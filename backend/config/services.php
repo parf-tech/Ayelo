@@ -49,6 +49,13 @@ return [
         'private_key' => env('FCM_PRIVATE_KEY'),
     ],
 
+    // LiveKit : la clé et le secret d'API ne quittent jamais le serveur ; le client reçoit un jeton de 10 minutes.
+    'livekit' => [
+        'url' => env('LIVEKIT_URL'),
+        'api_key' => env('LIVEKIT_API_KEY'),
+        'api_secret' => env('LIVEKIT_API_SECRET'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -1,3 +1,5 @@
+import { AccessibilityInfo } from 'react-native';
+
 // Mocks communs : stockage sécurisé en mémoire, localisation, identifiants aléatoires, zones sûres.
 const mockStore = new Map<string, string>();
 
@@ -28,9 +30,8 @@ jest.mock('expo-crypto', () => ({
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
 // Les animations en boucle (Skeleton) empêcheraient act() de se terminer : on simule « réduire les animations ».
-import { AccessibilityInfo } from 'react-native';
-
 beforeEach(() => {
+  jest.clearAllMocks();
   mockStore.clear();
   jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
 });

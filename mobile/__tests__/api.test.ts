@@ -252,7 +252,6 @@ describe('configuration et stockage', () => {
   });
 
   it('jeton : écrit dans expo-secure-store, relu, effacé', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const SecureStore = require('expo-secure-store');
     tokenStore.resetCacheForTests();
     await tokenStore.set('abc');

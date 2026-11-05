@@ -12,7 +12,7 @@ module.exports = [
   },
   {
     // Fichiers de configuration et mocks Jest (CommonJS).
-    files: ['jest.setup.ts', '*.config.js'],
+    files: ['jest.setup.ts', '*.config.js', '__tests__/**'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },

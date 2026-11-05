@@ -50,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('typing', fn (Request $r) => Limit::perMinute(60)->by('typing:'.$r->user()?->id));
         RateLimiter::for('deletion-request', fn (Request $r) => Limit::perHour(3)->by('del-req:'.$r->ip()));
         RateLimiter::for('account-delete', fn (Request $r) => Limit::perDay(5)->by('acc-del:'.$r->user()?->id));
+        RateLimiter::for('webhooks', fn (Request $r) => Limit::perMinute(300)->by('webhook:'.$r->ip()));
+        RateLimiter::for('calls', fn (Request $r) => Limit::perMinute(10)->by('calls:'.$r->user()?->id));
         RateLimiter::for('media-upload', fn (Request $r) => Limit::perHour(20)->by('media:'.$r->user()?->id));
         RateLimiter::for('password-reset', fn (Request $r) => Limit::perHour(5)->by('pw-reset:'.$r->ip()));
     }

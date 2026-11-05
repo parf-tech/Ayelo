@@ -40,6 +40,9 @@
         <env name="DB_DATABASE" value="app_test"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="LIVEKIT_URL" value="wss://livekit.test"/>
+        <env name="LIVEKIT_API_KEY" value="testkey"/>
+        <env name="LIVEKIT_API_SECRET" value="une-cle-secrete-de-test-assez-longue-pour-hs256"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

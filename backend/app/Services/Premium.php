@@ -10,7 +10,8 @@ class Premium
     {
         return DB::table('subscriptions')
             ->where('user_id', $userId)
-            ->whereIn('status', ['active', 'grace'])
+            // « cancelled » = renouvellement annulé : l'accès dure jusqu'à la fin de la période payée.
+            ->whereIn('status', ['active', 'grace', 'cancelled'])
             ->where('period_end', '>', now())
             ->exists();
     }
