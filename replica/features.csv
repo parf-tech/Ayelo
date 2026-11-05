@@ -1,0 +1,45 @@
+feature,area,priority,original,clone,notes
+Inscription email,onboarding,must,yes,no,
+Connexion TikTok,onboarding,should,yes,no,confirmé par les CGU
+Connexion Google / Apple,onboarding,should,unknown,no,à confirmer
+Vérification âge 18+,onboarding,must,yes,no,CGU
+Choix de l'intention (mariage / amour durable / flirt / amitié / on verra),onboarding,must,yes,no,
+Profil avec photos,profil,must,yes,no,
+Profil vidéo,profil,must,yes,no,
+Origine et pays de résidence sur le profil,profil,must,yes,no,
+Masquer mon profil (Show my profile),profil,must,yes,no,
+Découverte de profils filtrée par origine,découverte,must,yes,no,
+Recherche par pays y compris un autre pays,découverte,must,yes,no,
+Explore swipe de profils vérifiés,découverte,should,yes,no,ajouté récemment
+Chat texte,messagerie,must,yes,no,
+Notifications push,notifications,must,yes,no,
+Notifications email,notifications,should,yes,no,
+Publier une invitation vidéo (film / concert / dîner),invitations,should,yes,no,
+Fil des invitations vidéo,invitations,should,yes,no,
+Singles à proximité (alerte),proximité,could,yes,no,enjeu vie privée
+Bloquer un utilisateur,sécurité,must,yes,no,
+Signaler un utilisateur (4 motifs),sécurité,must,yes,no,argent / harcèlement / comportement en rencontre / faux profil
+Revue des signalements (avertissement à suppression),sécurité,must,yes,no,outil admin
+Modération des photos et vidéos,sécurité,must,yes,no,UGC
+Badge profil vérifié,sécurité,should,yes,no,principe documenté sur le site (photos ou vidéo, revue humaine)
+Abonnement Premium (1 / 6 / 12 mois),paiement,must,yes,no,via stores + RevenueCat
+Achats ponctuels (Conversation / Propositions),paiement,should,yes,no,
+Restaurer les achats,paiement,must,yes,no,exigence des stores
+Déblocage Premium gratuit (réseaux sociaux / parrainage / défis),paiement,could,yes,no,vu sur fiche App Store coréenne
+Paramètres notifications,paramètres,should,yes,no,
+Suppression du compte,paramètres,must,yes,no,exigence des stores
+Support client dans l'app,support,should,yes,no,
+Site web : inscription et connexion,web,could,yes,no,
+Site web : pages sécurité / CGU / confidentialité,web,must,yes,no,à rédiger soi-même
+Coachs de rencontre,services,could,yes,skip,opération humaine
+Événements en personne,services,could,yes,skip,opération humaine
+Profils certifiés par pays (programme de l’éditeur),confiance,could,yes,skip,le principe est documenté (photos ou vidéo + revue humaine) mais pas les critères exacts ; remplacé par notre vérification par selfie
+Communauté d'utilisateurs existante,réseau,could,yes,skip,non clonable : effet de réseau
+Stories vidéo de 15 à 20 secondes,contenus,should,yes,no,confirmé App Store FR et site ; phase C (après lancement)
+Cadeaux virtuels achetés avec des crédits,monétisation,could,yes,no,confirmé App Store FR et site ; phase E
+Test de compatibilité de 3 minutes,découverte,could,yes,no,confirmé site
+Message direct avant match (Premium),messagerie,should,yes,no,confirmé site
+Filtres avancés payants,monétisation,could,yes,no,confirmé App Store FR ; contenu non spécifié
+Section communauté et recommandations,découverte,could,yes,no,confirmé site
+Appels voix et vidéo depuis le chat,messagerie,must,yes,no,confirmé site ; inclus au lancement (décision propriétaire)
+Certification du profil par photos ou courte vidéo,confiance,should,yes,no,confirmé site ; revue humaine

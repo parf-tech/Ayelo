@@ -1,0 +1,53 @@
+name: schema
+
+on:
+  push:
+    paths:
+      - 'docs/schema/**'
+      - 'tests/schema/**'
+      - '.github/workflows/schema.yml'
+  pull_request:
+    paths:
+      - 'docs/schema/**'
+      - 'tests/schema/**'
+      - '.github/workflows/schema.yml'
+
+jobs:
+  postgres16:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        working-directory: tests/schema
+        run: npm ci --omit=dev
+      - name: Schema tests on PostgreSQL 16
+        working-directory: tests/schema
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: node schema.test.mjs
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

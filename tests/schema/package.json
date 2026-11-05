@@ -1,0 +1,15 @@
+{
+  "name": "schema-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node schema.test.mjs",
+    "test:local": "node run-local-pg16.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "embedded-postgres": "16.15.0-beta.19"
+  }
+}
