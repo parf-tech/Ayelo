@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Services\Storage;
+
+use Aws\Exception\AwsException;
+use Aws\S3\S3Client;
+
+class S3MediaStorage implements MediaStorage
+{
+    private ?S3Client $client = null;
+
+    private function client(): S3Client
+    {
+        return $this->client ??= new S3Client([
+            'version' => 'latest',
+            'region' => config('media.disk.region'),
+            'endpoint' => config('media.disk.endpoint'),
+            'use_path_style_endpoint' => true,
+            'credentials' => ['key' => (string) config('media.disk.key'), 'secret' => (string) config('media.disk.secret')],
+        ]);
+    }
+
+    public function presignedUpload(string $key, string $mime, int $size, int $ttlMinutes): array
+    {
+        $command = $this->client()->getCommand('PutObject', [
+            'Bucket' => config('media.disk.bucket'),
+            'Key' => $key,
+            'ContentType' => $mime,
+            'ContentLength' => $size,
+        ]);
+
+        $request = $this->client()->createPresignedRequest($command, "+{$ttlMinutes} minutes");
+
+        return ['url' => (string) $request->getUri(), 'headers' => ['Content-Type' => $mime]];
+    }
+
+    public function temporaryUrl(string $key, int $ttlMinutes): string
+    {
+        $command = $this->client()->getCommand('GetObject', ['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
+
+        return (string) $this->client()->createPresignedRequest($command, "+{$ttlMinutes} minutes")->getUri();
+    }
+
+    public function head(string $key): ?array
+    {
+        try {
+            $result = $this->client()->headObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
+        } catch (AwsException) {
+            return null;
+        }
+
+        return ['size' => (int) $result['ContentLength'], 'mime' => (string) $result['ContentType']];
+    }
+
+    public function delete(string $key): void
+    {
+        $this->client()->deleteObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
+    }
+}

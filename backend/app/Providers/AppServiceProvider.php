@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Services\OAuth\JwtOAuthVerifier;
 use App\Services\OAuth\OAuthVerifier;
+use App\Services\Storage\MediaStorage;
+use App\Services\Storage\S3MediaStorage;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(OAuthVerifier::class, JwtOAuthVerifier::class);
+        $this->app->singleton(MediaStorage::class, S3MediaStorage::class);
     }
 
     public function boot(): void
@@ -37,6 +40,9 @@ class AppServiceProvider extends ServiceProvider
             Limit::perHour(3)->by('pw-forgot:'.strtolower((string) $r->input('email'))),
             Limit::perHour(20)->by('pw-forgot-ip:'.$r->ip()),
         ]);
+        RateLimiter::for('discover', fn (Request $r) => Limit::perMinute(60)->by('discover:'.$r->user()?->id));
+        RateLimiter::for('swipes', fn (Request $r) => Limit::perMinute(120)->by('swipes:'.$r->user()?->id));
+        RateLimiter::for('media-upload', fn (Request $r) => Limit::perHour(20)->by('media:'.$r->user()?->id));
         RateLimiter::for('password-reset', fn (Request $r) => Limit::perHour(5)->by('pw-reset:'.$r->ip()));
     }
 

@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Services\Storage;
+
+interface MediaStorage
+{
+    /**
+     * URL présignée de dépôt (méthode PUT) pour une clé d'objet.
+     *
+     * @return array{url: string, headers: array<string, string>}
+     */
+    public function presignedUpload(string $key, string $mime, int $size, int $ttlMinutes): array;
+
+    /** URL de lecture signée et courte. */
+    public function temporaryUrl(string $key, int $ttlMinutes): string;
+
+    /**
+     * Métadonnées réelles de l'objet déposé, ou null s'il n'existe pas.
+     *
+     * @return array{size: int, mime: string}|null
+     */
+    public function head(string $key): ?array;
+
+    public function delete(string $key): void;
+}

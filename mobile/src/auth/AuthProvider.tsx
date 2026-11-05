@@ -1,0 +1,127 @@
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import { Api, createApiClient, createEndpoints, getConfiguredBaseUrl, isApiError } from '../api';
+import type { ApiLocale, AuthResponse, Platform as ApiPlatform } from '../api/types';
+import { useI18n } from '../i18n';
+import { appStorage, getDeviceId, tokenStore } from '../storage';
+import { authReducer, AuthState, initialAuthState } from './authState';
+
+export type AuthContextValue = {
+  state: AuthState;
+  api: Api;
+  /** Enregistre le jeton (expo-secure-store) et ouvre la session. `isNewAccount` déclenche l'onboarding. */
+  signIn: (response: AuthResponse, options?: { isNewAccount?: boolean }) => Promise<void>;
+  /** Révoque le jeton côté serveur (au mieux) puis efface la session locale. */
+  signOut: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+  clientInfo: { platform: ApiPlatform; appVersion: string; locale: ApiLocale };
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function currentPlatform(): ApiPlatform {
+  return Platform.OS === 'ios' ? 'ios' : 'android';
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(authReducer, initialAuthState);
+  const { locale } = useI18n();
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
+
+  const expireSession = useCallback(async () => {
+    await tokenStore.clear();
+    await appStorage.setOnboardingPending(false);
+    dispatch({ type: 'SIGNED_OUT' });
+  }, []);
+
+  const api = useMemo(
+    () =>
+      createEndpoints(
+        createApiClient({
+          baseUrl: getConfiguredBaseUrl,
+          getDeviceId,
+          getToken: () => tokenStore.get(),
+          getLocale: () => localeRef.current,
+          // 401 sur une requête authentifiée : la session n'est plus valable.
+          onUnauthorized: () => {
+            void expireSession();
+          },
+        }),
+      ),
+    [expireSession],
+  );
+
+  // Restauration de la session au lancement.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const token = await tokenStore.get();
+      if (!token) {
+        if (!cancelled) dispatch({ type: 'RESTORED', signedIn: false, user: null, onboardingPending: false });
+        return;
+      }
+      const onboardingPending = await appStorage.getOnboardingPending();
+      try {
+        const me = await api.auth.me();
+        if (!cancelled) dispatch({ type: 'RESTORED', signedIn: true, user: me, onboardingPending });
+      } catch (error) {
+        if (cancelled) return;
+        if (isApiError(error) && error.isUnauthorized) {
+          // onUnauthorized a déjà effacé la session ; on s'assure de sortir de l'état « loading ».
+          dispatch({ type: 'RESTORED', signedIn: false, user: null, onboardingPending: false });
+        } else {
+          // Réseau coupé ou serveur indisponible : on garde la session (jeton conservé), profil rechargé plus tard.
+          dispatch({ type: 'RESTORED', signedIn: true, user: null, onboardingPending });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [api]);
+
+  const signIn = useCallback<AuthContextValue['signIn']>(async (response, options) => {
+    const isNewAccount = Boolean(options?.isNewAccount);
+    await tokenStore.set(response.token);
+    await appStorage.setOnboardingPending(isNewAccount);
+    dispatch({ type: 'SIGNED_IN', user: response.user, isNewAccount });
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      await api.auth.logout();
+    } catch {
+      // Hors ligne ou jeton déjà invalide : on efface quand même la session locale.
+    }
+    await expireSession();
+  }, [api, expireSession]);
+
+  const completeOnboarding = useCallback(async () => {
+    await appStorage.setOnboardingPending(false);
+    dispatch({ type: 'ONBOARDING_DONE' });
+  }, []);
+
+  const clientInfo = useMemo(
+    () => ({
+      platform: currentPlatform(),
+      appVersion: Constants.expoConfig?.version ?? '0.0.0',
+      locale: locale as ApiLocale,
+    }),
+    [locale],
+  );
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ state, api, signIn, signOut, completeOnboarding, clientInfo }),
+    [state, api, signIn, signOut, completeOnboarding, clientInfo],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth doit être utilisé sous <AuthProvider>.');
+  return ctx;
+}
