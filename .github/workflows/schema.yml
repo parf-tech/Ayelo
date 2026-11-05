@@ -48,4 +48,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: gitleaks (historique complet)
-        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.21.2 detect --source /repo --no-banner --redact
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.21.2 detect --source /repo --no-banner --redact --verbose
