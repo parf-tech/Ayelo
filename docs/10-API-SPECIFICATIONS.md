@@ -34,7 +34,7 @@ Limites par **compte** et par **appareil** d'abord, par IP seulement en dernier 
 | --- | --- | --- | --- | --- | --- |
 | POST /auth/register | créer un compte | public | 5/h/appareil, 20/h/IP | email, mot de passe, **age_token** (de /auth/age-check), consentements | token, user |
 | POST /auth/login | se connecter | public | 5/15 min | email, mot de passe, appareil | token, user |
-| POST /auth/oauth/{provider} | Google / Apple / TikTok | public | 10/15 min/appareil | code ou jeton d'identité, **age_token** (obligatoire pour une nouvelle inscription), consentements | token, user |
+| POST /auth/oauth/{provider} | Google / Apple / TikTok | public | 10/15 min/appareil | code ou jeton d'identité, **age_token** (exigé seulement si le compte n'existe pas ; sinon connexion directe), consentements | token, user |
 | POST /auth/email/verify | valider l'email | public | 10/h | jeton | 204 |
 | POST /auth/email/resend | renvoyer le lien | user | 3/h | | 204 |
 | POST /auth/phone/send | envoyer un code SMS | user | 3/h | numéro | 204 |
@@ -47,6 +47,7 @@ Limites par **compte** et par **appareil** d'abord, par IP seulement en dernier 
 | DELETE /auth/sessions | ferme **toutes** les sessions | user | | | 204 |
 | POST /auth/age-check | contrôle d'âge **avant** création du compte | public | 10/h/appareil | date de naissance | `age_token` signé (10 min, contient la date) ou 403 (refus mémorisé par hash) |
 | POST /me/consents | enregistre / retire un consentement | user | 30/h | kind, version, granted | 204 |
+| POST /account-deletion-requests | demande de suppression **depuis le web** (page publique exigée par les stores, à vérifier) ; confirmation par lien envoyé à l'e-mail du compte | public | 3/h/IP | email | 202 (réponse identique si inconnu) |
 | DELETE /me | demande de suppression | user | 1/jour | ré-authentification : mot de passe, ou jeton frais du fournisseur (Apple / Google / TikTok) pour les comptes sociaux | 202 |
 | POST /me/export | demande d'export de données | user | 1/jour | | 202 |
 | GET /me/export/{id} | état et URL signée | user | | | export |
@@ -162,7 +163,7 @@ Authentification des canaux : `POST /broadcasting/auth` (jeton Sanctum). Le serv
 
 ## Totaux
 
-Routes REST : 76 (74 listées dans les tableaux, dont `GET/PUT /me/notifications` compté pour deux, plus le webhook RevenueCat et `POST /broadcasting/auth`). Canaux temps réel : 2. Décompte par commande le 2026-11-05.
+Routes REST : 77 (75 dans les tableaux : 74 lignes dont `GET/PUT /me/notifications` compté pour deux ; plus le webhook RevenueCat et `POST /broadcasting/auth`). Canaux temps réel : 2. Décompte par commande le 2026-11-05.
 
 ## Statut
 

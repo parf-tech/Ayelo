@@ -7,7 +7,7 @@ Colonnes : phase (A à E), états à construire (V = vide, C = chargement, R = r
 | ID | écran | accès | but | composants clés | états | phase |
 | --- | --- | --- | --- | --- | --- | --- |
 | S01 | Accueil | ouverture | entrée, valeur du produit | logo, boutons de connexion, liens CGU | R | A |
-| S02 | Inscription / connexion | S68 (après contrôle d'âge) | créer ou ouvrir un compte | champs email/mot de passe, boutons Google/Apple | R, E | A |
+| S02 | Inscription / connexion | S01 (mode **connexion**, sans S63 ni S68) ; S68 (mode **inscription**, après contrôle d'âge) | créer ou ouvrir un compte | champs email/mot de passe, boutons Google/Apple | R, E | A |
 | S03 | Vérification email | après S02 | confirmer l'email | message, renvoyer le lien | R, E | A |
 | S04 | Profil de base | onboarding | nom, genre, pays, ville (la date de naissance est saisie en S68, avant le compte) | champs, sélecteur pays | R, E | A |
 | S05 | Intention | onboarding | choisir l'intention | 5 cartes de choix | R | A |

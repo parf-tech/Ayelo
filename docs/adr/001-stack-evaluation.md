@@ -58,5 +58,5 @@ Décidés par le propriétaire (voir `DECISIONS-PROPRIETAIRE.md`) : budget de 30
 
 Encore ouverts :
 1. Comptes Apple Developer et Google Play : non ouverts ; entité juridique à décider d'abord.
-2. Tableau de coûts sourcé : à produire (tâche P0-8) ; le budget n'est pas démontré.
+2. Tableau de coûts sourcé : produit (`14b-COSTS.md`), à valider par le propriétaire ; le scénario haut dépasse le budget (SMS, LiveKit).
 3. ADR 006 (sessions) et ADR 004 (hébergement de LiveKit) à écrire.

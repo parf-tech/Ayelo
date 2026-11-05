@@ -11,7 +11,7 @@ La seconde relecture a montré que `phase0-suivi.md` déclarait « traité » de
 
 | id | statut | détail |
 | --- | --- | --- |
-| BIS-B01 | **fermé en local, CI à confirmer** | Le SQL a été exécuté sur **PostgreSQL 16.15 natif** (2026-11-05) : 36 tables, **33 tests, 0 échec**, dont un test de concurrence. Commande : `cd tests/schema && npm run test:local`. Le workflow `.github/workflows/schema.yml` (service `postgres:16`) est écrit mais **n'a pas encore été exécuté** : il n'existe pas de dépôt distant. La migration Laravel (clés `uuid`, Sanctum `uuidMorphs`) est **testée** : 6 tests Pest, 0 échec, sur PostgreSQL 16.15. Il reste à confirmer en CI |
+| BIS-B01 | **fermé** | SQL exécuté sur **PostgreSQL 16.15 natif** en local (33 tests, 0 échec) **et** en CI GitHub (verte sur `ac22f5c` : schéma + gitleaks + Pest + `composer audit`). Migration Laravel (clés `uuid`, Sanctum `uuidMorphs`) testée : 6 tests Pest, 19 assertions |
 
 ## Majeurs
 
@@ -23,7 +23,7 @@ La seconde relecture a montré que `phase0-suivi.md` déclarait « traité » de
 | BIS-M04 | corrigé | 03 FR-G-1 et FR-G-2, 05 S30 alignés sur 1 / 3 / 12 mois et crédit « Conversation » ; « Propositions » hors lancement |
 | BIS-M05 | corrigé | 03 FR-A-6 réécrit selon 08 (Sanctum à expiration glissante, un jeton par appareil). **ADR 006 à écrire** : responsable Architecte, avant A2 |
 | BIS-M06 | corrigé | 11 : mineur suspecté = 2 h partout (vérifié par recherche de « 24 h ») |
-| BIS-M07 | partiel | `15b-TRACEABILITY.md` générée : 90 exigences, 0 sans épopée. Plages corrigées (A3, A5, A11, A13), dépendances / tailles / preuves ajoutées à A0, A16, A17, B10, chemin critique complété (A15). **Reste** : dépendances fines des autres épopées, à affiner à l'entrée en phase A |
+| BIS-M07 | partiel | `15b-TRACEABILITY.md` générée : 92 exigences (90 à l'origine, +FR-A-12 et FR-I-15), 0 sans épopée. Plages corrigées (A3, A5, A11, A13), dépendances / tailles / preuves ajoutées à A0, A16, A17, B10, chemin critique complété (A15). **Reste** : dépendances fines des autres épopées, à affiner à l'entrée en phase A |
 | BIS-M08 | corrigé | statuts mis à jour : 08, ADR (points ouverts réécrits), 06, 14 (staging, test de coût remplacé par un modèle de coût) |
 | BIS-M09 | corrigé | `features.csv` et `recon.md` (certification), 02 (limites n°3 et n°4, section « points faibles » renommée, source Google Play) |
 
@@ -52,12 +52,28 @@ La seconde relecture a montré que `phase0-suivi.md` déclarait « traité » de
 | objet | résultat |
 | --- | --- |
 | Écrans (05) | 50 : A 30, B 9, C 6, D 4, E 1 |
-| Routes (10) | 73 lignes de tableau + GET/PUT compté 2 + webhook + `/broadcasting/auth` = 76 (inchangé) |
+| Routes (10) | 73 lignes de tableau + GET/PUT compté 2 + webhook + `/broadcasting/auth` = 76 ; **77** après ajout de `POST /account-deletion-requests` |
 | Tables (SQL) | 36 |
-| Tests SQL | 31, 0 échec |
+| Tests SQL | 33, 0 échec (PostgreSQL 16.15) |
 | Exigences (03) | 90, toutes rattachées à une épopée |
 | `features.csv` | must 20, should 13, could 11 dont 4 skip |
 
-## Verdict du CTO
+## Clôture de G1
 
-Le propriétaire a accepté le **G1 conditionnel** le 2026-11-05 (« oui, continue ») : la phase A1 démarre. Le bloquant BIS-B01 est fermé sur PostgreSQL 16.15 natif en local. **G1 définitif** reste conditionné à : (1) l'exécution des workflows `schema.yml` et `backend.yml` en CI (aucun dépôt distant), (2) ~~le test de la migration Laravel avec clés `uuid`~~ : fait, (3) une troisième passe de relecture limitée aux points corrigés.
+Troisième relecture : `phase0-ter.md` (0 bloquant, 3 majeurs, 11 mineurs). Les trois conditions posées sont remplies :
+
+1. CI GitHub exécutée et verte (commit `ac22f5c`).
+2. Migration Laravel avec clés `uuid` et Sanctum `uuidMorphs` testée.
+3. Troisième passe de relecture faite.
+
+Les trois majeurs de la troisième passe sont traités le 2026-11-05 :
+
+| id | traitement |
+| --- | --- |
+| R3-M01 | passe de statuts : 00, 09, 15, ADR et ce suivi |
+| R3-M02 | parcours F00 « Connexion » ajouté (04) ; S02 accessible depuis S01 en mode connexion sans S63 ni S68 (05) ; `oauth` n'exige `age_token` que pour un nouveau compte (10) ; FR-A-12 (03) |
+| R3-M03 | le fichier Docker Compose ne monte plus le SQL : `php artisan migrate` fait foi (`infra/docker-compose.dev.yml`) |
+
+Mineurs traités avec : R3-m04 (workflow backend : `.env` et clé d'application avant Pest) et R3-m10 (FR-I-15 et route `POST /account-deletion-requests`).
+
+**G1 définitif : franchi** (décision du CTO, 2026-11-05). Réserves : le Docker Compose n'est pas testé (Docker absent du poste) ; les avertissements Pest de la CI sont à confirmer disparus ; matrice juridique, comptes développeur et modération humaine restent ouverts (hors G1).

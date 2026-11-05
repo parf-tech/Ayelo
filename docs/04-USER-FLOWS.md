@@ -2,6 +2,15 @@
 
 Les identifiants d'écran (S01…) renvoient à `05-SCREEN-INVENTORY.md`. Les clics sont ceux du chemin nominal : c'est le chiffre à battre.
 
+## F00 Connexion d'un compte existant (phase A)
+
+```
+S01 Accueil -> « Se connecter » -> S02 (mode connexion, email ou Google/Apple/TikTok) -> S10 Découverte
+```
+- Clics nominaux : 2 (hors saisie). **Pas de S63 ni S68** : le contrôle d'âge et les consentements ont déjà eu lieu à l'inscription.
+- OAuth : `age_token` exigé seulement si le compte n'existe pas encore ; sinon connexion directe.
+- Cas limites : mot de passe oublié (F15) ; nouvel appareil (session ajoutée, alerte) ; compte suspendu (F18) ; 5 échecs (429) ; compte supprimé ou banni (message neutre, `banned_identifiers`).
+
 ## F01 Inscription et onboarding (phase A)
 
 ```

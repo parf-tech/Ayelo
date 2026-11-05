@@ -165,9 +165,11 @@ Règles transverses :
 | FR-B-9 | Qualité vidéo adaptative (240p, 360p, 480p) et mode économie de données ; plafonds de poids par média | A/B | H |
 | FR-I-10 | Filtrage de texte (messages, bio, nom) fr / en en plus du filtrage des images | A | H |
 | FR-I-11 | Notification de sanction avec motif et contestation unique (`POST /appeals`) | A | H |
+| FR-I-15 | Page web publique de demande de suppression de compte (exigence des stores, à vérifier), confirmation par lien envoyé à l'e-mail du compte | A | H |
 | FR-I-12 | Contrôle d'âge **avant** création du compte : `POST /auth/age-check` renvoie un jeton signé court qui contient la date ; `register` **et** `oauth` exigent ce jeton ; la date est stockée dans `users.birthdate`, non modifiable ; refus mémorisé par hash ; purge des données refusées | A | H |
 | FR-I-13 | Export des données personnelles à la demande (`POST /me/export`) | A | H |
 | FR-I-14 | Consentements enregistrés et révocables (CGU, confidentialité, données sensibles, localisation, biométrie de vérification) | A | H |
+| FR-A-12 | Connexion d'un compte existant sans repasser par les consentements ni le contrôle d'âge (parcours F00) | A | H |
 | FR-A-10 | Écrans et parcours : mot de passe oublié, compte suspendu, refus d'âge, date de naissance (la saisie du code SMS suit FR-A-4, phase B) | A | H |
 | FR-A-11 | Suppression de compte avec ré-authentification adaptée (mot de passe ou jeton frais du fournisseur social) et révocation des jetons Apple / TikTok | A | H |
 | FR-C-9 | Limite quotidienne de likes pour les comptes gratuits (valeur initiale à fixer, stockée dans `daily_counters`) | B | H |

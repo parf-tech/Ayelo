@@ -1,5 +1,6 @@
 # Services locaux de développement. Aucun port exposé hors de 127.0.0.1.
 # Les mots de passe ci-dessous sont des valeurs de développement local uniquement.
+# Le schéma n'est PAS monté ici : il est appliqué par `php artisan migrate` (backend), qui fait foi.
 services:
   postgres:
     image: postgres:16
@@ -11,7 +12,6 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../docs/schema/001_initial.sql:/docker-entrypoint-initdb.d/001_initial.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app"]
       interval: 5s

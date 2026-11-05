@@ -30,7 +30,7 @@ Construire une application de rencontres **indépendante** pour Android et iOS, 
 | Marchés | vague 1 France / Belgique / Suisse / Canada francophone ; vague 2 Afrique francophone ; vague 3 États-Unis, Royaume-Uni, Afrique anglophone | `DECISIONS-PROPRIETAIRE.md` |
 | Langues | français et anglais dès la V1 | |
 | Hébergement | VPS 8 Go pour l'API, stockage Cloudflare R2 ; budget cible 30 à 80 € par mois (**non démontré**, voir `14-DEPLOYMENT.md`) | `14-DEPLOYMENT.md` |
-| Base de données | `schema/001_initial.sql` exécuté sur PGlite (PostgreSQL 18 émulé), 36 tables, 33 tests passés sur PostgreSQL 16.15 natif | `09-DATABASE-SCHEMA.md` |
+| Base de données | `schema/001_initial.sql` : 36 tables, 33 tests passés sur PostgreSQL 16.15 natif en local et en CI GitHub (verte) ; migration Laravel testée (Pest, 6 tests) | `09-DATABASE-SCHEMA.md` |
 
 ## Livraison en phases
 
@@ -57,6 +57,8 @@ Chaque phase passe des gates de livraison (`13-TEST-STRATEGY.md`). Rien n'est d�
 
 - Recon publique faite : `replica/recon.md`, `replica/features.csv`. App Store FR et site officiel lus ; Google Play non lu (page tronquée).
 - ADR 001 acceptée par le propriétaire. Décisions du propriétaire et arbitrages du CTO dans `DECISIONS-PROPRIETAIRE.md`.
-- Relectures indépendantes : passe 1 (`reviews/phase0.md` : 4 bloquants, 31 majeurs, 20 mineurs) et passe 2 (`reviews/phase0-bis.md` : 1 bloquant, 9 majeurs, 15 mineurs). Corrections suivies dans `reviews/phase0-bis-suivi.md`. **G1 conditionnel accepté par le propriétaire (2026-11-05)** : la phase A1 a démarré. Le SQL est vérifié sur PostgreSQL 16.15 natif en local (33 tests) ; il reste la CI GitHub, le test de la migration Laravel et une troisième passe de relecture pour déclarer G1 définitif.
-- Reste à produire : tableau de coûts sourcé (MAJ-06), matrice juridique par marché (MAJ-05), spécifications manquantes (voir `reviews/phase0-suivi.md`).
-- Aucun code d'application écrit.
+- Trois relectures indépendantes : `reviews/phase0.md`, `phase0-bis.md`, `phase0-ter.md` (0 bloquant, 3 majeurs traités ensuite, 11 mineurs). **G1 définitif : franchi sur le fond** (voir `reviews/phase0-bis-suivi.md`, section « Clôture de G1 »).
+- Dépôt privé `kodafelice22/ayelo-dating-app`. CI GitHub verte sur le commit `ac22f5c` (schéma sur PostgreSQL 16, gitleaks, Pest, `composer audit`).
+- Tableau de coûts sourcé : `14b-COSTS.md` (scénario bas ≈ 34 $/mois, haut ≈ 417 $/mois ; à valider par le propriétaire).
+- Code : fondations seulement (backend Laravel 12 avec Sanctum `uuid`, migration du schéma, route de santé). Phase A2 en cours.
+- Reste ouvert : matrice juridique par marché (juriste), comptes Apple et Google, modération humaine non budgétée, recherche de marque du nom de travail.

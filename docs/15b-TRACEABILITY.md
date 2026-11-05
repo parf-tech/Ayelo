@@ -16,6 +16,7 @@ Les noms de tests sont des **types** de test à écrire ; aucun test d'applicati
 | FR-A-9 | Limitation des tentatives : 5 échecs de connexion par 15 min et par (email, appareil) | A | H | A3 | Pest API + Maestro (parcours 1, 8) |
 | FR-A-10 | Écrans et parcours : mot de passe oublié, compte suspendu, refus d'âge, date de naissance (la s… | A | H | A17 | Pest API + Maestro (parcours 1, 8) |
 | FR-A-11 | Suppression de compte avec ré-authentification adaptée (mot de passe ou jeton frais du fourniss… | A | H | A13 | Pest API + Maestro (parcours 1, 8) |
+| FR-A-12 | Connexion d'un compte existant sans repasser par les consentements ni le contrôle d'âge (parcou… | A | H | A3 | Pest API + Maestro (parcours 1, 8) |
 | FR-B-1 | Création du profil en onboarding : nom, date de naissance, genre, pays d'origine, pays de résid… | A | C | A6 | Pest API + Maestro |
 | FR-B-2 | Biographie (500 caractères max) | A | H | A6 | Pest API + Maestro |
 | FR-B-3 | 1 à 6 photos ; 1 photo principale ; ordre modifiable | A | H | A6 | Pest API + Maestro |
@@ -92,8 +93,9 @@ Les noms de tests sont des **types** de test à écrire ; aucun test d'applicati
 | FR-I-12 | Contrôle d'âge **avant** création du compte : `POST /auth/age-check` renvoie un jeton signé cou… | A | H | A3 | Pest (autorisation, limites) + procédure écrite |
 | FR-I-13 | Export des données personnelles à la demande (`POST /me/export`) | A | H | A16 | Pest (autorisation, limites) + procédure écrite |
 | FR-I-14 | Consentements enregistrés et révocables (CGU, confidentialité, données sensibles, localisation,… | A | H | A16 | Pest (autorisation, limites) + procédure écrite |
+| FR-I-15 | Page web publique de demande de suppression de compte (exigence des stores, à vérifier), confir… | A | H | A16 | Pest (autorisation, limites) + procédure écrite |
 | FR-Z-1 | Interface en français et en anglais, langue choisie selon le téléphone puis modifiable (`users.… | A | H | A0 | Jest (clés de traduction) + Maestro en/fr |
 | FR-Z-2 | Notifications push, e-mails, SMS et textes légaux dans la langue de l'utilisateur | A | H | A0 | Jest (clés de traduction) + Maestro en/fr |
 | FR-Z-3 | Filtres de modération et mots-clés (« demande d'argent », insultes) maintenus par langue (fr, e… | A | H | A0 | Jest (clés de traduction) + Maestro en/fr |
 
-Exigences : 90. Sans épopée : 0 []. Épopées citées sans exigence dans 03 : [].
+Exigences : 92. Sans épopée : 0 []. Épopées citées sans exigence dans 03 : [].

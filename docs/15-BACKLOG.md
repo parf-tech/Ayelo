@@ -30,8 +30,8 @@ Règle de concurrence : une branche par épopée, un seul propriétaire par fich
 | P0-3 | Documents 00 à 15 | divers | fichiers présents | rédigés, corrigés après relecture |
 | P0-4 | Lire Google Play, App Store FR, accueil du site | REA | notes dans `02-REA-REPORT.md` | **fait** sauf Google Play (page tronquée) |
 | P0-5 | Relecture indépendante des documents | Reviewer | `docs/reviews/phase0.md` | **fait** (G1 non franchi) |
-| P0-5b | Seconde passe de relecture après corrections | Reviewer | `docs/reviews/phase0-bis.md` | à faire |
-| P0-6 | Validation propriétaire (gates G0, G1) | CTO | décision écrite | G0 fait ; G1 en attente de P0-5b |
+| P0-5b | Passes de relecture suivantes | Reviewer | `docs/reviews/phase0-bis.md`, `phase0-ter.md` | **fait** |
+| P0-6 | Validation propriétaire (gates G0, G1) | CTO | décision écrite | G0 fait ; **G1 franchi** (voir `reviews/phase0-bis-suivi.md`) |
 | P0-7 | Choix du nom, marque, domaine | propriétaire | décision écrite | nom de travail « Ayelo » proposé, recherche de marque à faire |
 | P0-8 | Tableau de coûts mensuel sourcé (URL + date de lecture par poste) | DevOps | `docs/14` section coûts | **produit** (`14b-COSTS.md`), à valider par le propriétaire ; reste : domaine, modération, Google Play, SMS Afrique |
 | P0-9 | Matrice juridique par marché, validée par un juriste | Security | `docs/11` annexe | à faire |
@@ -120,4 +120,4 @@ Encore ouvertes :
 
 ## Traçabilité
 
-Matrice exigence → épopée → type de test : [`15b-TRACEABILITY.md`](15b-TRACEABILITY.md) (90 exigences, toutes rattachées à une épopée, générée par script depuis 03).
+Matrice exigence → épopée → type de test : [`15b-TRACEABILITY.md`](15b-TRACEABILITY.md) (92 exigences, toutes rattachées à une épopée, générée par script depuis 03).

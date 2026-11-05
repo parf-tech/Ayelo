@@ -10,7 +10,7 @@
 | Moteur utilisé | **PostgreSQL 16.15 natif** (binaires Windows du paquet npm `embedded-postgres`), via `tests/schema/run-local-pg16.mjs`. Vérification précédente sur PGlite (PostgreSQL 18.6, WebAssembly) |
 | Tests de contraintes | **33 tests, 0 échec** sur PostgreSQL 16.15 (36 tables ; inclut un test de concurrence : deux insertions simultanées du même match donnent une seule ligne) |
 | Migration Laravel | **testée** (2026-11-05) : Laravel 12 + Sanctum 4 avec `uuidMorphs`, migration qui applique `001_initial.sql`, `migrate:fresh` rejouable (fonctions en `create or replace`). Pest sur PostgreSQL 16.15 : 6 tests, 19 assertions, 0 échec (`backend/tests/Feature`) |
-| Reste à faire | exécuter les workflows GitHub (`schema.yml`, `backend.yml`), écrits mais **jamais exécutés** faute de dépôt distant |
+| CI GitHub | **exécutée et verte** sur le commit `ac22f5c` (schéma sur `postgres:16`, gitleaks sur l'historique, Pest, `composer audit`). Les premiers essais avaient échoué pour des raisons de configuration (gitleaks sur le premier commit, dossier `tests/Unit` vide), corrigées |
 
 Ajoutés après la seconde relecture : suppression d'un média lié à un message, réordonnancement des photos en deux mises à jour (l'échange direct est refusé), `truncate` du journal d'audit refusé, appel `busy`, message image.
 
