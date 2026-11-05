@@ -22,4 +22,7 @@ interface MediaStorage
     public function head(string $key): ?array;
 
     public function delete(string $key): void;
+
+    /** Dépose un contenu texte/binaire généré par le serveur (exports de données). */
+    public function put(string $key, string $contents, string $mime): void;
 }

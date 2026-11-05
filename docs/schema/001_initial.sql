@@ -82,7 +82,7 @@ create index on devices (device_fingerprint_hash);
 create table verification_codes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users(id) on delete cascade,
-  channel text not null check (channel in ('email','phone','password_reset')),
+  channel text not null check (channel in ('email','phone','password_reset','account_deletion')),
   code_hash text not null,
   attempts smallint not null default 0,
   expires_at timestamptz not null,

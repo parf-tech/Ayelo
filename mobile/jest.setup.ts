@@ -27,6 +27,10 @@ jest.mock('expo-crypto', () => ({
 
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
+// Les animations en boucle (Skeleton) empêcheraient act() de se terminer : on simule « réduire les animations ».
+import { AccessibilityInfo } from 'react-native';
+
 beforeEach(() => {
   mockStore.clear();
+  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
 });

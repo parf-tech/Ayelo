@@ -35,8 +35,17 @@ class FakeMediaStorage implements MediaStorage
     }
 
     /** Simule le dépôt réel du fichier par le client. */
-    public function put(string $key, int $size, string $mime): void
+    public function simulateUpload(string $key, int $size, string $mime): void
     {
         $this->objects[$key] = ['size' => $size, 'mime' => $mime];
+    }
+
+    /** @var array<string, string> */
+    public array $contents = [];
+
+    public function put(string $key, string $contents, string $mime): void
+    {
+        $this->contents[$key] = $contents;
+        $this->objects[$key] = ['size' => strlen($contents), 'mime' => $mime];
     }
 }

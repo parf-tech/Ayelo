@@ -15,8 +15,15 @@ type SignupFlow = { state: SignupState; dispatch: React.Dispatch<SignupEvent> };
 const SignupFlowContext = createContext<SignupFlow | null>(null);
 
 /** État du parcours d'inscription : en mémoire uniquement (ni consentements ni jeton d'âge ne sont persistés). */
-export function SignupFlowProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(signupReducer, initialSignupState);
+export function SignupFlowProvider({
+  children,
+  initialState = initialSignupState,
+}: {
+  children: React.ReactNode;
+  /** Réservé aux tests : démarre le parcours à une étape donnée. */
+  initialState?: SignupState;
+}) {
+  const [state, dispatch] = useReducer(signupReducer, initialState);
   const value = useMemo(() => ({ state, dispatch }), [state]);
   return <SignupFlowContext.Provider value={value}>{children}</SignupFlowContext.Provider>;
 }

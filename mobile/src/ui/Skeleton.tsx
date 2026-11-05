@@ -14,7 +14,8 @@ export type SkeletonProps = {
 export function Skeleton({ width, height, variant = 'line', testID, style }: SkeletonProps) {
   const { colors, radius } = useTheme();
   const [opacity] = useState(() => new Animated.Value(1));
-  const [reduceMotion, setReduceMotion] = useState(false);
+  // null = réglage système pas encore connu : on n'anime pas avant de savoir.
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -22,14 +23,16 @@ export function Skeleton({ width, height, variant = 'line', testID, style }: Ske
       .then((enabled) => {
         if (mounted) setReduceMotion(Boolean(enabled));
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (mounted) setReduceMotion(true);
+      });
     return () => {
       mounted = false;
     };
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion !== false) {
       opacity.setValue(1);
       return;
     }
