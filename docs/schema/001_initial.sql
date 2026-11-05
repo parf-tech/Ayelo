@@ -535,7 +535,7 @@ create table audit_logs (
 create index on audit_logs (actor_staff_id, created_at desc);
 create index on audit_logs (subject_type, subject_id);
 
-create function forbid_change() returns trigger language plpgsql as $$
+create or replace function forbid_change() returns trigger language plpgsql as $$
 begin
   raise exception 'table % is append-only', tg_table_name;
 end $$;
@@ -546,7 +546,7 @@ create trigger audit_logs_no_truncate before truncate on audit_logs
   for each statement execute function forbid_change();
 
 -- date de naissance non modifiable après création
-create function lock_birthdate() returns trigger language plpgsql as $$
+create or replace function lock_birthdate() returns trigger language plpgsql as $$
 begin
   if new.birthdate is distinct from old.birthdate then
     raise exception 'birthdate cannot be changed';

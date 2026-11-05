@@ -11,7 +11,7 @@ La seconde relecture a montré que `phase0-suivi.md` déclarait « traité » de
 
 | id | statut | détail |
 | --- | --- | --- |
-| BIS-B01 | **fermé en local, CI à confirmer** | Le SQL a été exécuté sur **PostgreSQL 16.15 natif** (2026-11-05) : 36 tables, **33 tests, 0 échec**, dont un test de concurrence. Commande : `cd tests/schema && npm run test:local`. Le workflow `.github/workflows/schema.yml` (service `postgres:16`) est écrit mais **n'a pas encore été exécuté** : il n'existe pas de dépôt distant. La migration Laravel n'est pas testée (pas de `backend/`). Il reste donc à confirmer en CI et avec Laravel |
+| BIS-B01 | **fermé en local, CI à confirmer** | Le SQL a été exécuté sur **PostgreSQL 16.15 natif** (2026-11-05) : 36 tables, **33 tests, 0 échec**, dont un test de concurrence. Commande : `cd tests/schema && npm run test:local`. Le workflow `.github/workflows/schema.yml` (service `postgres:16`) est écrit mais **n'a pas encore été exécuté** : il n'existe pas de dépôt distant. La migration Laravel (clés `uuid`, Sanctum `uuidMorphs`) est **testée** : 6 tests Pest, 0 échec, sur PostgreSQL 16.15. Il reste à confirmer en CI |
 
 ## Majeurs
 
@@ -60,4 +60,4 @@ La seconde relecture a montré que `phase0-suivi.md` déclarait « traité » de
 
 ## Verdict du CTO
 
-Le propriétaire a accepté le **G1 conditionnel** le 2026-11-05 (« oui, continue ») : la phase A1 démarre. Le bloquant BIS-B01 est fermé sur PostgreSQL 16.15 natif en local. **G1 définitif** reste conditionné à : (1) l'exécution du workflow `schema.yml` en CI, (2) le test de la migration Laravel avec clés `uuid`, (3) une troisième passe de relecture limitée aux points corrigés.
+Le propriétaire a accepté le **G1 conditionnel** le 2026-11-05 (« oui, continue ») : la phase A1 démarre. Le bloquant BIS-B01 est fermé sur PostgreSQL 16.15 natif en local. **G1 définitif** reste conditionné à : (1) l'exécution des workflows `schema.yml` et `backend.yml` en CI (aucun dépôt distant), (2) ~~le test de la migration Laravel avec clés `uuid`~~ : fait, (3) une troisième passe de relecture limitée aux points corrigés.
