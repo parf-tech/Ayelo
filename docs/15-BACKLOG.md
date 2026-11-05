@@ -121,3 +121,11 @@ Encore ouvertes :
 ## Traçabilité
 
 Matrice exigence → épopée → type de test : [`15b-TRACEABILITY.md`](15b-TRACEABILITY.md) (92 exigences, toutes rattachées à une épopée, générée par script depuis 03).
+
+## État d'avancement du code (2026-11-05)
+
+| épopée | état | preuve |
+| --- | --- | --- |
+| A1 fondations | fait (Docker Compose non testé : Docker absent du poste) | CI verte |
+| A2 socle backend | partiel : Laravel, Sanctum `uuid`, migration, santé, format d'erreur unique, limites de débit (âge, inscription, connexion). **Reste** : politiques d'autorisation, Redis | Pest sur PostgreSQL 16 |
+| A3 authentification | partiel : contrôle d'âge, inscription (consentements, appareil, Argon2id), connexion, déconnexion (22 tests Pest, 97 assertions). **Reste** : vérification de l'e-mail, mot de passe oublié, OAuth Google / Apple, liste et fermeture des sessions | Pest sur PostgreSQL 16 |

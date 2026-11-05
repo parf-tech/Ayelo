@@ -17,7 +17,7 @@ Règles transverses :
 | FR-A-3 | Vérification de l'email par lien à usage unique (expire 24 h) | A | H |
 | FR-A-4 | Vérification du téléphone par SMS (6 chiffres, expire 10 min, 5 essais max) | B | H |
 | FR-A-5 | Récupération de compte par email (lien expire 1 h) | A | H |
-| FR-A-6 | Sessions : jeton Sanctum à expiration glissante (30 jours d'inactivité, à confirmer par l'ADR 006), un jeton par appareil, liste des appareils connectés, déconnexion d'un appareil ou de tous | A | H |
+| FR-A-6 | Sessions : jeton Sanctum d'expiration fixe de 30 jours après l'émission (implémenté ; une expiration glissante reste à décider par l'ADR 006), un jeton par appareil, liste des appareils connectés, déconnexion d'un appareil ou de tous | A | H |
 | FR-A-7 | Déconnexion révoque le jeton et le jeton push de l'appareil | A | H |
 | FR-A-8 | Suppression du compte depuis les réglages : profil masqué tout de suite, données effacées sous 30 jours | A | C |
 | FR-A-9 | Limitation des tentatives : 5 échecs de connexion par 15 min et par (email, appareil) | A | H |

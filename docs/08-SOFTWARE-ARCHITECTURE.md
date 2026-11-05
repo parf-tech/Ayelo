@@ -110,7 +110,7 @@ Voir `14-DEPLOYMENT.md`.
 
 ## Authentification et sessions (décision en attente d'ADR 006)
 
-Option retenue provisoirement : jetons Sanctum à expiration glissante (par exemple 30 jours d'inactivité), un jeton par appareil, lié à `devices.token_id`. Pas de paire access/refresh écrite à la main en V1. Routes : liste des sessions, fermeture d'une session, fermeture de **toutes** les sessions. La compromission d'un jeton est limitée par la révocation et la détection d'usage anormal.
+Implémenté (2026-11-05) : jetons Sanctum d'expiration **fixe** de 30 jours (`SANCTUM_EXPIRATION=43200` minutes), un jeton par appareil ; l'expiration glissante n'est pas implémentée (décision de l'ADR 006), lié à `devices.token_id`. Pas de paire access/refresh écrite à la main en V1. Routes : liste des sessions, fermeture d'une session, fermeture de **toutes** les sessions. La compromission d'un jeton est limitée par la révocation et la détection d'usage anormal.
 
 ## Décisions à consigner en ADR
 
