@@ -1,13 +1,20 @@
 name: schema
 
 on:
+  workflow_dispatch:
   push:
     paths:
+      - '.gitleaks.toml'
+      - 'backend/**'
+      - 'mobile/**'
       - 'docs/schema/**'
       - 'tests/schema/**'
       - '.github/workflows/schema.yml'
   pull_request:
     paths:
+      - '.gitleaks.toml'
+      - 'backend/**'
+      - 'mobile/**'
       - 'docs/schema/**'
       - 'tests/schema/**'
       - '.github/workflows/schema.yml'
