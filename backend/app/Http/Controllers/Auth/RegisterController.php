@@ -3,23 +3,20 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\AccountMail;
 use App\Services\AgeGate;
+use App\Services\DeviceSessions;
+use App\Services\Registrar;
 use App\Support\DeviceId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
-    /** Versions des textes acceptés (à synchroniser avec les pages légales). */
-    private const CONSENT_VERSION = '2026-11-05';
-
-    public function __invoke(Request $request, AgeGate $gate): JsonResponse
+    public function __invoke(Request $request, AgeGate $gate, Registrar $registrar, DeviceSessions $sessions, AccountMail $mail): JsonResponse
     {
         $device = DeviceId::from($request);
 
@@ -46,64 +43,19 @@ class RegisterController extends Controller
             throw ValidationException::withMessages(['age_token' => ['Contrôle d\'âge manquant, expiré ou invalide.']]);
         }
 
-        $result = DB::transaction(function () use ($data, $birthdate, $request, $device) {
-            $user = User::create([
-                'email' => strtolower($data['email']),
-                'password' => $data['password'],
-                'birthdate' => $birthdate,
-                'locale' => $data['locale'] ?? 'fr',
-            ]);
+        $user = $registrar->create([
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'birthdate' => $birthdate,
+            'locale' => $data['locale'] ?? 'fr',
+        ], $data['consents'], $request);
 
-            $rows = [];
-            foreach (['terms', 'privacy', 'sensitive_data'] as $kind) {
-                $rows[] = $this->consentRow($user->id, $kind, true, $request);
-            }
-            $rows[] = $this->consentRow($user->id, 'marketing', (bool) ($data['consents']['marketing'] ?? false), $request);
-            DB::table('user_consents')->insert($rows);
-
-            DB::table('notification_prefs')->insert([
-                'user_id' => $user->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $token = $user->createToken('mobile:'.$data['platform']);
-
-            DB::table('devices')->insert([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
-                'user_id' => $user->id,
-                'token_id' => $token->accessToken->getKey(),
-                'platform' => $data['platform'],
-                'device_fingerprint_hash' => DeviceId::hash($device),
-                'app_version' => $data['app_version'] ?? null,
-                'last_active_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return [$user, $token->plainTextToken];
-        });
-
-        [$user, $plain] = $result;
+        $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);
+        $mail->sendVerification($user);
 
         return response()->json([
-            'token' => $plain,
+            'token' => $token,
             'user' => ['id' => $user->id, 'email' => $user->email, 'locale' => $user->locale],
         ], 201);
-    }
-
-    /** @return array<string, mixed> */
-    private function consentRow(string $userId, string $kind, bool $granted, Request $request): array
-    {
-        return [
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'user_id' => $userId,
-            'kind' => $kind,
-            'version' => self::CONSENT_VERSION,
-            'granted' => $granted,
-            'ip' => $request->ip(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
     }
 }

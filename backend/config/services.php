@@ -28,6 +28,20 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Connexion avec Google / Apple : seuls des identifiants d'application PUBLICS sont configurés.
+    'oauth' => [
+        'google' => [
+            'client_ids' => array_filter(explode(',', (string) env('GOOGLE_CLIENT_IDS', ''))),
+            'issuers' => ['https://accounts.google.com', 'accounts.google.com'],
+            'jwks_url' => 'https://www.googleapis.com/oauth2/v3/certs',
+        ],
+        'apple' => [
+            'client_ids' => array_filter(explode(',', (string) env('APPLE_CLIENT_IDS', ''))),
+            'issuers' => ['https://appleid.apple.com'],
+            'jwks_url' => 'https://appleid.apple.com/auth/keys',
+        ],
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

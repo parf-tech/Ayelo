@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\OAuth\JwtOAuthVerifier;
+use App\Services\OAuth\OAuthVerifier;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,12 +13,12 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(OAuthVerifier::class, JwtOAuthVerifier::class);
     }
 
     public function boot(): void
     {
-        // Limites par appareil d'abord, par IP en dernier recours (réseaux mobiles en CGNAT).
+        // Limites par appareil ou par compte d'abord, par IP en dernier recours (réseaux mobiles en CGNAT).
         // Valeurs initiales de docs/10-API-SPECIFICATIONS.md, à calibrer.
         RateLimiter::for('age-check', fn (Request $r) => Limit::perHour(10)->by('age:'.$this->device($r)));
 
@@ -27,6 +29,15 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', fn (Request $r) => Limit::perMinutes(15, 5)
             ->by('login:'.strtolower((string) $r->input('email')).'|'.$this->device($r)));
+
+        RateLimiter::for('oauth', fn (Request $r) => Limit::perMinutes(15, 10)->by('oauth:'.$this->device($r)));
+        RateLimiter::for('email-verify', fn (Request $r) => Limit::perHour(10)->by('email-verify:'.$r->ip()));
+        RateLimiter::for('email-resend', fn (Request $r) => Limit::perHour(3)->by('email-resend:'.$r->user()?->id));
+        RateLimiter::for('password-forgot', fn (Request $r) => [
+            Limit::perHour(3)->by('pw-forgot:'.strtolower((string) $r->input('email'))),
+            Limit::perHour(20)->by('pw-forgot-ip:'.$r->ip()),
+        ]);
+        RateLimiter::for('password-reset', fn (Request $r) => Limit::perHour(5)->by('pw-reset:'.$r->ip()));
     }
 
     private function device(Request $r): string

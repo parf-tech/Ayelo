@@ -4,17 +4,16 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\DeviceSessions;
 use App\Support\DeviceId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class LoginController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, DeviceSessions $sessions): JsonResponse
     {
         $device = DeviceId::from($request);
 
@@ -29,9 +28,12 @@ class LoginController extends Controller
 
         // Même réponse pour « e-mail inconnu » et « mot de passe faux » ; on hache dans les deux cas
         // pour ne pas révéler l'existence du compte par le temps de réponse.
-        $valid = $user !== null && $user->password !== null
-            ? Hash::check($data['password'], $user->password)
-            : tap(false, fn () => Hash::make($data['password']));
+        if ($user !== null && $user->password !== null) {
+            $valid = Hash::check($data['password'], $user->password);
+        } else {
+            Hash::make($data['password']);
+            $valid = false;
+        }
 
         if (! $valid) {
             return response()->json(['error' => ['code' => 'invalid_credentials', 'message' => 'Identifiants invalides.']], 401);
@@ -41,24 +43,11 @@ class LoginController extends Controller
             return response()->json(['error' => ['code' => 'account_restricted', 'message' => 'Compte indisponible.']], 403);
         }
 
-        $token = $user->createToken('mobile:'.$data['platform']);
-
-        DB::table('devices')->insert([
-            'id' => (string) Str::uuid(),
-            'user_id' => $user->id,
-            'token_id' => $token->accessToken->getKey(),
-            'platform' => $data['platform'],
-            'device_fingerprint_hash' => DeviceId::hash($device),
-            'app_version' => $data['app_version'] ?? null,
-            'last_active_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
+        $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);
         $user->forceFill(['last_seen_at' => now()])->save();
 
         return response()->json([
-            'token' => $token->plainTextToken,
+            'token' => $token,
             'user' => ['id' => $user->id, 'email' => $user->email, 'locale' => $user->locale],
         ]);
     }
