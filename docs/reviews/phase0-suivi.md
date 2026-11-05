@@ -24,7 +24,7 @@ Statuts : **traité** (corrigé dans les documents), **partiel**, **ouvert** (re
 | MAJ-03 | traité | statuts mis à jour (00, 08, 15, ADR, features.csv) ; 06 : langues décidées |
 | MAJ-04 | traité | FR-Z-1..3, `users.locale`, épopée A0 |
 | MAJ-05 | ouvert | matrice juridique par marché : tâche P0-9, **juriste requis** avant G3 ; ordre de lancement proposé (vagues 1 à 3) |
-| MAJ-06 | ouvert | tableau de coûts sourcé : tâche P0-8, bloquant avant tout achat ; budget 30 à 80 € **non démontré** |
+| MAJ-06 | partiel | tableau de coûts sourcé et daté produit (`14b-COSTS.md`, 2026-11-05) : scénario bas ≈ 34 $/mois, haut ≈ 417 $/mois ; reste à chiffrer le domaine, la modération, Google Play et les SMS en Afrique ; validation du propriétaire en attente |
 | MAJ-07 | traité | 08 réécrit (PushKit + CallKit, ConnectionService), critères go/no-go de D0 dans 15 |
 | MAJ-08 | traité | FR-B-9, FR-E-9, 08 (qualités 240 à 480p, mode économie de données) ; cible de test Android d'entrée de gamme à ajouter à 13 |
 | MAJ-09 | traité | proximité (FR-C-8) déplacée en phase E |

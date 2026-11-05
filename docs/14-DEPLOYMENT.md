@@ -99,7 +99,9 @@ Clé SSH uniquement, `ufw` (22 restreint, 80, 443), fail2ban, mises à jour auto
 
 VPS, R2, Sentry, email/SMS, modération d'images, LiveKit, comptes développeur. Un tableau de budget sera produit avec les tarifs officiels du jour **avant** tout achat.
 
-## Tableau de coûts mensuels : à produire (tâche P0-8)
+## Tableau de coûts mensuels (tâche P0-8) : voir [`14b-COSTS.md`](14b-COSTS.md)
+
+Tableau produit le 2026-11-05 avec tarifs datés et sourcés. Résultat : scénario bas ≈ 34 $/mois (dans le budget), scénario haut ≈ 417 $/mois (hors budget, dominé par les SMS et LiveKit). Texte d'origine de la tâche :
 
 Le budget cible est de 30 à 80 € par mois, mais **il n'est pas démontré**. Postes à chiffrer, chacun avec l'URL de la grille tarifaire officielle et la date de lecture : VPS de 8 Go, Cloudflare R2, LiveKit Cloud (palier gratuit et palier payant, minutes d'appel), Sentry, e-mail transactionnel, SMS vers chaque pays visé, modération automatique d'images, EAS Build, runners macOS pour les tests iOS, RevenueCat (pourcentage du chiffre d'affaires), nom de domaine. Deux scénarios (bas et haut) avec hypothèse de trafic explicite. La **modération humaine** est budgétée à part. Si le total haut dépasse 80 €, le propriétaire arbitre : réduire le périmètre des appels, ou relever le budget.
 

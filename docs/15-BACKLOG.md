@@ -33,7 +33,7 @@ Règle de concurrence : une branche par épopée, un seul propriétaire par fich
 | P0-5b | Seconde passe de relecture après corrections | Reviewer | `docs/reviews/phase0-bis.md` | à faire |
 | P0-6 | Validation propriétaire (gates G0, G1) | CTO | décision écrite | G0 fait ; G1 en attente de P0-5b |
 | P0-7 | Choix du nom, marque, domaine | propriétaire | décision écrite | nom de travail « Ayelo » proposé, recherche de marque à faire |
-| P0-8 | Tableau de coûts mensuel sourcé (URL + date de lecture par poste) | DevOps | `docs/14` section coûts | à faire (bloquant avant tout achat) |
+| P0-8 | Tableau de coûts mensuel sourcé (URL + date de lecture par poste) | DevOps | `docs/14` section coûts | **produit** (`14b-COSTS.md`), à valider par le propriétaire ; reste : domaine, modération, Google Play, SMS Afrique |
 | P0-9 | Matrice juridique par marché, validée par un juriste | Security | `docs/11` annexe | à faire |
 | P0-10 | Ouvrir comptes Apple Developer et Google Play ; décider l'entité juridique avant | propriétaire | comptes ouverts | à faire (délais longs) |
 
