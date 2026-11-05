@@ -1,0 +1,12 @@
+# Les règles par défaut de gitleaks restent actives. Seuls les fichiers de test sont exclus :
+# ils contiennent des mots de passe factices (ex. "mauvaisMotDePasse1") qui déclenchent la règle generic-api-key.
+# Revue : aucun secret réel dans ces dossiers ; les secrets réels vivent dans l'environnement, jamais dans le dépôt.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Données factices des tests"
+paths = [
+  '''backend/tests/''',
+  '''mobile/__tests__/''',
+]
