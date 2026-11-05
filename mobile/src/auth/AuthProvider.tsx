@@ -1,9 +1,10 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 import { Api, createApiClient, createEndpoints, getConfiguredBaseUrl, isApiError } from '../api';
 import type { ApiLocale, AuthResponse, Platform as ApiPlatform } from '../api/types';
 import { useI18n } from '../i18n';
+import { getActiveLocale } from '../i18n/activeLocale';
 import { appStorage, getDeviceId, tokenStore } from '../storage';
 import { authReducer, AuthState, initialAuthState } from './authState';
 
@@ -27,8 +28,6 @@ export function currentPlatform(): ApiPlatform {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
   const { locale } = useI18n();
-  const localeRef = useRef(locale);
-  localeRef.current = locale;
 
   const expireSession = useCallback(async () => {
     await tokenStore.clear();
@@ -43,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           baseUrl: getConfiguredBaseUrl,
           getDeviceId,
           getToken: () => tokenStore.get(),
-          getLocale: () => localeRef.current,
+          getLocale: getActiveLocale,
           // 401 sur une requête authentifiée : la session n'est plus valable.
           onUnauthorized: () => {
             void expireSession();

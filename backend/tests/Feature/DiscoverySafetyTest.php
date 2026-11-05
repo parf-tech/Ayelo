@@ -8,7 +8,8 @@ use Illuminate\Support\Str;
 
 function member(array $profile = [], bool $photo = true, array $user = []): array
 {
-    $u = User::factory()->create($user);
+    // Date de naissance fixe par défaut : la fabrique en tire une au hasard, ce qui rendrait les filtres d'âge instables.
+    $u = User::factory()->create(array_merge(['birthdate' => '1995-06-15'], $user));
     DB::table('profiles')->insert(array_merge([
         'id' => (string) Str::uuid(), 'user_id' => $u->id, 'display_name' => 'M'.substr($u->id, 0, 5),
         'gender' => 'woman', 'origin_country' => 'CM', 'residence_country' => 'FR', 'intent' => 'flirt',

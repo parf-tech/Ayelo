@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, ScrollViewInstance, View } from 'react-native';
 import { MIN_TARGET, useTheme } from '../theme';
 import { Text } from './Text';
 
@@ -93,7 +93,7 @@ type ColumnProps = {
 
 function Column({ title, testID, items, selected, onSelect, flex, scrollToKey }: ColumnProps) {
   const { colors, radius, space } = useTheme();
-  const ref = useRef<ScrollView>(null);
+  const ref = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
     if (scrollToKey === undefined) return;

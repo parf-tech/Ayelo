@@ -10,6 +10,7 @@
         "aws/aws-sdk-php": "^3.403",
         "firebase/php-jwt": "^7.2",
         "laravel/framework": "^12.0",
+        "laravel/reverb": "^1.12",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "predis/predis": "^3.7"

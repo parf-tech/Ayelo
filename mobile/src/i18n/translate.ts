@@ -21,6 +21,6 @@ export function translate(locale: Locale, key: TranslationKey, params?: Translat
 
 /** Ramène un code de langue du téléphone (« fr-CA », « en_US »…) à une langue prise en charge. */
 export function resolveLocale(code: string | null | undefined): Locale {
-  const base = (code ?? '').toLowerCase().split(/[-_]/)[0];
+  const base = (code ?? '').toLowerCase().split(/[-_]/)[0] ?? '';
   return (SUPPORTED_LOCALES as readonly string[]).includes(base) ? (base as Locale) : DEFAULT_LOCALE;
 }

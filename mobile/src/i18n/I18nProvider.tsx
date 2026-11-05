@@ -1,6 +1,7 @@
 import { getLocales } from 'expo-localization';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { appStorage } from '../storage/appStorage';
+import { setActiveLocale } from './activeLocale';
 import type { TranslationKey } from './fr';
 import { Locale, resolveLocale, SUPPORTED_LOCALES, translate, TranslationParams } from './translate';
 
@@ -41,6 +42,10 @@ export function I18nProvider({ children, initialLocale }: Props) {
       cancelled = true;
     };
   }, [initialLocale]);
+
+  useEffect(() => {
+    setActiveLocale(locale);
+  }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);

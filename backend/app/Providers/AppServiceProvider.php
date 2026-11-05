@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Services\OAuth\JwtOAuthVerifier;
+use App\Services\Push\FcmPushNotifier;
+use App\Services\Push\PushNotifier;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\Storage\MediaStorage;
 use App\Services\Storage\S3MediaStorage;
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OAuthVerifier::class, JwtOAuthVerifier::class);
         $this->app->singleton(MediaStorage::class, S3MediaStorage::class);
+        $this->app->bind(PushNotifier::class, FcmPushNotifier::class);
     }
 
     public function boot(): void
@@ -42,6 +45,9 @@ class AppServiceProvider extends ServiceProvider
         ]);
         RateLimiter::for('discover', fn (Request $r) => Limit::perMinute(60)->by('discover:'.$r->user()?->id));
         RateLimiter::for('swipes', fn (Request $r) => Limit::perMinute(120)->by('swipes:'.$r->user()?->id));
+        RateLimiter::for('conversations', fn (Request $r) => Limit::perMinute(10)->by('conv:'.$r->user()?->id));
+        RateLimiter::for('messages', fn (Request $r) => Limit::perMinute(30)->by('msg:'.$r->user()?->id));
+        RateLimiter::for('typing', fn (Request $r) => Limit::perMinute(60)->by('typing:'.$r->user()?->id));
         RateLimiter::for('media-upload', fn (Request $r) => Limit::perHour(20)->by('media:'.$r->user()?->id));
         RateLimiter::for('password-reset', fn (Request $r) => Limit::perHour(5)->by('pw-reset:'.$r->ip()));
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, DimensionValue, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
 
@@ -13,7 +13,7 @@ export type SkeletonProps = {
 /** Placeholder de chargement. Pulsation désactivée si « réduire les animations » est actif. */
 export function Skeleton({ width, height, variant = 'line', testID, style }: SkeletonProps) {
   const { colors, radius } = useTheme();
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [opacity] = useState(() => new Animated.Value(1));
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {

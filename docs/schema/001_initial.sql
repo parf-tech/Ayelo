@@ -263,7 +263,7 @@ create table messages (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (conversation_id, sender_id, client_id),
-  check (type <> 'text' or (body is not null and char_length(body) >= 1))
+  check (type <> 'text' or deleted_at is not null or (body is not null and char_length(body) >= 1))
 );
 create index on messages (conversation_id, created_at desc);
 create index on messages (sender_id);

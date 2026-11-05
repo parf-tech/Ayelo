@@ -48,6 +48,8 @@ export function Button({
       hitSlop={4}
       style={({ pressed }) => {
         const palette = paletteFor(variant, colors);
+        const backgroundColor = disabled ? (variant === 'ghost' ? 'transparent' : colors.disabledBg) : palette.bg;
+        const borderColor = disabled ? colors.disabledBg : palette.border;
         const base: ViewStyle = {
           minHeight: MIN_TARGET + 4,
           minWidth: MIN_TARGET,
@@ -57,14 +59,10 @@ export function Button({
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: variant === 'secondary' ? 1.5 : 0,
-          backgroundColor: palette.bg,
-          borderColor: palette.border,
+          backgroundColor,
+          borderColor,
           opacity: pressed && !inactive ? 0.78 : 1,
         };
-        if (disabled) {
-          base.backgroundColor = variant === 'ghost' ? 'transparent' : colors.disabledBg;
-          base.borderColor = colors.disabledBg;
-        }
         return [base, style];
       }}
     >
