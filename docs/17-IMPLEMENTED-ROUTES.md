@@ -1,0 +1,78 @@
+# 17 : Routes réellement implémentées (générées)
+
+Générées le 2026-11-06 par `php artisan route:list --path=api/v1 --json` (état du code, pas de la spécification). La spécification reste `10-API-SPECIFICATIONS.md` ; l'écart est listé dans `16-STATUS.md`.
+
+Total : 70 routes (méthode × chemin). Authentification : « jeton » = Sanctum obligatoire.
+
+| méthode | chemin | accès | limite de débit |
+| --- | --- | --- | --- |
+| POST | `/account-deletion-requests` | public | — |
+| POST | `/account-deletion-requests/confirm` | public | — |
+| POST | `/appeals` | public | — |
+| POST | `/auth/age-check` | public | — |
+| POST | `/auth/email/resend` | public | — |
+| POST | `/auth/email/verify` | public | — |
+| POST | `/auth/login` | public | — |
+| POST | `/auth/logout` | public | — |
+| POST | `/auth/oauth/{provider}` | public | — |
+| POST | `/auth/password/forgot` | public | — |
+| POST | `/auth/password/reset` | public | — |
+| POST | `/auth/register` | public | — |
+| DELETE | `/auth/sessions` | public | — |
+| GET | `/auth/sessions` | public | — |
+| DELETE | `/auth/sessions/{device}` | public | — |
+| GET | `/billing/offers` | public | — |
+| GET | `/billing/status` | public | — |
+| POST | `/billing/sync` | public | — |
+| GET | `/billing/transactions` | public | — |
+| GET | `/blocks` | public | — |
+| POST | `/blocks` | public | — |
+| DELETE | `/blocks/{userId}` | public | — |
+| GET | `/broadcasting/auth` | public | — |
+| POST | `/broadcasting/auth` | public | — |
+| POST | `/calls` | public | — |
+| POST | `/calls/{id}/accept` | public | — |
+| POST | `/calls/{id}/decline` | public | — |
+| POST | `/calls/{id}/end` | public | — |
+| POST | `/calls/{id}/token` | public | — |
+| GET | `/conversations` | public | — |
+| POST | `/conversations` | public | — |
+| POST | `/conversations/{id}/delivered` | public | — |
+| POST | `/conversations/{id}/hide` | public | — |
+| GET | `/conversations/{id}/messages` | public | — |
+| POST | `/conversations/{id}/messages` | public | — |
+| POST | `/conversations/{id}/read` | public | — |
+| POST | `/conversations/{id}/typing` | public | — |
+| GET | `/discover` | public | — |
+| GET | `/health` | public | — |
+| GET | `/matches` | public | — |
+| DELETE | `/matches/{id}` | public | — |
+| DELETE | `/me` | public | — |
+| GET | `/me` | public | — |
+| GET | `/me/consents` | public | — |
+| POST | `/me/consents` | public | — |
+| PUT | `/me/device` | public | — |
+| POST | `/me/export` | public | — |
+| GET | `/me/export/{id}` | public | — |
+| PUT | `/me/media/order` | public | — |
+| GET | `/me/notifications` | public | — |
+| PUT | `/me/notifications` | public | — |
+| GET | `/me/preferences` | public | — |
+| PUT | `/me/preferences` | public | — |
+| PATCH | `/me/privacy` | public | — |
+| PUT | `/me/profile` | public | — |
+| GET | `/me/sanctions` | public | — |
+| GET | `/me/verification` | public | — |
+| POST | `/me/verification` | public | — |
+| GET | `/me/verification/pose` | public | — |
+| POST | `/media/upload-url` | public | — |
+| DELETE | `/media/{id}` | public | — |
+| POST | `/media/{id}/complete` | public | — |
+| DELETE | `/messages/{id}` | public | — |
+| GET | `/profiles/{userId}` | public | — |
+| POST | `/reports` | public | — |
+| GET | `/support/tickets` | public | — |
+| POST | `/support/tickets` | public | — |
+| POST | `/swipes` | public | — |
+| POST | `/swipes/undo` | public | — |
+| POST | `/webhooks/revenuecat` | public | — |
