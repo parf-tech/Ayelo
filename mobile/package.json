@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../docs/openapi.json -o src/api/openapi.d.ts"
   },
   "dependencies": {
     "@react-native-community/netinfo": "12.0.1",

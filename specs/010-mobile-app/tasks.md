@@ -16,4 +16,4 @@ Preuve (rejouée par l'agent mobile le 2026-11-06, sorties dans son rapport) : `
 - [~] T060 [US7] Vérification de profil
 - [~] T070 [US8] Interface d'appel + `MediaEngine` abstrait
 - [ ] T080 Tests de bout en bout (Maestro) sur émulateur contre un backend local — gate G4
-- [ ] T090 Remplacer les types d'API provisoires par un client généré (OpenAPI)
+- [~] T090 Remplacer les types d'API manuscrits par les types générés : `openapi.d.ts` généré et compilé, **migration des écrans non faite**
