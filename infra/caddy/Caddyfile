@@ -1,0 +1,43 @@
+# Reverse proxy : TLS automatique (Let's Encrypt). Les domaines viennent des variables d'environnement.
+{
+	email {$ACME_EMAIL}
+}
+
+# API REST
+{$API_DOMAIN} {
+	root * /var/www/html/public
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	php_fastcgi app:9000
+	file_server
+	request_body {
+		max_size 12MB
+	}
+}
+
+# WebSocket (Reverb)
+{$WS_DOMAIN} {
+	reverse_proxy reverb:8080
+}
+
+# Administration : séparée de l'API ; restreindre par IP en production si possible (ADMIN_ALLOWED_IPS).
+{$ADMIN_DOMAIN} {
+	root * /var/www/html/public
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		-Server
+	}
+	@blocked not remote_ip {$ADMIN_ALLOWED_IPS:0.0.0.0/0}
+	respond @blocked 403
+	php_fastcgi app:9000
+	file_server
+}

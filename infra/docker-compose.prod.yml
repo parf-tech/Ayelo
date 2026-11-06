@@ -1,0 +1,111 @@
+# Production : un seul serveur (VPS). Aucun port de base de données ni de Redis n'est publié.
+# Non exécuté sur le poste de développement. Variables : voir infra/.env.prod.example (le vrai fichier n'est PAS dans le dépôt).
+name: ayelo
+
+x-app: &app
+  build:
+    context: ..
+    dockerfile: infra/php/Dockerfile
+    target: runtime
+  env_file: .env.prod
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  networks: [internal]
+  volumes:
+    - app-storage:/var/www/html/storage
+
+services:
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env.prod
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - app-public:/var/www/html/public:ro
+    depends_on: [app, reverb]
+    networks: [internal, edge]
+
+  app:
+    <<: *app
+    command: ["php-fpm"]
+    volumes:
+      - app-storage:/var/www/html/storage
+      - app-public:/var/www/html/public
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60", "--sleep=1", "--max-time=3600"]
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+
+  reverb:
+    <<: *app
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "no"]
+    networks: [internal]
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env.prod
+    volumes:
+      - ./backup:/backup:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        apt-get update -qq && apt-get install -y -qq awscli gnupg cron >/dev/null
+        echo "$$BACKUP_CRON /backup/backup.sh >> /proc/1/fd/1 2>&1" | crontab -
+        cron -f
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+networks:
+  internal: {}
+  edge: {}
+
+volumes:
+  pgdata:
+  caddy-data:
+  caddy-config:
+  app-storage:
+  app-public:
