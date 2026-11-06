@@ -6,7 +6,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16.15) | 134 tests, 721 assertions, 0 échec (exécution locale du 2026-11-05) |
+| Tests backend (Pest, PostgreSQL 16.15) | **158 tests, 831 assertions, 0 échec** (exécution du CTO le 2026-11-06, état commité + correctifs de sécurité) |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
 | CI GitHub | `backend` vert (commit `a1a091e`), `schema` vert (commit `20e9427`) |
 | Contrôle de secrets (gitleaks, historique complet) | propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__` |
@@ -81,7 +81,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | G0 cadrage | franchi |
 | G1 conception | franchi (3 relectures, CI verte) |
 | G2 module | franchi pour les modules backend ci-dessus (tests verts), pas encore pour l'administration ni le mobile |
-| G3 sécurité | **non franchi** : revue de sécurité indépendante du code non faite, matrice juridique absente |
+| G3 sécurité | **non franchi** : revue de sécurité du code faite (9 constats hauts, traités : voir `reviews/code-security-1-suivi.md`) ; seconde revue, `npm audit`, attestation d'appareil et matrice juridique manquent |
 | G4 intégration (E2E) | **non franchi** : aucun test de bout en bout mobile / backend |
 | G5 pré-production | **non franchi** : aucun déploiement, aucune sauvegarde restaurée |
 | G6 stores et appels | **non franchi** |

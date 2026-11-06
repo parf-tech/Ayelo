@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Media;
+use App\Services\MediaSanitizer;
 use App\Services\Storage\MediaStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,7 +76,7 @@ class MediaController extends Controller
         return response()->json(['media_id' => $media->id, 'upload' => $upload], 201);
     }
 
-    public function complete(Request $request, string $id, MediaStorage $storage): JsonResponse
+    public function complete(Request $request, string $id, MediaStorage $storage, MediaSanitizer $sanitizer): JsonResponse
     {
         $media = Media::findOrFail($id);
         Gate::forUser($request->user())->authorize('manage', $media);
@@ -98,6 +99,24 @@ class MediaController extends Controller
 
             return response()->json(['error' => ['code' => 'upload_rejected', 'message' => 'Fichier refusé.']], 422);
         }
+
+        // Le type et la taille déclarés ne suffisent pas (la présignature ne les lie pas) : on relit les octets,
+        // on vérifie la signature réelle, puis on ré-encode l'image sans métadonnées (EXIF/GPS) vers une NOUVELLE clé.
+        // L'ancienne clé est supprimée : l'URL de dépôt encore valide ne peut plus remplacer un média approuvé.
+        $clean = $sanitizer->clean($storage->get($media->storage_key), $media->mime_type);
+        if ($clean === null) {
+            $storage->delete($media->storage_key);
+            $media->delete();
+
+            return response()->json(['error' => ['code' => 'upload_rejected', 'message' => 'Fichier refusé.']], 422);
+        }
+
+        $newKey = sprintf('u/%s/%s/%s.%s', $media->user_id, $media->kind, Str::uuid(), $clean['ext']);
+        $storage->put($newKey, $clean['bytes'], $clean['mime']);
+        $storage->delete($media->storage_key);
+        $media->storage_key = $newKey;
+        $media->size_bytes = strlen($clean['bytes']);
+        $media->mime_type = $clean['mime'];
 
         // Aucun média n'est public avant approbation (FR-B-8) : file de modération humaine tant
         // qu'aucun prestataire automatique n'est branché.

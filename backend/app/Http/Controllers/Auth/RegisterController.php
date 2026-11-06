@@ -20,7 +20,7 @@ class RegisterController extends Controller
     {
         $device = DeviceId::from($request);
 
-        if ($gate->isRefused($device)) {
+        if ($gate->isRefused($device, $request->ip())) {
             return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
         }
 
@@ -37,6 +37,11 @@ class RegisterController extends Controller
             'consents.sensitive_data' => ['required', 'accepted'],
             'consents.marketing' => ['nullable', 'boolean'],
         ]);
+
+        // Un e-mail associé à un compte sanctionné puis supprimé ne peut pas se réinscrire (revue F-16).
+        if (\App\Services\BannedIdentifiers::has('email', $data['email'])) {
+            return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
+        }
 
         $birthdate = $gate->readToken($data['age_token'], $device);
         if ($birthdate === null) {

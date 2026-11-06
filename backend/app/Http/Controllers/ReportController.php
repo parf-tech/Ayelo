@@ -42,9 +42,26 @@ class ReportController extends Controller
         }
 
         $minor = $data['reason'] === 'minor_suspected';
+
+        // Au plus 3 signalements « mineur suspecté » par jour et par compte (revue F-09).
+        if ($minor && DB::table('reports')->where('reporter_id', $me)->where('reason', 'minor_suspected')->where('created_at', '>=', now()->startOfDay())->count() >= 3) {
+            return response()->json(['error' => ['code' => 'quota_reached', 'message' => 'Trop de signalements aujourd\'hui.']], 429);
+        }
+
+        // Suspension automatique SEULEMENT si le signaleur a eu une interaction avec la personne (conversation) ou si
+        // un deuxième signaleur distinct s'ajoute en 7 jours. Sinon le signalement entre en file prioritaire sans
+        // suspendre : un compte jetable ne peut pas suspendre des inconnus en série. Compromis produit à confirmer
+        // par le propriétaire (specs/005, risque F-09).
+        $pair = [$me, $data['reported_id']];
+        sort($pair, SORT_STRING);
+        $interaction = DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->exists();
+        $otherMinorReporters = DB::table('reports')->where('reported_id', $data['reported_id'])->where('reason', 'minor_suspected')
+            ->where('reporter_id', '<>', $me)->where('created_at', '>=', now()->subDays(7))->distinct()->count('reporter_id');
+        $autoSuspend = $minor && ($interaction || $otherMinorReporters >= 1);
+
         $id = (string) Str::uuid();
 
-        DB::transaction(function () use ($id, $me, $data, $minor) {
+        DB::transaction(function () use ($id, $me, $data, $minor, $autoSuspend) {
             $distinct = DB::table('reports')->where('reported_id', $data['reported_id'])->where('created_at', '>=', now()->subDays(7))
                 ->distinct()->count('reporter_id') + 1;
 
@@ -59,7 +76,7 @@ class ReportController extends Controller
                 $this->risk($data['reported_id'], 'many_reports', 30);
             }
 
-            if ($minor) {
+            if ($autoSuspend) {
                 // Suspension préventive immédiate, levée ou confirmée par la revue prioritaire (docs/11).
                 DB::table('users')->where('id', $data['reported_id'])->where('status', 'active')->update(['status' => 'suspended', 'updated_at' => now()]);
                 DB::table('sanctions')->insert([

@@ -16,7 +16,15 @@ use Illuminate\Support\Str;
  */
 class RevenueCatProcessor
 {
-    /** @param array<string, mixed> $payload @return string processed|duplicate|ignored */
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return string processed|duplicate|ignored
+     *
+     * Un événement n'est « traité » que lorsque `processed_at` est renseigné, dans la MÊME transaction que ses effets.
+     * Si le traitement échoue, rien n'est marqué : le rejeu de RevenueCat est alors retraité (revue F-08).
+     * Un événement pour un utilisateur inconnu est conservé sans `processed_at` : un rejeu ultérieur (après la
+     * connexion de l'utilisateur) pourra l'appliquer.
+     */
     public function handle(array $payload): string
     {
         $event = $payload['event'] ?? null;
@@ -24,16 +32,17 @@ class RevenueCatProcessor
             return 'ignored';
         }
 
-        $inserted = DB::table('webhook_events')->insertOrIgnore([
-            'id' => (string) $event['id'], 'payload' => json_encode($payload), 'created_at' => now(),
-        ]);
-        if ($inserted === 0) {
+        $id = (string) $event['id'];
+        DB::table('webhook_events')->insertOrIgnore(['id' => $id, 'payload' => json_encode($payload), 'created_at' => now()]);
+
+        $row = DB::table('webhook_events')->where('id', $id)->first();
+        if ($row->processed_at !== null) {
             return 'duplicate';
         }
 
         $userId = $this->resolveUser($event);
         if ($userId === null) {
-            $this->done($event['id'], 'utilisateur inconnu');
+            DB::table('webhook_events')->where('id', $id)->update(['error' => 'utilisateur inconnu']);
 
             return 'ignored';
         }

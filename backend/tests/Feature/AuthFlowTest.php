@@ -52,7 +52,8 @@ it('refuse un mineur avec un message neutre et mémorise le refus', function () 
     asDevice()->postJson('/api/v1/auth/age-check', ['birthdate' => '1990-05-10'])
         ->assertForbidden();
 
-    expect(DB::table('banned_identifiers')->where('kind', 'age_refusal')->count())->toBe(1);
+    // Le refus est mémorisé pour l'appareil ET pour l'adresse IP (revue F-02).
+    expect(DB::table('banned_identifiers')->where('kind', 'age_refusal')->count())->toBe(2);
 });
 
 it('accepte exactement 18 ans aujourd’hui et refuse 18 ans demain', function () {

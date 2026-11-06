@@ -18,7 +18,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MessageController extends Controller
 {
-    private const MEDIA_KIND = ['image' => 'message_image', 'video' => 'message_video', 'voice' => 'message_voice'];
+    // Texte et images seulement au lancement (vidéos et notes vocales : spec 012).
+    private const MEDIA_KIND = ['image' => 'message_image'];
 
     public function index(Request $request, string $id, Conversations $conversations): JsonResponse
     {
@@ -55,7 +56,7 @@ class MessageController extends Controller
 
         $data = $request->validate([
             'client_id' => ['required', 'uuid'],
-            'type' => ['required', Rule::in(['text', 'image', 'video', 'voice'])],
+            'type' => ['required', Rule::in(['text', 'image'])],
             'body' => ['nullable', 'string', 'max:2000'],
             'media_id' => ['nullable', 'uuid'],
         ]);
@@ -129,7 +130,9 @@ class MessageController extends Controller
         $message = DB::table('messages')->where('id', $id)->where('sender_id', $request->user()->id)->first();
         abort_if($message === null, 404);
 
-        DB::table('messages')->where('id', $id)->update(['deleted_at' => now(), 'body' => null, 'updated_at' => now()]);
+        // Le contenu est masqué par l'API mais conservé jusqu'à l'anonymisation : un expéditeur ne peut pas détruire
+        // une preuve avant la revue d'un signalement (revue F-15).
+        DB::table('messages')->where('id', $id)->update(['deleted_at' => now(), 'updated_at' => now()]);
 
         return response()->noContent();
     }

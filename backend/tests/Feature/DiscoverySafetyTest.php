@@ -238,9 +238,13 @@ it('place le compte en revue prioritaire après 3 signalements distincts', funct
     expect((int) DB::table('users')->where('id', $target->id)->value('risk_score'))->toBeGreaterThan(0);
 });
 
-it('suspend préventivement un compte signalé comme mineur suspecté, avec priorité maximale', function () {
-    [, $rb] = member();
+it('suspend préventivement un compte signalé comme mineur suspecté par une personne qui a échangé avec lui', function () {
+    [$reporter, $rb] = member();
     [$target] = member();
+    $pair = [$reporter->id, $target->id];
+    sort($pair, SORT_STRING);
+    DB::table('conversations')->insert(['id' => (string) Str::uuid(), 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $reporter->id,
+        'unlocked_by' => 'credit', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
 
     as_($rb)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
 

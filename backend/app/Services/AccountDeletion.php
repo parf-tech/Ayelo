@@ -43,7 +43,8 @@ class AccountDeletion
 
     public function anonymize(User $user): void
     {
-        $keys = DB::table('media')->where('user_id', $user->id)->pluck('storage_key');
+        $keys = DB::table('media')->where('user_id', $user->id)->pluck('storage_key')
+            ->merge(DB::table('data_exports')->where('user_id', $user->id)->whereNotNull('storage_key')->pluck('storage_key'));
         foreach ($keys as $key) {
             $this->storage->delete($key);
         }
@@ -62,8 +63,21 @@ class AccountDeletion
 
             DB::table('swipes')->where('swiper_id', $user->id)->orWhere('target_id', $user->id)->delete();
             foreach (['media', 'stories', 'video_invites', 'verification_requests', 'preferences', 'profiles', 'devices', 'auth_identities',
-                'verification_codes', 'notification_prefs', 'daily_counters', 'data_exports'] as $table) {
+                'verification_codes', 'notification_prefs', 'daily_counters', 'data_exports', 'support_tickets', 'appeals'] as $table) {
                 DB::table($table)->where('user_id', $user->id)->delete();
+            }
+            DB::table('story_views')->where('viewer_id', $user->id)->delete();
+            DB::table('story_audience')->where('viewer_id', $user->id)->delete();
+            DB::table('call_sessions')->where('caller_id', $user->id)->orWhere('callee_id', $user->id)->delete();
+            DB::table('gift_sends')->where('sender_id', $user->id)->orWhere('receiver_id', $user->id)->delete();
+
+            // Conservé comme preuve de consentement, mais sans l'adresse IP.
+            DB::table('user_consents')->where('user_id', $user->id)->update(['ip' => null]);
+            // Charges utiles RevenueCat brutes (identifiant d'utilisateur) : effacées.
+            DB::table('webhook_events')->whereRaw("payload->'event'->>'app_user_id' = ?", [$user->id])->update(['payload' => '{}']);
+            // Signaux de risque : conservés seulement si le compte a été sanctionné (lutte contre le contournement).
+            if (! $sanctioned) {
+                DB::table('risk_events')->where('user_id', $user->id)->delete();
             }
 
             DB::table('matches')->where('user_a', $user->id)->orWhere('user_b', $user->id)->update(['status' => 'unmatched', 'updated_at' => now()]);
@@ -72,16 +86,14 @@ class AccountDeletion
             $user->tokens()->delete();
 
             DB::table('users')->where('id', $user->id)->update([
-                'email' => null, 'phone' => null, 'password' => null, 'status' => 'deleted', 'email_verified_at' => null, 'phone_verified_at' => null, 'updated_at' => now(),
+                'email' => null, 'phone' => null, 'password' => null, 'status' => 'deleted', 'email_verified_at' => null, 'phone_verified_at' => null,
+                'last_seen_at' => null, 'risk_score' => $sanctioned ? DB::raw('risk_score') : 0, 'updated_at' => now(),
             ]);
         });
     }
 
     private function remember(string $kind, string $value): void
     {
-        DB::table('banned_identifiers')->insertOrIgnore([
-            'id' => (string) Str::uuid(), 'kind' => $kind, 'value_hash' => hash_hmac('sha256', strtolower($value), (string) config('app.key')),
-            'reason' => 'sanctioned_account_deleted', 'created_at' => now(),
-        ]);
+        BannedIdentifiers::remember($kind, $value, 'sanctioned_account_deleted');
     }
 }

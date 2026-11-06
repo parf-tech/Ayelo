@@ -21,15 +21,18 @@ return [
 
     'max_profile_photos' => 6,
 
-    // Limites par type : mimes autorisés, poids maximal (octets), durée maximale (secondes).
+    // Types ouverts au lancement : IMAGES uniquement. Chaque image est relue, ré-encodée et débarrassée de ses métadonnées
+    // (EXIF, GPS) à la fin de l'envoi. Les vidéos et l'audio restent fermés tant qu'aucun traitement équivalent
+    // (ffmpeg -map_metadata -1, transcodage) n'existe : voir specs/012 et docs/reviews/code-security-1.md (F-05).
     'kinds' => [
         'profile_photo' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024],
-        'profile_video' => ['mimes' => ['video/mp4'], 'max_bytes' => 50 * 1024 * 1024, 'max_seconds' => 60],
         'message_image' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024],
-        'message_video' => ['mimes' => ['video/mp4'], 'max_bytes' => 30 * 1024 * 1024, 'max_seconds' => 30],
-        'message_voice' => ['mimes' => ['audio/mp4', 'audio/aac', 'audio/mpeg'], 'max_bytes' => 5 * 1024 * 1024, 'max_seconds' => 120],
-        'story' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'], 'max_bytes' => 30 * 1024 * 1024, 'max_seconds' => 15],
-        'invite_video' => ['mimes' => ['video/mp4'], 'max_bytes' => 50 * 1024 * 1024, 'max_seconds' => 60],
         'verification_selfie' => ['mimes' => ['image/jpeg', 'image/png'], 'max_bytes' => 8 * 1024 * 1024],
     ],
+
+    // Types prévus plus tard (non ouverts) : profile_video, message_video, message_voice, story, invite_video.
+    'deferred_kinds' => ['profile_video', 'message_video', 'message_voice', 'story', 'invite_video'],
+
+    // Dépôts jamais finalisés : supprimés après ce délai (heures).
+    'pending_ttl_hours' => 24,
 ];

@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\FakeMediaStorage;
+use Tests\Support\TestImages;
 
 beforeEach(function () {
     $this->storage = new FakeMediaStorage;
@@ -139,7 +140,7 @@ it('ne montre que les médias approuvés aux autres, et masque la dernière conn
 function requestUpload($test, string $bearer, array $o = [])
 {
     return $test->withHeader('Authorization', $bearer)->postJson('/api/v1/media/upload-url', array_merge([
-        'kind' => 'profile_photo', 'mime_type' => 'image/jpeg', 'size_bytes' => 200000,
+        'kind' => 'profile_photo', 'mime_type' => 'image/jpeg', 'size_bytes' => strlen(TestImages::jpeg()),
     ], $o));
 }
 
@@ -179,7 +180,8 @@ it('valide l’objet réellement déposé avant de le passer en revue', function
     $this->withHeader('Authorization', $bearer)->postJson("/api/v1/media/$id/complete")->assertStatus(422)->assertJsonPath('error.code', 'upload_missing');
 
     // Le client a menti sur la taille : fichier supprimé et refusé.
-    $this->storage->simulateUpload($key, 999999, 'image/jpeg');
+    DB::table('media')->where('id', $id)->update(['size_bytes' => 5000]);
+    $this->storage->upload($key, TestImages::jpeg(), 'image/jpeg');
     $this->withHeader('Authorization', $bearer)->postJson("/api/v1/media/$id/complete")->assertStatus(422)->assertJsonPath('error.code', 'upload_rejected');
     expect($this->storage->deleted)->toContain($key)->and(DB::table('media')->where('id', $id)->exists())->toBeFalse();
 });
@@ -188,9 +190,11 @@ it('passe un média valide en file de modération, jamais directement public', f
     [, $bearer] = actingToken();
     $id = requestUpload($this, $bearer)->json('media_id');
     $key = DB::table('media')->where('id', $id)->value('storage_key');
-    $this->storage->simulateUpload($key, 200000, 'image/jpeg');
+    $this->storage->upload($key, TestImages::jpeg(), 'image/jpeg');
 
     $this->withHeader('Authorization', $bearer)->postJson("/api/v1/media/$id/complete")->assertOk()->assertJsonPath('status', 'processing');
+    // L'objet d'origine est remplacé par une copie nettoyée sous une nouvelle clé.
+    expect(DB::table('media')->where('id', $id)->value('storage_key'))->not->toBe($key)->and($this->storage->deleted)->toContain($key);
     $this->withHeader('Authorization', $bearer)->postJson("/api/v1/media/$id/complete")->assertStatus(409);
 });
 
@@ -198,7 +202,7 @@ it('approuve automatiquement seulement si le réglage de développement est acti
     config(['media.auto_approve' => true]);
     [, $bearer] = actingToken();
     $id = requestUpload($this, $bearer)->json('media_id');
-    $this->storage->simulateUpload(DB::table('media')->where('id', $id)->value('storage_key'), 200000, 'image/jpeg');
+    $this->storage->upload(DB::table('media')->where('id', $id)->value('storage_key'), TestImages::jpeg(), 'image/jpeg');
 
     $this->withHeader('Authorization', $bearer)->postJson("/api/v1/media/$id/complete")->assertOk()->assertJsonPath('status', 'approved');
 });

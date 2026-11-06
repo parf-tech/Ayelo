@@ -17,7 +17,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Adresse IP réelle derrière le reverse proxy (Caddy) : seuls les proxys listés sont crus (revue F-04).
+        // TRUSTED_PROXIES = liste séparée par des virgules (CIDR). Vide = aucun proxy de confiance (valeur sûre).
+        $proxies = array_values(array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '')))));
+        if ($proxies !== []) {
+            $middleware->trustProxies(at: $proxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+        }
+
+        // Limite générale par compte ou par IP, et refus des comptes suspendus/bannis sur les jetons déjà émis (F-03, F-12).
+        $middleware->throttleApi('api');
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureAccountActive::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Format d'erreur unique de l'API (docs/10-API-SPECIFICATIONS.md) :

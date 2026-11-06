@@ -23,6 +23,9 @@ interface MediaStorage
 
     public function delete(string $key): void;
 
+    /** Contenu de l'objet (nettoyage des images à la fin de l'envoi). */
+    public function get(string $key): string;
+
     /** Dépose un contenu texte/binaire généré par le serveur (exports de données). */
     public function put(string $key, string $contents, string $mime): void;
 }

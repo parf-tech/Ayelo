@@ -52,12 +52,16 @@ class OAuthController extends Controller
             }
         } else {
             // Nouveau compte : contrôle d'âge et consentements obligatoires (FR-I-12, FR-I-14).
-            if ($gate->isRefused($device)) {
+            if ($gate->isRefused($device, $request->ip())) {
                 return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
             }
 
             if ($identity->email === null || ! $identity->emailVerified) {
                 return response()->json(['error' => ['code' => 'email_not_verified', 'message' => 'Adresse e-mail non vérifiée par le fournisseur.']], 422);
+            }
+
+            if (\App\Services\BannedIdentifiers::has('email', $identity->email)) {
+                return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
             }
 
             // Pas de rattachement automatique à un compte existant (risque de prise de contrôle).

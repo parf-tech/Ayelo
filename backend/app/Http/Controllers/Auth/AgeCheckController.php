@@ -16,12 +16,12 @@ class AgeCheckController extends Controller
         $data = $request->validate(['birthdate' => ['required', 'date_format:Y-m-d', 'before:today', 'after:1900-01-01']]);
 
         // Refus déjà mémorisé pour cet appareil : on ne réévalue pas une autre date (FR-I-12).
-        if ($gate->isRefused($device)) {
+        if ($gate->isRefused($device, $request->ip())) {
             return $this->refusal();
         }
 
         if (! $gate->isAdult($data['birthdate'])) {
-            $gate->remember($device);
+            $gate->remember($device, $request->ip());
 
             return $this->refusal();
         }

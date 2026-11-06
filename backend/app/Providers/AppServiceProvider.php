@@ -12,6 +12,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,19 +25,31 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Limites par appareil ou par compte d'abord, par IP en dernier recours (réseaux mobiles en CGNAT).
+        // Limites : jamais sur un en-tête client seul (revue de sécurité F-01). Pour les routes sensibles on combine
+        // l'identifiant visé (e-mail), l'adresse IP et l'appareil (uuid valide) : la limite la plus stricte l'emporte.
         // Valeurs initiales de docs/10-API-SPECIFICATIONS.md, à calibrer.
-        RateLimiter::for('age-check', fn (Request $r) => Limit::perHour(10)->by('age:'.$this->device($r)));
+        RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by($r->user()?->id ? 'u:'.$r->user()->id : 'ip:'.$r->ip()));
+
+        RateLimiter::for('age-check', fn (Request $r) => [
+            Limit::perHour(10)->by('age-dev:'.$this->device($r)),
+            Limit::perHour(30)->by('age-ip:'.$r->ip()),
+        ]);
 
         RateLimiter::for('register', fn (Request $r) => [
             Limit::perHour(5)->by('reg-device:'.$this->device($r)),
             Limit::perHour(20)->by('reg-ip:'.$r->ip()),
         ]);
 
-        RateLimiter::for('login', fn (Request $r) => Limit::perMinutes(15, 5)
-            ->by('login:'.strtolower((string) $r->input('email')).'|'.$this->device($r)));
+        RateLimiter::for('login', fn (Request $r) => [
+            Limit::perMinutes(15, 5)->by('login-email:'.strtolower(trim((string) $r->input('email')))),
+            Limit::perMinutes(15, 10)->by('login-device:'.$this->device($r)),
+            Limit::perMinutes(15, 30)->by('login-ip:'.$r->ip()),
+        ]);
 
-        RateLimiter::for('oauth', fn (Request $r) => Limit::perMinutes(15, 10)->by('oauth:'.$this->device($r)));
+        RateLimiter::for('oauth', fn (Request $r) => [
+            Limit::perMinutes(15, 10)->by('oauth-dev:'.$this->device($r)),
+            Limit::perMinutes(15, 30)->by('oauth-ip:'.$r->ip()),
+        ]);
         RateLimiter::for('email-verify', fn (Request $r) => Limit::perHour(10)->by('email-verify:'.$r->ip()));
         RateLimiter::for('email-resend', fn (Request $r) => Limit::perHour(3)->by('email-resend:'.$r->user()?->id));
         RateLimiter::for('password-forgot', fn (Request $r) => [
@@ -56,8 +69,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('password-reset', fn (Request $r) => Limit::perHour(5)->by('pw-reset:'.$r->ip()));
     }
 
+    /** Identifiant d'appareil si l'en-tête est un uuid valide, sinon l'IP : un en-tête libre ne crée pas de compteur neuf. */
     private function device(Request $r): string
     {
-        return (string) ($r->header('X-Device-Id') ?: $r->ip());
+        $id = (string) $r->header('X-Device-Id', '');
+
+        return Str::isUuid($id) ? strtolower($id) : 'ip:'.$r->ip();
     }
 }

@@ -128,6 +128,11 @@ class CallController extends Controller
             return response()->json(['error' => ['code' => 'call_ended', 'message' => 'Cet appel est terminé.']], 409);
         }
 
+        // L'appelé ne reçoit aucun jeton tant qu'il n'a pas décroché : sinon il pourrait écouter l'appelant (revue F-07).
+        if ($call->status === 'ringing' && $call->callee_id === $request->user()->id) {
+            return response()->json(['error' => ['code' => 'call_not_accepted', 'message' => 'Décrochez d\'abord.']], 409);
+        }
+
         $name = (string) DB::table('profiles')->where('user_id', $request->user()->id)->value('display_name');
 
         return response()->json(['livekit' => [

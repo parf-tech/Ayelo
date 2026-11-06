@@ -4,14 +4,17 @@ namespace App\Services;
 
 use App\Support\DeviceId;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * Contrôle d'âge exécuté AVANT la création du compte (docs FR-I-12).
  * - majeur : émet un jeton chiffré de 10 minutes qui contient la date de naissance et l'appareil ;
- * - mineur : refus mémorisé par empreinte d'appareil (banned_identifiers, kind = age_refusal).
+ * - mineur : refus mémorisé par appareil (90 jours) ET par adresse IP (2 heures).
+ *
+ * L'identifiant d'appareil étant choisi par le client, il ne suffit pas seul (revue de sécurité F-02) : l'IP ajoute
+ * un frein à un simple changement d'en-tête. Limite connue : derrière un partage d'IP (réseau mobile), le refus
+ * touche brièvement d'autres personnes ; c'est pourquoi la fenêtre IP est courte. Le contrôle reste déclaratif.
  */
 class AgeGate
 {
@@ -21,13 +24,15 @@ class AgeGate
 
     public const REFUSAL_DAYS = 90;
 
-    public function isRefused(string $deviceId): bool
+    public const IP_REFUSAL_HOURS = 2;
+
+    public function isRefused(string $deviceId, ?string $ip = null): bool
     {
-        return DB::table('banned_identifiers')
-            ->where('kind', 'age_refusal')
-            ->where('value_hash', DeviceId::hash($deviceId))
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists();
+        if (BannedIdentifiers::has('age_refusal', 'device:'.$deviceId)) {
+            return true;
+        }
+
+        return $ip !== null && BannedIdentifiers::has('age_refusal', 'ip:'.$ip);
     }
 
     public function isAdult(string $birthdate): bool
@@ -35,12 +40,13 @@ class AgeGate
         return CarbonImmutable::parse($birthdate)->startOfDay()->lte(CarbonImmutable::today()->subYears(self::MIN_AGE));
     }
 
-    public function remember(string $deviceId): void
+    public function remember(string $deviceId, ?string $ip = null): void
     {
-        DB::table('banned_identifiers')->updateOrInsert(
-            ['kind' => 'age_refusal', 'value_hash' => DeviceId::hash($deviceId)],
-            ['id' => (string) \Illuminate\Support\Str::uuid(), 'reason' => 'age_under_18', 'expires_at' => now()->addDays(self::REFUSAL_DAYS), 'created_at' => now()]
-        );
+        BannedIdentifiers::remember('age_refusal', 'device:'.$deviceId, 'age_under_18', now()->addDays(self::REFUSAL_DAYS));
+
+        if ($ip !== null) {
+            BannedIdentifiers::remember('age_refusal', 'ip:'.$ip, 'age_under_18', now()->addHours(self::IP_REFUSAL_HOURS));
+        }
     }
 
     public function issueToken(string $birthdate, string $deviceId): string
