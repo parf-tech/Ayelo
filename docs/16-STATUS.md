@@ -8,7 +8,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | --- | --- |
 | Tests backend (Pest, PostgreSQL 16.15) | **242 tests, 1602 assertions, 0 échec** (exécution du CTO le 2026-11-06, y compris l'administration) |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
-| CI GitHub | `backend` vert (commit `a1a091e`), `schema` vert (commit `20e9427`) |
+| CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
 | Contrôle de secrets (gitleaks, historique complet) | propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__` |
 | Audit des dépendances PHP | `composer audit` : aucune faille signalée (2026-11-05) |
 | Mobile (Jest, typecheck, lint, bundle) | **300 tests, typecheck et lint propres, `expo export --platform android` compile** (rejoué par le CTO le 2026-11-06). `npm audit` : 0 haute / critique, 31 modérées ou basses (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
@@ -50,7 +50,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | Transcodage vidéo | sans objet tant que les vidéos de profil ne sont pas ouvertes |
 | Redis en production | configuré dans le code (Predis) mais jamais exécuté contre un vrai Redis |
 | i18n côté serveur au-delà des e-mails | seuls les e-mails sont traduits (fr, en) ; les messages d'API sont en français |
-| Contrat OpenAPI généré | non produit ; `17-IMPLEMENTED-ROUTES.md` liste les routes |
+| Contrat OpenAPI | produit : `docs/openapi.json` (67 opérations), vérifié à jour par la CI ; types TypeScript générés mais pas encore utilisés par les écrans |
 
 ## Non vérifié (écrit mais jamais exécuté)
 
