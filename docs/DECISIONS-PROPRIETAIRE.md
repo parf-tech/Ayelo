@@ -66,3 +66,11 @@ Tous les `.com` testés sont **déjà pris**. Les `.app` et `.io` ci-dessous son
 - Phase C (stories, invitations vidéo) : **après le lancement** (décision E3).
 - Phase E (cadeaux, proximité, parrainage) : après le lancement.
 - Ajoutés à la phase A : internationalisation fr / en (A0), export / consentements / contestation / support (A16), écrans manquants (A17).
+
+## Vérification préliminaire du nom « Ayelo » (2026-11-06)
+
+Recherche web (deux requêtes) : **aucune marque ou application nommée exactement « Ayelo »** trouvée. Noms proches relevés :
+- **AILO** : dépôt de marque de juin 2025 par AILO International, Inc., couvrant notamment des services de rencontres et de mariage (source : trademarkdir.com, lecture d'un extrait de recherche seulement) : **risque de confusion à faire évaluer**, le domaine d'activité est le même.
+- AYLOE (enregistrement individuel sans lien visible avec les rencontres), Yelo (applications de location de voitures, banque), Aylo Health (santé).
+
+**Limites** : ce n'est pas une recherche d'antériorité. Les bases officielles (INPI, EUIPO, USPTO, CIPO canadien, OAPI pour l'Afrique) n'ont pas été interrogées ; la disponibilité dans l'App Store et Google Play n'est pas vérifiée. Avant tout achat de domaine ou publication : recherche d'antériorité par un professionnel de la propriété intellectuelle, notamment sur AILO. Le nom reste **provisoire**.
