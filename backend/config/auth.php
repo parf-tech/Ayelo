@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\StaffUser;
 use App\Models\User;
 
 return [
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Personnel d'administration (table staff_users), jamais mélangé avec les utilisateurs de l'application.
+        'staff' => [
+            'driver' => 'session',
+            'provider' => 'staff',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'staff' => [
+            'driver' => 'eloquent',
+            'model' => StaffUser::class,
         ],
 
         // 'users' => [

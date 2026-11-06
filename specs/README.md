@@ -16,7 +16,7 @@ Les exigences détaillées d'origine restent dans `docs/03-FUNCTIONAL-SPECIFICAT
 | 006 | Compte, vie privée, données | A | **livré (backend)** | `AccountLifecycleTest` |
 | 007 | Premium et crédits | B | **livré (serveur)** ; achat mobile à faire | `BillingTest` |
 | 008 | Appels audio et vidéo | D | **partiel** : signalisation livrée ; média réel et sonnerie app fermée à prouver (D0) | `CallsTest` |
-| 009 | Administration (back-office) | A/B | **à faire** (agent interrompu) | — |
+| 009 | Administration (back-office) | A/B | **livré côté code** (Filament, 2FA, audit) ; rendu navigateur non vérifié | `tests/Feature/Admin` (108 tests) |
 | 010 | Application mobile | A→D | **partiel** : fondations et inscription ; écrans fonctionnels à faire | Jest 141 tests (rapport d'agent) |
 | 011 | Préparation du lancement | G3→G7 | **à faire** (dépend du propriétaire en partie) | — |
 | 012 | Fonctions reportées (après lancement) | C/E | **reporté** | — |

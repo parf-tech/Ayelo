@@ -6,7 +6,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16.15) | **158 tests, 831 assertions, 0 échec** (exécution du CTO le 2026-11-06, état commité + correctifs de sécurité) |
+| Tests backend (Pest, PostgreSQL 16.15) | **242 tests, 1602 assertions, 0 échec** (exécution du CTO le 2026-11-06, y compris l'administration) |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
 | CI GitHub | `backend` vert (commit `a1a091e`), `schema` vert (commit `20e9427`) |
 | Contrôle de secrets (gitleaks, historique complet) | propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__` |
@@ -37,7 +37,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 
 | lot | responsable | état |
 | --- | --- | --- |
-| Administration Filament (modération, signalements, vérifications, crédits, audit) | sous-agent Backend | en cours, rien de livré |
+| Administration Filament | livrée côté code (242 tests) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
 | Écrans mobiles de la phase 2 (profil, découverte, messagerie, paramètres, Premium, vérification, interface d'appel) | sous-agent Mobile | en cours, rien de livré |
 
 ## Non fait

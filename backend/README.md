@@ -54,6 +54,31 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## Administration
+
+Back-office Filament 4 (version épinglée) sur `/admin`, séparé de l'API. Spécification : `specs/009-admin-backoffice/`.
+
+- **Authentification** : garde `staff` sur la table `staff_users` (jamais `users`). La double authentification (application TOTP) est **obligatoire** : un compte sans 2FA est redirigé vers l'écran de configuration et ne voit rien d'autre. Un compte `is_active = false` ne peut pas se connecter ; sa session ouverte est refusée à la requête suivante.
+- **Rôles** : `moderator` (médias, signalements, contestations, vérifications), `support` (tickets, lecture seule des utilisateurs), `admin` (tout, y compris ajustement de crédits et Premium offert). Matrice unique : `app/Services/Admin/Permissions.php`, lue par les politiques Filament et par les services.
+- **Journal d'audit** : toute action passe par un service de `app/Services/Admin/` (hérite de `AdminService`), qui écrit la mutation et la ligne `audit_logs` dans la même transaction ; sans écriture du journal, l'action est annulée. Connexions, échecs de connexion, consultation de selfie et changements de 2FA y figurent aussi. La table est en ajout seulement (déclencheur SQL) et l'interface est en lecture seule.
+
+### Créer le premier administrateur
+
+```bash
+php artisan staff:create admin@exemple.test admin          # mot de passe généré, affiché UNE seule fois
+php artisan staff:create admin@exemple.test admin --prompt # ou saisie masquée (12 caractères minimum)
+php artisan staff:reset-2fa admin@exemple.test             # téléphone perdu : efface la 2FA (journalisé)
+```
+
+Rôles : `moderator`, `support`, `admin`. Le mot de passe n'est jamais passé en argument, ni écrit dans les journaux. À la première connexion sur `/admin`, scanner le QR code avec une application TOTP et **noter les codes de secours**.
+
+### Déploiement
+
+- `SESSION_DRIVER` doit être un vrai pilote de session (`redis` ou `file`) pour le panneau ; `.env.example` utilise `array` pour l'API sans état (le panneau retombe sur `file` si `array` est détecté hors tests).
+- Planifier `php artisan sanctions:expire` (chaque minute) : réactive les comptes dont la suspension à durée limitée est terminée. Sans cela, une suspension expirée resterait bloquante (l'API refuse la connexion tant que le statut n'est pas `active`).
+- Après chaque déploiement : `php artisan filament:assets` (publie les ressources statiques du panneau dans `public/`).
+- En production : sous-domaine dédié et accès réseau restreint (docs/11), à configurer côté infrastructure ; le panneau n'a pas de restriction de domaine ou d'IP intégrée.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

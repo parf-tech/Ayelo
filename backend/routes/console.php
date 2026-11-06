@@ -40,3 +40,6 @@ Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $s
 
 Schedule::command('media:purge-pending')->hourly();
 Schedule::command('exports:purge')->dailyAt('03:30');
+
+// Lève les suspensions à durée limitée arrivées à échéance (sinon le compte reste bloqué : voir specs/009).
+Schedule::command('sanctions:expire')->everyMinute()->withoutOverlapping();
