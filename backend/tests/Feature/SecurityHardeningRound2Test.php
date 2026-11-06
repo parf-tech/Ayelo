@@ -198,3 +198,27 @@ it('un e-mail envoyé en tableau ne provoque pas de 500 (login, password-forgot)
         expect(test()->withHeader('Authorization', '')->postJson($uri, ['email' => ['a', 'b'], 'password' => 'x'])->status())->toBeLessThan(500);
     }
 });
+
+// ---------- N-11 : pas de route web inutile ----------
+
+it('N-11 : /broadcasting/auth n’existe que sous /api/v1, avec jeton, et / ne sert plus de page', function () {
+    test()->get('/')->assertNotFound();
+    test()->postJson('/broadcasting/auth')->assertNotFound();
+    app('auth')->forgetGuards();
+    test()->withHeader('Authorization', '')->postJson('/api/v1/broadcasting/auth')->assertUnauthorized();
+});
+
+// ---------- N-14 : médias, lecture bornée et plafond de pixels ----------
+
+it('N-14 : une image au-delà de 20 Mpx est refusée avant tout décodage', function () {
+    $png = "\x89PNG\r\n\x1a\n".pack('N', 13).'IHDR'.pack('NN', 5000, 5000)."\x08\x02\x00\x00\x00".pack('N', 0);
+
+    expect((new App\Services\MediaSanitizer)->clean($png, 'image/png'))->toBeNull();
+});
+
+it('N-14 : la lecture d’un objet est bornée à max_bytes + 1 octets', function () {
+    $storage = new Tests\Support\FakeMediaStorage;
+    $storage->upload('k', str_repeat('a', 100), 'image/jpeg');
+
+    expect(strlen($storage->get('k', 10)))->toBe(11)->and(strlen($storage->get('k')))->toBe(100);
+});

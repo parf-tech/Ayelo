@@ -23,12 +23,12 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 
 - [x] **N-07** exemple de production : `SESSION_DRIVER=redis`, `SESSION_SECURE_COOKIE=true`, `SESSION_SAME_SITE=strict` (`infra/.env.prod.example`).
 - [x] **N-08** l'e-mail saisi lors d'un échec de connexion du personnel est borné à 190 caractères et ignoré s'il n'est pas une chaîne (`StaffAuthAudit`).
-- [ ] **N-09** minimisation (e-mail visible du modérateur, aperçus non journalisés) : lot suivant.
+- [~] **N-09** fait : e-mail du média masqué sans le droit `users.view`, `canViewForRecord` aligné sur `users.view` dans les trois relations. Reste : téléphone et score de risque pour le support, journalisation des aperçus d'images de message, séparation du droit selfie (non vérifié dans un vrai navigateur).
 - [x] **N-10** mot de passe du personnel : 12 caractères minimum aussi via le profil (`EditStaffProfile`). Le mot de passe initial saisi à la création reste affiché en clair dans la console : non traité.
-- [ ] **N-11** route `broadcasting/auth` dupliquée hors middlewares et `GET /` : lot suivant.
+- [x] **N-11** `channels:` retiré de `bootstrap/app.php` (les canaux sont chargés par `routes/api/realtime.php`), `GET /` supprimé. Test : `N-11`.
 - [ ] **N-12** double contrôle des actions administrateur : décision produit.
-- [ ] **N-13** traces incomplètes (expiration, console, ordre de suppression du selfie) : lot suivant.
-- [ ] **N-14** médias : lecture non bornée, plafond de 40 Mpx, orphelins : lot suivant.
+- [~] **N-13** fait : l'expiration automatique écrit `sanction.expired` (test dans `StaffCommandTest`). Reste : opérateur de la console (acteur nul), ordre de suppression du selfie avant commit (probabilité faible), obligation d'ouvrir le selfie avant d'approuver.
+- [~] **N-14** fait : lecture bornée à `max_bytes + 1` octets (`Range` côté S3), plafond ramené à 20 Mpx. Tests : `N-14` (2). Reste : balayage des clés orphelines, mise à jour des bibliothèques d'images, traitement hors processus web.
 - [x] **F-23** un message texte avec `media_id` est refusé. Test : `F-23`.
 - [x] E-mail envoyé en tableau : plus de 500 (`login`, `password-forgot`). Test dédié.
 - [ ] F-06, F-16, F-22 résiduels : lot suivant.
@@ -40,9 +40,9 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 ## Preuves d'exécution (condition G3)
 
 - [x] Pest rejoué (voir résultat ci-dessous).
-- [ ] `composer audit` rejoué (la CI le fait déjà ; journal à joindre).
-- [ ] `npm audit` mobile rejoué.
-- [ ] `gitleaks` sur l'historique du commit final.
+- [x] `composer audit` rejoué le 2026-11-06 : « No security vulnerability advisories found ».
+- [x] `npm audit --omit=dev` mobile rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (outils de build transitifs ; le correctif proposé est un retour à Expo 52, refusé).
+- [ ] `gitleaks` sur l'historique du commit final : non rejoué en local (binaire absent du poste, téléchargement non autorisé) ; le workflow CI `schema` le fait sur l'historique complet.
 - [ ] Procès-verbal de restauration réel (S8).
 - [ ] Troisième relecture ciblée N-01 / N-02 (S9).
 
@@ -52,4 +52,4 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 
 ## Résultat de la suite complète
 
-**257 tests, 1646 assertions, 0 échec** (Pest, PostgreSQL 16, PHP 8.5.12 avec `pdo_pgsql`, exécution du 2026-11-06). Sous Windows, les tests de signature RSA demandent `OPENSSL_CONF` vers un `openssl.cnf` existant.
+**260 tests, 1653 assertions, 0 échec** (Pest, PostgreSQL 16, PHP 8.5.12 avec `pdo_pgsql`, exécution du 2026-11-06). Sous Windows, les tests de signature RSA demandent `OPENSSL_CONF` vers un `openssl.cnf` existant.

@@ -88,4 +88,5 @@ it('réactive les comptes dont la suspension a expiré, pas les autres', functio
     expect(DB::table('users')->find($expired->id)->status)->toBe('active')
         ->and(DB::table('users')->find($running->id)->status)->toBe('suspended')
         ->and(DB::table('users')->find($banned->id)->status)->toBe('banned');
+    expect(Seed::audit('sanction.expired'))->not->toBeNull(); // N-13 : la réactivation automatique est tracée
 });

@@ -103,7 +103,9 @@ class MediaController extends Controller
         // Le type et la taille déclarés ne suffisent pas (la présignature ne les lie pas) : on relit les octets,
         // on vérifie la signature réelle, puis on ré-encode l'image sans métadonnées (EXIF/GPS) vers une NOUVELLE clé.
         // L'ancienne clé est supprimée : l'URL de dépôt encore valide ne peut plus remplacer un média approuvé.
-        $clean = $sanitizer->clean($storage->get($media->storage_key), $media->mime_type);
+        // Lecture bornée : l'objet a pu être remplacé entre le HEAD et la lecture (revue N-14).
+        $raw = $storage->get($media->storage_key, (int) $rules['max_bytes']);
+        $clean = strlen($raw) > (int) $rules['max_bytes'] ? null : $sanitizer->clean($raw, $media->mime_type);
         if ($clean === null) {
             $storage->delete($media->storage_key);
             $media->delete();

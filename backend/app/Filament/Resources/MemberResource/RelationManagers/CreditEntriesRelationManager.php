@@ -20,7 +20,7 @@ class CreditEntriesRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return true;
+        return \App\Filament\Support\Staff::can(\App\Services\Admin\Permissions::USERS_VIEW);
     }
 
     public function table(Table $table): Table

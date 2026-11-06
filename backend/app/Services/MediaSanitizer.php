@@ -11,7 +11,7 @@ namespace App\Services;
  */
 class MediaSanitizer
 {
-    public const MAX_PIXELS = 40_000_000;
+    public const MAX_PIXELS = 20_000_000;
 
     public const MAX_SIDE = 12_000;
 

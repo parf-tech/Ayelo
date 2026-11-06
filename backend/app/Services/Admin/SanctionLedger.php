@@ -107,6 +107,8 @@ class SanctionLedger
             $hasSanction = DB::table('sanctions')->where('user_id', $userId)->whereIn('kind', ['suspension', 'ban'])->exists();
             if ($hasSanction && $this->restoreIfFree($userId)) {
                 $restored++;
+                // Réactivation automatique tracée (revue N-13) : acteur nul = le système.
+                app(Audit::class)->record(null, 'sanction.expired', 'users', $userId, ['status' => 'suspended'], ['status' => 'active']);
             }
         }
 

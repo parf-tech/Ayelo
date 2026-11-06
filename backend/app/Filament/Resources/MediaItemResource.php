@@ -46,7 +46,8 @@ class MediaItemResource extends AdminResource
         return $table
             ->columns([
                 TextColumn::make('kind')->label('Type')->badge(),
-                TextColumn::make('owner.email')->label('Utilisateur'),
+                // Minimisation (revue N-09) : l'e-mail n'est montré qu'au rôle qui peut déjà consulter les comptes.
+                TextColumn::make('owner.email')->label('Utilisateur')->visible(fn () => Staff::can(Permissions::USERS_VIEW)),
                 TextColumn::make('mime_type')->label('Format'),
                 TextColumn::make('size_bytes')->label('Poids')->formatStateUsing(fn ($state) => $state ? number_format($state / 1024, 0, ',', ' ').' Ko' : '—'),
                 TextColumn::make('created_at')->label('Déposé')->since(),

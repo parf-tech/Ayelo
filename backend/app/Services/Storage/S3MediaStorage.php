@@ -57,9 +57,14 @@ class S3MediaStorage implements MediaStorage
         $this->client()->deleteObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
     }
 
-    public function get(string $key): string
+    public function get(string $key, ?int $maxBytes = null): string
     {
-        return (string) $this->client()->getObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key])['Body'];
+        $args = ['Bucket' => config('media.disk.bucket'), 'Key' => $key];
+        if ($maxBytes !== null) {
+            $args['Range'] = 'bytes=0-'.$maxBytes;
+        }
+
+        return (string) $this->client()->getObject($args)['Body'];
     }
 
     public function put(string $key, string $contents, string $mime): void
