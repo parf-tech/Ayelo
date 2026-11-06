@@ -38,7 +38,7 @@ class StaffAuthAudit
             return;
         }
         $user = $event->user instanceof StaffUser ? $event->user : null;
-        $this->audit->record($user, 'staff.login_failed', 'staff_users', $user?->id, null, ['email' => (string) ($event->credentials['email'] ?? '')]);
+        $this->audit->record($user, 'staff.login_failed', 'staff_users', $user?->id, null, ['email' => \Illuminate\Support\Str::limit(is_string($event->credentials['email'] ?? null) ? $event->credentials['email'] : '', 190, '')]);
     }
 
     public function onLogout(Logout $event): void

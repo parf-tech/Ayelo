@@ -35,12 +35,20 @@ class StaffCreateCommand extends Command
             return self::FAILURE;
         }
 
+        // La double authentification est enrôlée DÈS LA CRÉATION : sans cela, quiconque connaîtrait le mot de passe pourrait
+        // enrôler son propre appareil à la première connexion (revue N-05). Le secret n'est affiché qu'ici, une fois.
+        $google2fa = new \PragmaRX\Google2FA\Google2FA;
+        $secret = $google2fa->generateSecretKey();
+        $staff->saveAppAuthenticationSecret($secret);
+
         $this->components->info("Compte créé : {$staff->email} (rôle {$staff->role}).");
         if ($generated) {
             $this->line('Mot de passe (affiché une seule fois, à changer et à noter dans un gestionnaire de mots de passe) :');
             $this->line($plain);
         }
-        $this->line('La double authentification (application TOTP) sera à configurer à la première connexion sur /admin.');
+        $this->line('Double authentification : ajoutez ce secret dans une application TOTP (affiché une seule fois) :');
+        $this->line($secret);
+        $this->line('URI : '.$google2fa->getQRCodeUrl('Ayelo', $staff->email, $secret));
 
         return self::SUCCESS;
     }

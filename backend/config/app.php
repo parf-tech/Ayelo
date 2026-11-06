@@ -57,6 +57,9 @@ return [
     // Base des liens envoyés par e-mail (vérification, réinitialisation).
     'web_url' => env('APP_WEB_URL', env('APP_URL', 'http://localhost')),
 
+    // Domaine dédié du panneau d'administration (ex. admin.exemple.fr). Vide = servi sur tous les domaines (local, tests).
+    'admin_domain' => env('ADMIN_DOMAIN'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

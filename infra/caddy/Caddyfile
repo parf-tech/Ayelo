@@ -7,6 +7,9 @@
 {$API_DOMAIN} {
 	root * /var/www/html/public
 	encode zstd gzip
+	# Le panneau et ses routes Livewire ne sont JAMAIS servis sur le domaine de l'API.
+	@panel path /admin /admin/* /livewire /livewire/* /filament /filament/*
+	respond @panel 404
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"

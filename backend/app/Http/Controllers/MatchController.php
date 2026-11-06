@@ -22,7 +22,7 @@ class MatchController extends Controller
 
         $otherIds = $rows->map(fn ($m) => $m->user_a === $me ? $m->user_b : $m->user_a);
         // Un compte suspendu ou en cours de suppression disparaît de la liste (revue F-10).
-        $profiles = Profile::with('user')->whereIn('user_id', $otherIds)->get()->filter(fn ($p) => $p->user->status === 'active')->keyBy('user_id');
+        $profiles = Profile::with('user')->whereIn('user_id', $otherIds)->get()->filter(fn ($p) => $p->user->status === 'active' && $p->is_visible)->keyBy('user_id');
         $conversations = DB::table('conversations')->whereIn('match_id', $rows->pluck('id'))->pluck('id', 'match_id');
 
         return response()->json(['data' => $rows->map(function ($m) use ($me, $profiles, $conversations, $presenter) {

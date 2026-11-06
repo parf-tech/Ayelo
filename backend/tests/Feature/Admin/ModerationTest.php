@@ -124,7 +124,8 @@ it('suspend pour une durée : compte suspendu, fin de sanction, sessions fermée
     $s = DB::table('sanctions')->where('report_id', $r)->first();
     expect($s->kind)->toBe('suspension')->and(\Illuminate\Support\Carbon::parse($s->ends_at)->diffInDays(now(), true))->toBeGreaterThan(6.9)->toBeLessThan(7.1);
     expect(DB::table('reports')->find($r)->outcome)->toBe('suspension');
-    expect(DB::table('personal_access_tokens')->where('tokenable_id', $u->id)->count())->toBe(0);
+    // Les jetons ne sont plus révoqués : l'utilisateur doit pouvoir lire sa sanction et la contester (revue N-02).
+    expect(DB::table('personal_access_tokens')->where('tokenable_id', $u->id)->count())->toBe(1);
     expect(json_decode(Seed::audit('report.suspension')->after, true))->toMatchArray(['days' => 7, 'user_status' => 'suspended']);
 });
 

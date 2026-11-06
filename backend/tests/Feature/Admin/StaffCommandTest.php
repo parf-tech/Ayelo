@@ -13,7 +13,7 @@ it('crée un compte avec un mot de passe généré, affiché une seule fois et s
     $this->artisan('staff:create', ['email' => 'Premier.Admin@Ayelo.test', 'role' => 'admin'])->expectsOutputToContain('rôle admin')->assertSuccessful();
 
     $staff = StaffUser::where('email', 'premier.admin@ayelo.test')->first();
-    expect($staff)->not->toBeNull()->and($staff->role)->toBe('admin')->and($staff->is_active)->toBeTrue()->and($staff->totp_secret_encrypted)->toBeNull();
+    expect($staff)->not->toBeNull()->and($staff->role)->toBe('admin')->and($staff->is_active)->toBeTrue()->and($staff->totp_secret_encrypted)->not->toBeNull();
     expect(Hash::isHashed($staff->password))->toBeTrue();
     expect(DB::table('staff_users')->where('id', $staff->id)->value('password'))->not->toContain('Premier');
 });

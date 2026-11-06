@@ -47,7 +47,7 @@ class OAuthController extends Controller
 
         if ($linked !== null) {
             $user = User::findOrFail($linked->user_id);
-            if ($user->status !== 'active') {
+            if (! in_array($user->status, ['active', 'suspended', 'banned'], true)) {
                 return response()->json(['error' => ['code' => 'account_restricted', 'message' => 'Compte indisponible.']], 403);
             }
         } else {

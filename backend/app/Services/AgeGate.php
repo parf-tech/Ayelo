@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Crypt;
 /**
  * Contrôle d'âge exécuté AVANT la création du compte (docs FR-I-12).
  * - majeur : émet un jeton chiffré de 10 minutes qui contient la date de naissance et l'appareil ;
- * - mineur : refus mémorisé par appareil (90 jours) ET par adresse IP (2 heures).
+ * - mineur : refus mémorisé par appareil (90 jours) ET par adresse IP (30 minutes).
  *
  * L'identifiant d'appareil étant choisi par le client, il ne suffit pas seul (revue de sécurité F-02) : l'IP ajoute
  * un frein à un simple changement d'en-tête. Limite connue : derrière un partage d'IP (réseau mobile), le refus
- * touche brièvement d'autres personnes ; c'est pourquoi la fenêtre IP est courte. Le contrôle reste déclaratif.
+ * touche brièvement d'autres personnes ; c'est pourquoi la fenêtre IP est courte (30 minutes, revue N-04). Le contrôle reste déclaratif.
  */
 class AgeGate
 {
@@ -24,7 +24,7 @@ class AgeGate
 
     public const REFUSAL_DAYS = 90;
 
-    public const IP_REFUSAL_HOURS = 2;
+    public const IP_REFUSAL_MINUTES = 30;
 
     public function isRefused(string $deviceId, ?string $ip = null): bool
     {
@@ -45,7 +45,7 @@ class AgeGate
         BannedIdentifiers::remember('age_refusal', 'device:'.$deviceId, 'age_under_18', now()->addDays(self::REFUSAL_DAYS));
 
         if ($ip !== null) {
-            BannedIdentifiers::remember('age_refusal', 'ip:'.$ip, 'age_under_18', now()->addHours(self::IP_REFUSAL_HOURS));
+            BannedIdentifiers::remember('age_refusal', 'ip:'.$ip, 'age_under_18', now()->addMinutes(self::IP_REFUSAL_MINUTES));
         }
     }
 

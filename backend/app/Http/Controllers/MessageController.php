@@ -58,7 +58,7 @@ class MessageController extends Controller
             'client_id' => ['required', 'uuid'],
             'type' => ['required', Rule::in(['text', 'image'])],
             'body' => ['nullable', 'string', 'max:2000'],
-            'media_id' => ['nullable', 'uuid'],
+            'media_id' => ['nullable', 'uuid', 'prohibited_if:type,text', 'required_if:type,image'],
         ]);
 
         // Renvoi après coupure réseau : même client_id => on renvoie le message déjà enregistré (idempotence).

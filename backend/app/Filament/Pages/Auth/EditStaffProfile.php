@@ -16,7 +16,7 @@ class EditStaffProfile extends EditProfile
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            $this->getPasswordFormComponent(),
+            $this->getPasswordFormComponent()->minLength(12),
             $this->getPasswordConfirmationFormComponent(),
             $this->getCurrentPasswordFormComponent(),
         ]);

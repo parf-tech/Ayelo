@@ -67,11 +67,19 @@ class AdminPanelProvider extends PanelProvider
         }
     }
 
+    /** Domaine dédié du panneau, ou null (local, tests) : alors servi sur tous les domaines. */
+    public static function adminDomain(): ?string
+    {
+        return config('app.admin_domain') ?: null;
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
             ->id('admin')
+            // En production le panneau n'est servi que sur ADMIN_DOMAIN (revue N-01) ; vide en local et en test.
+            ->domain(self::adminDomain())
             ->path('admin')
             ->authGuard('staff')
             ->login(StaffLogin::class)

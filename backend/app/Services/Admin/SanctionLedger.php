@@ -65,8 +65,9 @@ class SanctionLedger
         ]);
 
         if ($kind !== 'warning') {
+            // Les jetons ne sont PAS révoqués : le middleware EnsureAccountActive restreint déjà l'accès, et l'utilisateur doit
+            // pouvoir lire sa sanction et la contester (revue N-02).
             DB::table('users')->where('id', $userId)->update(['status' => $kind === 'ban' ? 'banned' : 'suspended', 'updated_at' => now()]);
-            $this->revokeSessions($userId);
         }
 
         return $id;

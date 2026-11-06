@@ -43,3 +43,16 @@ Schedule::command('exports:purge')->dailyAt('03:30');
 
 // Lève les suspensions à durée limitée arrivées à échéance (sinon le compte reste bloqué : voir specs/009).
 Schedule::command('sanctions:expire')->everyMinute()->withoutOverlapping();
+
+Artisan::command('billing:replay-unknown', function (App\Services\RevenueCatProcessor $processor) {
+    $done = 0;
+    DB::table('webhook_events')->whereNull('processed_at')->where('error', 'utilisateur inconnu')->orderBy('created_at')->limit(500)->get()
+        ->each(function ($row) use ($processor, &$done) {
+            if ($processor->handle(json_decode($row->payload, true) ?: []) === 'processed') {
+                $done++;
+            }
+        });
+    $this->info("Événements rejoués : $done");
+})->purpose('Rejoue les événements RevenueCat reçus avant que leur utilisateur existe');
+
+Schedule::command('billing:replay-unknown')->everyFifteenMinutes()->withoutOverlapping();

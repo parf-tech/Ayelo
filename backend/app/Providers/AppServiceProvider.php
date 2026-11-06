@@ -32,28 +32,29 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('age-check', fn (Request $r) => [
             Limit::perHour(10)->by('age-dev:'.$this->device($r)),
-            Limit::perHour(30)->by('age-ip:'.$r->ip()),
+            Limit::perHour(100)->by('age-ip:'.$r->ip()),
         ]);
 
         RateLimiter::for('register', fn (Request $r) => [
             Limit::perHour(5)->by('reg-device:'.$this->device($r)),
-            Limit::perHour(20)->by('reg-ip:'.$r->ip()),
+            Limit::perHour(60)->by('reg-ip:'.$r->ip()),
         ]);
 
+        // Les échecs par e-mail (et par e-mail + IP) sont comptés dans LoginController, pas ici : un tiers ne peut ainsi pas
+        // verrouiller le compte d'une victime avec de simples requêtes réussies ou venues d'ailleurs (revue N-06).
         RateLimiter::for('login', fn (Request $r) => [
-            Limit::perMinutes(15, 5)->by('login-email:'.strtolower(trim((string) $r->input('email')))),
-            Limit::perMinutes(15, 10)->by('login-device:'.$this->device($r)),
-            Limit::perMinutes(15, 30)->by('login-ip:'.$r->ip()),
+            Limit::perMinutes(15, 15)->by('login-device:'.$this->device($r)),
+            Limit::perMinutes(15, 120)->by('login-ip:'.$r->ip()),
         ]);
 
         RateLimiter::for('oauth', fn (Request $r) => [
             Limit::perMinutes(15, 10)->by('oauth-dev:'.$this->device($r)),
-            Limit::perMinutes(15, 30)->by('oauth-ip:'.$r->ip()),
+            Limit::perMinutes(15, 120)->by('oauth-ip:'.$r->ip()),
         ]);
         RateLimiter::for('email-verify', fn (Request $r) => Limit::perHour(10)->by('email-verify:'.$r->ip()));
         RateLimiter::for('email-resend', fn (Request $r) => Limit::perHour(3)->by('email-resend:'.$r->user()?->id));
         RateLimiter::for('password-forgot', fn (Request $r) => [
-            Limit::perHour(3)->by('pw-forgot:'.strtolower((string) $r->input('email'))),
+            Limit::perHour(3)->by('pw-forgot:'.strtolower(is_string($r->input('email')) ? $r->input('email') : '')),
             Limit::perHour(20)->by('pw-forgot-ip:'.$r->ip()),
         ]);
         RateLimiter::for('discover', fn (Request $r) => Limit::perMinute(60)->by('discover:'.$r->user()?->id));

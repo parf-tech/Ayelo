@@ -168,11 +168,18 @@ it('renvoie la même erreur pour un e-mail inconnu et un mauvais mot de passe', 
     expect($unknown->status())->toBe(401)->and($unknown->json())->toBe($wrong->json());
 });
 
-it('refuse la connexion d’un compte suspendu', function () {
+it('autorise la connexion d’un compte suspendu (jeton restreint) mais refuse un compte en cours de suppression', function () {
     asDevice()->postJson('/api/v1/auth/register', registerPayload())->assertCreated();
     User::where('email', 'alice@example.com')->update(['status' => 'suspended']);
 
-    asDevice()->postJson('/api/v1/auth/login', ['email' => 'alice@example.com', 'password' => 'Motdepasse2026', 'platform' => 'ios'])
+    // Le jeton est restreint par EnsureAccountActive : il sert à lire sa sanction et à la contester (revue N-02).
+    $token = asDevice()->postJson('/api/v1/auth/login', ['email' => 'alice@example.com', 'password' => 'Motdepasse2026', 'platform' => 'ios'])
+        ->assertOk()->json('token');
+    app('auth')->forgetGuards();
+    asDevice()->withHeader('Authorization', 'Bearer '.$token)->getJson('/api/v1/discover')->assertForbidden()->assertJsonPath('error.code', 'account_restricted');
+
+    User::where('email', 'alice@example.com')->update(['status' => 'deleting']);
+    asDevice()->withHeader('Authorization', '')->postJson('/api/v1/auth/login', ['email' => 'alice@example.com', 'password' => 'Motdepasse2026', 'platform' => 'ios'])
         ->assertForbidden()->assertJsonPath('error.code', 'account_restricted');
 });
 
