@@ -1,34 +1,62 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { INTENTS } from '../../api/types';
+import { INTENTS, isApiError } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
-import { BackButton } from '../common/BackButton';
 import { useI18n } from '../../i18n';
+import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Button, ChoiceCard, ProgressBar, ScreenContainer, Text } from '../../ui';
+import { Banner, Button, ChoiceCard, ProgressBar, ScreenContainer, Text } from '../../ui';
+import { BackButton } from '../common/BackButton';
 import { useOnboardingDraft } from './OnboardingProvider';
 import { ONBOARDING_STEPS } from './steps';
 
-/**
- * S05 : intention (5 choix). Fin de l'onboarding implémenté : le brouillon reste sur l'appareil tant que
- * PUT /me/profile n'existe pas côté backend (rien n'est envoyé au serveur pour l'instant).
- */
+/** S05 : intention (5 choix). Envoie le profil complet (PUT /me/profile) puis passe aux photos (S06). */
 export function IntentScreen() {
+  const router = useRouter();
   const { t } = useI18n();
   const { space } = useTheme();
   const { draft, update } = useOnboardingDraft();
-  const { completeOnboarding } = useAuth();
+  const { api, refreshMe } = useAuth();
   const [error, setError] = useState<string | undefined>();
+  const [banner, setBanner] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   const finish = async () => {
+    setBanner(undefined);
     if (!draft.intent) {
       setError(t('validation.intent'));
       return;
     }
+    if (!draft.gender || !draft.country || !draft.originCountry) {
+      // Brouillon incomplet (reprise après redémarrage) : retour à S04.
+      router.replace('/onboarding/profile' as never);
+      return;
+    }
     setLoading(true);
     try {
-      await completeOnboarding();
+      await api.profile.update({
+        display_name: draft.displayName.trim(),
+        gender: draft.gender,
+        origin_country: draft.originCountry,
+        residence_country: draft.country,
+        city: draft.city.trim(),
+        intent: draft.intent,
+      });
+      await refreshMe();
+      router.push('/onboarding/photos' as never);
+    } catch (e) {
+      if (isApiError(e) && e.isValidation) {
+        const field = e.fieldError('residence_country');
+        if (field) {
+          // Le serveur limite le changement de pays de résidence : retour à S04.
+          setBanner(t('error.validation'));
+          router.replace('/onboarding/profile' as never);
+          return;
+        }
+      }
+      const { key, params } = apiErrorMessage(e);
+      setBanner(t(key, params));
     } finally {
       setLoading(false);
     }
@@ -38,7 +66,7 @@ export function IntentScreen() {
     <ScreenContainer
       scroll
       testID="screen-intent"
-      footer={<Button testID="intent-submit" label={t('intent.submit')} onPress={finish} loading={loading} />}
+      footer={<Button testID="intent-submit" label={t('common.continue')} onPress={finish} loading={loading} loadingLabel={t('profile.saving')} />}
     >
       <ProgressBar current={2} total={ONBOARDING_STEPS} label={t('onboarding.progress', { current: 2, total: ONBOARDING_STEPS })} />
       <BackButton fallbackHref="/onboarding/profile" />
@@ -48,6 +76,16 @@ export function IntentScreen() {
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
         {t('intent.subtitle')}
       </Text>
+      {banner ? (
+        <Banner
+          testID="intent-banner"
+          variant="error"
+          message={banner}
+          onDismiss={() => setBanner(undefined)}
+          dismissLabel={t('ui.banner.dismiss')}
+          style={{ marginBottom: space[3] }}
+        />
+      ) : null}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('intent.title')} style={{ gap: space[3] }}>
         {INTENTS.map((intent) => (
           <ChoiceCard

@@ -17,3 +17,8 @@ export type CountryCode = (typeof COUNTRY_CODES)[number];
 export function countryKey(code: CountryCode): TranslationKey {
   return `country.${code}` as TranslationKey;
 }
+
+/** Nom d'un pays dans la langue courante ; le code ISO si le pays n'est pas dans la liste de lancement. */
+export function countryLabel(t: (key: TranslationKey) => string, code: string): string {
+  return (COUNTRY_CODES as readonly string[]).includes(code) ? t(countryKey(code as CountryCode)) : code;
+}

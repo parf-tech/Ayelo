@@ -125,6 +125,15 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
             onPress={submit}
             loading={loading}
           />
+          {!isRegister ? (
+            <Button
+              testID="auth-forgot"
+              variant="ghost"
+              label={t('forgot.link')}
+              onPress={() => router.push('/forgot-password' as never)}
+              disabled={loading}
+            />
+          ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Text variant="caption" tone="textMuted">
               {isRegister ? t('auth.switch.toLogin.prompt') : t('auth.switch.toRegister.prompt')}

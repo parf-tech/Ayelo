@@ -1,3 +1,4 @@
+import { enAreas } from './areas';
 import type { TranslationKey } from './fr';
 
 // Doit contenir exactement les mêmes clés que `fr.ts` (vérifié par le compilateur et par __tests__/i18n.test.ts).
@@ -199,4 +200,5 @@ export const en: Record<TranslationKey, string> = {
   'demo.sample.emptyTitle': 'Nothing to show',
   'demo.sample.emptyBody': 'There is nothing here yet.',
   'demo.sample.emptyAction': 'Refresh',
+  ...enAreas,
 };

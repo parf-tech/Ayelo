@@ -10,7 +10,7 @@ import { CountryPicker } from './CountryPicker';
 import { ONBOARDING_STEPS } from './steps';
 import { useOnboardingDraft } from './OnboardingProvider';
 
-type Errors = { name?: string; gender?: string; country?: string; city?: string };
+type Errors = { name?: string; gender?: string; country?: string; origin?: string; city?: string };
 
 /** S04 : profil de base (nom, genre, pays de résidence, ville). La date de naissance a déjà été saisie en S68. */
 export function BasicProfileScreen() {
@@ -27,10 +27,11 @@ export function BasicProfileScreen() {
       name: nameKey ? t(nameKey) : undefined,
       gender: draft.gender ? undefined : t('validation.gender'),
       country: draft.country ? undefined : t('validation.country'),
+      origin: draft.originCountry ? undefined : t('validation.origin'),
       city: cityKey ? t(cityKey) : undefined,
     };
     setErrors(found);
-    if (found.name || found.gender || found.country || found.city) return;
+    if (found.name || found.gender || found.country || found.origin || found.city) return;
     router.push('/onboarding/intent' as never);
   };
 
@@ -83,13 +84,22 @@ export function BasicProfileScreen() {
 
         <CountryPicker value={draft.country} onChange={(country) => update({ country })} error={errors.country} />
 
+        <CountryPicker
+          idPrefix="origin"
+          label={t('profile.origin')}
+          searchPlaceholder={t('profile.origin.search')}
+          value={draft.originCountry}
+          onChange={(originCountry) => update({ originCountry })}
+          error={errors.origin}
+        />
+
         <TextField
           testID="profile-city"
           label={t('profile.city')}
           value={draft.city}
           onChangeText={(city) => update({ city })}
           error={errors.city}
-          maxLength={120}
+          maxLength={80}
           autoComplete="postal-address-locality"
         />
       </View>

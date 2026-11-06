@@ -25,7 +25,7 @@ export function validateDisplayName(value: string): TranslationKey | null {
 
 export function validateCity(value: string): TranslationKey | null {
   const length = value.trim().length;
-  return length >= 1 && length <= 120 ? null : 'validation.city';
+  return length >= 1 && length <= 80 ? null : 'validation.city';
 }
 
 export type BirthdateParts = { day?: number; month?: number; year?: number };

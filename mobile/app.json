@@ -19,6 +19,17 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-localization"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ayelo accède à vos photos pour que vous puissiez les ajouter à votre profil.",
+          "cameraPermission": "Ayelo utilise la caméra pour le selfie de vérification de votre profil."
+        }
+      ]
+    ]
   }
 }

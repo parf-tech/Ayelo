@@ -5,56 +5,56 @@ import type {
   Block,
   BillingOffers,
   BillingStatus,
+  CallAcceptResponse,
   CallKind,
-  CallWithToken,
+  CallStartResponse,
+  CallTokenResponse,
   ConsentUpdate,
+  ConsentsResponse,
   Conversation,
   DataExport,
+  DeleteAccountRequest,
+  DeleteAccountResponse,
   DeviceRegistration,
   DiscoverFilters,
-  Gift,
-  GiftSendRequest,
-  GiftSendResponse,
-  Invite,
-  InviteRequest,
-  LiveKitToken,
+  ListResponse,
   LoginRequest,
   Match,
   Me,
-  Media,
+  MediaCompleteResponse,
   Message,
   NotificationPrefs,
   OAuthProvider,
-  OAuthRequest,
+  OpenConversationResponse,
   Page,
   PageQuery,
   Preferences,
   PrivacyInput,
-  Profile,
   ProfileInput,
   PublicProfile,
   RegisterRequest,
   ReportRequest,
+  ReportResponse,
   Sanction,
+  SelfProfile,
   SendMessageRequest,
   Session,
-  Story,
-  StoryGroup,
-  StoryRequest,
-  StoryViewer,
   SupportTicket,
+  SupportTicketCreated,
   SwipeAction,
   SwipeResult,
   Transaction,
+  UndoSwipeResult,
   UploadUrlRequest,
   UploadUrlResponse,
-  VerificationRequest,
+  VerificationOverview,
+  VerificationPose,
+  VerificationStartResponse,
 } from './types';
 
 /**
- * Toutes les routes de docs/10-API-SPECIFICATIONS.md.
- * Seules ageCheck, register, login, logout et me existent côté backend aujourd'hui ;
- * les écrans n'appellent que celles-là.
+ * Routes de l'API v1 réellement exposées par le backend (backend/routes/api/*.php).
+ * Aucune route n'est inventée : tout ce qui n'existe pas côté serveur est absent d'ici.
  */
 export function createEndpoints(client: ApiClient) {
   const { request } = client;
@@ -69,78 +69,79 @@ export function createEndpoints(client: ApiClient) {
     logout: () => request<void>('POST', '/auth/logout'),
     me: () => request<Me>('GET', '/me'),
 
-    oauth: (provider: OAuthProvider, body: OAuthRequest) =>
+    oauth: (provider: OAuthProvider, body: { id_token: string; platform: string; age_token?: string }) =>
       request<AuthResponse>('POST', `/auth/oauth/${provider}`, { auth: false, body }),
+    /** Lien reçu par e-mail : { token }. 422 invalid_token si le lien est expiré. */
     verifyEmail: (token: string) => request<void>('POST', '/auth/email/verify', { auth: false, body: { token } }),
     resendEmail: () => request<void>('POST', '/auth/email/resend'),
-    sendPhoneCode: (phone: string) => request<void>('POST', '/auth/phone/send', { body: { phone } }),
-    verifyPhone: (code: string) => request<void>('POST', '/auth/phone/verify', { body: { code } }),
     forgotPassword: (email: string) =>
       request<void>('POST', '/auth/password/forgot', { auth: false, body: { email } }),
     resetPassword: (token: string, password: string) =>
       request<void>('POST', '/auth/password/reset', { auth: false, body: { token, password } }),
-    sessions: () => request<Session[]>('GET', '/auth/sessions'),
+    sessions: () => request<ListResponse<Session>>('GET', '/auth/sessions'),
     closeSession: (id: string) => request<void>('DELETE', `/auth/sessions/${id}`),
     closeAllSessions: () => request<void>('DELETE', '/auth/sessions'),
+
+    consents: () => request<ConsentsResponse>('GET', '/me/consents'),
     updateConsent: (body: ConsentUpdate) => request<void>('POST', '/me/consents', { body }),
-    requestAccountDeletionByEmail: (email: string) =>
-      request<void>('POST', '/account-deletion-requests', { auth: false, body: { email } }),
-    /** Ré-authentification : mot de passe, ou jeton frais du fournisseur pour un compte social. */
-    deleteAccount: (reauth: { password?: string; provider?: OAuthProvider; provider_token?: string }) =>
-      request<void>('DELETE', '/me', { body: reauth }),
+    /** Ré-authentification : mot de passe, ou { provider, id_token } pour un compte social. */
+    deleteAccount: (body: DeleteAccountRequest) => request<DeleteAccountResponse>('DELETE', '/me', { body }),
     requestExport: () => request<DataExport>('POST', '/me/export'),
     getExport: (id: string) => request<DataExport>('GET', `/me/export/${id}`),
   };
 
   const profile = {
-    update: (body: ProfileInput) => request<Profile>('PUT', '/me/profile', { body }),
+    /** Création (201) ou mise à jour (200) ; à la création tous les champs sont obligatoires. */
+    update: (body: ProfileInput) => request<SelfProfile>('PUT', '/me/profile', { body }),
+    preferences: () => request<Preferences>('GET', '/me/preferences'),
     updatePreferences: (body: Partial<Preferences>) => request<Preferences>('PUT', '/me/preferences', { body }),
-    updatePrivacy: (body: PrivacyInput) => request<Profile>('PATCH', '/me/privacy', { body }),
+    updatePrivacy: (body: PrivacyInput) => request<SelfProfile>('PATCH', '/me/privacy', { body }),
     createUploadUrl: (body: UploadUrlRequest) => request<UploadUrlResponse>('POST', '/media/upload-url', { body }),
-    completeUpload: (mediaId: string) => request<Media>('POST', `/media/${mediaId}/complete`),
-    orderMedia: (ids: string[]) => request<void>('PUT', '/me/media/order', { body: { ids } }),
+    completeUpload: (mediaId: string) => request<MediaCompleteResponse>('POST', `/media/${mediaId}/complete`),
+    orderMedia: (ids: string[]) => request<{ ids: string[] }>('PUT', '/me/media/order', { body: { ids } }),
     deleteMedia: (mediaId: string) => request<void>('DELETE', `/media/${mediaId}`),
+    pose: () => request<VerificationPose>('GET', '/me/verification/pose'),
+    verification: () => request<VerificationOverview>('GET', '/me/verification'),
     startVerification: (selfieMediaId: string) =>
-      request<VerificationRequest>('POST', '/me/verification', { body: { selfie_media_id: selfieMediaId } }),
-    verification: () => request<VerificationRequest>('GET', '/me/verification'),
+      request<VerificationStartResponse>('POST', '/me/verification', { body: { selfie_media_id: selfieMediaId } }),
     publicProfile: (id: string) => request<PublicProfile>('GET', `/profiles/${id}`),
   };
 
   const discovery = {
     discover: (filters: DiscoverFilters = {}) =>
       request<Page<PublicProfile>>('GET', '/discover', { query: { ...filters } }),
+    /** 402 premium_required (super like), 429 quota_reached. */
     swipe: (targetId: string, action: SwipeAction) =>
       request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } }),
-    undoSwipe: () => request<PublicProfile>('POST', '/swipes/undo'),
-    matches: (page: PageQuery = {}) => request<Page<Match>>('GET', '/matches', { query: { ...page } }),
+    /** Premium uniquement (402 premium_required) ; 409 nothing_to_undo. */
+    undoSwipe: () => request<UndoSwipeResult>('POST', '/swipes/undo'),
+    matches: () => request<ListResponse<Match>>('GET', '/matches'),
     deleteMatch: (id: string) => request<void>('DELETE', `/matches/${id}`),
   };
 
   const safety = {
     block: (blockedId: string) => request<void>('POST', '/blocks', { body: { blocked_id: blockedId } }),
-    unblock: (id: string) => request<void>('DELETE', `/blocks/${id}`),
-    blocks: () => request<Block[]>('GET', '/blocks'),
-    report: (body: ReportRequest) => request<void>('POST', '/reports', { body }),
-    sanctions: () => request<Sanction[]>('GET', '/me/sanctions'),
+    unblock: (userId: string) => request<void>('DELETE', `/blocks/${userId}`),
+    blocks: () => request<ListResponse<Block>>('GET', '/blocks'),
+    report: (body: ReportRequest) => request<ReportResponse>('POST', '/reports', { body }),
+    sanctions: () => request<ListResponse<Sanction>>('GET', '/me/sanctions'),
     appeal: (sanctionId: string, message: string) =>
-      request<void>('POST', '/appeals', { body: { sanction_id: sanctionId, message } }),
+      request<{ id: string; status: string }>('POST', '/appeals', { body: { sanction_id: sanctionId, message } }),
     createSupportTicket: (subject: string, body: string) =>
-      request<SupportTicket>('POST', '/support/tickets', { body: { subject, body } }),
-    supportTickets: () => request<SupportTicket[]>('GET', '/support/tickets'),
+      request<SupportTicketCreated>('POST', '/support/tickets', { body: { subject, body } }),
+    supportTickets: () => request<ListResponse<SupportTicket>>('GET', '/support/tickets'),
   };
 
   const messaging = {
-    conversations: (page: PageQuery = {}) =>
-      request<Page<Conversation>>('GET', '/conversations', { query: { ...page } }),
+    conversations: () => request<ListResponse<Conversation>>('GET', '/conversations'),
+    /** 402 credit_required si ni Premium ni crédit « Conversation ». */
     openConversation: (targetId: string) =>
-      request<Conversation>('POST', '/conversations', { body: { target_id: targetId } }),
+      request<OpenConversationResponse>('POST', '/conversations', { body: { target_id: targetId } }),
     messages: (conversationId: string, page: PageQuery = {}) =>
       request<Page<Message>>('GET', `/conversations/${conversationId}/messages`, { query: { ...page } }),
+    /** Idempotent par client_id : renvoyer le même client_id ne crée pas de doublon. */
     sendMessage: (conversationId: string, body: SendMessageRequest) =>
-      request<Message>('POST', `/conversations/${conversationId}/messages`, {
-        body,
-        idempotencyKey: body.client_id,
-      }),
+      request<Message>('POST', `/conversations/${conversationId}/messages`, { body }),
     markRead: (conversationId: string, upToMessageId: string) =>
       request<void>('POST', `/conversations/${conversationId}/read`, { body: { up_to_message_id: upToMessageId } }),
     markDelivered: (conversationId: string, upToMessageId: string) =>
@@ -152,47 +153,31 @@ export function createEndpoints(client: ApiClient) {
     deleteMessage: (messageId: string) => request<void>('DELETE', `/messages/${messageId}`),
   };
 
-  /** Phase D : client prêt, aucun écran d'appel pour l'instant. */
+  /** Signalisation d'appel seulement : le média (LiveKit) n'est pas branché (voir README, « Appels : prototype D0 requis »). */
   const calls = {
     start: (conversationId: string, kind: CallKind) =>
-      request<CallWithToken>('POST', '/calls', { body: { conversation_id: conversationId, kind } }),
-    accept: (id: string) => request<LiveKitToken>('POST', `/calls/${id}/accept`),
+      request<CallStartResponse>('POST', '/calls', { body: { conversation_id: conversationId, kind } }),
+    accept: (id: string) => request<CallAcceptResponse>('POST', `/calls/${id}/accept`),
     decline: (id: string) => request<void>('POST', `/calls/${id}/decline`),
     end: (id: string) => request<void>('POST', `/calls/${id}/end`),
-    renewToken: (id: string) => request<LiveKitToken>('POST', `/calls/${id}/token`),
-  };
-
-  const content = {
-    stories: () => request<StoryGroup[]>('GET', '/stories'),
-    publishStory: (body: StoryRequest) => request<Story>('POST', '/stories', { body }),
-    markStoryViewed: (id: string) => request<void>('POST', `/stories/${id}/view`),
-    reactToStory: (id: string, emoji: string) => request<void>('POST', `/stories/${id}/react`, { body: { emoji } }),
-    storyViewers: (id: string) => request<StoryViewer[]>('GET', `/stories/${id}/viewers`),
-    deleteStory: (id: string) => request<void>('DELETE', `/stories/${id}`),
-    invites: (query: { country?: string; cursor?: string } = {}) =>
-      request<Page<Invite>>('GET', '/invites', { query }),
-    publishInvite: (body: InviteRequest) => request<Invite>('POST', '/invites', { body }),
-    deleteInvite: (id: string) => request<void>('DELETE', `/invites/${id}`),
+    renewToken: (id: string) => request<CallTokenResponse>('POST', `/calls/${id}/token`),
   };
 
   const billing = {
     offers: () => request<BillingOffers>('GET', '/billing/offers'),
     status: () => request<BillingStatus>('GET', '/billing/status'),
     sync: () => request<BillingStatus>('POST', '/billing/sync'),
-    transactions: (page: PageQuery = {}) =>
-      request<Page<Transaction>>('GET', '/billing/transactions', { query: { ...page } }),
-    gifts: () => request<Gift[]>('GET', '/gifts'),
-    sendGift: (body: GiftSendRequest, idempotencyKey: string) =>
-      request<GiftSendResponse>('POST', '/gifts/send', { body, idempotencyKey }),
+    transactions: () => request<ListResponse<Transaction>>('GET', '/billing/transactions'),
   };
 
   const notifications = {
     registerDevice: (body: DeviceRegistration) => request<void>('PUT', '/me/device', { body }),
     preferences: () => request<NotificationPrefs>('GET', '/me/notifications'),
-    updatePreferences: (body: NotificationPrefs) => request<NotificationPrefs>('PUT', '/me/notifications', { body }),
+    updatePreferences: (body: Partial<NotificationPrefs>) =>
+      request<NotificationPrefs>('PUT', '/me/notifications', { body }),
   };
 
-  return { auth, profile, discovery, safety, messaging, calls, content, billing, notifications };
+  return { auth, profile, discovery, safety, messaging, calls, billing, notifications };
 }
 
 export type Api = ReturnType<typeof createEndpoints>;

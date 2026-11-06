@@ -104,13 +104,32 @@ describe('client API : requêtes', () => {
     expect(headers.Authorization).toBe('Bearer TOK');
   });
 
-  it('sérialise la requête (booléens, valeurs vides ignorées) et pose Idempotency-Key', async () => {
-    const { api, fetchImpl } = setup([jsonResponse(200, { data: [], next_cursor: null }), jsonResponse(200, {})], 'T');
-    await api.discovery.discover({ verified_only: true, country: 'FR', cursor: undefined });
-    expect(lastCall(fetchImpl).url).toBe('https://api.example.test/api/v1/discover?verified_only=1&country=FR');
+  it('sérialise la requête (booléens, tableaux au format Laravel, valeurs vides ignorées)', async () => {
+    const { api, fetchImpl } = setup([jsonResponse(200, { data: [], next_cursor: null })], 'T');
+    await api.discovery.discover({ verified_only: true, countries: ['FR', 'BE'], intents: ['flirt'], cursor: undefined });
+    expect(lastCall(fetchImpl).url).toBe(
+      'https://api.example.test/api/v1/discover?verified_only=1&countries%5B%5D=FR&countries%5B%5D=BE&intents%5B%5D=flirt',
+    );
+  });
 
-    await api.billing.sendGift({ conversation_id: 'c', gift_id: 'g' }, 'idem-1');
+  it("pose l'en-tête Idempotency-Key quand le client le demande", async () => {
+    const fetchImpl: FetchMock = jest.fn().mockResolvedValueOnce(jsonResponse(200, {}));
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      getDeviceId: async () => DEVICE,
+      getToken: async () => 'T',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await client.request('POST', '/x', { body: {}, idempotencyKey: 'idem-1' });
     expect(lastCall(fetchImpl).headers['Idempotency-Key']).toBe('idem-1');
+  });
+
+  it("n'expose aucune route absente du backend (pas de cadeaux, stories, invitations, téléphone)", () => {
+    const { api } = setup([]);
+    const names = Object.values(api).flatMap((group) => Object.keys(group));
+    for (const forbidden of ['sendGift', 'gifts', 'stories', 'publishStory', 'invites', 'sendPhoneCode', 'verifyPhone']) {
+      expect(names).not.toContain(forbidden);
+    }
   });
 
   it('buildUrl : racine avec ou sans slash final', () => {

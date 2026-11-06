@@ -357,6 +357,7 @@ describe('S04 Profil de base', () => {
     await u.type(screen.getByTestId('profile-name'), 'Awa');
     await u.press(screen.getByTestId('gender-woman'));
     await u.press(screen.getByTestId('country-SN'));
+    await u.press(screen.getByTestId('origin-CI'));
     await u.type(screen.getByTestId('profile-city'), 'Dakar');
     await u.press(screen.getByTestId('profile-continue'));
     expect(router.push).toHaveBeenCalledWith('/onboarding/intent');

@@ -1,0 +1,50 @@
+export const premiumFr = {
+  'premium.title': 'Abonnement Premium',
+  'premium.subtitle': 'Likes illimités, coups de cœur, retour en arrière et conversations sans crédit.',
+  'premium.active': 'Premium actif jusqu’au {date}.',
+  'premium.activeNoDate': 'Premium actif.',
+  'premium.plan.1': '1 mois',
+  'premium.plan.3': '3 mois',
+  'premium.plan.12': '12 mois',
+  'premium.plan.other': '{months} mois',
+  'premium.price.unknown': 'Prix indisponible',
+  'premium.subscribe': 'S’abonner',
+  'premium.selectPlan': 'Choisissez une durée.',
+  'premium.restore': 'Restaurer mes achats',
+  'premium.restore.done': 'Vos achats ont été restaurés. Le serveur met à jour votre compte.',
+  'premium.restore.error': 'La restauration a échoué. Réessayez.',
+  'premium.renewal':
+    'L’abonnement se renouvelle automatiquement à la fin de chaque période, au même tarif, tant que vous ne l’annulez pas dans les réglages de votre boutique (App Store ou Google Play) au moins 24 h avant le renouvellement.',
+  'premium.terms': 'Conditions d’utilisation',
+  'premium.privacy': 'Politique de confidentialité',
+  'premium.linkMissing': 'Lien non configuré',
+  'premium.credits.cta': 'Acheter des crédits',
+  'premium.unavailable.expo_go':
+    'Les achats ne fonctionnent pas dans Expo Go : un build de développement est nécessaire. Aucun achat n’est simulé.',
+  'premium.unavailable.missing_key':
+    'Les achats ne sont pas configurés dans cette version (clé RevenueCat absente). Aucun achat n’est simulé.',
+  'premium.unavailable.not_installed':
+    'Le module d’achat n’est pas disponible dans cette version. Aucun achat n’est simulé.',
+  'premium.pending': 'Achat en attente d’approbation. Il sera pris en compte dès sa validation par la boutique.',
+  'premium.purchaseError': 'L’achat n’a pas abouti. Vous n’avez pas été débité si l’écran de paiement ne s’est pas terminé.',
+  'premium.offers.empty': 'Aucune offre disponible pour le moment.',
+  'premium.balance': 'Crédits « Conversation » : {count}',
+
+  'credits.title': 'Crédits Conversation',
+  'credits.subtitle': 'Un crédit ouvre une conversation avec une personne avec qui vous n’avez pas de match.',
+  'credits.pack.one': '1 crédit',
+  'credits.pack.many': '{count} crédits',
+  'credits.buy': 'Acheter',
+  'credits.buyPack': 'Acheter {pack}',
+
+  'purchase.title': 'Confirmation de l’achat',
+  'purchase.validating': 'Validation de votre achat en cours…',
+  'purchase.validating.hint': 'La boutique a accepté le paiement ; nous attendons la confirmation du serveur.',
+  'purchase.confirmed.premium': 'Bienvenue dans Premium. Votre abonnement est actif.',
+  'purchase.confirmed.credits': 'Crédits ajoutés. Solde : {count}.',
+  'purchase.timeout':
+    'La validation prend plus de temps que prévu. Votre achat n’est pas perdu : il sera pris en compte dès que le serveur l’aura reçu. Vous pouvez vérifier à nouveau ou contacter le support.',
+  'purchase.check': 'Vérifier à nouveau',
+  'purchase.support': 'Contacter le support',
+  'purchase.done': 'Terminé',
+} as const;

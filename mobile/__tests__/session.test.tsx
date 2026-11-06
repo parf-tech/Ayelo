@@ -1,7 +1,9 @@
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
-import { HomeScreen } from '../src/features/home/HomeScreen';
+import { Button } from '../src/ui';
+import { Text } from 'react-native';
+import { useAuth } from '../src/auth/AuthProvider';
 import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
 import { tokenStore } from '../src/storage/tokenStore';
 import { jsonResponse, probe, renderApp } from './helpers/app';
@@ -9,6 +11,18 @@ import { jsonResponse, probe, renderApp } from './helpers/app';
 jest.mock('expo-router', () => require('./helpers/routerMock').expoRouterMock);
 
 const fetchMock = jest.fn();
+
+/** Écran minimal qui expose la session (le comportement testé est celui d'AuthProvider). */
+function SessionScreen() {
+  const { state, signOut } = useAuth();
+  return (
+    <>
+      {state.user ? <Text testID="home-user">{`Connecté en tant que ${state.user.email}`}</Text> : null}
+      <Button testID="home-logout" label="Se déconnecter" onPress={() => void signOut()} />
+    </>
+  );
+}
+const HomeScreen = SessionScreen;
 const ME = { id: 'u1', email: 'moi@example.test', locale: 'fr' };
 
 beforeEach(() => {

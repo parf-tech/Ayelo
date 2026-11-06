@@ -1,0 +1,22 @@
+export const callsFr = {
+  'call.kind.audio': 'audio',
+  'call.kind.video': 'vidéo',
+  'call.outgoing': 'Appel {kind} : sonnerie en cours…',
+  'call.incoming': 'Appel {kind} entrant',
+  'call.accept': 'Répondre',
+  'call.decline': 'Refuser',
+  'call.cancel': 'Annuler l’appel',
+  'call.hangup': 'Raccrocher',
+  'call.mute': 'Micro',
+  'call.camera': 'Caméra',
+  'call.speaker': 'Haut-parleur',
+  'call.report': 'Signaler',
+  'call.media.unavailable':
+    'L’audio et la vidéo ne sont pas disponibles dans cette version (prototype D0 requis). Seule la sonnerie est transmise.',
+  'call.end.ended': 'Appel terminé',
+  'call.end.declined': 'Appel refusé',
+  'call.end.missed': 'Appel manqué',
+  'call.end.cancelled': 'Appel annulé',
+  'call.end.busy': 'Cette personne est déjà en ligne',
+  'call.end.failed': 'L’appel n’a pas pu aboutir',
+} as const;

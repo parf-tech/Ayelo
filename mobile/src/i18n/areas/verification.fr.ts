@@ -1,0 +1,30 @@
+export const verificationFr = {
+  'error.invalid_selfie': 'Ce selfie n’a pas pu être utilisé. Reprenez-en un.',
+
+  'verify.title': 'Vérifier mon profil',
+  'verify.subtitle': 'Un selfie qui reproduit la pose demandée prouve que vous êtes bien la personne des photos. Le badge apparaît après examen par l’équipe.',
+  'verify.pose': 'Pose demandée',
+  'verify.pose.hint': 'Prenez un selfie en reproduisant exactement cette pose : {pose}.',
+  'verify.consent.label': 'J’accepte le traitement de mon selfie pour vérifier mon profil',
+  'verify.consent.description':
+    'Le selfie peut constituer une donnée biométrique. Il sert uniquement à la vérification, vous pouvez retirer ce consentement dans les réglages.',
+  'verify.consent.required': 'Cochez la case pour continuer.',
+  'verify.takePhoto': 'Prendre le selfie',
+  'verify.retake': 'Reprendre le selfie',
+  'verify.preview': 'Aperçu de votre selfie',
+  'verify.submit': 'Envoyer pour vérification',
+  'verify.cameraDenied': 'Accès à la caméra refusé. Autorisez-le dans les réglages du téléphone pour prendre le selfie.',
+  'verify.sending': 'Envoi du selfie',
+  'verify.alreadyVerified': 'Votre profil est déjà vérifié.',
+  'verify.seeStatus': 'Voir l’état de la vérification',
+
+  'verifyStatus.title': 'État de la vérification',
+  'verifyStatus.none': 'Aucune vérification demandée.',
+  'verifyStatus.pending': 'Votre demande est en cours d’examen. Cela peut prendre un peu de temps.',
+  'verifyStatus.verified': 'Profil vérifié. Le badge est visible sur votre profil.',
+  'verifyStatus.rejected': 'Votre demande a été refusée.',
+  'verifyStatus.reason': 'Motif : {reason}',
+  'verifyStatus.retry': 'Refaire la vérification',
+  'verifyStatus.start': 'Commencer la vérification',
+  'verifyStatus.refresh': 'Actualiser',
+} as const;

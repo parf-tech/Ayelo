@@ -20,17 +20,18 @@ function LoadingScreen() {
 }
 
 /** Mise en page d'une zone de navigation, protégée par la garde d'authentification (guardArea). */
-export function AreaLayout({ area }: { area: Area }) {
+export function AreaLayout({ area, shell: Shell }: { area: Area; shell?: React.ComponentType<{ children: React.ReactNode }> }) {
   const { state } = useAuth();
   const decision = guardArea(state, area);
 
   if (decision.kind === 'wait') return <LoadingScreen />;
   if (decision.kind === 'redirect') return <Redirect href={decision.href as never} />;
 
-  return (
+  const stack = (
     <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       {/* S64 : pas de geste retour vers la saisie de la date. */}
       {area === 'public' ? <Stack.Screen name="signup/age-refused" options={{ gestureEnabled: false }} /> : null}
     </Stack>
   );
+  return Shell ? <Shell>{stack}</Shell> : stack;
 }

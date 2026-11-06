@@ -1,18 +1,18 @@
-import type { User } from '../api/types';
+import type { AuthUser } from '../api/types';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 
 export type AuthState = {
   status: AuthStatus;
-  user: User | null;
+  user: AuthUser | null;
   /** Onboarding (S04, S05) à terminer : fixé à l'inscription, effacé à la fin de S05. */
   onboardingPending: boolean;
 };
 
 export type AuthAction =
-  | { type: 'RESTORED'; signedIn: boolean; user: User | null; onboardingPending: boolean }
-  | { type: 'SIGNED_IN'; user: User; isNewAccount: boolean }
-  | { type: 'USER_LOADED'; user: User }
+  | { type: 'RESTORED'; signedIn: boolean; user: AuthUser | null; onboardingPending: boolean }
+  | { type: 'SIGNED_IN'; user: AuthUser; isNewAccount: boolean }
+  | { type: 'USER_LOADED'; user: AuthUser }
   | { type: 'ONBOARDING_DONE' }
   | { type: 'SIGNED_OUT' };
 

@@ -11,8 +11,8 @@ export type Area = 'public' | 'onboarding' | 'app';
 export const ROUTES = {
   welcome: '/',
   login: '/login',
-  onboardingStart: '/onboarding/profile',
-  home: '/home',
+  onboardingStart: '/onboarding/verify-email',
+  home: '/discover',
 } as const;
 
 export type GuardDecision = { kind: 'wait' } | { kind: 'allow' } | { kind: 'redirect'; href: string };

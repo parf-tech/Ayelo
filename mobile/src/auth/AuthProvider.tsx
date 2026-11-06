@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 import { Api, createApiClient, createEndpoints, getConfiguredBaseUrl, isApiError } from '../api';
-import type { ApiLocale, AuthResponse, Platform as ApiPlatform } from '../api/types';
+import type { ApiLocale, AuthResponse, Me, Platform as ApiPlatform } from '../api/types';
 import { useI18n } from '../i18n';
 import { getActiveLocale } from '../i18n/activeLocale';
 import { appStorage, getDeviceId, tokenStore } from '../storage';
@@ -16,6 +16,8 @@ export type AuthContextValue = {
   /** Révoque le jeton côté serveur (au mieux) puis efface la session locale. */
   signOut: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  /** Recharge GET /me (profil, crédits, Premium). Renvoie null si la requête échoue (l'état précédent est conservé). */
+  refreshMe: () => Promise<Me | null>;
   clientInfo: { platform: ApiPlatform; appVersion: string; locale: ApiLocale };
 };
 
@@ -102,6 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ONBOARDING_DONE' });
   }, []);
 
+  const refreshMe = useCallback(async () => {
+    try {
+      const me = await api.auth.me();
+      dispatch({ type: 'USER_LOADED', user: me });
+      return me;
+    } catch {
+      return null;
+    }
+  }, [api]);
+
   const clientInfo = useMemo(
     () => ({
       platform: currentPlatform(),
@@ -112,8 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ state, api, signIn, signOut, completeOnboarding, clientInfo }),
-    [state, api, signIn, signOut, completeOnboarding, clientInfo],
+    () => ({ state, api, signIn, signOut, completeOnboarding, refreshMe, clientInfo }),
+    [state, api, signIn, signOut, completeOnboarding, refreshMe, clientInfo],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

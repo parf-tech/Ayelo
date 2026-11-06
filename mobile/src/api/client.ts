@@ -5,7 +5,7 @@ const DEFAULT_TIMEOUT_MS = 15000;
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export type QueryValue = string | number | boolean | undefined | null;
+export type QueryValue = string | number | boolean | undefined | null | readonly string[];
 
 export type RequestOptions = {
   query?: Record<string, QueryValue>;
@@ -48,6 +48,11 @@ export function buildUrl(baseUrl: string, path: string, query?: Record<string, Q
   const params: string[] = [];
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      // Tableaux au format Laravel : countries[]=FR&countries[]=BE
+      for (const item of value) params.push(`${encodeURIComponent(key)}%5B%5D=${encodeURIComponent(String(item))}`);
+      continue;
+    }
     const serialized = typeof value === 'boolean' ? (value ? '1' : '0') : String(value);
     params.push(`${encodeURIComponent(key)}=${encodeURIComponent(serialized)}`);
   }

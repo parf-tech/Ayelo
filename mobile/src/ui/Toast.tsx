@@ -4,7 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n';
 import { Banner, BannerVariant } from './Banner';
 
-export type ToastOptions = { message: string; variant?: BannerVariant; durationMs?: number };
+export type ToastOptions = {
+  message: string;
+  variant?: BannerVariant;
+  durationMs?: number;
+  /** Action facultative (ex. « Voir » après un nouveau match). */
+  actionLabel?: string;
+  onAction?: () => void;
+};
 
 type ToastApi = { show: (options: ToastOptions) => void; hide: () => void };
 
@@ -52,6 +59,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             testID="toast"
             message={toast.message}
             variant={toast.variant ?? 'info'}
+            actionLabel={toast.actionLabel}
+            onAction={
+              toast.onAction
+                ? () => {
+                    hide();
+                    toast.onAction?.();
+                  }
+                : undefined
+            }
             onDismiss={hide}
             dismissLabel={t('ui.toast.dismiss')}
           />

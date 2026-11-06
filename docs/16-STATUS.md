@@ -11,7 +11,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | CI GitHub | `backend` vert (commit `a1a091e`), `schema` vert (commit `20e9427`) |
 | Contrôle de secrets (gitleaks, historique complet) | propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__` |
 | Audit des dépendances PHP | `composer audit` : aucune faille signalée (2026-11-05) |
-| Mobile (Jest, typecheck, lint) | 141 tests, typecheck et lint propres ; `expo export --platform android` compile (rapport du sous-agent, non rejoué par le CTO) |
+| Mobile (Jest, typecheck, lint, bundle) | **300 tests, typecheck et lint propres, `expo export --platform android` compile** (rejoué par le CTO le 2026-11-06). `npm audit` : 0 haute / critique, 31 modérées ou basses (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
 
 ## Backend : fait et testé
 
@@ -38,7 +38,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | lot | responsable | état |
 | --- | --- | --- |
 | Administration Filament | livrée côté code (242 tests) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
-| Écrans mobiles de la phase 2 (profil, découverte, messagerie, paramètres, Premium, vérification, interface d'appel) | sous-agent Mobile | en cours, rien de livré |
+| Écrans mobiles de la phase 2 | livrés côté code (300 tests) ; jamais vus sur appareil | voir spec 010 |
 
 ## Non fait
 

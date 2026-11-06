@@ -1,0 +1,30 @@
+export const verificationEn = {
+  'error.invalid_selfie': 'This selfie could not be used. Take a new one.',
+
+  'verify.title': 'Verify my profile',
+  'verify.subtitle': 'A selfie that copies the requested pose proves you are the person in the photos. The badge appears after the team reviews it.',
+  'verify.pose': 'Requested pose',
+  'verify.pose.hint': 'Take a selfie copying exactly this pose: {pose}.',
+  'verify.consent.label': 'I agree to my selfie being processed to verify my profile',
+  'verify.consent.description':
+    'The selfie may be biometric data. It is used only for verification, and you can withdraw this consent in settings.',
+  'verify.consent.required': 'Tick the box to continue.',
+  'verify.takePhoto': 'Take the selfie',
+  'verify.retake': 'Retake the selfie',
+  'verify.preview': 'Preview of your selfie',
+  'verify.submit': 'Send for verification',
+  'verify.cameraDenied': 'Camera access denied. Allow it in your phone settings to take the selfie.',
+  'verify.sending': 'Sending the selfie',
+  'verify.alreadyVerified': 'Your profile is already verified.',
+  'verify.seeStatus': 'See verification status',
+
+  'verifyStatus.title': 'Verification status',
+  'verifyStatus.none': 'No verification requested.',
+  'verifyStatus.pending': 'Your request is being reviewed. This can take a little while.',
+  'verifyStatus.verified': 'Profile verified. The badge is visible on your profile.',
+  'verifyStatus.rejected': 'Your request was rejected.',
+  'verifyStatus.reason': 'Reason: {reason}',
+  'verifyStatus.retry': 'Redo the verification',
+  'verifyStatus.start': 'Start the verification',
+  'verifyStatus.refresh': 'Refresh',
+} as const;

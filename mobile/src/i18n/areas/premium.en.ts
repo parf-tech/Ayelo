@@ -1,0 +1,50 @@
+export const premiumEn = {
+  'premium.title': 'Premium subscription',
+  'premium.subtitle': 'Unlimited likes, super likes, undo and conversations without credits.',
+  'premium.active': 'Premium active until {date}.',
+  'premium.activeNoDate': 'Premium active.',
+  'premium.plan.1': '1 month',
+  'premium.plan.3': '3 months',
+  'premium.plan.12': '12 months',
+  'premium.plan.other': '{months} months',
+  'premium.price.unknown': 'Price unavailable',
+  'premium.subscribe': 'Subscribe',
+  'premium.selectPlan': 'Choose a duration.',
+  'premium.restore': 'Restore my purchases',
+  'premium.restore.done': 'Your purchases were restored. The server is updating your account.',
+  'premium.restore.error': 'Restoring failed. Try again.',
+  'premium.renewal':
+    'The subscription renews automatically at the end of each period, at the same price, until you cancel it in your store settings (App Store or Google Play) at least 24 hours before renewal.',
+  'premium.terms': 'Terms of use',
+  'premium.privacy': 'Privacy policy',
+  'premium.linkMissing': 'Link not configured',
+  'premium.credits.cta': 'Buy credits',
+  'premium.unavailable.expo_go':
+    'Purchases do not work in Expo Go: a development build is required. No purchase is simulated.',
+  'premium.unavailable.missing_key':
+    'Purchases are not configured in this version (RevenueCat key missing). No purchase is simulated.',
+  'premium.unavailable.not_installed':
+    'The purchase module is not available in this version. No purchase is simulated.',
+  'premium.pending': 'Purchase awaiting approval. It will be applied as soon as the store validates it.',
+  'premium.purchaseError': 'The purchase did not go through. You were not charged unless the payment sheet completed.',
+  'premium.offers.empty': 'No offers available right now.',
+  'premium.balance': '“Conversation” credits: {count}',
+
+  'credits.title': 'Conversation credits',
+  'credits.subtitle': 'One credit opens a conversation with someone you have not matched with.',
+  'credits.pack.one': '1 credit',
+  'credits.pack.many': '{count} credits',
+  'credits.buy': 'Buy',
+  'credits.buyPack': 'Buy {pack}',
+
+  'purchase.title': 'Purchase confirmation',
+  'purchase.validating': 'Validating your purchase…',
+  'purchase.validating.hint': 'The store accepted the payment; we are waiting for the server’s confirmation.',
+  'purchase.confirmed.premium': 'Welcome to Premium. Your subscription is active.',
+  'purchase.confirmed.credits': 'Credits added. Balance: {count}.',
+  'purchase.timeout':
+    'Validation is taking longer than expected. Your purchase is not lost: it will be applied as soon as the server receives it. You can check again or contact support.',
+  'purchase.check': 'Check again',
+  'purchase.support': 'Contact support',
+  'purchase.done': 'Finished',
+} as const;

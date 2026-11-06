@@ -1,3 +1,5 @@
+import { frAreas } from './areas';
+
 // Langue de base : français. `en.ts` doit avoir exactement les mêmes clés (test __tests__/i18n.test.ts).
 export const fr = {
   'app.name': 'Ayelo',
@@ -198,6 +200,7 @@ export const fr = {
   'demo.sample.emptyTitle': 'Rien à afficher',
   'demo.sample.emptyBody': "Il n'y a encore aucun élément ici.",
   'demo.sample.emptyAction': 'Actualiser',
+  ...frAreas,
 } as const;
 
 export type TranslationKey = keyof typeof fr;
