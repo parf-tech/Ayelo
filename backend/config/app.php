@@ -60,6 +60,9 @@ return [
     // Domaine dédié du panneau d'administration (ex. admin.exemple.fr). Vide = servi sur tous les domaines (local, tests).
     'admin_domain' => env('ADMIN_DOMAIN'),
 
+    // Identité de la personne qui lance staff:create / staff:reset-2fa en console (journal d'audit, revue N-13).
+    'staff_operator' => env('STAFF_OPERATOR'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

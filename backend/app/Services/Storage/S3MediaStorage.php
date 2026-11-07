@@ -71,4 +71,14 @@ class S3MediaStorage implements MediaStorage
     {
         $this->client()->putObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key, 'Body' => $contents, 'ContentType' => $mime]);
     }
+
+    public function listObjects(string $prefix): iterable
+    {
+        $pages = $this->client()->getPaginator('ListObjectsV2', ['Bucket' => config('media.disk.bucket'), 'Prefix' => $prefix]);
+        foreach ($pages as $page) {
+            foreach ($page['Contents'] ?? [] as $object) {
+                yield ['key' => (string) $object['Key'], 'modified_at' => $object['LastModified']->getTimestamp()];
+            }
+        }
+    }
 }

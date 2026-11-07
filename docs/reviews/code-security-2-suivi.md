@@ -27,11 +27,21 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 - [x] **N-10** mot de passe du personnel : 12 caractères minimum aussi via le profil (`EditStaffProfile`). Le mot de passe initial saisi à la création reste affiché en clair dans la console : non traité.
 - [x] **N-11** `channels:` retiré de `bootstrap/app.php` (les canaux sont chargés par `routes/api/realtime.php`), `GET /` supprimé. Test : `N-11`.
 - [ ] **N-12** double contrôle des actions administrateur : décision produit.
-- [~] **N-13** fait : l'expiration automatique écrit `sanction.expired` (test dans `StaffCommandTest`). Reste : opérateur de la console (acteur nul), ordre de suppression du selfie avant commit (probabilité faible), obligation d'ouvrir le selfie avant d'approuver.
-- [~] **N-14** fait : lecture bornée à `max_bytes + 1` octets (`Range` côté S3), plafond ramené à 20 Mpx. Tests : `N-14` (2). Reste : balayage des clés orphelines, mise à jour des bibliothèques d'images, traitement hors processus web.
+- [~] **N-13** fait : l'expiration automatique écrit `sanction.expired` (test dans `StaffCommandTest`) ; l'opérateur de la console (variable optionnelle `STAFF_OPERATOR`, clé `operator` dans `after`) est enregistré par `staff:create` (`staff.created`) et `staff:reset-2fa` (`staff.2fa_reset`). Tests : `N-13` (2, `SecurityHardeningRound3Test`). Reste : l'acteur reste nul et l'opérateur est déclaratif (non authentifié, vide si la variable n'est pas définie), ordre de suppression du selfie avant commit (probabilité faible), obligation d'ouvrir le selfie avant d'approuver.
+- [~] **N-14** fait : lecture bornée à `max_bytes + 1` octets (`Range` côté S3), plafond ramené à 20 Mpx. Tests : `N-14` (2). Balayage des clés orphelines : commande `media:sweep-orphans` (préfixe `u/`, délai de grâce 48 h, plafond 5 000 suppressions par passage, option `--dry-run`, planifiée à 04:00 ; méthode `MediaStorage::listObjects`, non exercée contre un vrai bucket S3/R2, seulement contre `FakeMediaStorage`). Tests : `N-14` (2, `SecurityHardeningRound3Test`). Reste : mise à jour des bibliothèques d'images, traitement hors processus web.
 - [x] **F-23** un message texte avec `media_id` est refusé. Test : `F-23`.
 - [x] E-mail envoyé en tableau : plus de 500 (`login`, `password-forgot`). Test dédié.
-- [ ] F-06, F-16, F-22 résiduels : lot suivant.
+- [x] **F-16 résiduel** les alias d'e-mail d'une adresse bannie sont refusés (`BannedIdentifiers::normalize` : minuscules, `+tag` retiré, points et `googlemail.com` ramenés à `gmail.com` pour Gmail ; les empreintes exactes déjà écrites restent reconnues). Tests : `F-16` (4, dont l'inscription). Non couvert : relais d'adresses masquées (Apple), appareil non banni.
+- [x] **F-22 résiduel** quotas par type dans `config/media.php` : `max_open` (dépôts en attente ou en revue) et `max_per_day` (24 h glissantes) ; réponse 422. Tests : `F-22` (2). Les valeurs (selfie 3 / 5, photo de profil 6 / 12, image de message 50 / 100) sont des choix à confirmer.
+- [~] **F-06 résiduel** fait : la date de naissance est ramenée au 1er janvier de l'année à l'anonymisation (migration `2026_11_07_000000_generalise_birthdate_on_deletion`, qui assouplit uniquement ce passage dans le déclencheur `lock_birthdate`) ; une panne du stockage sur un compte n'interrompt plus la purge des suivants (le compte reste « deleting » et ses lignes de média sont conservées pour la reprise). Tests : `F-06` (2). Attention : `docs/schema/001_initial.sql` n'est pas modifié (hors périmètre de ce lot) ; le déclencheur du schéma de référence reste l'ancien tant que la migration n'y est pas reportée, et la CI `schema` qui n'applique que ce fichier ne couvre pas ce passage. Reste : durées de conservation écrites pour `reports.details` et `sanctions.reason` (décision).
+
+## Constats de la revue S9 indépendante (traités)
+
+- [x] `SendPush` ignore les comptes dont le statut n'est pas `active` (les jetons ne sont plus révoqués à la sanction, N-02). Test : `S9` (SendPush).
+- [x] `staff:reset-2fa` crée un nouveau secret TOTP au lieu de vider la 2FA (qui rouvrait N-05) ; `staff:create` n'affiche plus mot de passe et secret 2FA dans la même sortie sauf avec `--show-secret` (sinon : `staff:reset-2fa` dans une session distincte). Tests : `S9` (2), `StaffCommandTest` mis à jour. Un compte créé sans `--show-secret` n'a donc pas de secret connu de l'opérateur tant qu'il n'a pas lancé `staff:reset-2fa`.
+- [x] Constat « une sanction sur un compte `deleting` le passe à `banned` » : inexact pour `SanctionLedger::issue`, qui refuse déjà les statuts hors `active`, `suspended`, `banned` (`SANCTIONABLE`). Une garde `whereIn('status', ...)` a tout de même été ajoutée sur la mise à jour. Test : `S9` (sanction).
+- [x] `POST /api/v1/broadcasting/auth` refuse le canal `user.{id}` d'un autre et `conversation.{id}` d'un non-participant. Test : `S9` (broadcasting) ; le contrôle existait déjà dans `MessagingTest`.
+- [x] Garde de démarrage : en production sans `ADMIN_DOMAIN`, `AdminPanelProvider::warnIfUnbound` journalise en `critical` (pas d'exception : elle casserait les builds d'image et `config:cache`). Test : `N-01` (garde).
 
 ## Exigences S2 (limites de débit)
 
@@ -52,4 +62,4 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 
 ## Résultat de la suite complète
 
-**260 tests, 1653 assertions, 0 échec** (Pest, PostgreSQL 16, PHP 8.5.12 avec `pdo_pgsql`, exécution du 2026-11-06). Sous Windows, les tests de signature RSA demandent `OPENSSL_CONF` vers un `openssl.cnf` existant.
+**278 tests, 1723 assertions, 0 échec** (Pest, PostgreSQL 16, PHP 8.5.12 avec `pdo_pgsql`, exécution du 2026-11-07). Sous Windows, les tests de signature RSA demandent `OPENSSL_CONF` vers un `openssl.cnf` existant.

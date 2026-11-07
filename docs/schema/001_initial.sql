@@ -545,10 +545,14 @@ create trigger audit_logs_append_only before update or delete on audit_logs
 create trigger audit_logs_no_truncate before truncate on audit_logs
   for each statement execute function forbid_change();
 
--- date de naissance non modifiable après création
+-- date de naissance non modifiable après création (seule exception : l'anonymisation, qui la ramène au 1er janvier de la même année ; revue F-06)
 create or replace function lock_birthdate() returns trigger language plpgsql as $$
 begin
   if new.birthdate is distinct from old.birthdate then
+    if new.status = 'deleted' and old.status is distinct from 'deleted'
+       and new.birthdate = date_trunc('year', old.birthdate)::date then
+      return new;
+    end if;
     raise exception 'birthdate cannot be changed';
   end if;
   return new;

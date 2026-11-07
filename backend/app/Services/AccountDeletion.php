@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -34,11 +35,18 @@ class AccountDeletion
     {
         $due = User::where('status', 'deleting')->where('deletion_requested_at', '<=', now()->subDays(self::GRACE_DAYS))->get();
 
+        // Une panne (stockage objet, base) sur un compte ne doit pas bloquer les suivants : il reste « deleting » et sera repris au prochain passage.
+        $done = 0;
         foreach ($due as $user) {
-            $this->anonymize($user);
+            try {
+                $this->anonymize($user);
+                $done++;
+            } catch (\Throwable $e) {
+                Log::error('Anonymisation différée', ['user_id' => $user->id, 'error' => $e::class]);
+            }
         }
 
-        return $due->count();
+        return $done;
     }
 
     public function anonymize(User $user): void
@@ -87,6 +95,8 @@ class AccountDeletion
 
             DB::table('users')->where('id', $user->id)->update([
                 'email' => null, 'phone' => null, 'password' => null, 'status' => 'deleted', 'email_verified_at' => null, 'phone_verified_at' => null,
+                // Date de naissance généralisée à l'année (minimisation) ; le déclencheur n'autorise que ce passage.
+                'birthdate' => DB::raw("date_trunc('year', birthdate)::date"),
                 'last_seen_at' => null, 'risk_score' => $sanctioned ? DB::raw('risk_score') : 0, 'updated_at' => now(),
             ]);
         });

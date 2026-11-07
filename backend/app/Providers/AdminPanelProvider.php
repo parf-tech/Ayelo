@@ -40,6 +40,8 @@ class AdminPanelProvider extends PanelProvider
 {
     public function boot(): void
     {
+        self::warnIfUnbound();
+
         // L'API est sans état (SESSION_DRIVER=array dans .env.example) ; le panneau a besoin d'une vraie session.
         if (config('session.driver') === 'array' && ! $this->app->environment('testing')) {
             config(['session.driver' => 'file']);
@@ -64,6 +66,17 @@ class AdminPanelProvider extends PanelProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([StaffCreateCommand::class, StaffResetTwoFactorCommand::class, SanctionsExpireCommand::class]);
+        }
+    }
+
+    /**
+     * En production sans ADMIN_DOMAIN, le panneau serait servi sur le domaine de l'API (revue N-01). On journalise en
+     * critique plutôt que de lever une exception : un démarrage interrompu (build d'image, config:cache) est pire ici.
+     */
+    public static function warnIfUnbound(): void
+    {
+        if (app()->isProduction() && self::adminDomain() === null) {
+            \Illuminate\Support\Facades\Log::critical('ADMIN_DOMAIN est vide en production : le panneau d administration est servi sur tous les domaines.');
         }
     }
 

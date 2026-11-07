@@ -26,6 +26,12 @@ class SendPush implements ShouldQueue
             return;
         }
 
+        // Un compte suspendu, banni ou en cours de suppression ne reçoit plus d'aperçu de message ni d'appel (revue S9) :
+        // les jetons ne sont plus révoqués à la sanction (N-02), le filtre doit donc être ici.
+        if (DB::table('users')->where('id', $this->userId)->value('status') !== 'active') {
+            return;
+        }
+
         $devices = DB::table('devices')->where('user_id', $this->userId)->whereNotNull('push_token')->get(['id', 'platform', 'push_token']);
 
         foreach ($devices as $device) {

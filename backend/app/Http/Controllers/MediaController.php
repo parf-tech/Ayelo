@@ -45,6 +45,16 @@ class MediaController extends Controller
         $user = $request->user();
         $position = 0;
 
+        // Quota par type (revue F-22) : le plafond de 20 dépôts par heure ne bornait pas le stockage par compte.
+        if (isset($rules['max_open']) && DB::table('media')->where('user_id', $user->id)->where('kind', $data['kind'])
+            ->whereIn('status', ['pending_upload', 'processing'])->count() >= (int) $rules['max_open']) {
+            throw ValidationException::withMessages(['kind' => ['Trop de fichiers en attente pour ce type.']]);
+        }
+        if (isset($rules['max_per_day']) && DB::table('media')->where('user_id', $user->id)->where('kind', $data['kind'])
+            ->where('created_at', '>', now()->subDay())->count() >= (int) $rules['max_per_day']) {
+            throw ValidationException::withMessages(['kind' => ['Quota quotidien atteint pour ce type.']]);
+        }
+
         if ($data['kind'] === 'profile_photo') {
             $used = DB::table('media')->where('user_id', $user->id)->where('kind', 'profile_photo')
                 ->whereIn('status', ['pending_upload', 'processing', 'approved'])->pluck('position')->all();

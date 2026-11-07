@@ -19,6 +19,14 @@ class StaffAccounts
         return Str::password(20, symbols: false);
     }
 
+    /** Opérateur de la console (variable STAFF_OPERATOR) : tracé dans le journal, sinon l'action reste sans acteur (revue N-13). */
+    private function operator(): ?string
+    {
+        $operator = trim((string) config('app.staff_operator'));
+
+        return $operator === '' ? null : mb_substr($operator, 0, 190);
+    }
+
     public function create(string $email, string $role, string $password): StaffUser
     {
         $email = strtolower(trim($email));
@@ -36,17 +44,38 @@ class StaffAccounts
         }
 
         $staff = StaffUser::create(['email' => $email, 'password' => $password, 'role' => $role, 'is_active' => true]);
-        $this->audit->record(null, 'staff.created', 'staff_users', $staff->id, null, ['email' => $email, 'role' => $role]);
+        $this->audit->record(null, 'staff.created', 'staff_users', $staff->id, null, ['email' => $email, 'role' => $role] + ($this->operator() ? ['operator' => $this->operator()] : []));
 
         return $staff;
     }
 
-    /** Perte du téléphone : efface la 2FA ; elle devra être reconfigurée à la prochaine connexion. */
-    public function resetTwoFactor(string $email): StaffUser
+    /**
+     * Enrôle un nouveau secret TOTP (créé par la console, jamais choisi à la première connexion : revue N-05).
+     *
+     * @return array{secret: string, uri: string}
+     */
+    public function enrollTwoFactor(StaffUser $staff): array
+    {
+        $google2fa = new \PragmaRX\Google2FA\Google2FA;
+        $secret = $google2fa->generateSecretKey();
+        $staff->saveAppAuthenticationSecret($secret);
+
+        return ['secret' => $secret, 'uri' => $google2fa->getQRCodeUrl('Ayelo', $staff->email, $secret)];
+    }
+
+    /**
+     * Perte du téléphone : remplace la 2FA par un NOUVEAU secret, créé ici (sinon le mot de passe seul permettrait
+     * d'enrôler son propre appareil à la prochaine connexion). Les codes de secours sont effacés.
+     *
+     * @return array{staff: StaffUser, secret: string, uri: string}
+     */
+    public function resetTwoFactor(string $email): array
     {
         $staff = StaffUser::where('email', strtolower(trim($email)))->first() ?? throw new DomainException('Compte introuvable.');
-        $staff->forceFill(['totp_secret_encrypted' => null, 'recovery_codes_encrypted' => null])->save();
+        $staff->forceFill(['recovery_codes_encrypted' => null])->save();
+        $enrolled = $this->enrollTwoFactor($staff);
+        $this->audit->record(null, 'staff.2fa_reset', 'staff_users', $staff->id, null, $this->operator() ? ['operator' => $this->operator()] : null);
 
-        return $staff;
+        return ['staff' => $staff] + $enrolled;
     }
 }

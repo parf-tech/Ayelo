@@ -31,4 +31,12 @@ interface MediaStorage
 
     /** Dépose un contenu texte/binaire généré par le serveur (exports de données). */
     public function put(string $key, string $contents, string $mime): void;
+
+    /**
+     * Objets sous un préfixe (balayage des clés orphelines, revue N-14), avec leur date de dernière modification
+     * (timestamp Unix). Parcours paresseux : ne jamais charger tout le bucket en mémoire.
+     *
+     * @return iterable<array{key: string, modified_at: int}>
+     */
+    public function listObjects(string $prefix): iterable;
 }

@@ -65,13 +65,15 @@ it('refuse un rôle inconnu, un e-mail invalide et un doublon', function () {
     expect(StaffUser::count())->toBe(1);
 });
 
-it('efface la 2FA d’un compte et le journalise', function () {
+it('remplace la 2FA d’un compte par un nouveau secret et le journalise', function () {
     $staff = Seed::staff('moderator');
+    $old = $staff->totp_secret_encrypted;
 
     $this->artisan('staff:reset-2fa', ['email' => $staff->email])->assertSuccessful();
 
-    expect($staff->fresh()->hasTwoFactor())->toBeFalse();
-    expect(Seed::audit('staff.2fa_disabled'))->not->toBeNull();
+    // Jamais de compte sans 2FA (revue N-05) : un secret neuf est créé par la console.
+    expect($staff->fresh()->hasTwoFactor())->toBeTrue()->and($staff->fresh()->totp_secret_encrypted)->not->toBe($old);
+    expect(Seed::audit('staff.2fa_reset'))->not->toBeNull();
     $this->artisan('staff:reset-2fa', ['email' => 'inconnu@ayelo.test'])->assertFailed();
 });
 

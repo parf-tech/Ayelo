@@ -31,13 +31,14 @@ class FakeMediaStorage implements MediaStorage
     public function delete(string $key): void
     {
         $this->deleted[] = $key;
-        unset($this->objects[$key]);
+        unset($this->objects[$key], $this->modifiedAt[$key]);
     }
 
     /** Simule le dépôt réel du fichier par le client. */
     public function simulateUpload(string $key, int $size, string $mime): void
     {
         $this->objects[$key] = ['size' => $size, 'mime' => $mime];
+        $this->modifiedAt[$key] = now()->timestamp;
     }
 
     /** @var array<string, string> */
@@ -60,5 +61,18 @@ class FakeMediaStorage implements MediaStorage
     {
         $this->contents[$key] = $contents;
         $this->objects[$key] = ['size' => strlen($contents), 'mime' => $mime];
+        $this->modifiedAt[$key] = now()->timestamp;
+    }
+
+    /** @var array<string, int> dernière modification (timestamp Unix), pour le balayage des orphelins */
+    public array $modifiedAt = [];
+
+    public function listObjects(string $prefix): iterable
+    {
+        foreach ($this->objects as $key => $_) {
+            if (str_starts_with($key, $prefix)) {
+                yield ['key' => $key, 'modified_at' => $this->modifiedAt[$key] ?? now()->timestamp];
+            }
+        }
     }
 }

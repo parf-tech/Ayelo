@@ -38,7 +38,45 @@ Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $s
     $this->info('Exports supprimés : '.$old->count());
 })->purpose('Supprime les exports de données expirés (objet et ligne)');
 
+// Objets sans ligne `media` (échec entre l'écriture de l'objet et celle de la ligne, suppression partielle) : revue N-14.
+// Seuls les objets de médias (`u/`) plus anciens que le délai de grâce sont supprimés ; les exports (`exports/`) ont leur propre purge.
+Artisan::command('media:sweep-orphans {--dry-run : Compter sans supprimer}', function (App\Services\Storage\MediaStorage $storage) {
+    $cutoff = now()->subHours((int) config('media.orphan_grace_hours'))->timestamp;
+    $limit = (int) config('media.orphan_sweep_max');
+    $dry = (bool) $this->option('dry-run');
+    $found = 0;
+    $batch = [];
+    $flush = function () use (&$batch, &$found, $storage, $dry) {
+        if ($batch === []) {
+            return;
+        }
+        $known = DB::table('media')->whereIn('storage_key', $batch)->pluck('storage_key')->all();
+        foreach (array_diff($batch, $known) as $orphan) {
+            $found++;
+            if (! $dry) {
+                $storage->delete($orphan);
+            }
+        }
+        $batch = [];
+    };
+    foreach ($storage->listObjects('u/') as $object) {
+        if ($object['modified_at'] > $cutoff) {
+            continue;
+        }
+        $batch[] = $object['key'];
+        if (count($batch) >= 500) {
+            $flush();
+        }
+        if ($found >= $limit) {
+            break;
+        }
+    }
+    $flush();
+    $this->info(($dry ? 'Orphelins repérés : ' : 'Orphelins supprimés : ').$found);
+})->purpose('Supprime les objets de médias sans ligne en base (au-delà du délai de grâce)');
+
 Schedule::command('media:purge-pending')->hourly();
+Schedule::command('media:sweep-orphans')->dailyAt('04:00')->onOneServer()->withoutOverlapping();
 Schedule::command('exports:purge')->dailyAt('03:30');
 
 // Lève les suspensions à durée limitée arrivées à échéance (sinon le compte reste bloqué : voir specs/009).
