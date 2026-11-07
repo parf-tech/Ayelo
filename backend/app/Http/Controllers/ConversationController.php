@@ -67,6 +67,11 @@ class ConversationController extends Controller
 
         $existing = DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->first();
         if ($existing !== null) {
+            /**
+             * Conversation déjà ouverte avec cette personne (aucun crédit dépensé).
+             *
+             * @body array{id: string, status: 'active'|'blocked'|'archived'}
+             */
             return response()->json(['id' => $existing->id, 'status' => $existing->status], 200);
         }
 
@@ -114,6 +119,13 @@ class ConversationController extends Controller
             return response()->json(['error' => ['code' => 'credit_required', 'message' => 'Un crédit « Conversation » ou un abonnement Premium est nécessaire.']], 402);
         }
 
+        /**
+         * Conversation créée.
+         *
+         * @status 201
+         *
+         * @body array{id: string, status: 'active'}
+         */
         return response()->json(['id' => $result, 'status' => 'active'], 201);
     }
 

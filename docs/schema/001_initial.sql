@@ -348,6 +348,7 @@ create table subscriptions (
   period_end timestamptz not null,
   original_transaction_id text unique,             -- null pour un Premium offert par l'administration
   granted_by uuid references staff_users(id) on delete set null,
+  last_event_ms bigint,                              -- event_timestamp_ms RevenueCat du dernier événement appliqué (revue F-13)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (period_end > period_start),

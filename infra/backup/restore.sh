@@ -1,4 +1,5 @@
 #!/bin/sh
+# OBSOLÈTE : remplacé par infra/scripts/restore.sh (base jetable, garde-fous, comptages). Plus utilisé ; à supprimer.
 # Restauration d'une sauvegarde dans une base VIERGE. Usage : restore.sh <fichier.sql.gz.gpg> <hôte> <base> <utilisateur>
 # Après restauration : rejouer les suppressions de comptes déjà traitées (voir docs/runbooks/restauration.md).
 set -eu

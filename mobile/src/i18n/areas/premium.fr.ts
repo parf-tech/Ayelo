@@ -15,6 +15,10 @@ export const premiumFr = {
   'premium.restore.error': 'La restauration a échoué. Réessayez.',
   'premium.renewal':
     'L’abonnement se renouvelle automatiquement à la fin de chaque période, au même tarif, tant que vous ne l’annulez pas dans les réglages de votre boutique (App Store ou Google Play) au moins 24 h avant le renouvellement.',
+  'premium.manage.cta': 'Gérer ou résilier mon abonnement',
+  'premium.manage.info':
+    'La résiliation se fait dans la boutique (App Store ou Google Play), en quelques secondes. Elle prend effet à la fin de la période déjà payée : vous gardez Premium jusque-là.',
+  'premium.manage.openError': 'Impossible d’ouvrir la boutique. Ouvrez les abonnements depuis l’App Store ou Google Play.',
   'premium.terms': 'Conditions d’utilisation',
   'premium.privacy': 'Politique de confidentialité',
   'premium.linkMissing': 'Lien non configuré',

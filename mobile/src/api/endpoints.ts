@@ -18,6 +18,7 @@ import type {
   DeleteAccountResponse,
   DeviceRegistration,
   DiscoverFilters,
+  DiscoverResponse,
   ListResponse,
   LoginRequest,
   Match,
@@ -111,7 +112,7 @@ export function createEndpoints(client: ApiClient) {
 
   const discovery = {
     discover: (filters: DiscoverFilters = {}) =>
-      request<Page<PublicProfile>>('GET', '/discover', { query: { ...filters } }),
+      request<DiscoverResponse>('GET', '/discover', { query: { ...filters } }),
     /** 402 premium_required (super like), 429 quota_reached. */
     swipe: (targetId: string, action: SwipeAction) =>
       request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } satisfies SwipeRequest }),

@@ -24,7 +24,18 @@ Artisan::command('media:purge-pending', function (App\Services\Storage\MediaStor
         $storage->delete($m->storage_key);
     }
     DB::table('media')->whereIn('id', $old->pluck('id'))->delete();
-    $this->info('Dépôts abandonnés supprimés : '.$old->count());
+    // Selfies dont la suppression a échoué après la décision (ProfileVerification : purge_after renseigné, statut « purged »).
+    $retried = 0;
+    foreach (DB::table('media')->where('kind', 'verification_selfie')->where('status', 'purged')->whereNotNull('purge_after')->limit(500)->get() as $m) {
+        try {
+            $storage->delete($m->storage_key);
+            DB::table('media')->where('id', $m->id)->update(['purge_after' => null]);
+            $retried++;
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+    $this->info('Dépôts abandonnés supprimés : '.$old->count().', selfies repris : '.$retried);
 })->purpose('Supprime les envois de médias jamais finalisés');
 
 Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $storage) {
@@ -94,3 +105,6 @@ Artisan::command('billing:replay-unknown', function (App\Services\RevenueCatProc
 })->purpose('Rejoue les événements RevenueCat reçus avant que leur utilisateur existe');
 
 Schedule::command('billing:replay-unknown')->everyFifteenMinutes()->withoutOverlapping();
+
+// Dead-letter : les tâches échouées (table failed_jobs) sont gardées 7 jours pour diagnostic puis purgées.
+Schedule::command('queue:prune-failed --hours=168')->daily()->onOneServer();

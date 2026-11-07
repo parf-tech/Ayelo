@@ -11,6 +11,9 @@ use Illuminate\Support\Str;
  * Applique un événement RevenueCat. Idempotent : `webhook_events.id` (clé primaire) empêche tout double traitement,
  * `purchases.transaction_id` et `subscriptions.original_transaction_id` empêchent tout double crédit.
  *
+ * Sandbox : les événements `environment = SANDBOX` sont acquittés mais jamais appliqués en production.
+ * Ordre : `subscriptions.last_event_ms` garde l'`event_timestamp_ms` du dernier événement appliqué ; un événement plus ancien est ignoré.
+ *
  * Types d'événements traités (noms à confirmer dans la documentation officielle de RevenueCat avant la mise en production) :
  * INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE, CANCELLATION, EXPIRATION, BILLING_ISSUE, NON_RENEWING_PURCHASE.
  */
@@ -40,6 +43,14 @@ class RevenueCatProcessor
             return 'duplicate';
         }
 
+        // Revue F-13 : les achats de test (TestFlight, testeurs Play) sont gratuits ; en production, l'événement SANDBOX
+        // est acquitté (200) et conservé pour trace, mais jamais appliqué.
+        if (app()->isProduction() && strtoupper((string) ($event['environment'] ?? '')) === 'SANDBOX') {
+            $this->done($id, 'environnement sandbox ignoré');
+
+            return 'ignored';
+        }
+
         $userId = $this->resolveUser($event);
         if ($userId === null) {
             DB::table('webhook_events')->where('id', $id)->update(['error' => 'utilisateur inconnu']);
@@ -47,17 +58,23 @@ class RevenueCatProcessor
             return 'ignored';
         }
 
-        DB::transaction(function () use ($event, $userId) {
-            match ($event['type']) {
+        $stale = false;
+        DB::transaction(function () use ($event, $userId, &$stale) {
+            $applied = match ($event['type']) {
                 'INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION', 'PRODUCT_CHANGE' => $this->activate($userId, $event),
                 'BILLING_ISSUE' => $this->setStatus($event, 'grace'),
                 'EXPIRATION' => $this->setStatus($event, 'expired'),
                 'CANCELLATION' => $this->cancel($userId, $event),
                 'NON_RENEWING_PURCHASE' => $this->consumable($userId, $event),
-                default => null,
+                default => true,
             };
-            $this->done($event['id']);
+            $stale = $applied === false;
+            $this->done($event['id'], $stale ? "événement plus ancien que l'état courant, ignoré" : null);
         });
+
+        if ($stale) {
+            return 'ignored';
+        }
 
         BillingUpdated::dispatch($userId);
 
@@ -77,6 +94,30 @@ class RevenueCatProcessor
         DB::table('webhook_events')->where('id', $eventId)->update(['processed_at' => now(), 'error' => $error]);
     }
 
+    /** Horodatage de l'événement chez RevenueCat (ms), ou null s'il est absent ou invalide. */
+    private function eventMs(array $event): ?int
+    {
+        $ms = $event['event_timestamp_ms'] ?? null;
+
+        return is_numeric($ms) && (int) $ms > 0 ? (int) $ms : null;
+    }
+
+    /** Revue F-13 : un événement plus ancien que le dernier appliqué à cet abonnement (réessai tardif) ne doit pas écraser l'état. */
+    private function isStale(?object $subscription, array $event): bool
+    {
+        $ts = $this->eventMs($event);
+
+        return $subscription !== null && $ts !== null && $subscription->last_event_ms !== null && $ts < (int) $subscription->last_event_ms;
+    }
+
+    /** @return array<string, int> colonne à écrire pour garder le plus récent horodatage appliqué */
+    private function stamp(array $event, ?object $subscription): array
+    {
+        $ts = $this->eventMs($event);
+
+        return $ts === null ? [] : ['last_event_ms' => max($ts, (int) ($subscription->last_event_ms ?? 0))];
+    }
+
     private function store(array $event): string
     {
         return config('billing.stores.'.($event['store'] ?? ''), 'apple');
@@ -87,11 +128,12 @@ class RevenueCatProcessor
         return is_numeric($ms) ? CarbonImmutable::createFromTimestampMs((int) $ms) : ($fallback ?? CarbonImmutable::now());
     }
 
-    private function activate(string $userId, array $event): void
+    /** @return bool false si l'événement est périmé (rien n'a été changé) */
+    private function activate(string $userId, array $event): bool
     {
         $original = (string) ($event['original_transaction_id'] ?? $event['transaction_id'] ?? '');
         if ($original === '') {
-            return;
+            return true;
         }
 
         $start = $this->date($event['purchased_at_ms'] ?? null);
@@ -100,28 +142,46 @@ class RevenueCatProcessor
             $end = $start->addMinute();
         }
 
-        $existing = DB::table('subscriptions')->where('original_transaction_id', $original)->first();
-        $values = ['user_id' => $userId, 'store' => $this->store($event), 'product_id' => (string) ($event['product_id'] ?? ''), 'status' => 'active',
+        $existing = DB::table('subscriptions')->where('original_transaction_id', $original)->lockForUpdate()->first();
+        if ($this->isStale($existing, $event)) {
+            return false;
+        }
+
+        $values = $this->stamp($event, $existing) + ['user_id' => $userId, 'store' => $this->store($event), 'product_id' => (string) ($event['product_id'] ?? ''), 'status' => 'active',
             'period_start' => $start, 'period_end' => $end, 'updated_at' => now()];
 
         $existing
             ? DB::table('subscriptions')->where('id', $existing->id)->update($values)
             : DB::table('subscriptions')->insert($values + ['id' => (string) Str::uuid(), 'original_transaction_id' => $original, 'created_at' => now()]);
+
+        return true;
     }
 
-    private function setStatus(array $event, string $status): void
+    private function setStatus(array $event, string $status): bool
     {
         $original = (string) ($event['original_transaction_id'] ?? $event['transaction_id'] ?? '');
-        if ($original !== '') {
-            DB::table('subscriptions')->where('original_transaction_id', $original)->update(['status' => $status, 'updated_at' => now()]);
+        if ($original === '') {
+            return true;
         }
+
+        $existing = DB::table('subscriptions')->where('original_transaction_id', $original)->lockForUpdate()->first();
+        if ($existing === null) {
+            return true;
+        }
+        if ($this->isStale($existing, $event)) {
+            return false;
+        }
+
+        DB::table('subscriptions')->where('id', $existing->id)->update($this->stamp($event, $existing) + ['status' => $status, 'updated_at' => now()]);
+
+        return true;
     }
 
     /**
      * Annulation. Un remboursement (motif « support client ») retire l'accès tout de suite et reprend les crédits ;
      * une annulation ordinaire garde l'accès jusqu'à la fin de la période payée.
      */
-    private function cancel(string $userId, array $event): void
+    private function cancel(string $userId, array $event): bool
     {
         $refund = ($event['cancel_reason'] ?? '') === 'CUSTOMER_SUPPORT';
         $productId = (string) ($event['product_id'] ?? '');
@@ -131,27 +191,37 @@ class RevenueCatProcessor
                 $this->refundPack($userId, $event);
             }
 
-            return;
+            return true;
         }
 
         $original = (string) ($event['original_transaction_id'] ?? $event['transaction_id'] ?? '');
         if ($original === '') {
-            return;
+            return true;
         }
 
-        DB::table('subscriptions')->where('original_transaction_id', $original)->update(
+        $existing = DB::table('subscriptions')->where('original_transaction_id', $original)->lockForUpdate()->first();
+        if ($existing === null) {
+            return true;
+        }
+        if ($this->isStale($existing, $event)) {
+            return false;
+        }
+
+        DB::table('subscriptions')->where('id', $existing->id)->update($this->stamp($event, $existing) + [
             // Remboursé : le statut suffit à retirer l'accès (Premium::active l'exclut) ; period_end reste inchangé
             // car la base impose period_end > period_start.
-            ['status' => $refund ? 'refunded' : 'cancelled', 'updated_at' => now()]
-        );
+            'status' => $refund ? 'refunded' : 'cancelled', 'updated_at' => now(),
+        ]);
+
+        return true;
     }
 
-    private function consumable(string $userId, array $event): void
+    private function consumable(string $userId, array $event): bool
     {
         $pack = config('billing.packs')[(string) ($event['product_id'] ?? '')] ?? null;
         $tx = (string) ($event['transaction_id'] ?? '');
         if ($pack === null || $tx === '') {
-            return;
+            return true;
         }
 
         $created = DB::table('purchases')->insertOrIgnore([
@@ -166,6 +236,8 @@ class RevenueCatProcessor
                 'ref_type' => 'purchase', 'idempotency_key' => 'purchase:'.$tx, 'created_at' => now(),
             ]);
         }
+
+        return true;
     }
 
     /** Reprend les crédits d'un achat remboursé, sans jamais descendre sous zéro. */

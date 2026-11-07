@@ -54,7 +54,23 @@ class SwipeController extends Controller
             }
         }
 
-        return response()->json($result, $result['status'] === 'recorded' ? 201 : 200);
+        if ($result['status'] === 'recorded') {
+            /**
+             * Swipe enregistré ; `matched` vaut true quand l'autre personne avait déjà aimé.
+             *
+             * @status 201
+             *
+             * @body array{status: 'recorded', matched: bool, match_id?: string, conversation_id?: string}
+             */
+            return response()->json($result, 201);
+        }
+
+        /**
+         * Swipe déjà enregistré (rejeu) ; `match_id` et `conversation_id` sont présents si un match actif existe.
+         *
+         * @body array{status: 'already_swiped', matched: false, match_id?: string, conversation_id?: string}
+         */
+        return response()->json($result, 200);
     }
 
     /** Annule le dernier « dislike » (Premium, FR-C-6). */

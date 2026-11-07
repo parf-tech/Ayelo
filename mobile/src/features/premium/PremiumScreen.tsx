@@ -7,6 +7,7 @@ import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, ChoiceCard, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { getLegalLinks, openExternal } from '../legal/links';
+import { ManageSubscription } from './ManageSubscription';
 import { usePremium } from './PremiumProvider';
 import { usePurchase } from './usePurchase';
 
@@ -77,6 +78,11 @@ export function PremiumScreen() {
             message={dateText ? t('premium.active', { date: dateText }) : t('premium.activeNoDate')}
             style={{ marginBottom: space[3] }}
           />
+        ) : null}
+        {status?.premium ? (
+          <View style={{ marginBottom: space[3] }}>
+            <ManageSubscription testID="premium-manage" variant="button" store={status.subscription?.store} />
+          </View>
         ) : null}
         <View accessibilityRole="radiogroup" accessibilityLabel={t('premium.title')} style={{ gap: space[2] }}>
           {plans.map((plan) => (

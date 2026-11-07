@@ -50,7 +50,10 @@ afterEach(async () => {
 
 describe('S50 Paramètres', () => {
   it('liste les entrées et navigue vers chaque sous-écran', async () => {
-    installFakeApi({ 'GET /me': [200, ME] });
+    installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/status': [200, { premium: false, subscription: null, credits: { conversation: 0 } }],
+    } as never);
     await renderShell(<SettingsScreen />);
     const u = user();
     const targets: [string, string][] = [
@@ -72,8 +75,41 @@ describe('S50 Paramètres', () => {
     }
   });
 
+  it('abonné : « Gérer ou résilier mon abonnement » ouvre la page des abonnements de la boutique', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/status': [
+        200,
+        { premium: true, subscription: { product_id: 'premium_1m', status: 'active', period_end: '2026-12-15T00:00:00Z', store: 'google' }, credits: { conversation: 0 } },
+      ],
+    } as never);
+    await renderShell(<SettingsScreen />);
+    const row = await screen.findByTestId('settings-manage-subscription');
+    expect(row).toHaveProp('accessibilityLabel', 'Gérer ou résilier mon abonnement');
+    expect(screen.getByTestId('settings-manage-subscription-info')).toHaveTextContent(/fin de la période déjà payée/);
+    await user().press(row);
+    expect(openURL).toHaveBeenCalledWith('https://play.google.com/store/account/subscriptions');
+    openURL.mockRestore();
+  });
+
+  it('non abonné ou statut indisponible : pas de ligne de résiliation', async () => {
+    const fake = installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/status': [200, { premium: false, subscription: null, credits: { conversation: 0 } }],
+    } as never);
+    await renderShell(<SettingsScreen />);
+    await screen.findByTestId('settings-preferences');
+    await waitFor(() => expect(fake.called('GET /billing/status')).toHaveLength(1));
+    expect(screen.queryByTestId('settings-manage-subscription')).not.toBeOnTheScreen();
+  });
+
   it('se déconnecter : POST /auth/logout puis session effacée', async () => {
-    const fake = installFakeApi({ 'GET /me': [200, ME], 'POST /auth/logout': emptyBody() });
+    const fake = installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/status': [200, { premium: false, subscription: null, credits: { conversation: 0 } }],
+      'POST /auth/logout': emptyBody(),
+    } as never);
     await renderShell(<SettingsScreen />);
     await user().press(await screen.findByTestId('settings-logout'));
     await waitFor(() => expect(probe.auth()).toBe('signedOut'));

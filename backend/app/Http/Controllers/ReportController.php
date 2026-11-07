@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ReporterCredibility;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,16 +49,14 @@ class ReportController extends Controller
             return response()->json(['error' => ['code' => 'quota_reached', 'message' => 'Trop de signalements aujourd\'hui.']], 429);
         }
 
-        // Suspension automatique SEULEMENT si le signaleur a eu une interaction avec la personne (conversation) ou si
-        // un deuxième signaleur distinct s'ajoute en 7 jours. Sinon le signalement entre en file prioritaire sans
-        // suspendre : un compte jetable ne peut pas suspendre des inconnus en série. Compromis produit à confirmer
-        // par le propriétaire (specs/005, risque F-09).
-        $pair = [$me, $data['reported_id']];
-        sort($pair, SORT_STRING);
-        $interaction = DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->exists();
-        $otherMinorReporters = DB::table('reports')->where('reported_id', $data['reported_id'])->where('reason', 'minor_suspected')
-            ->where('reporter_id', '<>', $me)->where('created_at', '>=', now()->subDays(7))->distinct()->count('reporter_id');
-        $autoSuspend = $minor && ($interaction || $otherMinorReporters >= 1);
+        // Suspension automatique SEULEMENT si le signaleur est établi (compte de plus de safety.reporter_min_age_days jours,
+        // e-mail vérifié) ET qu'il a eu une interaction avec la personne (conversation ou match), ou qu'un deuxième
+        // signaleur CRÉDIBLE distinct (mêmes critères, avec interaction) s'est ajouté en 7 jours. Sinon le signalement
+        // entre en file prioritaire sans suspendre : deux comptes jetables ne suspendent plus un tiers (décision Q2-B,
+        // revue F-09). La file prioritaire (ReportResource) reste le filet.
+        $credibility = app(ReporterCredibility::class);
+        $autoSuspend = $minor && $credibility->isEstablished($me)
+            && ($credibility->hasInteraction($me, $data['reported_id']) || $credibility->otherCredibleMinorReporters($data['reported_id'], $me) >= 1);
 
         $id = (string) Str::uuid();
 
@@ -86,6 +85,9 @@ class ReportController extends Controller
                 $this->risk($data['reported_id'], 'minor_suspected', 50);
             }
         });
+
+        // Alerte si ce signaleur a un ratio signalements / confirmations anormal (journal + audit, décision Q2-B).
+        $credibility->alertIfAbnormal($me);
 
         return response()->json(['id' => $id, 'status' => 'received'], 201);
     }

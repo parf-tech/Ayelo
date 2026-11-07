@@ -21,6 +21,24 @@ class MediaModeration extends AdminService
         parent::__construct($audit);
     }
 
+    /**
+     * Aperçu d'un média de la file : l'URL signée (config media.read_ttl_minutes) n'est produite qu'ici, sur action explicite, et
+     * l'ouverture est journalisée (revue N-09, « media.preview »). Dans le journal : propriétaire et type, JAMAIS l'URL.
+     * Un selfie de vérification n'est jamais servi par ce chemin (droit et journal propres : VerificationReview::viewSelfie).
+     */
+    public function preview(StaffUser $actor, string $mediaId): string
+    {
+        return $this->audited($actor, Permissions::MEDIA_MODERATE, 'media.preview', 'media', $mediaId, function () use ($mediaId) {
+            $media = $this->pending($mediaId);
+
+            return new Change(
+                $this->storage->temporaryUrl($media->storage_key, (int) config('media.read_ttl_minutes', 10)),
+                null,
+                ['user_id' => $media->user_id, 'kind' => $media->kind, 'ttl_minutes' => (int) config('media.read_ttl_minutes', 10)],
+            );
+        });
+    }
+
     public function approve(StaffUser $actor, string $mediaId): void
     {
         $this->audited($actor, Permissions::MEDIA_MODERATE, 'media.approved', 'media', $mediaId, function () use ($actor, $mediaId) {

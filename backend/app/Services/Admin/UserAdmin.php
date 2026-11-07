@@ -85,9 +85,17 @@ class UserAdmin extends AdminService
         }
         $key = 'admin:'.($idempotencyKey ?? (string) Str::uuid());
 
+        // Plafond quotidien des crédits ajoutés par acteur (décision Q3-B, revue N-12) ; seuls les ajouts comptent.
+        if ($delta > 0) {
+            $this->enforceCap($actor, Permissions::CREDITS_ADJUST, 'credits', $userId, $delta, 'credits.adjusted', 'daily_credit_cap');
+        }
+
         $this->audited($actor, Permissions::CREDITS_ADJUST, 'credits.adjusted', 'users', $userId, function () use ($actor, $userId, $creditType, $delta, $note, $key) {
             // Verrou sur l'utilisateur : sérialise les ajustements concurrents (solde et unicité de la clé).
             $this->lockedUser($userId);
+            if ($delta > 0) {
+                $this->assertWithinCap($actor, 'credits', $delta, 'credits.adjusted', 'daily_credit_cap');
+            }
             if (DB::table('credit_ledger')->where('user_id', $userId)->where('idempotency_key', $key)->exists()) {
                 throw new DomainException('Cet ajustement a déjà été appliqué.');
             }
@@ -115,8 +123,13 @@ class UserAdmin extends AdminService
             throw new DomainException('La date de fin doit être dans le futur et à moins de '.self::MAX_PREMIUM_DAYS.' jours.');
         }
 
-        $this->audited($actor, Permissions::PREMIUM_GRANT, 'premium.granted', 'users', $userId, function () use ($actor, $userId, $end, $note) {
+        // Plafond quotidien des jours de Premium offerts par acteur (décision Q3-B, revue N-12).
+        $days = self::premiumDays($end);
+        $this->enforceCap($actor, Permissions::PREMIUM_GRANT, 'premium_days', $userId, $days, 'premium.granted', 'daily_premium_days_cap');
+
+        $this->audited($actor, Permissions::PREMIUM_GRANT, 'premium.granted', 'users', $userId, function () use ($actor, $userId, $end, $note, $days) {
             $this->lockedUser($userId);
+            $this->assertWithinCap($actor, 'premium_days', $days, 'premium.granted', 'daily_premium_days_cap');
             $id = (string) Str::uuid();
             DB::table('subscriptions')->insert([
                 'id' => $id, 'user_id' => $userId, 'store' => 'promotional', 'product_id' => 'premium_promo', 'status' => 'active',
@@ -124,7 +137,7 @@ class UserAdmin extends AdminService
                 'created_at' => now(), 'updated_at' => now(),
             ]);
 
-            return new Change(null, null, ['subscription_id' => $id, 'period_end' => $end->toIso8601String(), 'note' => $note]);
+            return new Change(null, null, ['subscription_id' => $id, 'period_end' => $end->toIso8601String(), 'days' => $days, 'note' => $note]);
         });
     }
 
@@ -143,6 +156,61 @@ class UserAdmin extends AdminService
 
             return new Change(null, ['status' => 'active', 'period_end' => $sub->period_end, 'user_id' => $sub->user_id], ['status' => 'expired', 'note' => $note]);
         });
+    }
+
+    /** Jours de Premium comptés pour une fin donnée (arrondi au jour supérieur, au moins 1). */
+    private static function premiumDays(\Illuminate\Support\Carbon $end): int
+    {
+        return max(1, (int) ceil(now()->diffInSeconds($end, true) / 86400));
+    }
+
+    /**
+     * Total déjà accordé par cet acteur sur 24 h glissantes, lu dans le journal d'audit (ajout seulement : une révocation
+     * ou une annulation ne libère pas le plafond). `credits` : somme des deltas positifs ; `premium_days` : somme des jours.
+     */
+    private function usedToday(StaffUser $actor, string $kind): int
+    {
+        $since = now()->subDay();
+        $q = DB::table('audit_logs')->where('actor_staff_id', $actor->id)->where('created_at', '>=', $since);
+
+        if ($kind === 'credits') {
+            return (int) $q->where('action', 'credits.adjusted')->whereRaw("(after->>'delta')::int > 0")->sum(DB::raw("(after->>'delta')::int"));
+        }
+
+        return (int) $q->where('action', 'premium.granted')->sum(DB::raw("coalesce((after->>'days')::int, 0)"));
+    }
+
+    /** Hors transaction : un refus doit laisser sa trace, ce que la transaction d'`audited()` annulerait. */
+    private function enforceCap(StaffUser $actor, string $permission, string $kind, string $userId, int $amount, string $attempted, string $configKey): void
+    {
+        Permissions::authorize($actor, $permission);
+
+        $cap = (int) config('admin.'.$configKey);
+        $used = $this->usedToday($actor, $kind);
+        if ($used + $amount > $cap) {
+            $this->audit->record($actor, 'admin.cap_exceeded', 'users', $userId, ['kind' => $kind, 'used_24h' => $used, 'cap' => $cap], ['requested' => $amount, 'attempted_action' => $attempted]);
+
+            throw new DomainException(self::capMessage($kind, $cap, $used));
+        }
+    }
+
+    /** Nouveau contrôle sous verrou, dans la transaction : ferme la course entre deux requêtes simultanées du même acteur. */
+    private function assertWithinCap(StaffUser $actor, string $kind, int $amount, string $attempted, string $configKey): void
+    {
+        DB::select('select pg_advisory_xact_lock(hashtext(?))', ['admin_cap:'.$actor->id]);
+
+        $cap = (int) config('admin.'.$configKey);
+        $used = $this->usedToday($actor, $kind);
+        if ($used + $amount > $cap) {
+            throw new DomainException(self::capMessage($kind, $cap, $used));
+        }
+    }
+
+    private static function capMessage(string $kind, int $cap, int $used): string
+    {
+        $what = $kind === 'credits' ? 'de crédits ajoutés' : 'de jours de Premium offerts';
+
+        return "Plafond quotidien atteint : {$cap} ".$what." par administrateur sur 24 heures (déjà {$used}).";
     }
 
     private function reason(string $text): string

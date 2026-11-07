@@ -20,7 +20,7 @@ class RiskEventsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return \App\Filament\Support\Staff::can(\App\Services\Admin\Permissions::USERS_VIEW);
+        return \App\Filament\Support\Staff::can(\App\Services\Admin\Permissions::USERS_MANAGE);
     }
 
     public function table(Table $table): Table

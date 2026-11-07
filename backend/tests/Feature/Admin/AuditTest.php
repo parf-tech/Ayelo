@@ -119,6 +119,9 @@ it('une action est impossible si le journal ne peut pas être écrit : tout est 
     $appeal = Seed::appeal($sanction, $u->id);
     $ticket = Seed::ticket($u->id);
 
+    // Approuver exige d'avoir ouvert le selfie : on l'ouvre AVANT de casser le journal.
+    app(\App\Services\Admin\VerificationReview::class)->viewSelfie($admin, $vr);
+
     app()->bind(Audit::class, fn () => new class extends Audit
     {
         public function record(?StaffUser $actor, string $action, ?string $subjectType = null, ?string $subjectId = null, ?array $before = null, ?array $after = null): void

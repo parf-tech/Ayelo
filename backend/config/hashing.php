@@ -8,14 +8,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls the default hash driver that will be used to hash
-    | passwords for your application. By default, the bcrypt algorithm is
-    | used; however, you remain free to modify this option if you wish.
+    | passwords for your application. Argon2id is the default (security
+    | review F-17); bcrypt stays available through HASH_DRIVER.
     |
     | Supported: "bcrypt", "argon", "argon2id"
     |
     */
 
-    'driver' => env('HASH_DRIVER', 'bcrypt'),
+    'driver' => env('HASH_DRIVER', 'argon2id'),
 
     /*
     |--------------------------------------------------------------------------

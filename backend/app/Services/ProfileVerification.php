@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * Vérification de profil par selfie guidé (FR-B-6). La décision est humaine (aucune comparaison automatique de visages,
@@ -48,7 +49,17 @@ class ProfileVerification
         });
 
         if ($media) {
-            $this->storage->delete($media->storage_key);
+            // Après la validation de la transaction la plus externe (celle de l'appelant, s'il y en a une) : un échec de validation
+            // ne doit jamais faire perdre le selfie d'une demande restée en attente.
+            DB::afterCommit(function () use ($media): void {
+                try {
+                    $this->storage->delete($media->storage_key);
+                } catch (Throwable $e) {
+                    // La décision est prise : l'objet reste à supprimer. Repéré par purge_after et repris par media:purge-pending.
+                    report($e);
+                    DB::table('media')->where('id', $media->id)->update(['purge_after' => now()]);
+                }
+            });
         }
     }
 }

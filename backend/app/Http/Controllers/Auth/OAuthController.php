@@ -52,7 +52,15 @@ class OAuthController extends Controller
             }
         } else {
             // Nouveau compte : contrôle d'âge et consentements obligatoires (FR-I-12, FR-I-14).
+            // Refus d'âge déjà mémorisé pour cet appareil/IP : on l'étend à l'identité sociale et à son e-mail (décision Q1-B) ;
+            // inversement, une identité déjà refusée l'est depuis n'importe quel appareil.
             if ($gate->isRefused($device, $request->ip())) {
+                $gate->rememberIdentity($identity->emailVerified ? $identity->email : null, $provider, $identity->subject);
+
+                return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
+            }
+
+            if ($gate->isSocialRefused($provider, $identity->subject) || ($identity->email !== null && $gate->isEmailRefused($identity->email))) {
                 return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
             }
 

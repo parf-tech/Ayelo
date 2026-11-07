@@ -91,7 +91,7 @@ Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage p
 
 **Recommandation : B maintenant, puis C avant le lancement public** (vague 1, décision E1). Une estimation d'âge par pièce d'identité ou par visage est à étudier séparément avec le juriste (matrice légale), car elle ajoute des données sensibles.
 
-**Décision du propriétaire :** option ______ (date : ______).
+**Décision du propriétaire :** option **B**, prise par délégation (« c'est toi l'expert »), conforme à la recommandation du CTO (date : 2026-11-07). L'option C (attestation d'appareil) reste à faire avant le lancement public.
 
 ### Q2 : F-09, suspension préventive par deux comptes jetables (risque résiduel Moyen)
 
@@ -105,7 +105,7 @@ Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage p
 
 **Recommandation : B**, combinée à un délai de traitement écrit pour la file prioritaire et à la réponse écrite aux autorités (spec 011 T008). La décision dépend aussi du budget de modération humaine (spec 011 T024), toujours non arrêté.
 
-**Décision du propriétaire :** option ______ (date : ______).
+**Décision du propriétaire :** option **B**, prise par délégation (« c'est toi l'expert »), conforme à la recommandation du CTO (date : 2026-11-07). Le délai de traitement de la file prioritaire (24 h) dépend du budget de modération (spec 011 T024), toujours à arrêter.
 
 ### Q3 : N-12, pas de double contrôle des actions sensibles de l'administration (risque Bas)
 
@@ -119,4 +119,8 @@ Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage p
 
 **Recommandation : B dès le lancement ; C seulement pour la réactivation d'un compte banni et dès qu'une deuxième personne a accès au panneau.** En attendant, l'accès au panneau reste limité par la liste blanche d'IP (`ADMIN_ALLOWED_IPS`) et la double authentification obligatoire.
 
-**Décision du propriétaire :** option ______ (date : ______).
+**Décision du propriétaire :** option **B**, prise par délégation (« c'est toi l'expert »), conforme à la recommandation du CTO (date : 2026-11-07). L'option C sera ajoutée quand une deuxième personne aura accès au panneau.
+
+### Q4 : quotas de médias (F-22)
+
+Valeurs retenues par délégation (2026-11-07), à réviser après la bêta : photos de profil 6 ouvertes et 12 dépôts par jour ; images de message 50 et 100 ; selfies de vérification 3 et 5 (`backend/config/media.php`).

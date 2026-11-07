@@ -3,11 +3,13 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
+import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Button, ListRow, ScreenContainer, Text } from '../../ui';
 import { LanguageToggle } from '../common/LanguageToggle';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { ManageSubscription } from '../premium/ManageSubscription';
 
 function Section({ title }: { title: string }) {
   const { space } = useTheme();
@@ -23,7 +25,10 @@ export function SettingsScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { space } = useTheme();
-  const { signOut } = useAuth();
+  const { api, signOut } = useAuth();
+  // Statut d'abonnement : seulement pour décider d'afficher « Gérer ou résilier » ; une erreur masque simplement la ligne.
+  const billing = useResource(() => api.billing.status(), [api]);
+  const subscribed = billing.data?.premium === true;
   const [loggingOut, setLoggingOut] = useState(false);
   const go = (path: string) => () => router.push(path as never);
 
@@ -42,6 +47,9 @@ export function SettingsScreen() {
       <Section title={t('settings.section.account')} />
       <ListRow testID="settings-preferences" label={t('settings.preferences')} onPress={go('/settings/preferences')} />
       <ListRow testID="settings-notifications" label={t('settings.notifications')} onPress={go('/settings/notifications')} />
+      {subscribed ? (
+        <ManageSubscription testID="settings-manage-subscription" variant="row" store={billing.data?.subscription?.store} />
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text variant="body" style={{ fontWeight: '600' }}>
           {t('settings.language')}

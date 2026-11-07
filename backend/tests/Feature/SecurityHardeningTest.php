@@ -291,14 +291,18 @@ it('F-08 : un événement pour un utilisateur encore inconnu est conservé puis 
 
 // ---------- F-09 : suspension par signalement « mineur » ----------
 
-it('F-09 : un inconnu ne suspend pas un compte, un second signaleur distinct oui', function () {
+it('F-09 : un inconnu ne suspend pas un compte, un signaleur crédible en interaction oui (décision Q2-B)', function () {
     [$target] = h_member();
-    [, $r1] = h_member();
-    [, $r2] = h_member();
+    [$u1, $r1] = h_member(['created_at' => now()->subDays(10)]);
+    [$u2, $r2] = h_member(['created_at' => now()->subDays(10)]);
 
     h_as($r1)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
     expect(User::find($target->id)->status)->toBe('active')->and((int) DB::table('reports')->max('priority'))->toBe(2);
 
+    $pair = [$u2->id, $target->id];
+    sort($pair, SORT_STRING);
+    DB::table('conversations')->insert(['id' => (string) Str::uuid(), 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $u2->id,
+        'unlocked_by' => 'credit', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
     h_as($r2)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
     expect(User::find($target->id)->status)->toBe('suspended');
 });

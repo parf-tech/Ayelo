@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  * Vérification de profil (FR-B-6) : la décision est humaine. Le selfie est une donnée biométrique :
  * - URL signée très courte, générée seulement sur action explicite ;
  * - chaque consultation est journalisée (l'URL elle-même n'est JAMAIS écrite dans le journal) ;
- * - la décision passe par ProfileVerification, qui supprime le selfie.
+ * - la décision passe par ProfileVerification, qui supprime le selfie après validation de la transaction.
  */
 class VerificationReview extends AdminService
 {
@@ -56,8 +56,12 @@ class VerificationReview extends AdminService
     }
 
     /**
-     * La ligne d'audit est écrite AVANT l'appel à ProfileVerification (qui supprime l'objet dans le stockage) :
-     * si le journal échoue, rien n'est supprimé ; si la suppression échoue, tout est annulé et la demande reste en attente.
+     * La ligne d'audit est écrite AVANT l'appel à ProfileVerification. Celui-ci ne supprime l'objet du stockage qu'APRÈS la validation
+     * de la transaction externe (DB::afterCommit) : si le journal ou la validation échoue, tout est annulé, la demande reste en attente
+     * et le selfie existe toujours (revue N-13). Une panne du stockage après validation est signalée et reprise par media:purge-pending.
+     *
+     * Approuver exige d'avoir ouvert le selfie (ligne « verification.selfie_viewed » du même acteur pour cette demande) : la décision
+     * ne peut pas être prise sans regarder, et l'ouverture exige elle-même le droit SELFIE_VIEW. Le rejet n'a pas cette exigence.
      */
     private function decide(StaffUser $actor, string $requestId, string $decision, ?string $reason): void
     {
@@ -65,6 +69,9 @@ class VerificationReview extends AdminService
 
         DB::transaction(function () use ($actor, $requestId, $decision, $reason) {
             $request = $this->pending($requestId);
+            if ($decision === 'approved' && ! $this->selfieOpenedBy($actor, $requestId)) {
+                throw new DomainException('Ouvrez le selfie (consultation journalisée) avant d\'approuver.');
+            }
             $this->audit->record(
                 $actor, 'verification.'.$decision, 'verification_requests', $requestId,
                 ['status' => 'pending', 'user_id' => $request->user_id],
@@ -77,6 +84,12 @@ class VerificationReview extends AdminService
                 $this->verification->reject($requestId, (string) $reason, $actor->id);
             }
         });
+    }
+
+    private function selfieOpenedBy(StaffUser $actor, string $requestId): bool
+    {
+        return DB::table('audit_logs')->where('action', 'verification.selfie_viewed')->where('actor_staff_id', $actor->getKey())
+            ->where('subject_type', 'verification_requests')->where('subject_id', $requestId)->exists();
     }
 
     private function pending(string $requestId): object

@@ -1,6 +1,6 @@
 // Types des requêtes et réponses de l'API v1 (alignés sur les contrôleurs du backend Laravel, routes sous /api/v1).
 // Les formes de requête et de réponse sont dérivées du contrat généré (./openapi.d.ts, via ./generated).
-// Là où le contrat est trop large ou incomplet, le type est corrigé localement avec Refine ; les écarts connus
+// Là où le contrat reste trop large ou incomplet, le type est corrigé localement avec Refine ; les écarts connus
 // sont signalés en commentaire. Les types sans opération dans le contrat restent écrits à la main.
 import type { Item, OpRequest, OpResponse, Refine } from './generated';
 
@@ -54,9 +54,8 @@ export type Session = Refine<
 
 export type ConsentKind = OpRequest<'account.consent'>['kind'];
 export type ConsentUpdate = OpRequest<'account.consent'>;
-// Le contrat décrit la réponse de GET /me/consents comme un tableau ; le serveur renvoie un objet indexé par type.
-export type ConsentState = { granted: boolean; version: string; since: string };
-export type ConsentsResponse = { data: Partial<Record<ConsentKind, ConsentState>> };
+export type ConsentsResponse = OpResponse<'account.consents'>; // objet indexé par type, seulement pour les types déjà décidés
+export type ConsentState = NonNullable<ConsentsResponse['data'][ConsentKind]>;
 
 export type DataExport = {
   id: string;
@@ -85,73 +84,42 @@ export const INTENTS: readonly Intent[] = [
 
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 
-export type MediaStatus = 'pending_upload' | 'processing' | 'approved' | 'rejected';
-export type ProfileMediaKind = 'profile_photo' | 'profile_video';
-export type UploadKind =
-  | ProfileMediaKind
-  | 'message_image'
-  | 'message_video'
-  | 'message_voice'
-  | 'verification_selfie';
-
 type PublicProfileWire = OpResponse<'publicProfile.show'>;
 
-/**
- * Média d'un profil. `status` n'est renseigné que pour le propriétaire ; `url` est nulle tant que le média n'est pas lisible.
- * Le contrat type `kind` et `status` en string et `position` en string (le serveur envoie un entier).
- */
-export type ProfileMedia = Refine<
-  Item<PublicProfileWire['media']>,
-  { kind: ProfileMediaKind; position: number; status: MediaStatus | null }
->;
+/** Média d'un profil. `status` n'est renseigné que pour le propriétaire ; `url` est nulle tant que le média n'est pas lisible. */
+export type ProfileMedia = Item<PublicProfileWire['media']>;
+export type MediaStatus = NonNullable<ProfileMedia['status']>;
+export type ProfileMediaKind = ProfileMedia['kind'];
 
 /**
- * Profil public (autres utilisateurs). Le contrat type `age` en string (le serveur envoie un entier) et réduit
- * `gender` et `intent` à string ; `last_seen_at` reste facultatif côté application.
+ * Types déposables via POST /media/upload-url : le backend n'ouvre que la photo de profil, l'image de message et le
+ * selfie de vérification (config media.kinds). Vidéos et notes vocales restent fermées.
  */
-export type PublicProfile = Refine<
-  PublicProfileWire,
-  { age: number; gender: Gender; intent: Intent; media: ProfileMedia[]; last_seen_at?: string | null }
->;
+export type UploadKind = OpRequest<'media.uploadUrl'>['kind'];
 
-/** Profil du propriétaire (GET /me, PUT /me/profile). Le contrat omet les champs de confidentialité et de vérification. */
-export type SelfProfile = PublicProfile & {
-  is_visible: boolean;
-  hide_distance: boolean;
-  hide_last_seen: boolean;
-  verification_status: VerificationStatus;
-};
+/** Profil public (autres utilisateurs). `last_seen_at` est absent quand la personne le masque. */
+export type PublicProfile = PublicProfileWire;
 
 type MeWire = OpResponse<'profile.me'>;
 
+/** Profil du propriétaire (GET /me, PUT /me/profile) : s'y ajoutent confidentialité et vérification. */
+export type SelfProfile = NonNullable<MeWire['profile']>;
+
 export type Credits = MeWire['credits'];
 
-/** GET /me. Le contrat type `age` en string et ne décrit pas les champs de confidentialité du profil. */
-export type Me = Refine<MeWire, { email: string; locale: ApiLocale; age: number; profile: SelfProfile | null }>;
+/** GET /me. Le contrat type `email` comme nullable (compte sans e-mail) ; l'application attend toujours une adresse. */
+export type Me = Refine<MeWire, { email: string }>;
 
 /** Utilisateur de la session : { id, email, locale } après connexion, puis GET /me complet. */
 export type AuthUser = User & Partial<Omit<Me, keyof User>>;
 
-/** Le contrat décrit les listes de GET /me/preferences en unknown[] et les nombres en string. */
-export type Preferences = Refine<
-  OpResponse<'profile.preferences'>,
-  {
-    seeking_genders: Gender[];
-    age_min: number;
-    age_max: number;
-    countries: string[];
-    origins: string[];
-    intents: Intent[];
-    max_distance_km: number | null;
-  }
->;
+export type Preferences = OpResponse<'profile.preferences'>;
 
 export type PrivacyInput = OpRequest<'profile.privacy'>;
 
-/** Le contrat ne liste que photo de profil, image de message et selfie ; l'application envoie aussi vidéos et notes vocales. */
-export type UploadUrlRequest = Refine<OpRequest<'media.uploadUrl'>, { kind: UploadKind; duration_seconds?: number }>;
+export type UploadUrlRequest = OpRequest<'media.uploadUrl'>;
 export type UploadUrlResponse = OpResponse<'media.uploadUrl', 201>;
-export type MediaCompleteResponse = Refine<OpResponse<'media.complete'>, { status: MediaStatus }>;
+export type MediaCompleteResponse = OpResponse<'media.complete'>;
 
 export type VerificationPose = OpResponse<'verification.pose'>;
 export type VerificationRequestStatus = 'pending' | 'approved' | 'rejected';
@@ -169,7 +137,7 @@ export type VerificationStartResponse = OpResponse<'verification.store', 201>;
 
 // ---- Découverte ---------------------------------------------------------------------------------
 
-/** Filtres de GET /discover. Les tableaux sont envoyés sous la forme countries[]=FR. */
+/** Filtres de GET /discover. Les tableaux sont envoyés sous la forme countries[]=FR (le contrat les nomme `countries[]`). */
 export type DiscoverFilters = {
   age_min?: number;
   age_max?: number;
@@ -181,18 +149,16 @@ export type DiscoverFilters = {
   limit?: number;
 };
 
+/** Réponse de GET /discover (opération `discovery` du contrat). */
+export type DiscoverResponse = OpResponse<'discovery'>;
+
 export type SwipeRequest = OpRequest<'swipe.store'>;
 export type SwipeAction = SwipeRequest['action'];
-// Le contrat décrit la réponse de POST /swipes comme une chaîne : SwipeResult reste écrit à la main.
-export type SwipeResult = {
-  status: 'recorded' | 'already_swiped';
-  matched: boolean;
-  match_id?: string;
-  conversation_id?: string;
-};
+/** 201 : swipe enregistré ; 200 : swipe déjà enregistré (rejeu). */
+export type SwipeResult = OpResponse<'swipe.store', 201> | OpResponse<'swipe.store', 200>;
 export type UndoSwipeResult = OpResponse<'swipe.undo'>;
 
-export type Match = Refine<Item<OpResponse<'match.index'>['data']>, { profile: PublicProfile | null }>;
+export type Match = Item<OpResponse<'match.index'>['data']>;
 
 export type Block = { user_id: string; display_name: string; created_at: string };
 
@@ -223,17 +189,12 @@ export type SupportTicketCreated = { id: string; status: string };
 
 // ---- Messagerie ---------------------------------------------------------------------------------
 
-export type MessageType = 'text' | 'image' | 'video' | 'voice' | 'call_missed' | 'deleted';
-export type SendableMessageType = 'text' | 'image' | 'video' | 'voice';
-
-/** Le contrat type delivered_at et read_at en string (ils sont nuls tant que le message n'est ni remis ni lu). */
-export type Message = Refine<
-  Item<OpResponse<'message.index'>['data']>,
-  { type: MessageType | string; delivered_at: string | null; read_at: string | null }
-> & {
+/** `type` vaut « deleted » quand l'expéditeur a supprimé le message (contenu masqué). */
+export type Message = Item<OpResponse<'message.index'>['data']> & {
   /** Renseigné sur la réponse d'envoi quand le serveur détecte une demande d'argent. */
-  safety_hint?: 'money_request' | string;
+  safety_hint?: NonNullable<OpResponse<'message.store', 201>['safety_hint']>;
 };
+export type MessageType = Message['type'];
 
 export type ConversationStatus = 'active' | 'blocked' | 'archived' | string;
 
@@ -241,19 +202,15 @@ type ConversationWire = Item<OpResponse<'conversation.index'>['data']>;
 
 export type ConversationLastMessage = NonNullable<ConversationWire['last_message']>;
 
-export type Conversation = Refine<
-  ConversationWire,
-  { status: ConversationStatus; last_message: ConversationLastMessage | null; profile: PublicProfile | null }
->;
+/** Le contrat de GET /conversations type `status` en string. */
+export type Conversation = Refine<ConversationWire, { status: ConversationStatus }>;
 
-// Le contrat annonce id: string | null à la création (201) ; l'application attend toujours un identifiant.
-export type OpenConversationResponse = Refine<OpResponse<'conversation.store'>, { id: string; status: ConversationStatus }>;
+/** 201 : conversation créée ; 200 : conversation déjà ouverte avec cette personne. */
+export type OpenConversationResponse = OpResponse<'conversation.store', 201> | OpResponse<'conversation.store', 200>;
 
-/** Le contrat n'accepte que « text » et « image » ; l'application type aussi video et voice (SendableMessageType). */
-export type SendMessageRequest = Refine<
-  OpRequest<'message.store'>,
-  { type: SendableMessageType; body?: string; media_id?: string }
->;
+/** Le backend n'accepte que « text » et « image » à l'envoi (vidéos et notes vocales : spec 012). */
+export type SendMessageRequest = OpRequest<'message.store'>;
+export type SendableMessageType = SendMessageRequest['type'];
 
 // ---- Appels -------------------------------------------------------------------------------------
 

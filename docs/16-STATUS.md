@@ -6,7 +6,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe 
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16.15) | **260 tests Pest, 0 échec** (exécution du CTO, deuxième ronde de revue de sécurité incluse ; le nombre d'assertions n'a pas été relevé à nouveau) |
+| Tests backend (Pest, PostgreSQL 16.15) | **333 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 2114 assertions** (exécution du 2026-11-07, revues de sécurité 1 et 2, décisions Q1 à Q3 et lot de la checklist backend inclus) |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
 | CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
 | Contrôle de secrets (gitleaks, historique complet) | **exécuté uniquement par la CI** (workflow `schema`), jamais en local (binaire absent du poste, téléchargement non autorisé). Dernier résultat connu : propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__`. À rejouer sur l'historique du commit final |
@@ -38,7 +38,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe 
 
 | lot | responsable | état |
 | --- | --- | --- |
-| Administration Filament | livrée côté code (suite de 260 tests Pest) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
+| Administration Filament | livrée côté code (suite de 333 tests Pest) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
 | Écrans mobiles de la phase 2 | livrés côté code (300 tests) ; jamais vus sur appareil | voir spec 010 |
 
 ## Non fait
@@ -51,7 +51,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe 
 | Transcodage vidéo | sans objet tant que les vidéos de profil ne sont pas ouvertes |
 | Redis en production | configuré dans le code (Predis) mais jamais exécuté contre un vrai Redis |
 | i18n côté serveur au-delà des e-mails | seuls les e-mails sont traduits (fr, en) ; les messages d'API sont en français |
-| Contrat OpenAPI | produit : `docs/openapi.json` (67 opérations), vérifié à jour par la CI ; types TypeScript générés et utilisés par la couche API du mobile (`mobile/src/api/generated.ts`, authentification, profil, découverte, messages) ; écarts de la spec relevés dans les commentaires (enums en `string`, `POST /swipes` typé `string`, types de message et de média incomplets) |
+| Contrat OpenAPI | produit : `docs/openapi.json` (67 opérations), vérifié à jour par la CI ; types TypeScript générés et utilisés par la couche API du mobile (`mobile/src/api/generated.ts`, authentification, profil, découverte, messages) ; écarts de la spec corrigés à la source (annotations des contrôleurs et du présentateur de profil : réponse de `POST /swipes`, énumérations de profil, de message et de média, préférences, consentements, création de conversation) ; restent des surcharges locales `Refine` pour `platform`, `locale` des routes d'authentification, `Conversation.status` et `Me.email` ; la génération de `docs/openapi.json` demande une base PostgreSQL (extension `pdo_pgsql`) ou, à défaut, une base SQLite vide dotée des tables `users`, `profiles` et `media` |
 
 ## Non vérifié (écrit mais jamais exécuté)
 

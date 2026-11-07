@@ -63,7 +63,9 @@ it('donne un aperçu par URL signée', function () {
     $u = Seed::user();
     $m = Seed::media($u->id, 'profile_photo', 'processing', 'u/x/p.jpg');
 
-    Livewire::test(ListMediaItems::class)->assertTableActionHasUrl('preview', 'https://storage.test/get/u/x/p.jpg?ttl=10', \App\Filament\Models\MediaItem::find($m));
+    // L'URL n'est plus produite à l'affichage : seulement au clic, avec une ligne d'audit (voir SecurityHardeningRound4Test).
+    Livewire::test(ListMediaItems::class)->callTableAction('preview', \App\Filament\Models\MediaItem::find($m))->assertNotified('Aperçu journalisé.');
+    expect(Seed::audit('media.preview')->subject_id)->toBe($m);
 });
 
 it('refuse de traiter deux fois un média ou un selfie de vérification, sans audit', function () {
@@ -288,7 +290,8 @@ it('approuve une vérification : badge vérifié, selfie supprimé, audit', func
     [$req, $media] = Seed::verification($u->id);
     $this->storage->simulateUpload("u/{$u->id}/selfie.jpg", 10, 'image/jpeg');
 
-    Livewire::test(\App\Filament\Resources\VerificationRequestResource\Pages\ViewVerificationRequest::class, ['record' => $req])->callAction('approve');
+    // Approuver exige d'avoir ouvert le selfie.
+    Livewire::test(\App\Filament\Resources\VerificationRequestResource\Pages\ViewVerificationRequest::class, ['record' => $req])->callAction('show_selfie')->callAction('approve');
 
     expect(DB::table('verification_requests')->find($req))->toMatchArray(['status' => 'approved', 'reviewed_by' => $this->mod->id]);
     expect(DB::table('profiles')->where('user_id', $u->id)->value('verification_status'))->toBe('verified');
@@ -315,6 +318,7 @@ it('ne traite pas deux fois une vérification et exige un motif de rejet', funct
     $svc = app(\App\Services\Admin\VerificationReview::class);
 
     expect(fn () => $svc->reject($this->mod, $req, ''))->toThrow(DomainException::class);
+    $svc->viewSelfie($this->mod, $req);
     $svc->approve($this->mod, $req);
     expect(fn () => $svc->approve($this->mod, $req))->toThrow(DomainException::class);
     expect(fn () => $svc->viewSelfie($this->mod, $req))->toThrow(DomainException::class);

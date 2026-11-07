@@ -1,4 +1,5 @@
 #!/bin/sh
+# OBSOLÈTE : remplacé par infra/scripts/backup.sh (format custom, SHA-256, rétention). Plus utilisé par le compose ; à supprimer.
 # Sauvegarde quotidienne chiffrée de PostgreSQL vers un bucket S3 compatible (R2). Rétention : règles du bucket.
 # Non exécuté sur le poste de développement : à tester sur le serveur, puis TESTER LA RESTAURATION (runbook).
 set -eu

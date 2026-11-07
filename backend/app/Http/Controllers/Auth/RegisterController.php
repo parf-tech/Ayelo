@@ -21,6 +21,13 @@ class RegisterController extends Controller
         $device = DeviceId::from($request);
 
         if ($gate->isRefused($device, $request->ip())) {
+            // Refus d'âge en vigueur : l'e-mail présenté est mémorisé à son tour (HMAC), pour qu'un autre appareil ou une autre
+            // IP avec la même adresse ne contourne pas le refus (revue F-02, décision Q1-B).
+            $email = $request->input('email');
+            if (is_string($email) && strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $gate->rememberIdentity($email);
+            }
+
             return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
         }
 
@@ -39,7 +46,7 @@ class RegisterController extends Controller
         ]);
 
         // Un e-mail associé à un compte sanctionné puis supprimé ne peut pas se réinscrire (revue F-16).
-        if (\App\Services\BannedIdentifiers::has('email', $data['email'])) {
+        if (\App\Services\BannedIdentifiers::has('email', $data['email']) || $gate->isEmailRefused($data['email'])) {
             return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
         }
 

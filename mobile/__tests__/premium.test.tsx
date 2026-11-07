@@ -1,6 +1,7 @@
 import { act, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { ExecutionEnvironment } from 'expo-constants';
 import React from 'react';
+import { Linking } from 'react-native';
 import { createPurchaseProvider } from '../src/billing/createPurchaseProvider';
 import {
   type ProductKind,
@@ -10,6 +11,7 @@ import {
   type StoreProduct,
   UnavailablePurchaseProvider,
 } from '../src/billing/purchaseProvider';
+import { APP_STORE_SUBSCRIPTIONS_URL, PLAY_STORE_SUBSCRIPTIONS_URL, subscriptionsUrl } from '../src/features/premium/ManageSubscription';
 import { CreditsScreen } from '../src/features/premium/CreditsScreen';
 import { PremiumScreen } from '../src/features/premium/PremiumScreen';
 import { isPurchaseConfirmed, MAX_ATTEMPTS, POLL_INTERVAL_MS, PurchaseResultScreen } from '../src/features/premium/PurchaseResultScreen';
@@ -243,6 +245,68 @@ describe('S30 Offres Premium', () => {
     fake.set('GET /billing/offers', [200, OFFERS]);
     await user().press(screen.getByTestId('async-retry'));
     expect(await screen.findByTestId('plan-premium_1m')).toBeOnTheScreen();
+  });
+});
+
+describe("Gérer ou résilier l'abonnement", () => {
+  const activeStatus = (store: string) => ({
+    premium: true,
+    subscription: { product_id: 'premium_1m', status: 'active', period_end: '2026-12-15T00:00:00Z', store },
+    credits: { conversation: 0 },
+  });
+  const apiFor = (status: unknown) =>
+    installFakeApi({ 'GET /me': [200, ME], 'GET /billing/offers': [200, OFFERS], 'GET /billing/status': [200, status] } as never);
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("subscriptionsUrl : boutique de l'abonnement, sinon plateforme de l'appareil", () => {
+    expect(subscriptionsUrl('apple', 'android')).toBe(APP_STORE_SUBSCRIPTIONS_URL);
+    expect(subscriptionsUrl('google', 'ios')).toBe(PLAY_STORE_SUBSCRIPTIONS_URL);
+    expect(subscriptionsUrl(null, 'ios')).toBe('https://apps.apple.com/account/subscriptions');
+    expect(subscriptionsUrl(undefined, 'android')).toBe('https://play.google.com/store/account/subscriptions');
+  });
+
+  it('abonné : bouton visible avec explication claire, ouvre la page des abonnements de la boutique', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    apiFor(activeStatus('apple'));
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    const button = await screen.findByTestId('premium-manage');
+    expect(button).toHaveProp('accessibilityLabel', 'Gérer ou résilier mon abonnement');
+    expect(screen.getByTestId('premium-manage-info')).toHaveTextContent(/fin de la période déjà payée/);
+    await user().press(button);
+    expect(openURL).toHaveBeenCalledWith('https://apps.apple.com/account/subscriptions');
+  });
+
+  it('abonnement Google Play : ouvre la page des abonnements Google Play', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    apiFor(activeStatus('google'));
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await user().press(await screen.findByTestId('premium-manage'));
+    expect(openURL).toHaveBeenCalledWith('https://play.google.com/store/account/subscriptions');
+  });
+
+  it('en anglais : libellé et explication traduits', async () => {
+    apiFor(activeStatus('apple'));
+    await renderShell(<PremiumScreen />, { premium: new FakeStore(), locale: 'en' });
+    expect(await screen.findByTestId('premium-manage')).toHaveProp('accessibilityLabel', 'Manage or cancel my subscription');
+    expect(screen.getByTestId('premium-manage-info')).toHaveTextContent(/end of the period you already paid for/);
+  });
+
+  it("échec d'ouverture : message clair, sans plantage", async () => {
+    jest.spyOn(Linking, 'openURL').mockRejectedValue(new Error('no handler'));
+    apiFor(activeStatus('apple'));
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await user().press(await screen.findByTestId('premium-manage'));
+    expect(await screen.findByText(/Impossible d’ouvrir la boutique/)).toBeOnTheScreen();
+  });
+
+  it('non abonné : aucun bouton de gestion', async () => {
+    apiFor(STATUS_FREE);
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await screen.findByTestId('plan-premium_1m');
+    expect(screen.queryByTestId('premium-manage')).not.toBeOnTheScreen();
   });
 });
 

@@ -35,7 +35,7 @@ export function PhotosManager({ onChange }: Props) {
   const photos = useMemo<ProfileMedia[]>(
     () =>
       (me.data?.profile?.media ?? [])
-        .filter((m) => m.kind === 'profile_photo' && m.status !== 'rejected')
+        .filter((m) => m.kind === 'profile_photo')
         .sort((a, b) => a.position - b.position),
     [me.data],
   );

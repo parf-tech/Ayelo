@@ -135,6 +135,11 @@ class MediaController extends Controller
         $media->status = config('media.auto_approve') ? 'approved' : 'processing';
         $media->save();
 
+        /**
+         * `processing` : en file de revue humaine ; `approved` : approbation automatique (développement local).
+         *
+         * @body array{media_id: string, status: 'processing'|'approved'}
+         */
         return response()->json(['media_id' => $media->id, 'status' => $media->status]);
     }
 

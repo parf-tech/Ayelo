@@ -144,6 +144,12 @@ class AccountController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * État courant par type de consentement : un objet indexé par type, présent seulement pour les types déjà décidés.
+     * `since` est la date de la dernière décision.
+     *
+     * @response array{data: array{terms?: array{granted: bool, version: string, since: string}, privacy?: array{granted: bool, version: string, since: string}, sensitive_data?: array{granted: bool, version: string, since: string}, location?: array{granted: bool, version: string, since: string}, marketing?: array{granted: bool, version: string, since: string}, verification_biometric?: array{granted: bool, version: string, since: string}}}
+     */
     public function consents(Request $request): JsonResponse
     {
         $rows = DB::table('user_consents')->where('user_id', $request->user()->id)->orderByDesc('created_at')->get(['kind', 'version', 'granted', 'created_at']);

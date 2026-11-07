@@ -96,6 +96,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * État courant par type de consentement : un objet indexé par type, présent seulement pour les types déjà décidés.
+         *     `since` est la date de la dernière décision
+         */
         get: operations["account.consents"];
         put?: never;
         /** Enregistre ou retire un consentement (historique conservé : une ligne par décision) */
@@ -1092,27 +1096,36 @@ export interface operations {
                         id: string;
                         email: string | null;
                         email_verified: boolean;
-                        locale: string;
-                        age: string;
+                        /** @enum {string} */
+                        locale: "fr" | "en";
+                        age: number;
                         profile: {
                             user_id: string;
                             display_name: string;
-                            age: string;
-                            gender: string;
+                            age: number;
+                            /** @enum {string} */
+                            gender: "man" | "woman" | "other";
                             origin_country: string;
                             residence_country: string;
                             city: string | null;
                             bio: string | null;
-                            intent: string;
+                            /** @enum {string} */
+                            intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                             verified: boolean;
                             media: {
                                 id: string;
-                                kind: string;
-                                position: string;
-                                status: string | null;
+                                /** @enum {string} */
+                                kind: "profile_photo" | "profile_video";
+                                position: number;
+                                /** @enum {string|null} */
+                                status: "pending_upload" | "processing" | "approved" | null;
                                 url: string | null;
                             }[];
-                            last_seen_at: string | null;
+                            is_visible: boolean;
+                            hide_distance: boolean;
+                            hide_last_seen: boolean;
+                            /** @enum {string} */
+                            verification_status: "none" | "pending" | "verified" | "rejected";
                         } | null;
                         credits: {
                             conversation: number;
@@ -1263,10 +1276,37 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
-                            granted: boolean;
-                            version: string;
-                            since: string;
-                        }[];
+                            terms?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                            privacy?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                            sensitive_data?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                            location?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                            marketing?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                            verification_biometric?: {
+                                granted: boolean;
+                                version: string;
+                                since: string;
+                            };
+                        };
                     };
                 };
             };
@@ -1868,22 +1908,26 @@ export interface operations {
                             profile: {
                                 user_id: string;
                                 display_name: string;
-                                age: string;
-                                gender: string;
+                                age: number;
+                                /** @enum {string} */
+                                gender: "man" | "woman" | "other";
                                 origin_country: string;
                                 residence_country: string;
                                 city: string | null;
                                 bio: string | null;
-                                intent: string;
+                                /** @enum {string} */
+                                intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                                 verified: boolean;
                                 media: {
                                     id: string;
-                                    kind: string;
-                                    position: string;
-                                    status: string | null;
+                                    /** @enum {string} */
+                                    kind: "profile_photo" | "profile_video";
+                                    position: number;
+                                    /** @enum {string|null} */
+                                    status: "pending_upload" | "processing" | "approved" | null;
                                     url: string | null;
                                 }[];
-                                last_seen_at: string | null;
+                                last_seen_at?: string | null;
                             } | null;
                         }[];
                     };
@@ -1908,6 +1952,7 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Conversation déjà ouverte avec cette personne (aucun crédit dépensé). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1915,17 +1960,19 @@ export interface operations {
                 content: {
                     "application/json": {
                         id: string;
-                        status: string;
+                        /** @enum {string} */
+                        status: "active" | "blocked" | "archived";
                     };
                 };
             };
+            /** @description Conversation créée. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        id: string | null;
+                        id: string;
                         /** @constant */
                         status: "active";
                     };
@@ -2070,22 +2117,26 @@ export interface operations {
                         data: {
                             user_id: string;
                             display_name: string;
-                            age: string;
-                            gender: string;
+                            age: number;
+                            /** @enum {string} */
+                            gender: "man" | "woman" | "other";
                             origin_country: string;
                             residence_country: string;
                             city: string | null;
                             bio: string | null;
-                            intent: string;
+                            /** @enum {string} */
+                            intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                             verified: boolean;
                             media: {
                                 id: string;
-                                kind: string;
-                                position: string;
-                                status: string | null;
+                                /** @enum {string} */
+                                kind: "profile_photo" | "profile_video";
+                                position: number;
+                                /** @enum {string|null} */
+                                status: "pending_upload" | "processing" | "approved" | null;
                                 url: string | null;
                             }[];
-                            last_seen_at: string | null;
+                            last_seen_at?: string | null;
                         }[];
                         next_cursor: string | null;
                     };
@@ -2239,6 +2290,21 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "rate_limited";
+                            /** @constant */
+                            message: "Trop de tentatives. Réessayez plus tard.";
+                        };
+                    };
+                };
+            };
         };
     };
     "auth.logout": {
@@ -2282,22 +2348,26 @@ export interface operations {
                             profile: {
                                 user_id: string;
                                 display_name: string;
-                                age: string;
-                                gender: string;
+                                age: number;
+                                /** @enum {string} */
+                                gender: "man" | "woman" | "other";
                                 origin_country: string;
                                 residence_country: string;
                                 city: string | null;
                                 bio: string | null;
-                                intent: string;
+                                /** @enum {string} */
+                                intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                                 verified: boolean;
                                 media: {
                                     id: string;
-                                    kind: string;
-                                    position: string;
-                                    status: string | null;
+                                    /** @enum {string} */
+                                    kind: "profile_photo" | "profile_video";
+                                    position: number;
+                                    /** @enum {string|null} */
+                                    status: "pending_upload" | "processing" | "approved" | null;
                                     url: string | null;
                                 }[];
-                                last_seen_at: string | null;
+                                last_seen_at?: string | null;
                             } | null;
                         }[];
                     };
@@ -2378,6 +2448,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description `processing` : en file de revue humaine ; `approved` : approbation automatique (développement local). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2385,7 +2456,8 @@ export interface operations {
                 content: {
                     "application/json": {
                         media_id: string;
-                        status: string;
+                        /** @enum {string} */
+                        status: "processing" | "approved";
                     };
                 };
             };
@@ -2504,11 +2576,12 @@ export interface operations {
                             conversation_id: string;
                             sender_id: string;
                             client_id: string;
-                            type: string | "deleted";
+                            /** @enum {string} */
+                            type: "text" | "image" | "video" | "voice" | "gift" | "call_missed" | "system" | "deleted";
                             body: string | null;
                             media_id: string | null;
-                            delivered_at: string;
-                            read_at: string;
+                            delivered_at: string | null;
+                            read_at: string | null;
                             created_at: string;
                         }[];
                         next_cursor: string | null;
@@ -2553,21 +2626,37 @@ export interface operations {
                         conversation_id: string;
                         sender_id: string;
                         client_id: string;
-                        type: string | "deleted";
+                        /** @enum {string} */
+                        type: "text" | "image" | "video" | "voice" | "gift" | "call_missed" | "system" | "deleted";
                         body: string | null;
                         media_id: string | null;
-                        delivered_at: string;
-                        read_at: string;
+                        delivered_at: string | null;
+                        read_at: string | null;
                         created_at: string;
                     };
                 };
             };
+            /** @description Message créé ; `safety_hint` apparaît quand un texte ressemble à une demande d'argent. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown[];
+                    "application/json": {
+                        id: string;
+                        conversation_id: string;
+                        sender_id: string;
+                        client_id: string;
+                        /** @enum {string} */
+                        type: "text" | "image";
+                        body: string | null;
+                        media_id: string | null;
+                        delivered_at: string | null;
+                        read_at: string | null;
+                        created_at: string;
+                        /** @constant */
+                        safety_hint?: "money_request";
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -2850,7 +2939,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": {
+                        id: string;
+                        email: string | null;
+                        email_verified: boolean;
+                        /** @enum {string} */
+                        locale: "fr" | "en";
+                        age: number;
+                        profile: {
+                            user_id: string;
+                            display_name: string;
+                            age: number;
+                            /** @enum {string} */
+                            gender: "man" | "woman" | "other";
+                            origin_country: string;
+                            residence_country: string;
+                            city: string | null;
+                            bio: string | null;
+                            /** @enum {string} */
+                            intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
+                            verified: boolean;
+                            media: {
+                                id: string;
+                                /** @enum {string} */
+                                kind: "profile_photo" | "profile_video";
+                                position: number;
+                                /** @enum {string|null} */
+                                status: "pending_upload" | "processing" | "approved" | null;
+                                url: string | null;
+                            }[];
+                            is_visible: boolean;
+                            hide_distance: boolean;
+                            hide_last_seen: boolean;
+                            /** @enum {string} */
+                            verification_status: "none" | "pending" | "verified" | "rejected";
+                        } | null;
+                        credits: {
+                            conversation: number;
+                            proposal: number;
+                            coin: number;
+                        };
+                        premium: boolean;
+                    };
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        email: string | null;
+                        email_verified: boolean;
+                        /** @enum {string} */
+                        locale: "fr" | "en";
+                        age: number;
+                        profile: {
+                            user_id: string;
+                            display_name: string;
+                            age: number;
+                            /** @enum {string} */
+                            gender: "man" | "woman" | "other";
+                            origin_country: string;
+                            residence_country: string;
+                            city: string | null;
+                            bio: string | null;
+                            /** @enum {string} */
+                            intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
+                            verified: boolean;
+                            media: {
+                                id: string;
+                                /** @enum {string} */
+                                kind: "profile_photo" | "profile_video";
+                                position: number;
+                                /** @enum {string|null} */
+                                status: "pending_upload" | "processing" | "approved" | null;
+                                url: string | null;
+                            }[];
+                            is_visible: boolean;
+                            hide_distance: boolean;
+                            hide_last_seen: boolean;
+                            /** @enum {string} */
+                            verification_status: "none" | "pending" | "verified" | "rejected";
+                        } | null;
+                        credits: {
+                            conversation: number;
+                            proposal: number;
+                            coin: number;
+                        };
+                        premium: boolean;
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -2883,27 +3062,36 @@ export interface operations {
                         id: string;
                         email: string | null;
                         email_verified: boolean;
-                        locale: string;
-                        age: string;
+                        /** @enum {string} */
+                        locale: "fr" | "en";
+                        age: number;
                         profile: {
                             user_id: string;
                             display_name: string;
-                            age: string;
-                            gender: string;
+                            age: number;
+                            /** @enum {string} */
+                            gender: "man" | "woman" | "other";
                             origin_country: string;
                             residence_country: string;
                             city: string | null;
                             bio: string | null;
-                            intent: string;
+                            /** @enum {string} */
+                            intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                             verified: boolean;
                             media: {
                                 id: string;
-                                kind: string;
-                                position: string;
-                                status: string | null;
+                                /** @enum {string} */
+                                kind: "profile_photo" | "profile_video";
+                                position: number;
+                                /** @enum {string|null} */
+                                status: "pending_upload" | "processing" | "approved" | null;
                                 url: string | null;
                             }[];
-                            last_seen_at: string | null;
+                            is_visible: boolean;
+                            hide_distance: boolean;
+                            hide_last_seen: boolean;
+                            /** @enum {string} */
+                            verification_status: "none" | "pending" | "verified" | "rejected";
                         } | null;
                         credits: {
                             conversation: number;
@@ -2942,14 +3130,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        seeking_genders: unknown[];
-                        age_min: string | 18;
-                        age_max: string | 99;
-                        countries: unknown[];
-                        origins: unknown[];
-                        intents: unknown[];
+                        seeking_genders: ("man" | "woman" | "other")[];
+                        age_min: number;
+                        age_max: number;
+                        countries: string[];
+                        origins: string[];
+                        intents: ("marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out")[];
                         verified_only: boolean;
-                        max_distance_km: string | null;
+                        max_distance_km: number | null;
                     };
                 };
             };
@@ -2976,22 +3164,26 @@ export interface operations {
                     "application/json": {
                         user_id: string;
                         display_name: string;
-                        age: string;
-                        gender: string;
+                        age: number;
+                        /** @enum {string} */
+                        gender: "man" | "woman" | "other";
                         origin_country: string;
                         residence_country: string;
                         city: string | null;
                         bio: string | null;
-                        intent: string;
+                        /** @enum {string} */
+                        intent: "marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out";
                         verified: boolean;
                         media: {
                             id: string;
-                            kind: string;
-                            position: string;
-                            status: string | null;
+                            /** @enum {string} */
+                            kind: "profile_photo" | "profile_video";
+                            position: number;
+                            /** @enum {string|null} */
+                            status: "pending_upload" | "processing" | "approved" | null;
                             url: string | null;
                         }[];
-                        last_seen_at: string | null;
+                        last_seen_at?: string | null;
                     };
                 };
             };
@@ -3357,12 +3549,34 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Swipe déjà enregistré (rejeu) ; `match_id` et `conversation_id` sont présents si un match actif existe. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": {
+                        /** @constant */
+                        status: "already_swiped";
+                        matched: boolean;
+                        match_id?: string;
+                        conversation_id?: string;
+                    };
+                };
+            };
+            /** @description Swipe enregistré ; `matched` vaut true quand l'autre personne avait déjà aimé. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        status: "recorded";
+                        matched: boolean;
+                        match_id?: string;
+                        conversation_id?: string;
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];

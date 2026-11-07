@@ -8,6 +8,7 @@ use App\Services\DeviceSessions;
 use App\Support\DeviceId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
@@ -26,12 +27,29 @@ class LoginController extends Controller
         ]);
 
         $email = strtolower(trim($data['email']));
-        // Échecs comptés par (e-mail, IP) : 5 par 15 min ; et par e-mail seul : 30 par 15 min (bourrage d'identifiants distribué).
+        // Tentatives comptées par (e-mail, IP) : 5 par 15 min ; et par e-mail seul : 30 par 15 min (bourrage d'identifiants distribué).
+        // Le compteur est incrémenté AVANT la vérification du mot de passe (hit atomique, puis comparaison avec la limite) :
+        // une rafale parallèle ne peut pas dépasser la limite en passant toutes le contrôle avant la première mise à jour.
+        // Une tentative réussie est « remboursée » plus bas.
+        //
+        // Appareil de confiance : un appareil (X-Device-Id valide) déjà connecté avec succès à ce compte depuis moins de 30 jours
+        // n'est PAS soumis aux compteurs partagés (sinon un tiers remplit le compteur d'e-mail depuis beaucoup d'IP et verrouille le
+        // propriétaire). Il a son propre compteur, plus serré (10 échecs / 15 min). L'identifiant d'appareil est un uuid secret côté client.
+        $trustId = hash_hmac('sha256', $email.'|'.$device, (string) config('app.key'));
+        $trustKey = 'login-trusted:'.$trustId;
+        $keyTrusted = 'login-fail-trusted:'.$trustId;
+        $trusted = Cache::has($trustKey);
+
         $keyPair = 'login-fail:'.$email.'|'.$request->ip();
         $keyEmail = 'login-fail-email:'.$email;
-        if (RateLimiter::tooManyAttempts($keyPair, 5) || RateLimiter::tooManyAttempts($keyEmail, 30)) {
+        $limited = $trusted
+            ? RateLimiter::hit($keyTrusted, 900) > 10
+            : (RateLimiter::hit($keyPair, 900) > 5 || RateLimiter::hit($keyEmail, 900) > 30);
+        if ($limited) {
+            $retry = $trusted ? RateLimiter::availableIn($keyTrusted) : max(RateLimiter::availableIn($keyPair), RateLimiter::availableIn($keyEmail));
+
             return response()->json(['error' => ['code' => 'rate_limited', 'message' => 'Trop de tentatives. Réessayez plus tard.']], 429)
-                ->header('Retry-After', (string) max(RateLimiter::availableIn($keyPair), RateLimiter::availableIn($keyEmail)));
+                ->header('Retry-After', (string) $retry);
         }
 
         $user = User::where('email', $email)->first();
@@ -46,19 +64,26 @@ class LoginController extends Controller
         }
 
         if (! $valid) {
-            RateLimiter::hit($keyPair, 900);
-            RateLimiter::hit($keyEmail, 900);
-
+            // Le compteur a déjà été incrémenté avant la comparaison.
             return response()->json(['error' => ['code' => 'invalid_credentials', 'message' => 'Identifiants invalides.']], 401);
         }
+
+        // Mot de passe correct : la tentative ne compte pas (remboursement), et l'appareil devient (ou reste) de confiance 30 jours.
+        if ($trusted) {
+            RateLimiter::clear($keyTrusted);
+        } else {
+            RateLimiter::clear($keyPair);
+            if (RateLimiter::attempts($keyEmail) > 0) {
+                RateLimiter::decrement($keyEmail, 900);
+            }
+        }
+        Cache::put($trustKey, 1, now()->addDays(30));
 
         // Un compte suspendu ou banni peut se connecter : le jeton est restreint par EnsureAccountActive (sanctions, contestation,
         // export, suppression). Un compte en cours de suppression ou supprimé ne le peut pas.
         if (! in_array($user->status, ['active', 'suspended', 'banned'], true)) {
             return response()->json(['error' => ['code' => 'account_restricted', 'message' => 'Compte indisponible.']], 403);
         }
-
-        RateLimiter::clear($keyPair);
 
         $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);
         $user->forceFill(['last_seen_at' => now()])->save();

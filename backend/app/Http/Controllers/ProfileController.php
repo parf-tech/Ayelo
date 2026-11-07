@@ -56,7 +56,13 @@ class ProfileController extends Controller
 
         $profile->fill($data)->save();
 
-        return response()->json($presenter->self($user, $profile->fresh()), $profile->wasRecentlyCreated ? 201 : 200);
+        $payload = $presenter->self($user, $profile->fresh());
+
+        if ($profile->wasRecentlyCreated) {
+            return response()->json($payload, 201);
+        }
+
+        return response()->json($payload, 200);
     }
 
     public function privacy(Request $request, ProfilePresenter $presenter): JsonResponse
@@ -120,7 +126,11 @@ class ProfileController extends Controller
         return response()->json($this->preferencesFor($user->id));
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     *
+     * @scramble-return array{seeking_genders: list<'man'|'woman'|'other'>, age_min: int, age_max: int, countries: list<string>, origins: list<string>, intents: list<'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out'>, verified_only: bool, max_distance_km: int|null}
+     */
     private function preferencesFor(string $userId): array
     {
         $row = DB::table('preferences')->where('user_id', $userId)->first();

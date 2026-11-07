@@ -15,6 +15,10 @@ export const premiumEn = {
   'premium.restore.error': 'Restoring failed. Try again.',
   'premium.renewal':
     'The subscription renews automatically at the end of each period, at the same price, until you cancel it in your store settings (App Store or Google Play) at least 24 hours before renewal.',
+  'premium.manage.cta': 'Manage or cancel my subscription',
+  'premium.manage.info':
+    'You cancel in the store (App Store or Google Play), in a few seconds. Cancellation takes effect at the end of the period you already paid for: you keep Premium until then.',
+  'premium.manage.openError': 'Could not open the store. Open your subscriptions from the App Store or Google Play.',
   'premium.terms': 'Terms of use',
   'premium.privacy': 'Privacy policy',
   'premium.linkMissing': 'Link not configured',

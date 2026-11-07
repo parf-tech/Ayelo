@@ -95,19 +95,54 @@ services:
     command: ['exec redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly no --requirepass "$$REDIS_PASSWORD"']
     networks: [internal]
 
+  # Sauvegarde quotidienne de PostgreSQL (infra/scripts/backup.sh). Aucun port publié, réseau `internal` seulement
+  # (ce réseau n'est pas `internal: true` : la sortie vers le bucket S3/R2 reste possible).
+  # Pas de `env_file: .env.prod` ici : le service ne reçoit que les variables listées, pas APP_KEY, FCM, RevenueCat, etc.
+  # Les secrets viennent de infra/.env.prod au démarrage (substitution ${...}), jamais de l'image.
+  # Planification : attente jusqu'à BACKUP_TIME_UTC (HH:MM, défaut 02:15) ; une erreur est journalisée et la boucle continue.
+  # Sonde de santé : « unhealthy » si aucune réussite depuis plus de 26 h (premier jour exclu).
+  # Non exécuté sur le poste de développement (Docker absent) : à valider sur le serveur.
   backup:
-    image: postgres:16
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env.prod
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      BACKUP_DIR: /backups
+      BACKUP_TIME_UTC: ${BACKUP_TIME_UTC:-02:15}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_BUCKET: ${BACKUP_BUCKET:-}
+      BACKUP_ENDPOINT: ${BACKUP_ENDPOINT:-}
+      BACKUP_AWS_ACCESS_KEY_ID: ${BACKUP_AWS_ACCESS_KEY_ID:-}
+      BACKUP_AWS_SECRET_ACCESS_KEY: ${BACKUP_AWS_SECRET_ACCESS_KEY:-}
+      BACKUP_GPG_RECIPIENT: ${BACKUP_GPG_RECIPIENT:-}
     volumes:
-      - ./backup:/backup:ro
-    entrypoint:
-      - /bin/sh
-      - -c
+      - backups:/backups
+    command:
+      - /bin/bash
+      - -euc
       - |
-        apt-get update -qq && apt-get install -y -qq awscli gnupg cron >/dev/null
-        echo "$$BACKUP_CRON /backup/backup.sh >> /proc/1/fd/1 2>&1" | crontab -
-        cron -f
+        while true; do
+          now=$$(date -u +%s)
+          next=$$(date -u -d "today $$BACKUP_TIME_UTC" +%s)
+          if [ "$$next" -le "$$now" ]; then next=$$(date -u -d "tomorrow $$BACKUP_TIME_UTC" +%s); fi
+          echo "prochaine sauvegarde dans $$((next - now)) s (à $$BACKUP_TIME_UTC UTC)"
+          sleep "$$((next - now))"
+          /scripts/backup.sh || echo "ECHEC de la sauvegarde (voir les lignes ci-dessus)" >&2
+        done
+    healthcheck:
+      test: ["CMD-SHELL", "find /backups/.last_success -mmin -1560 | grep -q ."]
+      interval: 1h
+      timeout: 10s
+      retries: 1
+      start_period: 26h
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,3 +158,4 @@ volumes:
   caddy-config:
   app-storage:
   app-public:
+  backups:

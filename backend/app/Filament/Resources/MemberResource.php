@@ -9,6 +9,7 @@ use App\Filament\Resources\MemberResource\RelationManagers\CreditEntriesRelation
 use App\Filament\Resources\MemberResource\RelationManagers\RiskEventsRelationManager;
 use App\Filament\Resources\MemberResource\RelationManagers\SanctionsRelationManager;
 use App\Filament\Support\Staff;
+use App\Services\Admin\Permissions;
 use App\Services\Premium;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -40,10 +41,24 @@ class MemberResource extends AdminResource
 
     protected static ?int $navigationSort = 50;
 
+    /**
+     * Minimisation (revue N-09) : le téléphone et le score de risque ne concernent pas le support (qui peut consulter les comptes,
+     * USERS_VIEW) ; ils exigent USERS_MANAGE (administrateur). Appliqué à la requête : les colonnes ne sont même pas chargées,
+     * donc elles ne fuient ni par la table, ni par la fiche, ni par une réponse Livewire.
+     */
+    public static function canSeeSensitive(): bool
+    {
+        return Staff::can(Permissions::USERS_MANAGE);
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('profile')->select(['users.id', 'users.email', 'users.phone', 'users.status', 'users.risk_score',
-            'users.locale', 'users.birthdate', 'users.email_verified_at', 'users.last_seen_at', 'users.created_at'])->latest('users.created_at');
+        $columns = ['users.id', 'users.email', 'users.status', 'users.locale', 'users.birthdate', 'users.email_verified_at', 'users.last_seen_at', 'users.created_at'];
+        if (static::canSeeSensitive()) {
+            $columns = [...$columns, 'users.phone', 'users.risk_score'];
+        }
+
+        return parent::getEloquentQuery()->with('profile')->select($columns)->latest('users.created_at');
     }
 
     public static function table(Table $table): Table
@@ -63,7 +78,7 @@ class MemberResource extends AdminResource
                 TextColumn::make('profile.display_name')->label('Nom')->placeholder('—'),
                 TextColumn::make('status')->label('Statut')->badge()
                     ->color(fn ($state) => match ($state) {'active' => 'success', 'suspended' => 'warning', 'banned' => 'danger', default => 'gray'}),
-                TextColumn::make('risk_score')->label('Risque')->sortable(),
+                TextColumn::make('risk_score')->label('Risque')->sortable()->visible(fn () => static::canSeeSensitive()),
                 TextColumn::make('created_at')->label('Inscrit')->since()->sortable(),
                 TextColumn::make('last_seen_at')->label('Vu')->since()->placeholder('—'),
             ])
@@ -80,12 +95,12 @@ class MemberResource extends AdminResource
             Section::make('Compte')->columns(3)->schema([
                 TextEntry::make('id')->label('Identifiant')->copyable(),
                 TextEntry::make('email')->label('E-mail')->placeholder('(supprimé)'),
-                TextEntry::make('phone')->label('Téléphone')->placeholder('—'),
+                TextEntry::make('phone')->label('Téléphone')->placeholder('—')->visible(fn () => static::canSeeSensitive()),
                 TextEntry::make('profile.display_name')->label('Nom d\'affichage')->placeholder('—'),
                 TextEntry::make('profile.verification_status')->label('Vérification')->badge()->placeholder('—'),
                 TextEntry::make('status')->label('Statut')->badge(),
                 TextEntry::make('age')->label('Âge')->state(fn (Member $record): ?int => $record->birthdate?->age),
-                TextEntry::make('risk_score')->label('Score de risque'),
+                TextEntry::make('risk_score')->label('Score de risque')->visible(fn () => static::canSeeSensitive()),
                 TextEntry::make('created_at')->label('Inscrit')->dateTime(),
                 TextEntry::make('last_seen_at')->label('Dernière activité')->dateTime()->placeholder('—'),
             ]),

@@ -99,6 +99,13 @@ class MessageController extends Controller
         $recipient = $conversations->other($conversation, $me->id);
         SendPush::dispatch($recipient, 'messages', 'Nouveau message', $data['type'] === 'text' ? Str::limit((string) $data['body'], 80) : 'Média reçu', ['conversation_id' => $id, 'type' => 'message']);
 
+        /**
+         * Message créé ; `safety_hint` apparaît quand un texte ressemble à une demande d'argent.
+         *
+         * @status 201
+         *
+         * @body array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image', body: string|null, media_id: string|null, delivered_at: string|null, read_at: string|null, created_at: string, safety_hint?: 'money_request'}
+         */
         return response()->json($payload, 201);
     }
 
@@ -166,7 +173,13 @@ class MessageController extends Controller
         }
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * `type` vaut « deleted » quand le message a été supprimé par son expéditeur (contenu masqué).
+     *
+     * @return array<string, mixed>
+     *
+     * @scramble-return array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image'|'video'|'voice'|'gift'|'call_missed'|'system'|'deleted', body: string|null, media_id: string|null, delivered_at: string|null, read_at: string|null, created_at: string}
+     */
     private function present(stdClass $m): array
     {
         $deleted = $m->deleted_at !== null;

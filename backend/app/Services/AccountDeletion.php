@@ -19,6 +19,9 @@ class AccountDeletion
 {
     public const GRACE_DAYS = 30;
 
+    /** Remplace sanctions.reason (colonne obligatoire) une fois sa durée de conservation écoulée. */
+    public const PURGED_REASON = '[purgé]';
+
     public function __construct(private DeviceSessions $sessions, private MediaStorage $storage) {}
 
     public function request(User $user): void
@@ -46,7 +49,34 @@ class AccountDeletion
             }
         }
 
+        $this->purgeRetainedText();
+
         return $done;
+    }
+
+    /**
+     * Texte libre dont la durée de conservation est écoulée (revue F-06). Ne touche que les dossiers dont une partie est déjà
+     * anonymisée : reports.details est mis à null ; sanctions.reason (obligatoire) est remplacé par le marqueur PURGED_REASON.
+     * Les signalements encore sous conservation probatoire (evidence_retain_until) sont épargnés.
+     *
+     * @return array{reports: int, sanctions: int}
+     */
+    public function purgeRetainedText(): array
+    {
+        $deleted = DB::table('users')->select('id')->where('status', 'deleted');
+
+        $reports = DB::table('reports')->whereNotNull('details')
+            ->where('created_at', '<=', now()->subDays((int) config('retention.report_details_days', 365)))
+            ->where(fn ($q) => $q->whereNull('evidence_retain_until')->orWhere('evidence_retain_until', '<=', now()))
+            ->where(fn ($q) => $q->whereIn('reported_id', $deleted)->orWhereIn('reporter_id', $deleted))
+            ->update(['details' => null, 'updated_at' => now()]);
+
+        $sanctions = DB::table('sanctions')->where('reason', '<>', self::PURGED_REASON)
+            ->where('created_at', '<=', now()->subDays((int) config('retention.sanction_reason_days', 365)))
+            ->whereIn('user_id', $deleted)
+            ->update(['reason' => self::PURGED_REASON]);
+
+        return ['reports' => $reports, 'sanctions' => $sanctions];
     }
 
     public function anonymize(User $user): void

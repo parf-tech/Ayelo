@@ -7,7 +7,7 @@ use App\Filament\Resources\MediaItemResource\Pages\ListMediaItems;
 use App\Filament\Support\Staff;
 use App\Services\Admin\MediaModeration;
 use App\Services\Admin\Permissions;
-use App\Services\Storage\MediaStorage;
+use Filament\Notifications\Notification;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
@@ -54,9 +54,20 @@ class MediaItemResource extends AdminResource
             ])
             ->recordActions([
                 Action::make('preview')->label('Aperçu')->icon('heroicon-o-eye')->color('gray')
-                    // URL signée courte, calculée à l'affichage : aucune URL permanente n'est exposée.
-                    ->url(fn (MediaItem $record): string => app(MediaStorage::class)->temporaryUrl($record->storage_key, (int) config('media.read_ttl_minutes', 10)))
-                    ->openUrlInNewTab(),
+                    ->visible(fn () => Staff::can(Permissions::MEDIA_MODERATE))
+                    // L'URL signée courte n'est produite qu'au clic, et l'ouverture est journalisée (« media.preview », revue N-09).
+                    // Le lien est remis dans une notification : l'écriture du journal précède donc toujours l'accès au fichier.
+                    // (Le journal enregistre la génération de l'URL, pas le chargement effectif de l'image par le navigateur.)
+                    ->action(function (MediaItem $record): void {
+                        $url = null;
+                        if (Staff::run(function () use ($record, &$url): void {
+                            $url = app(MediaModeration::class)->preview(Staff::current(), $record->id);
+                        }, 'Aperçu journalisé.') && $url !== null) {
+                            Notification::make()->success()->title('Lien d’aperçu prêt (expire dans '.(int) config('media.read_ttl_minutes', 10).' minutes)')->persistent()
+                                ->actions([Action::make('open')->label('Ouvrir l’image')->url($url, shouldOpenInNewTab: true)->button()])
+                                ->send();
+                        }
+                    }),
                 Action::make('approve')->label('Approuver')->icon('heroicon-o-check')->color('success')
                     ->visible(fn () => Staff::can(Permissions::MEDIA_MODERATE))
                     ->requiresConfirmation()

@@ -219,10 +219,14 @@
                                             "type": "boolean"
                                         },
                                         "locale": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "fr",
+                                                "en"
+                                            ]
                                         },
                                         "age": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "profile": {
                                             "type": [
@@ -237,10 +241,15 @@
                                                     "type": "string"
                                                 },
                                                 "age": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "gender": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "man",
+                                                        "woman",
+                                                        "other"
+                                                    ]
                                                 },
                                                 "origin_country": {
                                                     "type": "string"
@@ -261,7 +270,14 @@
                                                     ]
                                                 },
                                                 "intent": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "marriage",
+                                                        "long_lasting_love",
+                                                        "flirt",
+                                                        "friendship",
+                                                        "lets_find_out"
+                                                    ]
                                                 },
                                                 "verified": {
                                                     "type": "boolean"
@@ -275,15 +291,25 @@
                                                                 "type": "string"
                                                             },
                                                             "kind": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "profile_photo",
+                                                                    "profile_video"
+                                                                ]
                                                             },
                                                             "position": {
-                                                                "type": "string"
+                                                                "type": "integer"
                                                             },
                                                             "status": {
                                                                 "type": [
                                                                     "string",
                                                                     "null"
+                                                                ],
+                                                                "enum": [
+                                                                    "pending_upload",
+                                                                    "processing",
+                                                                    "approved",
+                                                                    null
                                                                 ]
                                                             },
                                                             "url": {
@@ -302,10 +328,22 @@
                                                         ]
                                                     }
                                                 },
-                                                "last_seen_at": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
+                                                "is_visible": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_distance": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_last_seen": {
+                                                    "type": "boolean"
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "none",
+                                                        "pending",
+                                                        "verified",
+                                                        "rejected"
                                                     ]
                                                 }
                                             },
@@ -321,7 +359,10 @@
                                                 "intent",
                                                 "verified",
                                                 "media",
-                                                "last_seen_at"
+                                                "is_visible",
+                                                "hide_distance",
+                                                "hide_last_seen",
+                                                "verification_status"
                                             ]
                                         },
                                         "credits": {
@@ -517,6 +558,7 @@
         "/me/consents": {
             "get": {
                 "operationId": "account.consents",
+                "summary": "\u00c9tat courant par type de consentement : un objet index\u00e9 par type, pr\u00e9sent seulement pour les types d\u00e9j\u00e0 d\u00e9cid\u00e9s.\n`since` est la date de la derni\u00e8re d\u00e9cision",
                 "tags": [
                     "Account"
                 ],
@@ -529,25 +571,122 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "granted": {
-                                                        "type": "boolean"
+                                            "type": "object",
+                                            "properties": {
+                                                "terms": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
                                                     },
-                                                    "version": {
-                                                        "type": "string"
-                                                    },
-                                                    "since": {
-                                                        "type": "string"
-                                                    }
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
                                                 },
-                                                "required": [
-                                                    "granted",
-                                                    "version",
-                                                    "since"
-                                                ]
+                                                "privacy": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
+                                                },
+                                                "sensitive_data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
+                                                },
+                                                "location": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
+                                                },
+                                                "marketing": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
+                                                },
+                                                "verification_biometric": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "granted": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        },
+                                                        "since": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "granted",
+                                                        "version",
+                                                        "since"
+                                                    ]
+                                                }
                                             }
                                         }
                                     },
@@ -1699,10 +1838,15 @@
                                                                 "type": "string"
                                                             },
                                                             "age": {
-                                                                "type": "string"
+                                                                "type": "integer"
                                                             },
                                                             "gender": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "man",
+                                                                    "woman",
+                                                                    "other"
+                                                                ]
                                                             },
                                                             "origin_country": {
                                                                 "type": "string"
@@ -1723,7 +1867,14 @@
                                                                 ]
                                                             },
                                                             "intent": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "marriage",
+                                                                    "long_lasting_love",
+                                                                    "flirt",
+                                                                    "friendship",
+                                                                    "lets_find_out"
+                                                                ]
                                                             },
                                                             "verified": {
                                                                 "type": "boolean"
@@ -1737,15 +1888,25 @@
                                                                             "type": "string"
                                                                         },
                                                                         "kind": {
-                                                                            "type": "string"
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "profile_photo",
+                                                                                "profile_video"
+                                                                            ]
                                                                         },
                                                                         "position": {
-                                                                            "type": "string"
+                                                                            "type": "integer"
                                                                         },
                                                                         "status": {
                                                                             "type": [
                                                                                 "string",
                                                                                 "null"
+                                                                            ],
+                                                                            "enum": [
+                                                                                "pending_upload",
+                                                                                "processing",
+                                                                                "approved",
+                                                                                null
                                                                             ]
                                                                         },
                                                                         "url": {
@@ -1782,8 +1943,7 @@
                                                             "bio",
                                                             "intent",
                                                             "verified",
-                                                            "media",
-                                                            "last_seen_at"
+                                                            "media"
                                                         ]
                                                     }
                                                 },
@@ -1837,17 +1997,14 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "",
+                        "description": "Conversation cr\u00e9\u00e9e.",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
                                         "id": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "string"
                                         },
                                         "status": {
                                             "type": "string",
@@ -1927,7 +2084,7 @@
                         }
                     },
                     "200": {
-                        "description": "",
+                        "description": "Conversation d\u00e9j\u00e0 ouverte avec cette personne (aucun cr\u00e9dit d\u00e9pens\u00e9).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1937,7 +2094,12 @@
                                             "type": "string"
                                         },
                                         "status": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "active",
+                                                "blocked",
+                                                "archived"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2244,10 +2406,15 @@
                                                         "type": "string"
                                                     },
                                                     "age": {
-                                                        "type": "string"
+                                                        "type": "integer"
                                                     },
                                                     "gender": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "man",
+                                                            "woman",
+                                                            "other"
+                                                        ]
                                                     },
                                                     "origin_country": {
                                                         "type": "string"
@@ -2268,7 +2435,14 @@
                                                         ]
                                                     },
                                                     "intent": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "marriage",
+                                                            "long_lasting_love",
+                                                            "flirt",
+                                                            "friendship",
+                                                            "lets_find_out"
+                                                        ]
                                                     },
                                                     "verified": {
                                                         "type": "boolean"
@@ -2282,15 +2456,25 @@
                                                                     "type": "string"
                                                                 },
                                                                 "kind": {
-                                                                    "type": "string"
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                        "profile_photo",
+                                                                        "profile_video"
+                                                                    ]
                                                                 },
                                                                 "position": {
-                                                                    "type": "string"
+                                                                    "type": "integer"
                                                                 },
                                                                 "status": {
                                                                     "type": [
                                                                         "string",
                                                                         "null"
+                                                                    ],
+                                                                    "enum": [
+                                                                        "pending_upload",
+                                                                        "processing",
+                                                                        "approved",
+                                                                        null
                                                                     ]
                                                                 },
                                                                 "url": {
@@ -2327,8 +2511,7 @@
                                                     "bio",
                                                     "intent",
                                                     "verified",
-                                                    "media",
-                                                    "last_seen_at"
+                                                    "media"
                                                 ]
                                             }
                                         },
@@ -2598,6 +2781,38 @@
                             }
                         }
                     },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "rate_limited"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Trop de tentatives. R\u00e9essayez plus tard."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
@@ -2664,10 +2879,15 @@
                                                                 "type": "string"
                                                             },
                                                             "age": {
-                                                                "type": "string"
+                                                                "type": "integer"
                                                             },
                                                             "gender": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "man",
+                                                                    "woman",
+                                                                    "other"
+                                                                ]
                                                             },
                                                             "origin_country": {
                                                                 "type": "string"
@@ -2688,7 +2908,14 @@
                                                                 ]
                                                             },
                                                             "intent": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "marriage",
+                                                                    "long_lasting_love",
+                                                                    "flirt",
+                                                                    "friendship",
+                                                                    "lets_find_out"
+                                                                ]
                                                             },
                                                             "verified": {
                                                                 "type": "boolean"
@@ -2702,15 +2929,25 @@
                                                                             "type": "string"
                                                                         },
                                                                         "kind": {
-                                                                            "type": "string"
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "profile_photo",
+                                                                                "profile_video"
+                                                                            ]
                                                                         },
                                                                         "position": {
-                                                                            "type": "string"
+                                                                            "type": "integer"
                                                                         },
                                                                         "status": {
                                                                             "type": [
                                                                                 "string",
                                                                                 "null"
+                                                                            ],
+                                                                            "enum": [
+                                                                                "pending_upload",
+                                                                                "processing",
+                                                                                "approved",
+                                                                                null
                                                                             ]
                                                                         },
                                                                         "url": {
@@ -2747,8 +2984,7 @@
                                                             "bio",
                                                             "intent",
                                                             "verified",
-                                                            "media",
-                                                            "last_seen_at"
+                                                            "media"
                                                         ]
                                                     }
                                                 },
@@ -2916,7 +3152,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "`processing` : en file de revue humaine ; `approved` : approbation automatique (d\u00e9veloppement local).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2926,7 +3162,11 @@
                                             "type": "string"
                                         },
                                         "status": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "processing",
+                                                "approved"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -3186,16 +3426,16 @@
                                                         "type": "string"
                                                     },
                                                     "type": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "string",
-                                                                "enum": [
-                                                                    "deleted"
-                                                                ]
-                                                            }
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "text",
+                                                            "image",
+                                                            "video",
+                                                            "voice",
+                                                            "gift",
+                                                            "call_missed",
+                                                            "system",
+                                                            "deleted"
                                                         ]
                                                     },
                                                     "body": {
@@ -3211,10 +3451,16 @@
                                                         ]
                                                     },
                                                     "delivered_at": {
-                                                        "type": "string"
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
                                                     },
                                                     "read_at": {
-                                                        "type": "string"
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
                                                     },
                                                     "created_at": {
                                                         "type": "string"
@@ -3318,12 +3564,75 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "",
+                        "description": "Message cr\u00e9\u00e9 ; `safety_hint` appara\u00eet quand un texte ressemble \u00e0 une demande d'argent.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {}
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "conversation_id": {
+                                            "type": "string"
+                                        },
+                                        "sender_id": {
+                                            "type": "string"
+                                        },
+                                        "client_id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "text",
+                                                "image"
+                                            ]
+                                        },
+                                        "body": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "media_id": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "delivered_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "read_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "created_at": {
+                                            "type": "string"
+                                        },
+                                        "safety_hint": {
+                                            "type": "string",
+                                            "const": "money_request"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "conversation_id",
+                                        "sender_id",
+                                        "client_id",
+                                        "type",
+                                        "body",
+                                        "media_id",
+                                        "delivered_at",
+                                        "read_at",
+                                        "created_at"
+                                    ]
                                 }
                             }
                         }
@@ -3380,16 +3689,16 @@
                                             "type": "string"
                                         },
                                         "type": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "deleted"
-                                                    ]
-                                                }
+                                            "type": "string",
+                                            "enum": [
+                                                "text",
+                                                "image",
+                                                "video",
+                                                "voice",
+                                                "gift",
+                                                "call_missed",
+                                                "system",
+                                                "deleted"
                                             ]
                                         },
                                         "body": {
@@ -3405,10 +3714,16 @@
                                             ]
                                         },
                                         "delivered_at": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "read_at": {
-                                            "type": "string"
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "created_at": {
                                             "type": "string"
@@ -3943,7 +4258,403 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "email_verified": {
+                                            "type": "boolean"
+                                        },
+                                        "locale": {
+                                            "type": "string",
+                                            "enum": [
+                                                "fr",
+                                                "en"
+                                            ]
+                                        },
+                                        "age": {
+                                            "type": "integer"
+                                        },
+                                        "profile": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "string"
+                                                },
+                                                "display_name": {
+                                                    "type": "string"
+                                                },
+                                                "age": {
+                                                    "type": "integer"
+                                                },
+                                                "gender": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "man",
+                                                        "woman",
+                                                        "other"
+                                                    ]
+                                                },
+                                                "origin_country": {
+                                                    "type": "string"
+                                                },
+                                                "residence_country": {
+                                                    "type": "string"
+                                                },
+                                                "city": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "bio": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "intent": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "marriage",
+                                                        "long_lasting_love",
+                                                        "flirt",
+                                                        "friendship",
+                                                        "lets_find_out"
+                                                    ]
+                                                },
+                                                "verified": {
+                                                    "type": "boolean"
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "kind": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "profile_photo",
+                                                                    "profile_video"
+                                                                ]
+                                                            },
+                                                            "position": {
+                                                                "type": "integer"
+                                                            },
+                                                            "status": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "enum": [
+                                                                    "pending_upload",
+                                                                    "processing",
+                                                                    "approved",
+                                                                    null
+                                                                ]
+                                                            },
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "kind",
+                                                            "position",
+                                                            "status",
+                                                            "url"
+                                                        ]
+                                                    }
+                                                },
+                                                "is_visible": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_distance": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_last_seen": {
+                                                    "type": "boolean"
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "none",
+                                                        "pending",
+                                                        "verified",
+                                                        "rejected"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "user_id",
+                                                "display_name",
+                                                "age",
+                                                "gender",
+                                                "origin_country",
+                                                "residence_country",
+                                                "city",
+                                                "bio",
+                                                "intent",
+                                                "verified",
+                                                "media",
+                                                "is_visible",
+                                                "hide_distance",
+                                                "hide_last_seen",
+                                                "verification_status"
+                                            ]
+                                        },
+                                        "credits": {
+                                            "type": "object",
+                                            "properties": {
+                                                "conversation": {
+                                                    "type": "integer"
+                                                },
+                                                "proposal": {
+                                                    "type": "integer"
+                                                },
+                                                "coin": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "conversation",
+                                                "proposal",
+                                                "coin"
+                                            ]
+                                        },
+                                        "premium": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "email",
+                                        "email_verified",
+                                        "locale",
+                                        "age",
+                                        "profile",
+                                        "credits",
+                                        "premium"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "email_verified": {
+                                            "type": "boolean"
+                                        },
+                                        "locale": {
+                                            "type": "string",
+                                            "enum": [
+                                                "fr",
+                                                "en"
+                                            ]
+                                        },
+                                        "age": {
+                                            "type": "integer"
+                                        },
+                                        "profile": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "string"
+                                                },
+                                                "display_name": {
+                                                    "type": "string"
+                                                },
+                                                "age": {
+                                                    "type": "integer"
+                                                },
+                                                "gender": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "man",
+                                                        "woman",
+                                                        "other"
+                                                    ]
+                                                },
+                                                "origin_country": {
+                                                    "type": "string"
+                                                },
+                                                "residence_country": {
+                                                    "type": "string"
+                                                },
+                                                "city": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "bio": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "intent": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "marriage",
+                                                        "long_lasting_love",
+                                                        "flirt",
+                                                        "friendship",
+                                                        "lets_find_out"
+                                                    ]
+                                                },
+                                                "verified": {
+                                                    "type": "boolean"
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "kind": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "profile_photo",
+                                                                    "profile_video"
+                                                                ]
+                                                            },
+                                                            "position": {
+                                                                "type": "integer"
+                                                            },
+                                                            "status": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "enum": [
+                                                                    "pending_upload",
+                                                                    "processing",
+                                                                    "approved",
+                                                                    null
+                                                                ]
+                                                            },
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "kind",
+                                                            "position",
+                                                            "status",
+                                                            "url"
+                                                        ]
+                                                    }
+                                                },
+                                                "is_visible": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_distance": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_last_seen": {
+                                                    "type": "boolean"
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "none",
+                                                        "pending",
+                                                        "verified",
+                                                        "rejected"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "user_id",
+                                                "display_name",
+                                                "age",
+                                                "gender",
+                                                "origin_country",
+                                                "residence_country",
+                                                "city",
+                                                "bio",
+                                                "intent",
+                                                "verified",
+                                                "media",
+                                                "is_visible",
+                                                "hide_distance",
+                                                "hide_last_seen",
+                                                "verification_status"
+                                            ]
+                                        },
+                                        "credits": {
+                                            "type": "object",
+                                            "properties": {
+                                                "conversation": {
+                                                    "type": "integer"
+                                                },
+                                                "proposal": {
+                                                    "type": "integer"
+                                                },
+                                                "coin": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "conversation",
+                                                "proposal",
+                                                "coin"
+                                            ]
+                                        },
+                                        "premium": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "email",
+                                        "email_verified",
+                                        "locale",
+                                        "age",
+                                        "profile",
+                                        "credits",
+                                        "premium"
+                                    ]
                                 }
                             }
                         }
@@ -4004,10 +4715,14 @@
                                             "type": "boolean"
                                         },
                                         "locale": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "fr",
+                                                "en"
+                                            ]
                                         },
                                         "age": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "profile": {
                                             "type": [
@@ -4022,10 +4737,15 @@
                                                     "type": "string"
                                                 },
                                                 "age": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "gender": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "man",
+                                                        "woman",
+                                                        "other"
+                                                    ]
                                                 },
                                                 "origin_country": {
                                                     "type": "string"
@@ -4046,7 +4766,14 @@
                                                     ]
                                                 },
                                                 "intent": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "marriage",
+                                                        "long_lasting_love",
+                                                        "flirt",
+                                                        "friendship",
+                                                        "lets_find_out"
+                                                    ]
                                                 },
                                                 "verified": {
                                                     "type": "boolean"
@@ -4060,15 +4787,25 @@
                                                                 "type": "string"
                                                             },
                                                             "kind": {
-                                                                "type": "string"
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "profile_photo",
+                                                                    "profile_video"
+                                                                ]
                                                             },
                                                             "position": {
-                                                                "type": "string"
+                                                                "type": "integer"
                                                             },
                                                             "status": {
                                                                 "type": [
                                                                     "string",
                                                                     "null"
+                                                                ],
+                                                                "enum": [
+                                                                    "pending_upload",
+                                                                    "processing",
+                                                                    "approved",
+                                                                    null
                                                                 ]
                                                             },
                                                             "url": {
@@ -4087,10 +4824,22 @@
                                                         ]
                                                     }
                                                 },
-                                                "last_seen_at": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
+                                                "is_visible": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_distance": {
+                                                    "type": "boolean"
+                                                },
+                                                "hide_last_seen": {
+                                                    "type": "boolean"
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "none",
+                                                        "pending",
+                                                        "verified",
+                                                        "rejected"
                                                     ]
                                                 }
                                             },
@@ -4106,7 +4855,10 @@
                                                 "intent",
                                                 "verified",
                                                 "media",
-                                                "last_seen_at"
+                                                "is_visible",
+                                                "hide_distance",
+                                                "hide_last_seen",
+                                                "verification_status"
                                             ]
                                         },
                                         "credits": {
@@ -4268,52 +5020,52 @@
                                     "properties": {
                                         "seeking_genders": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "man",
+                                                    "woman",
+                                                    "other"
+                                                ]
+                                            }
                                         },
                                         "age_min": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "integer",
-                                                    "enum": [
-                                                        18
-                                                    ]
-                                                }
-                                            ]
+                                            "type": "integer"
                                         },
                                         "age_max": {
-                                            "anyOf": [
-                                                {
-                                                    "type": "string"
-                                                },
-                                                {
-                                                    "type": "integer",
-                                                    "enum": [
-                                                        99
-                                                    ]
-                                                }
-                                            ]
+                                            "type": "integer"
                                         },
                                         "countries": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         },
                                         "origins": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         },
                                         "intents": {
                                             "type": "array",
-                                            "items": {}
+                                            "items": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "marriage",
+                                                    "long_lasting_love",
+                                                    "flirt",
+                                                    "friendship",
+                                                    "lets_find_out"
+                                                ]
+                                            }
                                         },
                                         "verified_only": {
                                             "type": "boolean"
                                         },
                                         "max_distance_km": {
                                             "type": [
-                                                "string",
+                                                "integer",
                                                 "null"
                                             ]
                                         }
@@ -4372,10 +5124,15 @@
                                             "type": "string"
                                         },
                                         "age": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "gender": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "man",
+                                                "woman",
+                                                "other"
+                                            ]
                                         },
                                         "origin_country": {
                                             "type": "string"
@@ -4396,7 +5153,14 @@
                                             ]
                                         },
                                         "intent": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "marriage",
+                                                "long_lasting_love",
+                                                "flirt",
+                                                "friendship",
+                                                "lets_find_out"
+                                            ]
                                         },
                                         "verified": {
                                             "type": "boolean"
@@ -4410,15 +5174,25 @@
                                                         "type": "string"
                                                     },
                                                     "kind": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "profile_photo",
+                                                            "profile_video"
+                                                        ]
                                                     },
                                                     "position": {
-                                                        "type": "string"
+                                                        "type": "integer"
                                                     },
                                                     "status": {
                                                         "type": [
                                                             "string",
                                                             "null"
+                                                        ],
+                                                        "enum": [
+                                                            "pending_upload",
+                                                            "processing",
+                                                            "approved",
+                                                            null
                                                         ]
                                                     },
                                                     "url": {
@@ -4455,8 +5229,7 @@
                                         "bio",
                                         "intent",
                                         "verified",
-                                        "media",
-                                        "last_seen_at"
+                                        "media"
                                     ]
                                 }
                             }
@@ -5211,11 +5984,59 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "Swipe d\u00e9j\u00e0 enregistr\u00e9 (rejeu) ; `match_id` et `conversation_id` sont pr\u00e9sents si un match actif existe.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "already_swiped"
+                                        },
+                                        "matched": {
+                                            "type": "boolean"
+                                        },
+                                        "match_id": {
+                                            "type": "string"
+                                        },
+                                        "conversation_id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "matched"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Swipe enregistr\u00e9 ; `matched` vaut true quand l'autre personne avait d\u00e9j\u00e0 aim\u00e9.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "recorded"
+                                        },
+                                        "matched": {
+                                            "type": "boolean"
+                                        },
+                                        "match_id": {
+                                            "type": "string"
+                                        },
+                                        "conversation_id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "matched"
+                                    ]
                                 }
                             }
                         }

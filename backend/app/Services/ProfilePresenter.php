@@ -12,7 +12,14 @@ class ProfilePresenter
 {
     public function __construct(private MediaStorage $storage) {}
 
-    /** @return array<string, mixed> */
+    /**
+     * Profil du propriétaire : les champs de confidentialité et de vérification s'ajoutent à ceux des autres.
+     * `media[].status` n'est renseigné que pour le propriétaire.
+     *
+     * @return array<string, mixed>
+     *
+     * @scramble-return array{id: string, email: string|null, email_verified: bool, locale: 'fr'|'en', age: int, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, is_visible: bool, hide_distance: bool, hide_last_seen: bool, verification_status: 'none'|'pending'|'verified'|'rejected'}|null, credits: array{conversation: int, proposal: int, coin: int}, premium: bool}
+     */
     public function self(User $user, ?Profile $profile): array
     {
         $balance = fn (string $type) => (int) DB::table('credit_ledger')->where('user_id', $user->id)->where('credit_type', $type)->sum('delta');
@@ -29,7 +36,13 @@ class ProfilePresenter
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * `last_seen_at` est absent quand la personne le masque ; `media[].status` est toujours nul pour les autres.
+     *
+     * @return array<string, mixed>
+     *
+     * @scramble-return array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}
+     */
     public function public(Profile $profile): array
     {
         $profile->loadMissing('user');

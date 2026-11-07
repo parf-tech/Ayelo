@@ -1,5 +1,18 @@
 <?php
 
+/*
+ | Origines autorisées à ouvrir une connexion WebSocket (F-17, revue de sécurité). Valeur : REVERB_ALLOWED_ORIGINS, hôtes séparés par des
+ | virgules (jokers acceptés, ex. *.example.com ; « * » rétablit l'ancien comportement ouvert). Par défaut : l'hôte du site web
+ | (APP_WEB_URL, à défaut APP_URL) et REVERB_HOST (l'application mobile envoie comme Origin l'hôte de l'URL WebSocket).
+ */
+$reverbOrigins = array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '')))));
+if ($reverbOrigins === []) {
+    $reverbOrigins = array_values(array_unique(array_filter([
+        parse_url((string) env('APP_WEB_URL', env('APP_URL', 'http://localhost')), PHP_URL_HOST) ?: null,
+        env('REVERB_HOST') ?: null,
+    ])));
+}
+
 return [
 
     /*
@@ -82,7 +95,7 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                'allowed_origins' => $reverbOrigins,
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),

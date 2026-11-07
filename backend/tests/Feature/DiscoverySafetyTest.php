@@ -239,7 +239,8 @@ it('place le compte en revue prioritaire après 3 signalements distincts', funct
 });
 
 it('suspend préventivement un compte signalé comme mineur suspecté par une personne qui a échangé avec lui', function () {
-    [$reporter, $rb] = member();
+    // Signaleur crédible (décision Q2-B) : compte de plus de 7 jours, e-mail vérifié (fabrique), conversation avec la cible.
+    [$reporter, $rb] = member([], true, ['created_at' => now()->subDays(10)]);
     [$target] = member();
     $pair = [$reporter->id, $target->id];
     sort($pair, SORT_STRING);

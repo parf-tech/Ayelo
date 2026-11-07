@@ -252,9 +252,11 @@ describe('conformité aux règles d\'architecture', () => {
   });
 
   it('aucune URL de serveur en dur dans le code applicatif', () => {
-    const offenders = [...files(path.join(root, 'src')), ...files(path.join(root, 'app'))].filter((f) =>
-      /https?:\/\/(?!docs\.expo)/.test(fs.readFileSync(f, 'utf8')),
-    );
+    // Exception : les pages publiques « Abonnements » des boutiques (App Store / Google Play), qui ne sont pas notre serveur.
+    const storePages = path.join('src', 'features', 'premium', 'ManageSubscription.tsx');
+    const offenders = [...files(path.join(root, 'src')), ...files(path.join(root, 'app'))]
+      .filter((f) => !f.endsWith(storePages))
+      .filter((f) => /https?:\/\/(?!docs\.expo)/.test(fs.readFileSync(f, 'utf8')));
     expect(offenders).toEqual([]);
   });
 });
