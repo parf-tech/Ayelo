@@ -7,6 +7,7 @@ use App\Events\MessageCreated;
 use App\Jobs\SendPush;
 use App\Services\Conversations;
 use App\Services\MessageSafety;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,8 @@ class MessageController extends Controller
         $q = DB::table('messages')->where('conversation_id', $id)->orderByDesc('created_at')->orderByDesc('id');
         if (! empty($data['cursor'])) {
             $parts = explode('|', (string) base64_decode($data['cursor'], true), 2);
-            if (count($parts) !== 2 || ! preg_match('/^[0-9a-f-]{36}$/', $parts[1]) || strtotime($parts[0]) === false) {
+            // Format strict : strtotime() accepte des textes (« tomorrow », « 1 week ago ») que PostgreSQL refuse en 500 (revue F-24).
+            if (count($parts) !== 2 || ! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $parts[1]) || ! $this->validTimestamp($parts[0])) {
                 throw ValidationException::withMessages(['cursor' => ['Curseur invalide.']]);
             }
             $q->whereRaw('(created_at, id) < (?::timestamptz, ?::uuid)', $parts);
@@ -82,13 +84,24 @@ class MessageController extends Controller
         $messageId = (string) Str::uuid();
         // Microsecondes : sans elles, deux messages d'une même seconde seraient ordonnés au hasard (uuid).
         $at = now()->toDateTimeString('microsecond');
-        DB::transaction(function () use ($messageId, $id, $me, $data, $at) {
-            DB::table('messages')->insert([
-                'id' => $messageId, 'conversation_id' => $id, 'sender_id' => $me->id, 'client_id' => $data['client_id'], 'type' => $data['type'],
-                'body' => $data['body'] ?? null, 'media_id' => $data['media_id'] ?? null, 'created_at' => $at, 'updated_at' => $at,
-            ]);
-            DB::table('conversations')->where('id', $id)->update(['last_message_at' => $at, 'updated_at' => $at]);
-        });
+        try {
+            DB::transaction(function () use ($messageId, $id, $me, $data, $at) {
+                DB::table('messages')->insert([
+                    'id' => $messageId, 'conversation_id' => $id, 'sender_id' => $me->id, 'client_id' => $data['client_id'], 'type' => $data['type'],
+                    'body' => $data['body'] ?? null, 'media_id' => $data['media_id'] ?? null, 'created_at' => $at, 'updated_at' => $at,
+                ]);
+                DB::table('conversations')->where('id', $id)->update(['last_message_at' => $at, 'updated_at' => $at]);
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            // Deux envois simultanés avec le même client_id (renvoi après coupure) : le perdant renvoie le message du gagnant
+            // au lieu d'une erreur 500 (revue F-25). Aucune diffusion ni push en double.
+            $winner = DB::table('messages')->where(['conversation_id' => $id, 'sender_id' => $me->id, 'client_id' => $data['client_id']])->first();
+            if ($winner === null) {
+                throw $e;
+            }
+
+            return response()->json($this->present($winner), 200);
+        }
 
         $message = DB::table('messages')->where('id', $messageId)->first();
         $hint = $data['type'] === 'text' ? $safety->inspect($me->id, (string) $data['body']) : null;
@@ -97,7 +110,12 @@ class MessageController extends Controller
         MessageCreated::dispatch($id, $payload);
 
         $recipient = $conversations->other($conversation, $me->id);
-        SendPush::dispatch($recipient, 'messages', 'Nouveau message', $data['type'] === 'text' ? Str::limit((string) $data['body'], 80) : 'Média reçu', ['conversation_id' => $id, 'type' => 'message']);
+        // Confidentialité (revue F-28) : par défaut la notification ne contient pas le texte du message (écran verrouillé,
+        // transit par FCM/APNs). PUSH_MESSAGE_PREVIEW=true rétablit l'aperçu de 80 caractères.
+        $preview = config('push.message_preview')
+            ? ($data['type'] === 'text' ? Str::limit((string) $data['body'], (int) config('push.message_preview_chars', 80)) : 'Média reçu')
+            : 'Vous avez reçu un nouveau message.';
+        SendPush::dispatch($recipient, 'messages', 'Nouveau message', $preview, ['conversation_id' => $id, 'type' => 'message']);
 
         /**
          * Message créé ; `safety_hint` apparaît quand un texte ressemble à une demande d'argent.
@@ -147,11 +165,18 @@ class MessageController extends Controller
     private function mark(Request $request, string $id, Conversations $conversations, string $column, string $event): Response
     {
         $me = $request->user()->id;
-        abort_if($conversations->forParticipant($id, $me) === null, 404);
+        $conversation = $conversations->forParticipant($id, $me);
+        abort_if($conversation === null, 404);
 
         $data = $request->validate(['up_to_message_id' => ['required', 'uuid']]);
         $upTo = DB::table('messages')->where('id', $data['up_to_message_id'])->where('conversation_id', $id)->first();
         abort_if($upTo === null, 404);
+
+        // Mêmes conditions que l'envoi (revue F-27) : conversation bloquée, archivée ou compte suspendu => aucun accusé
+        // enregistré ni diffusé. Réponse 204 comme pour « typing », sans révéler la raison.
+        if (! $conversations->canWrite($conversation, $me)) {
+            return response()->noContent();
+        }
 
         $count = DB::table('messages')->where('conversation_id', $id)->where('sender_id', '<>', $me)->whereNull($column)
             ->where('created_at', '<=', $upTo->created_at)->update([$column => now(), 'updated_at' => now()]);
@@ -161,6 +186,16 @@ class MessageController extends Controller
         }
 
         return response()->noContent();
+    }
+
+    /** Horodatage tel que renvoyé par PostgreSQL (« 2026-11-07 10:00:00.123456+00 ») ; rien d'autre n'est accepté dans un curseur. */
+    private function validTimestamp(string $value): bool
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(\.\d{1,6})?(Z|[+-]\d{2}(:?\d{2})?)?$/', $value, $m)) {
+            return false;
+        }
+
+        return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) && (int) $m[4] < 24 && (int) $m[5] < 60 && (int) $m[6] < 60;
     }
 
     /** Un média attaché doit appartenir à l'expéditeur, être du bon type et avoir été approuvé. */

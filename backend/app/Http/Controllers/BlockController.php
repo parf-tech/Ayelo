@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Calls;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class BlockController extends Controller
     }
 
     /** Idempotent : bloquer deux fois renvoie 204 sans erreur. */
-    public function store(Request $request): Response
+    public function store(Request $request, Calls $calls): Response
     {
         $data = $request->validate(['blocked_id' => ['required', 'uuid', 'exists:users,id']]);
         $me = $request->user()->id;
@@ -39,6 +40,9 @@ class BlockController extends Controller
             DB::table('matches')->where('user_a', $pair[0])->where('user_b', $pair[1])->update(['status' => 'blocked', 'updated_at' => now()]);
             DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->update(['status' => 'blocked', 'updated_at' => now()]);
         });
+
+        // Un appel en cours (ou qui sonne) entre les deux est terminé et sa salle fermée (revue pentest P-05).
+        $calls->endBetween($me, $data['blocked_id']);
 
         return response()->noContent();
     }

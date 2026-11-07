@@ -18,22 +18,24 @@ final class AppealActions
         $open = fn (Appeal $record): bool => $record->status === 'open' && Staff::can(Permissions::APPEALS_REVIEW);
 
         return [
-            Action::make('accept')->label('Accepter')->icon('heroicon-o-check')->color('success')
+            Action::make('accept')->label(Staff::t('admin.action.accept'))->icon('heroicon-o-check')->color('success')
                 ->visible($open)
                 ->requiresConfirmation()
-                ->modalDescription('La sanction est levée et le compte réactivé s\'il n\'a pas d\'autre restriction.')
-                ->schema([Textarea::make('note')->label('Note (facultative)')->maxLength(500)])
+                ->modalDescription(Staff::t('admin.confirm.appeal.accept'))
+                ->schema([Textarea::make('note')->label(Staff::t('admin.field.note_optional'))->maxLength(500)])
                 ->action(function (Appeal $record, array $data) use ($afterSuccess): void {
-                    $done = Staff::run(fn () => app(AppealReview::class)->accept(Staff::current(), $record->id, $data['note'] ?? null), 'Contestation acceptée, sanction levée.');
+                    $done = Staff::run(fn () => app(AppealReview::class)->accept(Staff::current(), $record->id, $data['note'] ?? null), Staff::t('admin.notify.appeal_accepted'));
                     if ($done && $afterSuccess) {
                         $afterSuccess($record);
                     }
                 }),
-            Action::make('reject')->label('Rejeter')->icon('heroicon-o-x-mark')->color('danger')
+            Action::make('reject')->label(Staff::t('admin.action.reject'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible($open)
-                ->schema([Textarea::make('note')->label('Note de décision (obligatoire)')->required()->minLength(3)->maxLength(500)])
+                ->requiresConfirmation()
+                ->modalDescription(Staff::t('admin.confirm.appeal.reject'))
+                ->schema([Textarea::make('note')->label(Staff::t('admin.field.decision_note'))->required()->minLength(3)->maxLength(500)])
                 ->action(function (Appeal $record, array $data) use ($afterSuccess): void {
-                    $done = Staff::run(fn () => app(AppealReview::class)->reject(Staff::current(), $record->id, (string) $data['note']), 'Contestation rejetée.');
+                    $done = Staff::run(fn () => app(AppealReview::class)->reject(Staff::current(), $record->id, (string) $data['note']), Staff::t('admin.notify.appeal_rejected'));
                     if ($done && $afterSuccess) {
                         $afterSuccess($record);
                     }

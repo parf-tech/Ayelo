@@ -214,8 +214,8 @@ it('empêche d’agir sur le média d’un autre utilisateur', function () {
 
     // Le garde garde l'utilisateur en cache entre deux requêtes d'un même test : on le réinitialise.
     app('auth')->forgetGuards();
-    $this->withHeader('Authorization', $b)->postJson("/api/v1/media/$id/complete")->assertForbidden();
-    $this->withHeader('Authorization', $b)->deleteJson("/api/v1/media/$id")->assertForbidden();
+    $this->withHeader('Authorization', $b)->postJson("/api/v1/media/$id/complete")->assertNotFound();
+    $this->withHeader('Authorization', $b)->deleteJson("/api/v1/media/$id")->assertNotFound();
     expect(DB::table('media')->where('id', $id)->exists())->toBeTrue();
 });
 

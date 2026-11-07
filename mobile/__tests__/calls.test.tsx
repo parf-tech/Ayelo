@@ -194,7 +194,11 @@ describe('S15 à S18 : signalisation d\'appel', () => {
     expect(await screen.findByTestId('screen-call-active')).toBeOnTheScreen();
     expect(fake.called('POST /calls/k9/accept')).toHaveLength(1);
     expect(screen.getByTestId('call-media-unavailable')).toBeOnTheScreen();
-    expect(screen.getByTestId('call-mute')).toBeDisabled();
+    // Boutons sans effet masqués (micro, caméra, haut-parleur) ; le chronomètre n'est pas une région vivante.
+    expect(screen.queryByTestId('call-mute')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('call-camera')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('call-speaker')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('call-status')).toHaveProp('accessibilityLiveRegion', 'none');
 
     await u.press(screen.getByTestId('call-hangup'));
     await waitFor(() => expect(fake.called('POST /calls/k9/end')).toHaveLength(1));

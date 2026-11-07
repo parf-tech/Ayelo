@@ -244,8 +244,12 @@ it('suspend préventivement un compte signalé comme mineur suspecté par une pe
     [$target] = member();
     $pair = [$reporter->id, $target->id];
     sort($pair, SORT_STRING);
-    DB::table('conversations')->insert(['id' => (string) Str::uuid(), 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $reporter->id,
+    $conversationId = (string) Str::uuid();
+    DB::table('conversations')->insert(['id' => $conversationId, 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $reporter->id,
         'unlocked_by' => 'credit', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+    // Revue P-02 : une conversation ouverte d'un seul côté ne prouve rien ; la cible doit avoir écrit.
+    DB::table('messages')->insert(['id' => (string) Str::uuid(), 'conversation_id' => $conversationId, 'sender_id' => $target->id,
+        'client_id' => (string) Str::uuid(), 'type' => 'text', 'body' => 'salut', 'created_at' => now(), 'updated_at' => now()]);
 
     as_($rb)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
 

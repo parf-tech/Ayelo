@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Calls;
 use App\Services\ReporterCredibility;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -85,6 +86,10 @@ class ReportController extends Controller
                 $this->risk($data['reported_id'], 'minor_suspected', 50);
             }
         });
+
+        if ($autoSuspend) {
+            app(Calls::class)->endAllFor($data['reported_id']);
+        }
 
         // Alerte si ce signaleur a un ratio signalements / confirmations anormal (journal + audit, décision Q2-B).
         $credibility->alertIfAbnormal($me);

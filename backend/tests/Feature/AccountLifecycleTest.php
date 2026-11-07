@@ -135,9 +135,9 @@ it('génère un export JSON des données, une demande par jour, accessible à so
     [$u, $b] = lifeUser(['email' => 'export@example.com']);
     [, $other] = lifeUser();
 
-    $id = life($b)->postJson('/api/v1/me/export')->assertStatus(202)->json('id');
+    $id = life($b)->postJson('/api/v1/me/export', ['password' => 'Motdepasse2026'])->assertStatus(202)->json('id');
     Queue::assertPushed(BuildDataExport::class);
-    life($b)->postJson('/api/v1/me/export')->assertStatus(429);
+    life($b)->postJson('/api/v1/me/export', ['password' => 'Motdepasse2026'])->assertStatus(429);
 
     life($b)->getJson("/api/v1/me/export/$id")->assertOk()->assertJsonPath('status', 'pending')->assertJsonPath('url', null);
 

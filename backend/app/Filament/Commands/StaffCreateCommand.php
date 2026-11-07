@@ -2,7 +2,6 @@
 
 namespace App\Filament\Commands;
 
-use App\Models\StaffUser;
 use App\Services\Admin\StaffAccounts;
 use DomainException;
 use Illuminate\Console\Command;
@@ -22,6 +21,15 @@ class StaffCreateCommand extends Command
 
     public function handle(StaffAccounts $accounts): int
     {
+        // Refus avant toute saisie ou génération de mot de passe si la production n'a pas d'opérateur déclaré (revue N-13).
+        try {
+            $accounts->assertOperatorDeclared();
+        } catch (DomainException $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         $generated = ! $this->option('prompt');
         $plain = $generated
             ? $accounts->generatePassword()

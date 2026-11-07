@@ -12,6 +12,8 @@ export type ColorTokens = {
   dislike: string;
   verified: string;
   border: string;
+  /** Contour de composant (champ, case, piste d'interrupteur) : >= 3:1 (WCAG 1.4.11). `border` reste pour les séparateurs décoratifs. */
+  borderStrong: string;
   danger: string;
   warning: string;
   success: string;
@@ -34,6 +36,7 @@ export const colors: { light: ColorTokens; dark: ColorTokens } = {
     dislike: '#DC2626',
     verified: '#2563EB',
     border: '#E4E0DC',
+    borderStrong: '#85807B',
     danger: '#B91C1C',
     warning: '#B45309',
     success: '#15803D',
@@ -53,6 +56,7 @@ export const colors: { light: ColorTokens; dark: ColorTokens } = {
     dislike: '#F87171',
     verified: '#60A5FA',
     border: '#3A3633',
+    borderStrong: '#7F7973',
     danger: '#F87171',
     warning: '#FBBF24',
     success: '#4ADE80',
@@ -73,10 +77,12 @@ export type TypeToken = {
   line: number;
 };
 
-export const type: Record<'title' | 'h2' | 'body' | 'caption', TypeToken> = {
+export const type: Record<'title' | 'h2' | 'body' | 'bodySmall' | 'caption', TypeToken> = {
   title: { size: 28, weight: '700', line: 34 },
   h2: { size: 22, weight: '600', line: 28 },
   body: { size: 16, weight: '400', line: 22 },
+  // 14/20 : texte juridique et mentions obligatoires (renouvellement d'abonnement, consentements).
+  bodySmall: { size: 14, weight: '400', line: 20 },
   caption: { size: 13, weight: '400', line: 18 },
 };
 

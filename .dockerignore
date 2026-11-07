@@ -1,0 +1,65 @@
+# Contexte de construction de l'image PHP (infra/php/Dockerfile, contexte = racine du dépôt) : revue pentest P-08.
+# Principe : on exclut tout ce qui n'a rien à faire dans l'image (secrets locaux, historique, dépendances de développement,
+# tests, documentation, application mobile). Le Dockerfile ne copie que backend/, docs/schema/001_initial.sql et infra/php/*.
+
+# Secrets et configuration locale : jamais dans une couche d'image
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p8
+**/*.p12
+**/*.jks
+**/*.gpg
+**/*.asc
+
+# Historique et outils
+.git
+.gitignore
+.gitattributes
+.github
+.claude
+.specify
+.gitleaks.toml
+replica
+specs
+**/.DS_Store
+**/.idea
+**/.vscode
+
+# Dépendances de développement et caches : composer install --no-dev se fait dans l'image
+**/node_modules
+backend/vendor
+backend/.phpunit.result.cache
+backend/.phpunit.cache
+backend/.phpstan.cache
+backend/public/hot
+backend/public/storage
+
+# Tests, documentation, mobile, site public, scripts d'infrastructure
+tests
+backend/tests
+mobile
+web
+docs/*
+!docs/schema
+docs/schema/*
+!docs/schema/001_initial.sql
+infra/caddy
+infra/scripts
+infra/docker-compose*.yml
+infra/.env*
+
+# État d'exécution local : journaux, caches de configuration, vues compilées, fichiers déposés
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/app/*
+backend/bootstrap/cache/*
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+**/*.log

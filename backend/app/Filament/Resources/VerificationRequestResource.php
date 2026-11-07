@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Models\VerificationRequest;
 use App\Filament\Resources\VerificationRequestResource\Pages\ListVerificationRequests;
 use App\Filament\Resources\VerificationRequestResource\Pages\ViewVerificationRequest;
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -24,11 +26,7 @@ class VerificationRequestResource extends AdminResource
 
     protected static ?string $slug = 'verifications';
 
-    protected static ?string $modelLabel = 'vérification';
-
-    protected static ?string $pluralModelLabel = 'vérifications de profil';
-
-    protected static ?string $navigationLabel = 'Vérifications';
+    protected static string $labelKey = 'verification';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
 
@@ -48,35 +46,35 @@ class VerificationRequestResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('member.profile.display_name')->label('Utilisateur')->placeholder('—'),
-                TextColumn::make('pose_code')->label('Pose demandée'),
-                TextColumn::make('status')->label('Statut')->badge(),
-                TextColumn::make('created_at')->label('Reçue')->since(),
+                TextColumn::make('member.profile.display_name')->label(Staff::t('admin.col.user'))->placeholder('—'),
+                TextColumn::make('pose_code')->label(Staff::t('admin.col.pose')),
+                Labels::badge(TextColumn::make('status')->label(Staff::t('admin.col.status')), 'verification'),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.received_f'))->since(),
             ])
             ->filters([
-                SelectFilter::make('status')->label('Statut')->default('pending')
-                    ->options(['pending' => 'En attente', 'approved' => 'Approuvée', 'rejected' => 'Rejetée']),
+                SelectFilter::make('status')->label(Staff::t('admin.col.status'))->default('pending')
+                    ->options(Labels::options('verification', ['pending', 'approved', 'rejected'])),
             ])
             ->recordUrl(fn (VerificationRequest $record): string => static::getUrl('view', ['record' => $record]))
-            ->emptyStateHeading('Aucune vérification');
+            ->emptyStateHeading(Staff::t('admin.empty.verifications'));
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Demande')->columns(3)->schema([
-                TextEntry::make('member.profile.display_name')->label('Utilisateur')->placeholder('—'),
-                TextEntry::make('pose_code')->label('Pose demandée'),
-                TextEntry::make('status')->label('Statut')->badge(),
-                TextEntry::make('reject_reason')->label('Motif de rejet')->placeholder('—'),
-                TextEntry::make('created_at')->label('Reçue')->dateTime(),
+            Section::make(Staff::t('admin.section.request'))->columns(3)->schema([
+                TextEntry::make('member.profile.display_name')->label(Staff::t('admin.col.user'))->placeholder('—'),
+                TextEntry::make('pose_code')->label(Staff::t('admin.col.pose')),
+                Labels::badge(TextEntry::make('status')->label(Staff::t('admin.col.status')), 'verification'),
+                TextEntry::make('reject_reason')->label(Staff::t('admin.col.reject_reason'))->placeholder('—'),
+                TextEntry::make('created_at')->label(Staff::t('admin.col.received_f'))->dateTime(),
             ]),
-            Section::make('Selfie')->schema([
+            Section::make(Staff::t('admin.section.selfie'))->schema([
                 TextEntry::make('selfie')->hiddenLabel()->html()
                     ->state(fn ($livewire): ?HtmlString => $livewire->selfieUrl
-                        ? new HtmlString('<img src="'.e($livewire->selfieUrl).'" alt="Selfie de vérification" style="max-width:24rem;border-radius:.5rem">')
+                        ? new HtmlString('<img src="'.e($livewire->selfieUrl).'" alt="'.e(Staff::t('admin.verification.selfie_alt')).'" style="max-width:24rem;border-radius:.5rem">')
                         : null)
-                    ->placeholder('Cliquez sur « Voir le selfie » (la consultation est journalisée).'),
+                    ->placeholder(Staff::t('admin.verification.selfie_placeholder')),
             ]),
         ]);
     }

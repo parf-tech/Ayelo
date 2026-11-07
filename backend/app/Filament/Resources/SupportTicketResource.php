@@ -6,6 +6,8 @@ use App\Filament\Models\SupportTicket;
 use App\Filament\Resources\SupportTicketResource\Pages\ListSupportTickets;
 use App\Filament\Resources\SupportTicketResource\Pages\ViewSupportTicket;
 use App\Filament\Resources\SupportTicketResource\TicketActions;
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -21,11 +23,7 @@ class SupportTicketResource extends AdminResource
 
     protected static ?string $slug = 'tickets';
 
-    protected static ?string $modelLabel = 'ticket';
-
-    protected static ?string $pluralModelLabel = 'tickets de support';
-
-    protected static ?string $navigationLabel = 'Tickets de support';
+    protected static string $labelKey = 'ticket';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-lifebuoy';
 
@@ -45,30 +43,30 @@ class SupportTicketResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('subject')->label('Sujet')->limit(60),
-                TextColumn::make('member.profile.display_name')->label('Utilisateur')->placeholder('—'),
-                TextColumn::make('status')->label('Statut')->badge(),
-                TextColumn::make('assignee.email')->label('Attribué à')->placeholder('Non attribué'),
-                TextColumn::make('created_at')->label('Reçu')->since(),
+                TextColumn::make('subject')->label(Staff::t('admin.col.subject'))->limit(60),
+                TextColumn::make('member.profile.display_name')->label(Staff::t('admin.col.user'))->placeholder('—'),
+                Labels::badge(TextColumn::make('status')->label(Staff::t('admin.col.status')), 'ticket'),
+                TextColumn::make('assignee.email')->label(Staff::t('admin.col.assignee'))->placeholder(Staff::t('admin.misc.unassigned')),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.received'))->since(),
             ])
             ->filters([
-                SelectFilter::make('status')->label('Statut')->default('open')
-                    ->options(['open' => 'Ouvert', 'pending' => 'En attente', 'closed' => 'Fermé']),
+                SelectFilter::make('status')->label(Staff::t('admin.col.status'))->default('open')
+                    ->options(Labels::options('ticket', ['open', 'pending', 'closed'])),
             ])
             ->recordUrl(fn (SupportTicket $record): string => static::getUrl('view', ['record' => $record]))
             ->recordActions(TicketActions::make())
-            ->emptyStateHeading('Aucun ticket');
+            ->emptyStateHeading(Staff::t('admin.empty.tickets'));
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Ticket')->columns(3)->schema([
-                TextEntry::make('subject')->label('Sujet')->columnSpanFull(),
-                TextEntry::make('status')->label('Statut')->badge(),
-                TextEntry::make('assignee.email')->label('Attribué à')->placeholder('Non attribué'),
-                TextEntry::make('created_at')->label('Reçu')->dateTime(),
-                TextEntry::make('body')->label('Message')->columnSpanFull(),
+            Section::make(Staff::t('admin.section.ticket'))->columns(3)->schema([
+                TextEntry::make('subject')->label(Staff::t('admin.col.subject'))->columnSpanFull(),
+                Labels::badge(TextEntry::make('status')->label(Staff::t('admin.col.status')), 'ticket'),
+                TextEntry::make('assignee.email')->label(Staff::t('admin.col.assignee'))->placeholder(Staff::t('admin.misc.unassigned')),
+                TextEntry::make('created_at')->label(Staff::t('admin.col.received'))->dateTime(),
+                TextEntry::make('body')->label(Staff::t('admin.col.message'))->columnSpanFull(),
             ]),
         ]);
     }

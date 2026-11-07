@@ -1,0 +1,61 @@
+/*
+ * Jetons de design partagés avec l'application mobile.
+ * Source de vérité : mobile/src/theme/tokens.ts (couleurs claires et sombres, espacement, rayons, typographie).
+ * Spécification : docs/reviews/design-1.md section 8.3. Si tokens.ts change, mettre ce fichier à jour (valeurs recopiées à la main).
+ * Le jeton `info` (#1D4ED8 / #60A5FA) vient de la spécification 8.3, il n'existe pas encore dans tokens.ts.
+ */
+:root {
+  color-scheme: light dark;
+
+  --color-bg: #FFFFFF;
+  --color-surface: #F6F4F2;
+  --color-text: #1B1A19;
+  --color-text-muted: #5E5A56;
+  --color-primary: #C2410C;
+  --color-on-primary: #FFFFFF;
+  --color-border: #E4E0DC;
+  --color-border-strong: #85807B;
+  --color-danger: #B91C1C;
+  --color-warning: #B45309;
+  --color-success: #15803D;
+  --color-info: #1D4ED8;
+  /* Fond du marqueur « à compléter » : texte --color-text dessus (contraste vérifié >= 7:1). */
+  --color-todo-bg: #FDE68A;
+
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --size-target: 44px;
+  --size-content-max: 760px; /* pages web : texte long ; l'application utilise 560 */
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121110;
+    --color-surface: #1E1C1A;
+    --color-text: #F3F1EE;
+    --color-text-muted: #A8A29E;
+    --color-primary: #FB923C;
+    --color-on-primary: #1B1A19;
+    --color-border: #3A3633;
+    --color-border-strong: #7F7973;
+    --color-danger: #F87171;
+    --color-warning: #FBBF24;
+    --color-success: #4ADE80;
+    --color-info: #60A5FA;
+    --color-todo-bg: #5B3A06;
+  }
+}

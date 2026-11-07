@@ -6,11 +6,11 @@
 FROM postgres:16-bookworm
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends awscli gnupg ca-certificates \
+ && apt-get install -y --no-install-recommends awscli curl gnupg ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY backup.sh restore.sh /scripts/
-RUN chmod 0555 /scripts/backup.sh /scripts/restore.sh
+COPY backup.sh restore.sh retention.sh /scripts/
+RUN chmod 0555 /scripts/backup.sh /scripts/restore.sh /scripts/retention.sh
 
 # Le processus principal n'est pas PostgreSQL : on neutralise l'entrypoint de l'image de base.
 ENTRYPOINT []

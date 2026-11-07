@@ -119,7 +119,7 @@ function Column({ title, testID, items, selected, onSelect, flex, scrollToKey }:
           height: LIST_HEIGHT,
           borderRadius: radius.md,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: colors.borderStrong,
           backgroundColor: colors.surface,
         }}
       >

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\AccountMail;
 use App\Services\AgeGate;
 use App\Services\DeviceSessions;
 use App\Services\Registrar;
 use App\Support\DeviceId;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,19 +23,17 @@ class RegisterController extends Controller
         $device = DeviceId::from($request);
 
         if ($gate->isRefused($device, $request->ip())) {
-            // Refus d'âge en vigueur : l'e-mail présenté est mémorisé à son tour (HMAC), pour qu'un autre appareil ou une autre
-            // IP avec la même adresse ne contourne pas le refus (revue F-02, décision Q1-B).
-            $email = $request->input('email');
-            if (is_string($email) && strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $gate->rememberIdentity($email);
-            }
-
+            // Refus d'âge en vigueur pour l'appareil ou l'IP. L'e-mail SAISI n'est volontairement PAS mémorisé (revue pentest P-03) :
+            // une adresse non prouvée permettrait de bloquer l'inscription d'un tiers. Seules les identités prouvées (fournisseur OAuth)
+            // étendent le refus, voir OAuthController.
             return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
         }
 
+        // Le message « adresse déjà utilisée » est conservé (ergonomie) : risque d'énumération accepté, borné par les limites
+        // `register` (5 / h par appareil, 60 / h par IP) ; voir docs/reviews/code-security-2-suivi.md (lot 6).
         $data = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:254', Rule::unique('users', 'email')],
-            'password' => ['required', 'string', Password::min(10)->letters()->numbers(), 'different:email'],
+            'email' => ['required', 'email:rfc', 'max:254'],
+            'password' => ['required', 'string', Password::default(), 'different:email'],
             'age_token' => ['required', 'string'],
             'platform' => ['required', Rule::in(['ios', 'android'])],
             'app_version' => ['nullable', 'string', 'max:32'],
@@ -55,12 +55,35 @@ class RegisterController extends Controller
             throw ValidationException::withMessages(['age_token' => ['Contrôle d\'âge manquant, expiré ou invalide.']]);
         }
 
-        $user = $registrar->create([
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'birthdate' => $birthdate,
-            'locale' => $data['locale'] ?? 'fr',
-        ], $data['consents'], $request);
+        // Jeton d'âge à usage unique (revue F-29) : consommé ici, rendu si la création échoue.
+        if (! $gate->claimToken($data['age_token'])) {
+            throw ValidationException::withMessages(['age_token' => ['Contrôle d\'âge manquant, expiré ou invalide.']]);
+        }
+
+        try {
+            // Aucune « libération » d'un compte non vérifié ici (revue pentest P-01) : un formulaire ne prouve pas la possession de
+            // l'adresse, et une requête non authentifiée ne doit jamais détruire le compte d'autrui. Le vrai propriétaire d'une adresse
+            // squattée reprend la main par « mot de passe oublié » (le code part à l'adresse, preuve de possession) ou par OAuth.
+            if (User::where('email', strtolower($data['email']))->exists()) {
+                throw $this->emailTaken();
+            }
+
+            try {
+                $user = $registrar->create([
+                    'email' => $data['email'],
+                    'password' => $data['password'],
+                    'birthdate' => $birthdate,
+                    'locale' => $data['locale'] ?? 'fr',
+                ], $data['consents'], $request);
+            } catch (UniqueConstraintViolationException) {
+                // Course : deux inscriptions simultanées avec la même adresse (revue F-25) -> 422 propre, pas 500.
+                throw $this->emailTaken();
+            }
+        } catch (\Throwable $e) {
+            $gate->releaseToken($data['age_token']);
+
+            throw $e;
+        }
 
         $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);
         $mail->sendVerification($user);
@@ -69,5 +92,10 @@ class RegisterController extends Controller
             'token' => $token,
             'user' => ['id' => $user->id, 'email' => $user->email, 'locale' => $user->locale],
         ], 201);
+    }
+
+    private function emailTaken(): ValidationException
+    {
+        return ValidationException::withMessages(['email' => [trans('validation.unique', ['attribute' => 'email'])]]);
     }
 }

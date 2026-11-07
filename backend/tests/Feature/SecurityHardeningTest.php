@@ -301,8 +301,16 @@ it('F-09 : un inconnu ne suspend pas un compte, un signaleur crédible en intera
 
     $pair = [$u2->id, $target->id];
     sort($pair, SORT_STRING);
-    DB::table('conversations')->insert(['id' => (string) Str::uuid(), 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $u2->id,
+    $conv = (string) Str::uuid();
+    DB::table('conversations')->insert(['id' => $conv, 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $u2->id,
         'unlocked_by' => 'credit', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+    // Revue pentest P-02 : une conversation ouverte d'office par le signaleur ne suffit pas, la cible doit y avoir écrit.
+    h_as($r2)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
+    expect(User::find($target->id)->status)->toBe('active');
+
+    DB::table('reports')->where('reporter_id', $u2->id)->delete();
+    DB::table('messages')->insert(['id' => (string) Str::uuid(), 'conversation_id' => $conv, 'sender_id' => $target->id, 'client_id' => (string) Str::uuid(),
+        'type' => 'text', 'body' => 'bonjour', 'created_at' => now(), 'updated_at' => now()]);
     h_as($r2)->postJson('/api/v1/reports', ['reported_id' => $target->id, 'reason' => 'minor_suspected'])->assertCreated();
     expect(User::find($target->id)->status)->toBe('suspended');
 });

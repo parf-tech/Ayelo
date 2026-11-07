@@ -28,7 +28,7 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
         paddingHorizontal: space[4],
         borderRadius: radius.pill,
         borderWidth: selected ? 2 : 1,
-        borderColor: selected ? colors.primary : colors.border,
+        borderColor: selected ? colors.primary : colors.borderStrong,
         backgroundColor: colors.surface,
         opacity: pressed ? 0.8 : 1,
       })}

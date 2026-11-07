@@ -27,8 +27,35 @@ class StaffAccounts
         return $operator === '' ? null : mb_substr($operator, 0, 190);
     }
 
+    /**
+     * Données d'opérateur écrites dans la colonne `after` du journal : l'opérateur déclaré et le nom de la machine (hostname).
+     * Vide (aucune clé inventée) hors production si STAFF_OPERATOR n'est pas défini.
+     *
+     * @return array{operator?: string, host?: string}
+     */
+    private function operatorTrace(): array
+    {
+        $operator = $this->operator();
+
+        return $operator === null ? [] : ['operator' => $operator, 'host' => mb_substr((string) gethostname(), 0, 190)];
+    }
+
+    /**
+     * En production, une action de console sur les comptes du personnel exige un opérateur déclaré (STAFF_OPERATOR) : sans lui,
+     * l'entrée du journal ne dirait pas qui a agi (revue N-13). Hors production, le comportement est inchangé.
+     *
+     * @throws DomainException
+     */
+    public function assertOperatorDeclared(): void
+    {
+        if (app()->isProduction() && $this->operator() === null) {
+            throw new DomainException("Production : la variable STAFF_OPERATOR est vide. Définissez-la (votre identité, par exemple prenom.nom) avant de créer un compte du personnel ou de réinitialiser une 2FA : sinon l'action serait sans auteur dans le journal.");
+        }
+    }
+
     public function create(string $email, string $role, string $password): StaffUser
     {
+        $this->assertOperatorDeclared();
         $email = strtolower(trim($email));
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new DomainException('Adresse e-mail invalide.');
@@ -44,7 +71,7 @@ class StaffAccounts
         }
 
         $staff = StaffUser::create(['email' => $email, 'password' => $password, 'role' => $role, 'is_active' => true]);
-        $this->audit->record(null, 'staff.created', 'staff_users', $staff->id, null, ['email' => $email, 'role' => $role] + ($this->operator() ? ['operator' => $this->operator()] : []));
+        $this->audit->record(null, 'staff.created', 'staff_users', $staff->id, null, ['email' => $email, 'role' => $role] + $this->operatorTrace());
 
         return $staff;
     }
@@ -71,10 +98,11 @@ class StaffAccounts
      */
     public function resetTwoFactor(string $email): array
     {
+        $this->assertOperatorDeclared();
         $staff = StaffUser::where('email', strtolower(trim($email)))->first() ?? throw new DomainException('Compte introuvable.');
         $staff->forceFill(['recovery_codes_encrypted' => null])->save();
         $enrolled = $this->enrollTwoFactor($staff);
-        $this->audit->record(null, 'staff.2fa_reset', 'staff_users', $staff->id, null, $this->operator() ? ['operator' => $this->operator()] : null);
+        $this->audit->record(null, 'staff.2fa_reset', 'staff_users', $staff->id, null, $this->operatorTrace() ?: null);
 
         return ['staff' => $staff] + $enrolled;
     }

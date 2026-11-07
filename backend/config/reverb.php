@@ -4,6 +4,15 @@
  | Origines autorisées à ouvrir une connexion WebSocket (F-17, revue de sécurité). Valeur : REVERB_ALLOWED_ORIGINS, hôtes séparés par des
  | virgules (jokers acceptés, ex. *.example.com ; « * » rétablit l'ancien comportement ouvert). Par défaut : l'hôte du site web
  | (APP_WEB_URL, à défaut APP_URL) et REVERB_HOST (l'application mobile envoie comme Origin l'hôte de l'URL WebSocket).
+ |
+ | Comportement de Reverb (Protocols/Pusher/Server::verifyOrigin) : seul l'HÔTE de l'en-tête Origin est comparé (port et schéma ignorés,
+ | Str::is avec jokers) ; un Origin ABSENT est traité comme une chaîne vide, donc REFUSÉ (erreur Pusher 4009) dès que « * » n'est pas listé.
+ | Il n'existe pas de réglage pour accepter l'absence d'Origin : ne jamais compenser avec « * ».
+ | Application mobile (React Native 0.88, pusher-js 8.6) : Android ajoute lui-même Origin = http(s)://REVERB_HOST[:port] (WebSocketModule.kt),
+ | iOS (SocketRocket) le fait aussi ; donc REVERB_HOST DOIT figurer dans la liste. Si REVERB_ALLOWED_ORIGINS est renseignée, y inclure
+ | REVERB_HOST, sinon le temps réel mobile est refusé (repli sur le rafraîchissement périodique). Un export Expo Web ajoute l'hôte de la page.
+ | L'Origin protège les navigateurs (détournement de WebSocket entre sites) ; un client natif peut l'usurper, l'autorisation des canaux
+ | privés (/broadcasting/auth) reste la vraie barrière.
  */
 $reverbOrigins = array_values(array_filter(array_map('trim', explode(',', (string) env('REVERB_ALLOWED_ORIGINS', '')))));
 if ($reverbOrigins === []) {

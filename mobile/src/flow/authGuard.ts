@@ -2,7 +2,7 @@ import type { AuthState } from '../auth/authState';
 
 /**
  * Zones de navigation :
- *  - public     : accueil, connexion, parcours d'inscription (S01, S02, S63, S68, S64)
+ *  - public     : accueil, connexion, parcours d'inscription (S01, S02, S68, S63, S64)
  *  - onboarding : S04, S05 (compte créé, profil à compléter)
  *  - app        : écran connecté
  */

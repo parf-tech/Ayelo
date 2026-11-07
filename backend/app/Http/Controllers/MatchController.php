@@ -23,16 +23,20 @@ class MatchController extends Controller
         $otherIds = $rows->map(fn ($m) => $m->user_a === $me ? $m->user_b : $m->user_a);
         // Un compte suspendu ou en cours de suppression disparaît de la liste (revue F-10).
         $profiles = Profile::with('user')->whereIn('user_id', $otherIds)->get()->filter(fn ($p) => $p->user->status === 'active' && $p->is_visible)->keyBy('user_id');
+        $presented = $presenter->publicMany($profiles);
         $conversations = DB::table('conversations')->whereIn('match_id', $rows->pluck('id'))->pluck('id', 'match_id');
 
-        return response()->json(['data' => $rows->map(function ($m) use ($me, $profiles, $conversations, $presenter) {
+        /**
+         * @body array{data: list<array{id: string, created_at: string, conversation_id: string|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}|null}>}
+         */
+        return response()->json(['data' => $rows->map(function ($m) use ($me, $presented, $conversations) {
             $otherId = $m->user_a === $me ? $m->user_b : $m->user_a;
 
             return [
                 'id' => $m->id,
                 'created_at' => $m->created_at,
                 'conversation_id' => $conversations[$m->id] ?? null,
-                'profile' => isset($profiles[$otherId]) ? $presenter->public($profiles[$otherId]) : null,
+                'profile' => $presented[$otherId] ?? null,
             ];
         })->values()]);
     }

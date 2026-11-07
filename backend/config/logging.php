@@ -6,6 +6,11 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
+// Production : journal quotidien avec rotation (LOG_DAILY_DAYS, 14 par défaut) et niveau « info » (revue CTO n°1).
+// Ailleurs : fichier unique, niveau « debug ». Les variables LOG_* explicites l'emportent toujours.
+$isProduction = env('APP_ENV') === 'production';
+$defaultLevel = $isProduction ? 'info' : 'debug';
+
 return [
 
     /*
@@ -56,7 +61,7 @@ return [
         'stack' => [
             'tap' => [RedactLogs::class],
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', $isProduction ? 'daily' : 'single')),
             'ignore_exceptions' => false,
         ],
 
@@ -64,7 +69,7 @@ return [
             'tap' => [RedactLogs::class],
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'replace_placeholders' => true,
         ],
 
@@ -72,7 +77,7 @@ return [
             'tap' => [RedactLogs::class],
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
@@ -90,7 +95,7 @@ return [
         'papertrail' => [
             'tap' => [RedactLogs::class],
             'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'handler' => env('LOG_PAPERTRAIL_HANDLER', SyslogUdpHandler::class),
             'handler_with' => [
                 'host' => env('PAPERTRAIL_URL'),
@@ -103,7 +108,7 @@ return [
         'stderr' => [
             'tap' => [RedactLogs::class],
             'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'handler' => StreamHandler::class,
             'handler_with' => [
                 'stream' => 'php://stderr',
@@ -115,7 +120,7 @@ return [
         'syslog' => [
             'tap' => [RedactLogs::class],
             'driver' => 'syslog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
             'replace_placeholders' => true,
         ],
@@ -123,7 +128,7 @@ return [
         'errorlog' => [
             'tap' => [RedactLogs::class],
             'driver' => 'errorlog',
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_LEVEL', $defaultLevel),
             'replace_placeholders' => true,
         ],
 

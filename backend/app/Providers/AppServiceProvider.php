@@ -2,17 +2,20 @@
 
 namespace App\Providers;
 
+use App\OpenApi\ReauthenticationRequestBody;
 use App\Services\OAuth\JwtOAuthVerifier;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\PushNotifier;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\Storage\MediaStorage;
 use App\Services\Storage\S3MediaStorage;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +28,22 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Contrat OpenAPI : corps de la ré-authentification, que Scramble ne peut pas déduire (validation hors du contrôleur).
+        // Scramble est une dépendance de développement : absente de l'image de production (composer --no-dev).
+        if (class_exists(Scramble::class)) {
+            Scramble::configure()->withOperationTransformers(ReauthenticationRequestBody::class);
+        }
+
+        // Mot de passe (docs/11 Authentification 2, revue F-18) : 10 caractères minimum (FR-A-1 et validation du client mobile),
+        // lettres et chiffres ; en production seulement, refus des mots de passe présents dans les fuites publiques (Have I Been
+        // Pwned, k-anonymat : seuls 5 caractères de l'empreinte sont envoyés). Hors production : aucun appel réseau (tests).
+        // Si le service est injoignable, Laravel laisse passer (pas de blocage des inscriptions).
+        Password::defaults(function () {
+            $rule = Password::min(10)->letters()->numbers();
+
+            return $this->app->isProduction() ? $rule->uncompromised(3) : $rule;
+        });
+
         // Limites : jamais sur un en-tête client seul (revue de sécurité F-01). Pour les routes sensibles on combine
         // l'identifiant visé (e-mail), l'adresse IP et l'appareil (uuid valide) : la limite la plus stricte l'emporte.
         // Valeurs initiales de docs/10-API-SPECIFICATIONS.md, à calibrer.

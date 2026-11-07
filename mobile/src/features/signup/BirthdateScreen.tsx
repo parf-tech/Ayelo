@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { isApiError } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
-import { SIGNUP_ROUTES } from '../../flow/signupMachine';
+import { hasRequiredConsents, SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow, useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import type { TranslationKey } from '../../i18n';
@@ -15,7 +15,7 @@ import { BackButton } from '../common/BackButton';
 import { birthYears, toIsoBirthdate } from '../validation';
 
 /**
- * S68 : date de naissance, saisie AVANT la création du compte.
+ * S68 : date de naissance, première étape de l'inscription : saisie AVANT les consentements et la création du compte.
  * Le client ne juge jamais l'âge : il envoie la date au serveur (age-check) qui décide et mémorise un refus.
  */
 export function BirthdateScreen() {
@@ -23,7 +23,7 @@ export function BirthdateScreen() {
   const { t } = useI18n();
   const { space } = useTheme();
   const { api } = useAuth();
-  const { dispatch } = useSignupFlow();
+  const { state: flow, dispatch } = useSignupFlow();
   const guard = useSignupGuard('birthdate');
 
   const [parts, setParts] = useState<DateParts>({});
@@ -54,7 +54,8 @@ export function BirthdateScreen() {
     try {
       const response = await api.auth.ageCheck(result.iso);
       dispatch({ type: 'AGE_PASSED', ageToken: response.age_token, expiresAt: Date.now() + response.expires_in * 1000 });
-      router.push(SIGNUP_ROUTES.account as never);
+      // Première étape du parcours : consentements ensuite (S63). Déjà donnés (retour arrière, jeton expiré) : directement le compte.
+      router.push((hasRequiredConsents(flow.consents) ? SIGNUP_ROUTES.account : SIGNUP_ROUTES.consents) as never);
     } catch (error) {
       if (isApiError(error) && error.status === 403 && error.code === 'age_not_eligible') {
         // Refus : écran neutre S64 (la garde redirige aussi, la navigation est idempotente).

@@ -5,19 +5,21 @@ import { SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ScreenContainer, Text } from '../../ui';
+import { Banner, Button, ScreenContainer, Text } from '../../ui';
+import { setDeletionNotice, useDeletionNotice } from '../settings/deletionNotice';
 import { LanguageToggle } from '../common/LanguageToggle';
 
-/** S01 : accueil. Deux entrées : connexion (F00, sans S63 ni S68) et inscription (F01 : S63 -> S68 -> S02). */
+/** S01 : accueil. Deux entrées : connexion (F00, sans S63 ni S68) et inscription (F01 : S68 -> S63 -> S02). */
 export function WelcomeScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { space } = useTheme();
   const { dispatch } = useSignupFlow();
+  const deletion = useDeletionNotice();
 
   const startSignup = () => {
     dispatch({ type: 'RESET' });
-    router.push(SIGNUP_ROUTES.consents as never);
+    router.push(SIGNUP_ROUTES.birthdate as never);
   };
 
   return (
@@ -43,6 +45,16 @@ export function WelcomeScreen() {
       }
     >
       <LanguageToggle />
+      {deletion ? (
+        <Banner
+          testID="welcome-deletion-notice"
+          variant="info"
+          message={`${t('delete.done')} ${t('delete.grace', { days: deletion.days })} ${t('delete.cancelHint')}`}
+          onDismiss={() => setDeletionNotice(null)}
+          dismissLabel={t('ui.banner.dismiss')}
+          style={{ marginTop: space[3] }}
+        />
+      ) : null}
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text variant="title" tone="primary" style={{ marginBottom: space[4] }}>
           {t('app.name')}

@@ -39,6 +39,8 @@ create table users (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create index users_active_birthdate_idx on users (birthdate) where status = 'active';   -- découverte : filtre d'âge
+create index users_active_last_seen_idx on users (last_seen_at) where status = 'active';  -- découverte : filtre de fraîcheur
 
 create table user_consents (
   id uuid primary key default gen_random_uuid(),
@@ -138,6 +140,7 @@ create index on profiles (origin_country);
 create index on profiles (residence_country);
 create index on profiles (intent);
 create index on profiles (is_visible, verification_status);
+create index profiles_visible_created_idx on profiles (created_at desc, id desc) where is_visible;  -- tri de la découverte
 
 create table preferences (
   user_id uuid primary key references users(id) on delete cascade,
@@ -172,6 +175,7 @@ create table media (
   updated_at timestamptz not null default now()
 );
 create index on media (user_id, kind);
+create index media_approved_photo_idx on media (user_id) where kind = 'profile_photo' and status = 'approved';  -- découverte : photo approuvée
 create index on media (status, created_at);
 create unique index media_photo_position_unique on media (user_id, position)
   where kind = 'profile_photo' and status in ('pending_upload','processing','approved');
@@ -265,7 +269,10 @@ create table messages (
   unique (conversation_id, sender_id, client_id),
   check (type <> 'text' or deleted_at is not null or (body is not null and char_length(body) >= 1))
 );
-create index on messages (conversation_id, created_at desc);
+-- Index des chemins chauds (revue CTO 1, risque 9). Migration miroir : 2026_11_08_000000_add_hot_path_indexes.php, qui
+-- les crée avec `create index concurrently` sur une base déjà en production (ne bloque pas les écritures).
+create index messages_conversation_created_idx on messages (conversation_id, created_at desc, id desc);  -- curseur et dernier message
+create index messages_unread_idx on messages (conversation_id) where read_at is null and deleted_at is null;  -- non lus
 create index on messages (sender_id);
 create index on messages (media_id) where media_id is not null;
 

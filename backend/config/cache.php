@@ -78,6 +78,15 @@ return [
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
+        // Etat de securite qui ne doit PAS etre evince (jeton d'age a usage unique, compteur de reauthentification, consigne de
+        // pose) : connexion Redis persistante 'default' (pas l'instance LRU du cache), prefixe distinct. Voir config/safety.php.
+        'state' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_STATE_CONNECTION', 'default'),
+            'lock_connection' => env('REDIS_STATE_CONNECTION', 'default'),
+            'prefix' => env('CACHE_STATE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-state-'),
+        ],
+
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),

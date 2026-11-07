@@ -1,5 +1,15 @@
 /** Prix et titres affichés viennent du store (via RevenueCat) : l'API du backend ne renvoie ni prix ni devise. */
-export type StoreProduct = { productId: string; title: string; priceString: string };
+export type StoreProduct = {
+  productId: string;
+  title: string;
+  priceString: string;
+  /** Montant numérique du store (unité principale de la devise) : sert au calcul du prix par mois. Absent = pas de ligne « par mois ». */
+  price?: number;
+  /** Code devise ISO 4217 du store (EUR, USD…). */
+  currencyCode?: string;
+  /** Durée de l'abonnement, ISO 8601 (P1M, P3M, P1Y…). */
+  subscriptionPeriod?: string | null;
+};
 
 export type ProductKind = 'subscription' | 'consumable';
 

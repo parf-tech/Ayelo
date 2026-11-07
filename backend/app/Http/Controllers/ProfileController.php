@@ -28,17 +28,17 @@ class ProfileController extends Controller
         $user = $request->user();
         $profile = Profile::where('user_id', $user->id)->first();
 
-        $request->merge([
-            'origin_country' => strtoupper((string) $request->input('origin_country')),
-            'residence_country' => strtoupper((string) $request->input('residence_country')),
-        ]);
+        // Seules les chaînes sont mises en majuscules : un tableau reste tel quel et échoue à la validation (422, pas 500 - revue F-24).
+        $request->merge(collect(['origin_country', 'residence_country'])
+            ->filter(fn ($k) => is_string($request->input($k)))
+            ->mapWithKeys(fn ($k) => [$k => strtoupper($request->input($k))])->all());
 
         $required = $profile === null ? 'required' : 'sometimes';
         $data = $request->validate([
             'display_name' => [$required, 'string', 'min:2', 'max:40'],
             'gender' => [$required, Rule::in(self::GENDERS)],
-            'origin_country' => [$required, 'regex:/^[A-Z]{2}$/'],
-            'residence_country' => [$required, 'regex:/^[A-Z]{2}$/'],
+            'origin_country' => [$required, 'regex:/^[A-Z]{2}\z/'],
+            'residence_country' => [$required, 'regex:/^[A-Z]{2}\z/'],
             'city' => ['nullable', 'string', 'max:80'],
             'bio' => ['nullable', 'string', 'max:500'],
             'intent' => [$required, Rule::in(self::INTENTS)],
@@ -93,9 +93,9 @@ class ProfileController extends Controller
             'age_min' => ['sometimes', 'integer', 'min:18', 'max:99'],
             'age_max' => ['sometimes', 'integer', 'min:18', 'max:99'],
             'countries' => ['sometimes', 'array', 'max:20'],
-            'countries.*' => ['regex:/^[A-Z]{2}$/'],
+            'countries.*' => ['regex:/^[A-Z]{2}\z/'],
             'origins' => ['sometimes', 'array', 'max:20'],
-            'origins.*' => ['regex:/^[A-Z]{2}$/'],
+            'origins.*' => ['regex:/^[A-Z]{2}\z/'],
             'intents' => ['sometimes', 'array', 'max:5'],
             'intents.*' => [Rule::in(self::INTENTS)],
             'verified_only' => ['sometimes', 'boolean'],

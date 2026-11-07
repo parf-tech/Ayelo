@@ -66,6 +66,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Export des données : ré-authentification obligatoire comme la suppression (revue F-20), car le fichier contient e-mail,
+         *     date de naissance et messages envoyés. Un jeton volé ne suffit donc pas à les exfiltrer
+         */
         post: operations["account.requestExport"];
         delete?: never;
         options?: never;
@@ -248,10 +252,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Authenticate the request for channel access */
-        get: operations["broadcast.authenticate"];
+        get?: never;
         put?: never;
-        post?: never;
+        /**
+         * Autorise l'abonnement WebSocket à un canal privé
+         * @description Canaux `private-user.{id}` et `private-conversation.{id}`, selon `routes/channels.php`. Protocole Pusher : le client envoie l'identifiant de socket et le nom du canal, le serveur répond avec la signature.
+         *     Refus (403) si le compte n'est pas autorisé sur ce canal.
+         */
+        post: operations["broadcastAuth"];
         delete?: never;
         options?: never;
         head?: never;
@@ -709,7 +717,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Réponse identique que l'e-mail existe ou non (pas d'énumération de comptes) */
+        /**
+         * Réponse identique que l'e-mail existe ou non (pas d'énumération de comptes) : même code, et l'envoi (création du jeton
+         *     puis e-mail) part après la réponse, donc le temps de réponse ne dépend pas de l'existence du compte (revue F-11)
+         */
         post: operations["password.forgot"];
         delete?: never;
         options?: never;
@@ -966,7 +977,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Consignes : le selfie doit reproduire la pose demandée (évite la réutilisation d'une photo existante) */
+        /**
+         * Consigne : le selfie doit reproduire la pose demandée (évite la réutilisation d'une photo existante).
+         *     La pose est tirée au hasard pour ce compte, valable une heure ou jusqu'à l'envoi de la demande (revue F-28) : elle
+         *     n'est plus déterministe par jour, donc non prévisible à l'avance, et elle est consommée par la demande qui l'enregistre
+         */
         get: operations["verification.pose"];
         put?: never;
         post?: never;
@@ -993,6 +1008,36 @@ export interface components {
                     /** @description A detailed description of each field that failed validation. */
                     errors: {
                         [key: string]: string[];
+                    };
+                };
+            };
+        };
+        /** @description Ré-authentification refusée (mot de passe ou jeton du fournisseur incorrect). */
+        ReauthenticationRefused: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    error: {
+                        /** @enum {string} */
+                        code: "invalid_credentials" | "invalid_oauth_token";
+                        message: string;
+                    };
+                };
+            };
+        };
+        /** @description Trop d'échecs de ré-authentification (en-tête Retry-After en secondes). */
+        ReauthenticationThrottled: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    error: {
+                        /** @enum {string} */
+                        code: "rate_limited";
+                        message: string;
                     };
                 };
             };
@@ -1045,6 +1090,7 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Demande enregistrée, sans corps. Réponse identique que l'adresse corresponde à un compte ou non. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1069,6 +1115,7 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Suppression programmée, sans corps (délai de grâce avant la purge). */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1141,15 +1188,26 @@ export interface operations {
     };
     "account.destroy": {
         parameters: {
-            query: {
-                password: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        /** @description Mot de passe, ou jeton d'identité frais du fournisseur (compte social) avec le `nonce` éventuel. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    password: string;
+                } | {
+                    /** @enum {string} */
+                    provider: "google" | "apple";
+                    id_token: string;
+                    nonce?: string;
+                };
+            };
+        };
         responses: {
+            /** @description Suppression programmée (délai de grâce avant la purge). */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1158,35 +1216,13 @@ export interface operations {
                     "application/json": {
                         /** @constant */
                         status: "scheduled";
-                        /** @constant */
-                        purge_after_days: 30;
+                        purge_after_days: number;
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            /** @constant */
-                            code: "invalid_oauth_token";
-                            /** @constant */
-                            message: "Ré-authentification refusée.";
-                        };
-                    } | {
-                        error: {
-                            /** @constant */
-                            code: "invalid_credentials";
-                            /** @constant */
-                            message: "Mot de passe incorrect.";
-                        };
-                    };
-                };
-            };
-            422: components["responses"]["ValidationException"];
+            403: components["responses"]["ReauthenticationRefused"];
+            429: components["responses"]["ReauthenticationThrottled"];
         };
     };
     "account.requestExport": {
@@ -1196,8 +1232,21 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        /** @description Mot de passe, ou jeton d'identité frais du fournisseur (compte social) avec le `nonce` éventuel. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    password: string;
+                } | {
+                    /** @enum {string} */
+                    provider: "google" | "apple";
+                    id_token: string;
+                    nonce?: string;
+                };
+            };
+        };
         responses: {
+            /** @description Export demandé : il sera préparé en arrière-plan. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1211,21 +1260,8 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        error: {
-                            /** @constant */
-                            code: "quota_reached";
-                            /** @constant */
-                            message: "Une seule demande d'export par jour.";
-                        };
-                    };
-                };
-            };
+            403: components["responses"]["ReauthenticationRefused"];
+            429: components["responses"]["ReauthenticationThrottled"];
         };
     };
     "account.export": {
@@ -1599,24 +1635,35 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
-    "broadcast.authenticate": {
+    broadcastAuth: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    socket_id: string;
+                    channel_name: string;
+                };
+            };
+        };
         responses: {
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": {
+                        auth: string;
+                        channel_data?: string;
+                    };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "call.store": {
@@ -1708,6 +1755,21 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "call_limit";
+                            /** @constant */
+                            message: "Trop d'appels restés sans réponse. Réessayez plus tard.";
+                        };
+                    };
+                };
+            };
         };
     };
     "call.accept": {
@@ -1746,6 +1808,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "conversation_closed";
+                            /** @constant */
+                            message: "Cette conversation n'est plus disponible.";
+                        };
+                    } | {
                         /**
                          * @description Error overview.
                          * @example
@@ -1854,6 +1923,21 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "conversation_closed";
+                            /** @constant */
+                            message: "Cette conversation n'est plus disponible.";
+                        };
+                    };
+                };
+            };
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -1995,6 +2079,21 @@ export interface operations {
                 };
             };
             404: components["responses"]["ModelNotFoundException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "conversation_conflict";
+                            /** @constant */
+                            message: "Ouverture déjà en cours. Réessayez dans un instant.";
+                        };
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
             429: {
                 headers: {
@@ -2060,6 +2159,21 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["AuthenticationException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "push_token_in_use";
+                            /** @constant */
+                            message: "Ce jeton de notification est déjà utilisé par un autre compte.";
+                        };
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -2101,6 +2215,8 @@ export interface operations {
                 "origins[]"?: string[] | null;
                 "intents[]"?: ("marriage" | "long_lasting_love" | "flirt" | "friendship" | "lets_find_out")[] | null;
                 verified_only?: boolean | null;
+                /** @description Fraîcheur : n'afficher que les comptes vus depuis N jours (défaut : config discovery.active_within_days, nul = désactivé). */
+                active_within_days?: number | null;
             };
             header?: never;
             path?: never;
@@ -2520,6 +2636,21 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["AuthenticationException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "media_retained";
+                            /** @constant */
+                            message: "Ce fichier est conservé et ne peut pas être supprimé pour le moment.";
+                        };
+                    };
+                };
+            };
         };
     };
     "media.reorder": {
@@ -2784,7 +2915,18 @@ export interface operations {
                     age_token?: string | null;
                     /** @enum {string|null} */
                     locale?: "fr" | "en" | null;
-                    consents?: string[] | null;
+                    /** @description Même rigueur que l'inscription par e-mail (revue F-19) : "false", [1], 0 sont refusés ; absent = inscription à finaliser (409). */
+                    consents?: {
+                        terms?: string | null;
+                        privacy?: string | null;
+                        sensitive_data?: string | null;
+                        marketing?: boolean | null;
+                    } | null;
+                    /**
+                     * @description Nonce (revue F-21) : lié à la demande de connexion côté application ; contrôlé quand il est envoyé, exigé si
+                     *     safety.oauth.require_nonce est actif. L'application mobile doit l'envoyer dès que le SDK du fournisseur le permet.
+                     */
+                    nonce?: string | null;
                 };
             };
         };
@@ -2842,16 +2984,16 @@ export interface operations {
                     "application/json": {
                         error: {
                             /** @constant */
-                            code: "registration_required";
+                            code: "account_exists";
                             /** @constant */
-                            message: "Inscription à finaliser.";
+                            message: "Un compte existe déjà avec cette adresse. Connectez-vous avec votre e-mail.";
                         };
                     } | {
                         error: {
                             /** @constant */
-                            code: "account_exists";
+                            code: "registration_required";
                             /** @constant */
-                            message: "Un compte existe déjà avec cette adresse. Connectez-vous avec votre e-mail.";
+                            message: "Inscription à finaliser.";
                         };
                     };
                 };
@@ -3621,15 +3763,8 @@ export interface operations {
                         error: {
                             /** @constant */
                             code: "quota_reached";
-                            /** @constant */
-                            message: "Quota de likes atteint pour aujourd'hui.";
-                        };
-                    } | {
-                        error: {
-                            /** @constant */
-                            code: "quota_reached";
-                            /** @constant */
-                            message: "Quota de super-likes atteint.";
+                            /** @enum {string} */
+                            message: "Quota de super-likes atteint." | "Quota de likes atteint pour aujourd'hui.";
                         };
                     };
                 };

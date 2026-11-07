@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Supprimer mon compte – [Nom de l’application]</title>
+<meta name="description" content="Comment supprimer votre compte, délai de grâce de 30 jours, ce qui est supprimé et ce qui est conservé.">
+<link rel="alternate" hreflang="en" href="../en/account/delete.html">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="banner" role="note"><div class="wrap"><p><strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.</p></div></div>
+<header class="site"><div class="wrap">
+<a class="brand" href="../index.html">[Nom de l’application]</a>
+<nav aria-label="Pages du site"><ul>
+<li><a href="../index.html">Accueil</a></li>
+<li><a href="../legal/terms.html">Conditions d’utilisation</a></li>
+<li><a href="../legal/privacy.html">Confidentialité</a></li>
+<li><a href="../legal/community.html">Règles de la communauté</a></li>
+<li><a href="../safety.html">Sécurité et signalement</a></li>
+<li><a href="../support.html">Support</a></li>
+<li><a href="delete.html" aria-current="page">Supprimer mon compte</a></li>
+</ul></nav>
+<p class="lang"><a href="../en/account/delete.html" lang="en" hreflang="en" aria-label="Read this page in English">English</a></p>
+</div></header>
+<main id="contenu"><div class="wrap">
+<h1>Supprimer mon compte</h1>
+<div class="callout"><p>Votre profil est <strong>masqué immédiatement</strong> et vous êtes déconnecté de tous vos appareils. Vos données personnelles sont <strong>anonymisées après 30 jours</strong>.</p></div>
+
+<h2>Voie 1 : dans l’application</h2>
+<ol>
+  <li>Ouvrez l’application et connectez-vous.</li>
+  <li>Allez dans <strong>Paramètres</strong>, puis <strong>Supprimer mon compte</strong>.</li>
+  <li>Confirmez avec votre mot de passe.</li>
+</ol>
+
+<h2>Voie 2 : depuis cette page, sans l’application</h2>
+<p>Saisissez l’adresse e-mail de votre compte. Nous vous envoyons un lien de confirmation, <strong>valable 60 minutes</strong>. La suppression n’est demandée que lorsque vous ouvrez ce lien et le confirmez. La réponse est la même que l’adresse corresponde ou non à un compte.</p>
+<form method="post" action="https://api.example.invalid/api/v1/account-deletion-requests" data-deletion-form="request" data-msg-sending="Envoi en cours…" data-msg-done="Demande reçue. Si un compte actif existe pour cette adresse, un e-mail contenant un lien de confirmation vient d’être envoyé. Le lien est valable 60 minutes." data-msg-throttled="Trop de demandes. Réessayez dans quelques minutes." data-msg-invalid="Adresse invalide." data-msg-error="Une erreur est survenue. Réessayez plus tard ou contactez le support." data-msg-unconfigured="Ce formulaire n’est pas encore relié au service (adresse de l’API à renseigner). Utilisez l’application ou le support.">
+  <label for="email">Adresse e-mail du compte</label>
+  <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="254">
+  <button type="submit">Recevoir le lien de confirmation</button>
+  <div class="status" role="status" aria-live="polite"></div>
+</form>
+<p class="small">Adresse du service dans ce formulaire : <mark class="todo">[À COMPLÉTER : à renseigner par l’exploitant, voir docs/runbooks/site-public.md]</mark>. Pour un compte créé uniquement avec Google ou Apple (sans mot de passe), la voie 2 n’est pas encore disponible dans tous les cas : écrivez au <a href="../support.html">support</a>.</p>
+<noscript><p class="small">Sans JavaScript, le formulaire s’envoie quand même, mais la réponse du service s’affiche brute. Vous recevrez le même e-mail.</p></noscript>
+
+<h2>Délai de 30 jours</h2>
+<ul>
+  <li>Pendant 30 jours, votre compte est en attente de suppression : profil invisible, sessions fermées.</li>
+  <li>Passé ce délai, l’anonymisation est automatique et <strong>définitive</strong>.</li>
+  <li>Pour changer d’avis avant la fin du délai : contactez le <a href="../support.html">support</a> <mark class="todo">[À COMPLÉTER : procédure d’annulation à confirmer : non vérifiée dans le code]</mark>.</li>
+</ul>
+
+<h2>Abonnement Premium</h2>
+<div class="callout warn"><p><strong>Supprimer le compte ne résilie pas l’abonnement.</strong> Résiliez-le dans les réglages de l’App Store ou de Google Play, sinon la facturation continue.</p></div>
+
+<h2>Ce qui est supprimé</h2>
+<p>À l’anonymisation (après 30 jours) :</p>
+<ul>
+  <li>E-mail, mot de passe, téléphone éventuel, appareils et jetons de notification, identités de connexion sociale.</li>
+  <li>Profil, préférences, photos et fichiers associés, selfie de vérification, demandes de vérification.</li>
+  <li>Le contenu des messages que vous avez envoyés (la conversation reste visible pour l’autre personne, marquée « compte supprimé »).</li>
+  <li>Vos likes et passes, vos blocages, vos appels, vos histoires et invitations, vos demandes d’aide et contestations, vos archives d’export.</li>
+  <li>L’adresse IP associée à vos consentements.</li>
+  <li>Les données brutes d’achat reçues du prestataire d’abonnement qui contiennent votre identifiant.</li>
+</ul>
+
+<h2>Ce qui est conservé, et combien de temps</h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Élément</th><th scope="col">Conservation</th></tr></thead>
+<tbody>
+<tr><td>Date de naissance</td><td>Réduite à l’année (pas effacée) <mark class="todo">[À COMPLÉTER : à valider par un juriste]</mark></td></tr>
+<tr><td>Ligne de compte minimale (identifiant, statut « supprimé »)</td><td>Tant que des signalements ou sanctions s’y rattachent</td></tr>
+<tr><td>Texte libre des signalements concernant ou émis par le compte</td><td>365 jours après leur création, puis effacé (sauf conservation probatoire d’un dossier)</td></tr>
+<tr><td>Motif des sanctions</td><td>365 jours après la sanction, puis remplacé par un marqueur</td></tr>
+<tr><td>Si le compte a été suspendu ou banni : empreinte (hash) de l’e-mail et du téléphone, signaux de risque</td><td>Conservés pour empêcher le contournement d’un bannissement. Durée : <mark class="todo">[À COMPLÉTER : à fixer]</mark></td></tr>
+<tr><td>Preuves de consentement (sans adresse IP)</td><td><mark class="todo">[À COMPLÉTER : durée à fixer]</mark></td></tr>
+<tr><td>Achats et pièces comptables</td><td><mark class="todo">[À COMPLÉTER : durée comptable : juriste]</mark></td></tr>
+<tr><td>Sauvegardes du serveur</td><td>Une donnée supprimée peut subsister dans une sauvegarde jusqu’à sa rotation (14 jours par défaut <mark class="todo">[À COMPLÉTER : à valider]</mark>), sans être restaurée en production</td></tr>
+</tbody></table></div>
+<p>Voir aussi la <a href="../legal/privacy.html">politique de confidentialité</a>.</p>
+</div></main>
+<footer class="site"><div class="wrap">
+<ul>
+<li><a href="../index.html">Accueil</a></li>
+<li><a href="../legal/terms.html">Conditions d’utilisation</a></li>
+<li><a href="../legal/privacy.html">Confidentialité</a></li>
+<li><a href="../legal/community.html">Règles de la communauté</a></li>
+<li><a href="../safety.html">Sécurité et signalement</a></li>
+<li><a href="../support.html">Support</a></li>
+<li><a href="delete.html">Supprimer mon compte</a></li>
+</ul>
+<p>Version provisoire du site, brouillon 0.1 (2026-11-07). Aucun suivi, aucune statistique, aucune ressource externe.</p>
+</div></footer>
+<script src="../assets/deletion.js" defer></script>
+</body>
+</html>

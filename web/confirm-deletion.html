@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Confirmer la suppression – [Nom de l’application]</title>
+<meta name="description" content="Confirmation de la suppression de compte demandée par e-mail.">
+<link rel="alternate" hreflang="en" href="en/confirm-deletion.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="banner" role="note"><div class="wrap"><p><strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.</p></div></div>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html">[Nom de l’application]</a>
+<nav aria-label="Pages du site"><ul>
+<li><a href="index.html">Accueil</a></li>
+<li><a href="legal/terms.html">Conditions d’utilisation</a></li>
+<li><a href="legal/privacy.html">Confidentialité</a></li>
+<li><a href="legal/community.html">Règles de la communauté</a></li>
+<li><a href="safety.html">Sécurité et signalement</a></li>
+<li><a href="support.html">Support</a></li>
+<li><a href="account/delete.html">Supprimer mon compte</a></li>
+</ul></nav>
+<p class="lang"><a href="en/confirm-deletion.html" lang="en" hreflang="en" aria-label="Read this page in English">English</a></p>
+</div></header>
+<main id="contenu"><div class="wrap">
+<h1>Confirmer la suppression de mon compte</h1>
+<p>Vous avez demandé la suppression de votre compte. En confirmant, votre profil est masqué immédiatement et vos données personnelles sont anonymisées après 30 jours. Un abonnement Premium n’est pas résilié : faites-le dans la boutique.</p>
+<form method="post" action="https://api.example.invalid/api/v1/account-deletion-requests/confirm" data-deletion-form="confirm"
+ data-msg-sending="Envoi en cours…" data-msg-done="Suppression demandée. Votre profil est masqué. Suppression définitive dans 30 jours."
+ data-msg-throttled="Trop de demandes. Réessayez dans quelques minutes." data-msg-invalid="Lien invalide ou expiré. Recommencez la demande depuis la page de suppression."
+ data-msg-error="Une erreur est survenue. Réessayez plus tard ou contactez le support."
+ data-msg-unconfigured="Ce formulaire n’est pas encore relié au service (adresse de l’API à renseigner). Utilisez l’application ou le support.">
+  <label for="token">Code de confirmation (rempli automatiquement depuis le lien de l’e-mail)</label>
+  <input id="token" name="token" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="200">
+  <button type="submit">Confirmer la suppression de mon compte</button>
+  <div class="status" role="status" aria-live="polite"></div>
+</form>
+<noscript><p class="small">Sans JavaScript, le code n’est pas rempli automatiquement : copiez-le depuis l’adresse du lien (la partie après <code>token=</code>).</p></noscript>
+<p class="small">Lien expiré ou non demandé par vous ? Ignorez-le, rien n’est supprimé tant que vous ne confirmez pas. <a href="account/delete.html">Retour à la page de suppression</a>.</p>
+</div></main>
+<footer class="site"><div class="wrap">
+<ul>
+<li><a href="index.html">Accueil</a></li>
+<li><a href="legal/terms.html">Conditions d’utilisation</a></li>
+<li><a href="legal/privacy.html">Confidentialité</a></li>
+<li><a href="legal/community.html">Règles de la communauté</a></li>
+<li><a href="safety.html">Sécurité et signalement</a></li>
+<li><a href="support.html">Support</a></li>
+<li><a href="account/delete.html">Supprimer mon compte</a></li>
+</ul>
+<p>Version provisoire du site, brouillon 0.1 (2026-11-07). Aucun suivi, aucune statistique, aucune ressource externe.</p>
+</div></footer>
+<script src="assets/deletion.js" defer></script>
+</body>
+</html>

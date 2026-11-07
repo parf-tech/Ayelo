@@ -25,6 +25,6 @@ Route::prefix('auth')->group(function () {
         Route::post('/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:email-resend');
         Route::get('/sessions', [SessionController::class, 'index']);
         Route::delete('/sessions', [SessionController::class, 'destroyAll']);
-        Route::delete('/sessions/{device}', [SessionController::class, 'destroy']);
+        Route::delete('/sessions/{device}', [SessionController::class, 'destroy'])->whereUuid('device');
     });
 });

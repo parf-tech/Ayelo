@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\User;
+use App\Services\Calls;
 use App\Services\DeviceSessions;
 use Carbon\CarbonInterface;
 use DomainException;
@@ -69,6 +70,10 @@ class SanctionLedger
             // pouvoir lire sa sanction et la contester (revue N-02).
             // Jamais sur un compte « deleting » ou « deleted » : il passerait à « banned » et la purge ne l'anonymiserait plus.
             DB::table('users')->where('id', $userId)->whereIn('status', ['active', 'suspended', 'banned'])->update(['status' => $kind === 'ban' ? 'banned' : 'suspended', 'updated_at' => now()]);
+
+            // Un compte restreint ne reste pas en appel : appels en cours terminés, salles LiveKit fermées (revue pentest P-05).
+            // Après validation de la transaction (celle de l'appelant incluse) : ni diffusion ni appel réseau sous verrou.
+            DB::afterCommit(fn () => app(Calls::class)->endAllFor($userId));
         }
 
         return $id;

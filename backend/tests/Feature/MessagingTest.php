@@ -235,12 +235,12 @@ it('refuse d’ouvrir une conversation avec un profil masqué ou bloqué', funct
 
 // ---------- appareil et notifications ----------
 
-it('enregistre le jeton push de l’appareil courant et le réaffecte s’il change de compte', function () {
+it('enregistre le jeton push de l’appareil courant et le réaffecte s’il change de compte sur le même téléphone', function () {
     [$a] = person();
     [$b] = person();
     foreach ([$a, $b] as $u) {
         $token = $u->createToken('t');
-        DB::table('devices')->insert(['id' => (string) Str::uuid(), 'user_id' => $u->id, 'token_id' => $token->accessToken->getKey(), 'platform' => 'android', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('devices')->insert(['id' => (string) Str::uuid(), 'user_id' => $u->id, 'token_id' => $token->accessToken->getKey(), 'platform' => 'android', 'device_fingerprint_hash' => 'same-phone', 'created_at' => now(), 'updated_at' => now()]);
         $bearers[$u->id] = 'Bearer '.$token->plainTextToken;
     }
 

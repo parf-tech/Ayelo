@@ -6,6 +6,8 @@ use App\Filament\Models\Appeal;
 use App\Filament\Resources\AppealResource\AppealActions;
 use App\Filament\Resources\AppealResource\Pages\ListAppeals;
 use App\Filament\Resources\AppealResource\Pages\ViewAppeal;
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -21,11 +23,7 @@ class AppealResource extends AdminResource
 
     protected static ?string $slug = 'appeals';
 
-    protected static ?string $modelLabel = 'contestation';
-
-    protected static ?string $pluralModelLabel = 'contestations';
-
-    protected static ?string $navigationLabel = 'Contestations';
+    protected static string $labelKey = 'appeal';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-scale';
 
@@ -45,35 +43,35 @@ class AppealResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('member.profile.display_name')->label('Utilisateur')->placeholder('—'),
-                TextColumn::make('sanction.kind')->label('Sanction')->badge(),
-                TextColumn::make('message')->label('Message')->limit(80),
-                TextColumn::make('status')->label('Statut')->badge(),
-                TextColumn::make('created_at')->label('Reçue')->since(),
+                TextColumn::make('member.profile.display_name')->label(Staff::t('admin.col.user'))->placeholder('—'),
+                Labels::badge(TextColumn::make('sanction.kind')->label(Staff::t('admin.col.sanction')), 'sanction'),
+                TextColumn::make('message')->label(Staff::t('admin.col.message'))->limit(80),
+                Labels::badge(TextColumn::make('status')->label(Staff::t('admin.col.status')), 'appeal'),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.received_f'))->since(),
             ])
             ->filters([
-                SelectFilter::make('status')->label('Statut')->default('open')
-                    ->options(['open' => 'Ouverte', 'accepted' => 'Acceptée', 'rejected' => 'Rejetée']),
+                SelectFilter::make('status')->label(Staff::t('admin.col.status'))->default('open')
+                    ->options(Labels::options('appeal', ['open', 'accepted', 'rejected'])),
             ])
             ->recordUrl(fn (Appeal $record): string => static::getUrl('view', ['record' => $record]))
             ->recordActions(AppealActions::make())
-            ->emptyStateHeading('Aucune contestation');
+            ->emptyStateHeading(Staff::t('admin.empty.appeals'));
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Contestation')->columns(3)->schema([
-                TextEntry::make('status')->label('Statut')->badge(),
-                TextEntry::make('created_at')->label('Reçue')->dateTime(),
-                TextEntry::make('decision_note')->label('Note de décision')->placeholder('—'),
-                TextEntry::make('message')->label('Message de l\'utilisateur')->columnSpanFull(),
+            Section::make(Staff::t('admin.section.appeal'))->columns(3)->schema([
+                Labels::badge(TextEntry::make('status')->label(Staff::t('admin.col.status')), 'appeal'),
+                TextEntry::make('created_at')->label(Staff::t('admin.col.received_f'))->dateTime(),
+                TextEntry::make('decision_note')->label(Staff::t('admin.col.decision_note'))->placeholder('—'),
+                TextEntry::make('message')->label(Staff::t('admin.col.user_message'))->columnSpanFull(),
             ]),
-            Section::make('Sanction contestée')->columns(3)->schema([
-                TextEntry::make('sanction.kind')->label('Type')->badge(),
-                TextEntry::make('sanction.reason')->label('Motif communiqué'),
-                TextEntry::make('sanction.ends_at')->label('Fin')->dateTime()->placeholder('Sans fin'),
-                TextEntry::make('member.status')->label('Statut du compte')->badge(),
+            Section::make(Staff::t('admin.section.contested_sanction'))->columns(3)->schema([
+                Labels::badge(TextEntry::make('sanction.kind')->label(Staff::t('admin.col.type')), 'sanction'),
+                TextEntry::make('sanction.reason')->label(Staff::t('admin.col.reason_shown')),
+                TextEntry::make('sanction.ends_at')->label(Staff::t('admin.col.end'))->dateTime()->placeholder(Staff::t('admin.misc.no_end')),
+                Labels::badge(TextEntry::make('member.status')->label(Staff::t('admin.col.account_status')), 'account'),
             ]),
         ]);
     }

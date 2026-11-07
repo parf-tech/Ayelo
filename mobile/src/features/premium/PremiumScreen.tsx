@@ -6,9 +6,10 @@ import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, ChoiceCard, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
-import { getLegalLinks, openExternal } from '../legal/links';
-import { ManageSubscription } from './ManageSubscription';
+import { useLegalOpener } from '../legal/useLegalOpener';
+import { isPromotionalStore, ManageSubscription } from './ManageSubscription';
 import { usePremium } from './PremiumProvider';
+import { monthlyPrice } from './pricing';
 import { usePurchase } from './usePurchase';
 
 /** S30 : offres Premium (1 / 3 / 12 mois). Prix du store (RevenueCat) ; sans store, achat désactivé avec explication. */
@@ -18,7 +19,8 @@ export function PremiumScreen() {
   const { space } = useTheme();
   const { provider, offers, refreshStatus } = usePremium();
   const purchase = usePurchase();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const openLegal = useLegalOpener();
 
   const data = useResource(async () => {
     const [available, status] = await Promise.all([offers(), refreshStatus()]);
@@ -27,7 +29,6 @@ export function PremiumScreen() {
     return { available, status, products };
   }, [provider]);
 
-  const links = getLegalLinks();
   const plans = [...(data.data?.available.subscriptions ?? [])].sort((a, b) => a.months - b.months);
   const priceOf = (productId: string) => data.data?.products.find((p) => p.productId === productId)?.priceString;
   const planLabel = (months: number) =>
@@ -35,6 +36,13 @@ export function PremiumScreen() {
       ? t(`premium.plan.${months}` as 'premium.plan.1')
       : t('premium.plan.other', { months });
   const status = data.data?.status;
+  // Offre la plus longue = meilleur prix par mois : présélectionnée, avec un badge textuel.
+  const bestPlan = plans.length > 1 ? plans.reduce((best, p) => (p.months >= best.months ? p : best)) : null;
+  const selected = chosen ?? bestPlan?.product_id ?? plans[0]?.product_id ?? null;
+  const selectedPlan = plans.find((p) => p.product_id === selected) ?? null;
+  const selectedPrice = selectedPlan ? priceOf(selectedPlan.product_id) : undefined;
+  // Un Premium offert (sans boutique) n'empêche pas de s'abonner ; un abonnement de boutique actif, si.
+  const alreadySubscribed = status?.premium === true && !isPromotionalStore(status.subscription?.store);
   const dateText = status?.subscription?.period_end
     ? new Date(status.subscription.period_end).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
     : null;
@@ -44,13 +52,29 @@ export function PremiumScreen() {
       scroll
       testID="screen-premium"
       footer={
-        <Button
-          testID="premium-subscribe"
-          label={t('premium.subscribe')}
-          onPress={() => selected && void purchase.buy(selected, 'subscription')}
-          disabled={!selected || !purchase.available}
-          loading={purchase.busyId !== null}
-        />
+        data.status === 'ready' && !alreadySubscribed && selectedPlan ? (
+          <View style={{ gap: space[2] }}>
+            <Text variant="body" style={{ fontWeight: '600' }} testID="premium-summary">
+              {selectedPrice
+                ? t('premium.summary', { plan: planLabel(selectedPlan.months), price: selectedPrice })
+                : t('premium.summary.noPrice', { plan: planLabel(selectedPlan.months) })}
+            </Text>
+            <Button
+              testID="premium-subscribe"
+              label={selectedPrice ? t('premium.subscribePrice', { price: selectedPrice }) : t('premium.subscribe')}
+              onPress={() => selected && void purchase.buy(selected, 'subscription')}
+              disabled={!selected || !purchase.available}
+              loading={purchase.busyId !== null}
+            />
+            <Text variant="bodySmall" tone="textMuted" testID="premium-renewal">
+              {t('premium.renewal')}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: space[4] }}>
+              <Button testID="premium-terms" variant="ghost" label={t('premium.terms')} onPress={() => void openLegal('terms')} />
+              <Button testID="premium-privacy" variant="ghost" label={t('premium.privacy')} onPress={() => void openLegal('privacy')} />
+            </View>
+          </View>
+        ) : undefined
       }
     >
       <ScreenHeader title={t('premium.title')} fallbackHref="/profile" />
@@ -81,45 +105,28 @@ export function PremiumScreen() {
         ) : null}
         {status?.premium ? (
           <View style={{ marginBottom: space[3] }}>
-            <ManageSubscription testID="premium-manage" variant="button" store={status.subscription?.store} />
+            <ManageSubscription testID="premium-manage" variant="button" store={status.subscription?.store} periodEnd={status.subscription?.period_end} />
           </View>
         ) : null}
-        <View accessibilityRole="radiogroup" accessibilityLabel={t('premium.title')} style={{ gap: space[2] }}>
-          {plans.map((plan) => (
-            <ChoiceCard
-              key={plan.product_id}
-              testID={`plan-${plan.product_id}`}
-              label={planLabel(plan.months)}
-              description={priceOf(plan.product_id) ?? t('premium.price.unknown')}
-              selected={selected === plan.product_id}
-              onPress={() => setSelected(plan.product_id)}
-            />
-          ))}
-        </View>
-        {!selected ? (
-          <Text variant="caption" tone="textMuted" style={{ marginTop: space[2] }}>
-            {t('premium.selectPlan')}
-          </Text>
+        {!alreadySubscribed ? (
+          <View accessibilityRole="radiogroup" accessibilityLabel={t('premium.title')} style={{ gap: space[2] }}>
+            {plans.map((plan) => {
+              const price = priceOf(plan.product_id) ?? t('premium.price.unknown');
+              const perMonth = monthlyPrice(data.data?.products.find((p) => p.productId === plan.product_id), plan.months, locale);
+              const parts = [price, perMonth ? t('premium.perMonth', { amount: perMonth }) : null, bestPlan?.product_id === plan.product_id ? t('premium.bestValue') : null];
+              return (
+                <ChoiceCard
+                  key={plan.product_id}
+                  testID={`plan-${plan.product_id}`}
+                  label={planLabel(plan.months)}
+                  description={parts.filter(Boolean).join(' · ')}
+                  selected={selected === plan.product_id}
+                  onPress={() => setChosen(plan.product_id)}
+                />
+              );
+            })}
+          </View>
         ) : null}
-        <Text variant="caption" tone="textMuted" style={{ marginTop: space[3] }} testID="premium-renewal">
-          {t('premium.renewal')}
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: space[2] }}>
-          <Button
-            testID="premium-terms"
-            variant="ghost"
-            label={links.terms ? t('premium.terms') : `${t('premium.terms')} (${t('premium.linkMissing')})`}
-            disabled={!links.terms}
-            onPress={() => links.terms && void openExternal(links.terms)}
-          />
-          <Button
-            testID="premium-privacy"
-            variant="ghost"
-            label={links.privacy ? t('premium.privacy') : `${t('premium.privacy')} (${t('premium.linkMissing')})`}
-            disabled={!links.privacy}
-            onPress={() => links.privacy && void openExternal(links.privacy)}
-          />
-        </View>
         <Button testID="premium-restore" variant="secondary" label={t('premium.restore')} onPress={() => void purchase.restore()} style={{ marginTop: space[2] }} />
         <Button testID="premium-credits" variant="ghost" label={t('premium.credits.cta')} onPress={() => router.push('/premium/credits' as never)} />
       </AsyncView>

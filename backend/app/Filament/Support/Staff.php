@@ -21,6 +21,18 @@ final class Staff
         return $user;
     }
 
+    /** Traduction dans la langue du personnel (fr par défaut, en sur demande du navigateur), indépendante de la langue de l'API. */
+    public static function t(string $key, array $replace = []): string
+    {
+        return (string) __($key, $replace, StaffLocale::resolve());
+    }
+
+    /** « 1 jour », « 7 jours » (pluriel selon la langue). */
+    public static function days(int $count): string
+    {
+        return trans_choice('admin.days', $count, ['count' => $count], StaffLocale::resolve());
+    }
+
     public static function can(string $ability): bool
     {
         $user = Filament::auth()->user();
@@ -41,11 +53,11 @@ final class Staff
 
             return false;
         } catch (AuthorizationException) {
-            Notification::make()->danger()->title('Action non autorisée pour votre rôle.')->send();
+            Notification::make()->danger()->title(self::t('admin.notify.forbidden'))->send();
 
             return false;
         } catch (UniqueConstraintViolationException) {
-            Notification::make()->danger()->title('Cette opération a déjà été enregistrée.')->send();
+            Notification::make()->danger()->title(self::t('admin.notify.duplicate'))->send();
 
             return false;
         }

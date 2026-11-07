@@ -1,0 +1,10 @@
+# Configuration PHPStan / Larastan utilisée par .github/workflows/ci.yml (job static-analysis).
+# Les chemins sont relatifs à ce fichier. Aucun baseline : la première exécution mesure l'état réel.
+includes:
+    - ../../backend/vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - ../../backend/app
+    tmpDir: ../../backend/storage/framework/phpstan

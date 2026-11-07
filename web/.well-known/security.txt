@@ -1,0 +1,17 @@
+# MODELE (RFC 9116) : NE PAS PUBLIER TEL QUEL.
+# Remplacer chaque valeur marquee [A COMPLETER] par une valeur reelle choisie par le proprietaire du service.
+# Aucune adresse ci-dessous n'est reelle : example.invalid ne peut jamais recevoir de courrier.
+
+Contact: mailto:security@example.invalid
+# [A COMPLETER] adresse de signalement des failles (boite surveillee), a creer avant publication.
+
+Expires: 2027-11-07T00:00:00.000Z
+# [A COMPLETER] date d'expiration obligatoire (au plus un an) ; la renouveler avant l'echeance.
+
+Preferred-Languages: fr, en
+
+Canonical: https://web.example.invalid/.well-known/security.txt
+# [A COMPLETER] URL definitive de ce fichier, sur le domaine public du site.
+
+# Policy: https://web.example.invalid/safety
+# [A COMPLETER] decommenter et corriger quand la page de securite est publiee sur le vrai domaine.

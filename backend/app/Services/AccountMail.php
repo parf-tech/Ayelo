@@ -30,6 +30,39 @@ class AccountMail
         Mail::to($user->email)->locale($user->locale)->send(new PasswordResetMail($this->link('reset-password', $token)));
     }
 
+    /**
+     * Envoi APRÈS l'envoi de la réponse (revue F-11) : le jeton est créé et l'e-mail part une fois la réponse partie, donc la durée
+     * de la requête est la même que le compte existe ou non (pas d'énumération par le temps de réponse).
+     */
+    public function sendVerificationAfterResponse(User $user): void
+    {
+        $this->afterResponse(fn () => $this->sendVerification($user));
+    }
+
+    public function sendPasswordResetAfterResponse(User $user): void
+    {
+        $this->afterResponse(fn () => $this->sendPasswordReset($user));
+    }
+
+    /** Exécute après la réponse (callback de fin de requête du noyau) ; une panne d'envoi est journalisée, jamais renvoyée au client. */
+    private function afterResponse(\Closure $send): void
+    {
+        $done = false;
+        app()->terminating(function () use ($send, &$done) {
+            // Une seule exécution : l'application garde ses callbacks entre deux requêtes (tests, Octane).
+            if ($done) {
+                return;
+            }
+            $done = true;
+
+            try {
+                $send();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        });
+    }
+
     private function link(string $path, string $token): string
     {
         return rtrim((string) config('app.web_url'), '/').'/'.$path.'?token='.urlencode($token);

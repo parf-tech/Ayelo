@@ -15,18 +15,25 @@ import { toIsoBirthdate, validateEmail, validatePassword } from '../src/features
 const allConsents = { terms: true, privacy: true, sensitive_data: true, marketing: false };
 const run = (events: SignupEvent[], from: SignupState = initialSignupState) => events.reduce(signupReducer, from);
 
-describe('machine d\'états d\'inscription : consentements -> âge -> inscription', () => {
-  it('démarre sur les consentements (S63)', () => {
-    expect(initialSignupState.step).toBe('consents');
+describe('machine d\'états d\'inscription : âge -> consentements -> inscription', () => {
+  it('démarre sur la date de naissance (S68) : l\'âge est contrôlé avant tout consentement', () => {
+    expect(initialSignupState.step).toBe('birthdate');
   });
 
-  it('parcours nominal : S63 -> S68 -> S02', () => {
-    const s1 = run([{ type: 'CONSENTS_ACCEPTED', consents: allConsents }]);
-    expect(s1.step).toBe('birthdate');
-    const s2 = signupReducer(s1, { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 5000 });
+  it('parcours nominal : S68 -> S63 -> S02', () => {
+    const s1 = run([{ type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 5000 }]);
+    expect(s1.step).toBe('consents');
+    expect(s1.ageToken).toBe('tok');
+    expect(s1.consents).toBeNull();
+    const s2 = signupReducer(s1, { type: 'CONSENTS_ACCEPTED', consents: allConsents });
     expect(s2.step).toBe('account');
     expect(s2.ageToken).toBe('tok');
     expect(s2.consents).toEqual(allConsents);
+  });
+
+  it('ne saute pas S68 : les consentements sont ignorés tant que l\'âge n\'est pas contrôlé', () => {
+    const s = signupReducer(initialSignupState, { type: 'CONSENTS_ACCEPTED', consents: allConsents });
+    expect(s).toBe(initialSignupState);
   });
 
   it.each([
@@ -34,40 +41,33 @@ describe('machine d\'états d\'inscription : consentements -> âge -> inscriptio
     ['privacy', { ...allConsents, privacy: false }],
     ['sensitive_data', { ...allConsents, sensitive_data: false }],
   ])('refuse d\'avancer sans le consentement obligatoire « %s »', (_name, consents) => {
-    const s = signupReducer(initialSignupState, { type: 'CONSENTS_ACCEPTED', consents });
+    const atConsents = run([{ type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1 }]);
+    const s = signupReducer(atConsents, { type: 'CONSENTS_ACCEPTED', consents });
     expect(s.step).toBe('consents');
     expect(s.consents).toBeNull();
   });
 
   it('marketing est facultatif : absent = false', () => {
-    const s = signupReducer(initialSignupState, {
-      type: 'CONSENTS_ACCEPTED',
-      consents: { terms: true, privacy: true, sensitive_data: true },
-    });
-    expect(s.step).toBe('birthdate');
+    const s = run([
+      { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1 },
+      { type: 'CONSENTS_ACCEPTED', consents: { terms: true, privacy: true, sensitive_data: true } },
+    ]);
+    expect(s.step).toBe('account');
     expect(s.consents?.marketing).toBe(false);
   });
 
-  it('ne saute pas S63 : un jeton d\'âge est ignoré tant que les consentements manquent', () => {
-    const s = signupReducer(initialSignupState, { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1 });
-    expect(s).toBe(initialSignupState);
-  });
-
-  it('refus d\'âge : état terminal qui efface consentements et jeton', () => {
-    const s = run([
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
-      { type: 'AGE_REFUSED' },
-    ]);
+  it('refus d\'âge : état terminal, avant tout consentement', () => {
+    const s = run([{ type: 'AGE_REFUSED' }]);
     expect(s.step).toBe('refused');
     expect(s.consents).toBeNull();
     expect(s.ageToken).toBeNull();
   });
 
   it('refus d\'âge : bloque la suite (aucun événement ne permet d\'avancer)', () => {
-    const refused = run([{ type: 'CONSENTS_ACCEPTED', consents: allConsents }, { type: 'AGE_REFUSED' }]);
+    const refused = run([{ type: 'AGE_REFUSED' }]);
     const attempts: SignupEvent[] = [
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 9e12 },
+      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_TOKEN_EXPIRED' },
       { type: 'AGE_REFUSED' },
     ];
@@ -78,40 +78,47 @@ describe('machine d\'états d\'inscription : consentements -> âge -> inscriptio
     expect(signupReducer(refused, { type: 'RESET' })).toEqual(initialSignupState);
   });
 
-  it('le jeton d\'âge expiré ramène à S68 et efface le jeton', () => {
-    const s = run([
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
+  it('jeton d\'âge expiré : retour à S68, jeton effacé, consentements gardés ; la nouvelle date mène directement à S02', () => {
+    const expired = run([
       { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1000 },
+      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_TOKEN_EXPIRED' },
     ]);
+    expect(expired.step).toBe('birthdate');
+    expect(expired.ageToken).toBeNull();
+    expect(expired.consents).toEqual(allConsents);
+    const again = signupReducer(expired, { type: 'AGE_PASSED', ageToken: 'tok2', expiresAt: 2000 });
+    expect(again.step).toBe('account');
+    expect(again.ageToken).toBe('tok2');
+  });
+
+  it('le jeton d\'âge peut aussi expirer sur S63 (lecture longue des textes)', () => {
+    const s = run([{ type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1000 }, { type: 'AGE_TOKEN_EXPIRED' }]);
     expect(s.step).toBe('birthdate');
     expect(s.ageToken).toBeNull();
-    expect(s.consents).toEqual(allConsents);
   });
 
   it('un 403 au moment du register (S02) bascule aussi vers le refus', () => {
     const s = run([
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_PASSED', ageToken: 'tok', expiresAt: 1000 },
+      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_REFUSED' },
     ]);
     expect(s.step).toBe('refused');
+    expect(s.consents).toBeNull();
   });
 
-  it('retour en arrière puis nouvelle date : nouveau jeton accepté', () => {
+  it('retour en arrière puis nouvelle date : nouveau jeton accepté, étape atteinte conservée', () => {
     const s = run([
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
       { type: 'AGE_PASSED', ageToken: 'a', expiresAt: 1 },
       { type: 'AGE_PASSED', ageToken: 'b', expiresAt: 2 },
     ]);
     expect(s.ageToken).toBe('b');
+    expect(s.step).toBe('consents');
   });
 
   it('isAgeTokenValid : jeton absent, valide, expiré', () => {
-    const ok = run([
-      { type: 'CONSENTS_ACCEPTED', consents: allConsents },
-      { type: 'AGE_PASSED', ageToken: 'a', expiresAt: 10_000 },
-    ]);
+    const ok = run([{ type: 'AGE_PASSED', ageToken: 'a', expiresAt: 10_000 }]);
     expect(isAgeTokenValid(initialSignupState, 0)).toBe(false);
     expect(isAgeTokenValid(ok, 9_999)).toBe(true);
     expect(isAgeTokenValid(ok, 10_000)).toBe(false);
@@ -119,18 +126,18 @@ describe('machine d\'états d\'inscription : consentements -> âge -> inscriptio
 });
 
 describe('accès aux écrans du parcours (garde)', () => {
-  const atConsents = initialSignupState;
-  const atBirthdate = run([{ type: 'CONSENTS_ACCEPTED', consents: allConsents }]);
-  const atAccount = signupReducer(atBirthdate, { type: 'AGE_PASSED', ageToken: 't', expiresAt: 1 });
+  const atBirthdate = initialSignupState;
+  const atConsents = run([{ type: 'AGE_PASSED', ageToken: 't', expiresAt: 1 }]);
+  const atAccount = signupReducer(atConsents, { type: 'CONSENTS_ACCEPTED', consents: allConsents });
   const refused = signupReducer(atBirthdate, { type: 'AGE_REFUSED' });
 
-  it('S68 sans consentements : redirigé vers S63', () => {
-    expect(resolveSignupScreen(atConsents, 'birthdate')).toEqual({ allowed: false, redirectTo: 'consents' });
+  it('S63 sans contrôle d\'âge : redirigé vers S68', () => {
+    expect(resolveSignupScreen(atBirthdate, 'consents')).toEqual({ allowed: false, redirectTo: 'birthdate' });
   });
 
-  it('S02 inscription sans contrôle d\'âge : redirigé vers S68 (ou S63)', () => {
-    expect(resolveSignupScreen(atBirthdate, 'account')).toEqual({ allowed: false, redirectTo: 'birthdate' });
+  it('S02 inscription sans contrôle d\'âge ou sans consentements : redirigé vers l\'étape manquante', () => {
     expect(resolveSignupScreen(atConsents, 'account')).toEqual({ allowed: false, redirectTo: 'consents' });
+    expect(resolveSignupScreen(atBirthdate, 'account')).toEqual({ allowed: false, redirectTo: 'birthdate' });
   });
 
   it('retour arrière autorisé vers les étapes déjà franchies', () => {

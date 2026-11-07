@@ -44,7 +44,7 @@ export function CheckboxField({
           padding: space[4],
           borderRadius: radius.md,
           borderWidth: 1,
-          borderColor: checked ? colors.primary : colors.border,
+          borderColor: checked ? colors.primary : colors.borderStrong,
           backgroundColor: colors.surface,
           opacity: pressed && !disabled ? 0.8 : 1,
         },

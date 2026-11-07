@@ -78,16 +78,20 @@ export const settingsFr = {
   'blocked.unblocked': 'Personne débloquée.',
 
   'delete.title': 'Supprimer mon compte',
-  'delete.warning': 'Cette action est définitive après un délai de réflexion. Votre profil, vos photos et vos conversations seront supprimés.',
-  'delete.grace': 'Votre compte sera supprimé définitivement dans {days} jours.',
+  'delete.warning':
+    'Votre profil, vos photos et vos conversations sont masqués dès maintenant, puis supprimés définitivement au bout de 30 jours.',
+  'delete.grace': 'Suppression définitive dans {days} jours.',
   'delete.password': 'Mot de passe actuel',
   'delete.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe.',
   'delete.social':
     'Votre compte utilise une connexion Google ou Apple : la ré-authentification par ces fournisseurs n’est pas encore disponible dans cette version. Contactez le support pour supprimer votre compte.',
-  'delete.confirm': 'Supprimer définitivement mon compte',
+  'reauth.google': 'Confirmer avec Google',
+  'reauth.apple': 'Confirmer avec Apple',
+  'reauth.failed': 'La confirmation n’a pas abouti. Réessayez.',
+  'delete.confirm': 'Supprimer mon compte',
   'delete.passwordRequired': 'Saisissez votre mot de passe.',
   'delete.wrongPassword': 'Mot de passe incorrect.',
-  'delete.done': 'Demande enregistrée. Vous allez être déconnecté.',
+  'delete.done': 'Demande enregistrée. Votre profil est masqué.',
 
   'export.title': 'Exporter mes données',
   'export.body': 'Vous pouvez demander une copie de vos données personnelles. Une demande par jour.',
@@ -99,6 +103,12 @@ export const settingsFr = {
   'export.failed': 'L’export a échoué. Réessayez demain ou contactez le support.',
   'export.expired': 'Ce lien a expiré. Faites une nouvelle demande.',
   'export.check': 'Vérifier l’état',
+  'export.password': 'Mot de passe actuel',
+  'export.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe avant de demander l’export.',
+  'export.passwordRequired': 'Saisissez votre mot de passe.',
+  'export.wrongPassword': 'Mot de passe incorrect.',
+  'export.social':
+    'Votre compte utilise la connexion Google ou Apple : la ré-authentification avec ces services n’est pas encore disponible dans cette version. Contactez le support pour obtenir vos données.',
 
   'support.title': 'Aide et assistance',
   'support.subject': 'Objet',
@@ -160,4 +170,11 @@ export const settingsFr = {
   'appeal.invalid': 'Entre 10 et 2 000 caractères.',
   'appeal.send': 'Envoyer la contestation',
   'appeal.sent': 'Contestation envoyée. Nous reviendrons vers vous.',
+  'legal.fallback.body':
+    'Le texte complet de ce document n’est pas encore accessible depuis cette version de l’application. Vous pouvez en obtenir une copie en écrivant au support.',
+  'legal.fallback.contact': 'Écrire à {email}',
+  'delete.cancelHint': 'Pour annuler la suppression avant cette date, contactez le support.',
+  'delete.signOut': 'Me déconnecter',
+  'delete.subscription':
+    'Supprimer votre compte ne résilie pas votre abonnement Premium. Résiliez-le dans la boutique, sinon il continuera d’être facturé.',
 } as const;

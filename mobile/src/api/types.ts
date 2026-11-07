@@ -65,7 +65,9 @@ export type DataExport = {
 };
 
 export type DeleteAccountResponse = { status: 'scheduled'; purge_after_days: number };
-export type DeleteAccountRequest = { password: string } | { provider: OAuthProvider; id_token: string };
+/** Ré-authentification de DELETE /me et de POST /me/export : mot de passe, ou jeton du fournisseur (+ nonce facultatif). */
+export type DeleteAccountRequest = OpRequest<'account.destroy'>;
+export type ExportRequest = OpRequest<'account.requestExport'>;
 
 // ---- Profil -------------------------------------------------------------------------------------
 
@@ -102,13 +104,20 @@ export type PublicProfile = PublicProfileWire;
 
 type MeWire = OpResponse<'profile.me'>;
 
-/** Profil du propriétaire (GET /me, PUT /me/profile) : s'y ajoutent confidentialité et vérification. */
+/** Profil du propriétaire (champ `profile` de GET /me, PUT /me/profile et PATCH /me/privacy) : s'y ajoutent confidentialité et vérification. */
 export type SelfProfile = NonNullable<MeWire['profile']>;
 
 export type Credits = MeWire['credits'];
 
 /** GET /me. Le contrat type `email` comme nullable (compte sans e-mail) ; l'application attend toujours une adresse. */
 export type Me = Refine<MeWire, { email: string }>;
+
+/**
+ * Réponse de PUT /me/profile (200 ou 201) et de PATCH /me/privacy : le serveur renvoie l'objet /me complet
+ * (profil, crédits, premium), pas le seul profil. Même retouche d'`email` que `Me`.
+ */
+export type ProfileUpsertResponse = Refine<OpResponse<'profile.upsert'>, { email: string }>;
+export type PrivacyUpdateResponse = Refine<OpResponse<'profile.privacy'>, { email: string }>;
 
 /** Utilisateur de la session : { id, email, locale } après connexion, puis GET /me complet. */
 export type AuthUser = User & Partial<Omit<Me, keyof User>>;

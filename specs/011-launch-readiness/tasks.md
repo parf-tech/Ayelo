@@ -3,7 +3,7 @@
 ## Que l'équipe peut faire seule
 - [x] T001 Revue de sécurité du code → `docs/reviews/code-security-1.md` (0 critique, 9 hauts, 9 moyens, 12 bas)
 - [~] T002 Corriger les constats hauts : 7 corrigés, 2 atténués, 24 tests (`SecurityHardeningTest`, suite de 158 tests verte, CI verte) ; **relecture de contrôle à faire**
-- [~] T003 `infra/docker-compose.prod.yml`, `infra/php/Dockerfile`, `infra/caddy/Caddyfile`, `infra/backup/{backup,restore}.sh`, `docs/runbooks/restauration.md` : **écrits, jamais exécutés** (Docker absent) ; essai de restauration à faire sur un serveur
+- [~] T003 `infra/docker-compose.prod.yml`, `infra/php/Dockerfile`, `infra/caddy/Caddyfile`, `infra/scripts/{backup,restore}.sh`, `docs/runbooks/restauration.md` : **écrits, jamais exécutés** (Docker absent) ; essai de restauration à faire sur un serveur
 - [x] T004 Contrat OpenAPI généré depuis le code (`docs/openapi.json`, 67 opérations, outil dedoc/scramble, vérifié à jour par la CI) + types TypeScript générés (`mobile/src/api/openapi.d.ts`, script `npm run api:types`). Les types manuscrits du client mobile ne sont pas encore remplacés (spec 010 T090)
 - [ ] T005 Parcours Maestro (inscription, match, message, blocage, signalement, suppression)
 - [ ] T006 Test de concurrence réelle pour les matchs et l'ouverture de conversation

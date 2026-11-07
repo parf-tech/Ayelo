@@ -9,19 +9,17 @@ export const premiumEn = {
   'premium.plan.other': '{months} months',
   'premium.price.unknown': 'Price unavailable',
   'premium.subscribe': 'Subscribe',
-  'premium.selectPlan': 'Choose a duration.',
   'premium.restore': 'Restore my purchases',
   'premium.restore.done': 'Your purchases were restored. The server is updating your account.',
   'premium.restore.error': 'Restoring failed. Try again.',
   'premium.renewal':
     'The subscription renews automatically at the end of each period, at the same price, until you cancel it in your store settings (App Store or Google Play) at least 24 hours before renewal.',
-  'premium.manage.cta': 'Manage or cancel my subscription',
+  'premium.manage.cta': 'Manage my subscription',
   'premium.manage.info':
-    'You cancel in the store (App Store or Google Play), in a few seconds. Cancellation takes effect at the end of the period you already paid for: you keep Premium until then.',
+    'Cancel in the App Store or Google Play. Cancellation takes effect at the end of the period you already paid for: you keep Premium until then.',
   'premium.manage.openError': 'Could not open the store. Open your subscriptions from the App Store or Google Play.',
   'premium.terms': 'Terms of use',
   'premium.privacy': 'Privacy policy',
-  'premium.linkMissing': 'Link not configured',
   'premium.credits.cta': 'Buy credits',
   'premium.unavailable.expo_go':
     'Purchases do not work in Expo Go: a development build is required. No purchase is simulated.',
@@ -30,7 +28,8 @@ export const premiumEn = {
   'premium.unavailable.not_installed':
     'The purchase module is not available in this version. No purchase is simulated.',
   'premium.pending': 'Purchase awaiting approval. It will be applied as soon as the store validates it.',
-  'premium.purchaseError': 'The purchase did not go through. You were not charged unless the payment sheet completed.',
+  'premium.purchaseError':
+    'The purchase did not go through. If the payment was made, it will be applied within a few minutes; otherwise you are not charged.',
   'premium.offers.empty': 'No offers available right now.',
   'premium.balance': '“Conversation” credits: {count}',
 
@@ -51,4 +50,12 @@ export const premiumEn = {
   'purchase.check': 'Check again',
   'purchase.support': 'Contact support',
   'purchase.done': 'Finished',
+  'premium.manage.promo': 'Premium offered until {date}. Nothing to cancel.',
+  'premium.manage.promoNoDate': 'Premium offered by the team. Nothing to cancel.',
+  'premium.perMonth': 'that is {amount} per month',
+  'premium.bestValue': 'Best value',
+  'premium.subscribePrice': 'Subscribe, {price}',
+  'premium.summary': '{plan}, {price}. Renews automatically until cancelled.',
+  'premium.summary.noPrice': '{plan}. Renews automatically until cancelled.',
+  'premium.unavailable.generic': 'Purchases are temporarily unavailable. Try again later.',
 } as const;

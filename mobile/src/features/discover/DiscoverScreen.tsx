@@ -122,6 +122,12 @@ export function DiscoverScreen() {
   };
 
   const openProfile = (id: string) => router.push(`/user/${id}` as never);
+  // Signalement depuis la carte : une seule entrée, puis motif et confirmation sur l'écran de signalement.
+  const reportProfile = (profile: PublicProfile) =>
+    router.push({
+      pathname: '/report',
+      params: { reportedId: profile.user_id, name: profile.display_name, contextType: 'profile', contextId: profile.user_id },
+    } as never);
   const filtersActive = filters !== null;
   const needsProfile = status === 'error' && isApiError(paged.error) && paged.error.status === 403;
 
@@ -176,7 +182,7 @@ export function DiscoverScreen() {
             <View style={{ flex: 1, marginBottom: space[3] }} testID="discover-deck">
               {next ? <SwipeCard key={next.user_id} profile={next} interactive={false} onSwipe={() => undefined} onOpen={() => undefined} /> : null}
               {top ? (
-                <SwipeCard key={top.user_id} profile={top} interactive onSwipe={(a) => void act(a)} onOpen={() => openProfile(top.user_id)} />
+                <SwipeCard key={top.user_id} profile={top} interactive onSwipe={(a) => void act(a)} onOpen={() => openProfile(top.user_id)} onReport={() => reportProfile(top)} />
               ) : (
                 <View accessible accessibilityLabel={t('common.loading')} style={{ flex: 1 }}>
                   <Skeleton variant="card" height={400} />
@@ -212,7 +218,17 @@ export function DiscoverScreen() {
                 style={{ borderColor: colors.like, minWidth: 56 }}
               />
             </View>
-            <Button testID="swipe-undo" variant="ghost" label={t('discover.undo')} onPress={() => void undo()} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Button testID="swipe-undo" variant="ghost" label={t('discover.undo')} onPress={() => void undo()} />
+              <Button
+                testID="swipe-report"
+                variant="ghost"
+                label={t('discover.report')}
+                accessibilityLabel={top ? t('discover.reportAria', { name: top.display_name }) : t('discover.report')}
+                disabled={!top}
+                onPress={() => top && reportProfile(top)}
+              />
+            </View>
           </View>
         </AsyncView>
       )}

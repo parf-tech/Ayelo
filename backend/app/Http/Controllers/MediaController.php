@@ -88,8 +88,7 @@ class MediaController extends Controller
 
     public function complete(Request $request, string $id, MediaStorage $storage, MediaSanitizer $sanitizer): JsonResponse
     {
-        $media = Media::findOrFail($id);
-        Gate::forUser($request->user())->authorize('manage', $media);
+        $media = $this->ownedMedia($request, $id);
 
         if ($media->status !== 'pending_upload') {
             return response()->json(['error' => ['code' => 'already_completed', 'message' => 'Média déjà traité.']], 409);
@@ -145,13 +144,45 @@ class MediaController extends Controller
 
     public function destroy(Request $request, string $id, MediaStorage $storage): Response
     {
-        $media = Media::findOrFail($id);
-        Gate::forUser($request->user())->authorize('manage', $media);
+        $media = $this->ownedMedia($request, $id);
+
+        // Revue pentest P-04 : la suppression d'un média ne doit détruire ni une preuve ni une pièce de revue. Les clés étrangères
+        // supprimaient en cascade la demande de vérification (selfie) ou mettaient `messages.media_id` à NULL (preuve de signalement).
+        // On refuse (409) tant que le média est retenu ; le fichier est purgé plus tard par la conservation et le balayage d'orphelins.
+        if ($this->isRetained($media)) {
+            return response()->json(['error' => ['code' => 'media_retained', 'message' => 'Ce fichier est conservé et ne peut pas être supprimé pour le moment.']], 409);
+        }
 
         $storage->delete($media->storage_key);
         $media->delete();
 
         return response()->noContent();
+    }
+
+    /**
+     * Média référencé par une demande de vérification, un message (image, vidéo, vocal ; même supprimé côté expéditeur, la ligne
+     * est conservée comme preuve) ou une story visée par un signalement non clos. Un média non référencé reste supprimable.
+     */
+    private function isRetained(Media $media): bool
+    {
+        return DB::table('verification_requests')->where('selfie_media_id', $media->id)->exists()
+            || DB::table('messages')->where('media_id', $media->id)->exists()
+            || DB::table('stories')->join('reports', function ($join) {
+                $join->on('reports.context_id', '=', 'stories.id')->where('reports.context_type', 'story');
+            })->where('stories.media_id', $media->id)->whereIn('reports.status', ['open', 'reviewed'])->exists();
+    }
+
+    /**
+     * Média du demandeur uniquement. Inexistant et appartenant à autrui donnent le même 404 : l'ancien « findOrFail puis
+     * authorize » répondait 404 ou 403 selon l'existence du média (oracle, revue F-26).
+     */
+    private function ownedMedia(Request $request, string $id): Media
+    {
+        $media = Media::where('id', $id)->where('user_id', $request->user()->id)->first();
+        abort_if($media === null, 404);
+        Gate::forUser($request->user())->authorize('manage', $media);
+
+        return $media;
     }
 
     public function reorder(Request $request): JsonResponse

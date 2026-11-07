@@ -13,8 +13,13 @@ class FakeMediaStorage implements MediaStorage
     /** @var list<string> */
     public array $deleted = [];
 
+    /** @var list<array{key: string, mime: string, size: int, ttl: int}> URL de dépôt délivrées (le contrat réel signe le type, pas la taille) */
+    public array $presigned = [];
+
     public function presignedUpload(string $key, string $mime, int $size, int $ttlMinutes): array
     {
+        $this->presigned[] = ['key' => $key, 'mime' => $mime, 'size' => $size, 'ttl' => $ttlMinutes];
+
         return ['url' => 'https://storage.test/put/'.$key, 'headers' => ['Content-Type' => $mime]];
     }
 

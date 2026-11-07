@@ -18,26 +18,44 @@ export function subscriptionsUrl(store?: string | null, os: string = Platform.OS
   return os === 'ios' ? APP_STORE_SUBSCRIPTIONS_URL : PLAY_STORE_SUBSCRIPTIONS_URL;
 }
 
+/** Premium offert par l'équipe (`store: 'promotional'`, sans transaction de boutique) : rien à résilier dans une boutique. */
+export function isPromotionalStore(store?: string | null): boolean {
+  return Boolean(store && /promo|gift|grant|offert/i.test(store));
+}
+
 type Props = {
-  /** `store` de l'abonnement renvoyé par GET /billing/status. */
+  /** `store` de l'abonnement renvoyé par GET /billing/status. Inconnu (statut non chargé) : on suit la plateforme. */
   store?: string | null;
+  /** `period_end` de l'abonnement, pour le message d'un Premium offert. */
+  periodEnd?: string | null;
   /** `button` : bouton secondaire (écran Premium) ; `row` : ligne de liste (réglages). */
   variant: 'button' | 'row';
   testID?: string;
 };
 
 /** Accès direct, sans détour ni offre de rétention, à la gestion/résiliation de l'abonnement dans la boutique. */
-export function ManageSubscription({ store, variant, testID }: Props) {
-  const { t } = useI18n();
+export function ManageSubscription({ store, periodEnd, variant, testID }: Props) {
+  const { t, locale } = useI18n();
   const { space } = useTheme();
   const toast = useToast();
+  if (isPromotionalStore(store)) {
+    // Pas de boutique derrière cet abonnement : on explique au lieu d'ouvrir une page d'abonnements vide.
+    const date = periodEnd ? new Date(periodEnd).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+    return (
+      <View testID={testID}>
+        <Text variant="bodySmall" tone="textMuted" style={{ marginVertical: space[2] }} testID={testID ? `${testID}-info` : undefined}>
+          {date ? t('premium.manage.promo', { date }) : t('premium.manage.promoNoDate')}
+        </Text>
+      </View>
+    );
+  }
   const label = t('premium.manage.cta');
   const open = async () => {
     const ok = await openExternal(subscriptionsUrl(store));
     if (!ok) toast.show({ message: t('premium.manage.openError'), variant: 'error' });
   };
   const info = (
-    <Text variant="caption" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[2] }} testID={testID ? `${testID}-info` : undefined}>
+    <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[2] }} testID={testID ? `${testID}-info` : undefined}>
       {t('premium.manage.info')}
     </Text>
   );

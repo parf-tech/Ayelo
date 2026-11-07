@@ -6,6 +6,8 @@ use App\Filament\Models\AuditEntry;
 use App\Filament\Resources\AuditEntryResource\Pages\ListAuditEntries;
 use App\Filament\Resources\AuditEntryResource\Pages\ViewAuditEntry;
 use App\Services\Admin\Audit;
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -22,11 +24,7 @@ class AuditEntryResource extends AdminResource
 
     protected static ?string $slug = 'audit-log';
 
-    protected static ?string $modelLabel = 'entrée du journal';
-
-    protected static ?string $pluralModelLabel = 'journal d\'audit';
-
-    protected static ?string $navigationLabel = 'Journal d\'audit';
+    protected static string $labelKey = 'audit';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
@@ -46,19 +44,20 @@ class AuditEntryResource extends AdminResource
     {
         return $table
             ->columns([
-                TextColumn::make('created_at')->label('Date')->dateTime('d/m/Y H:i:s'),
-                TextColumn::make('actor.email')->label('Acteur')->placeholder('Système'),
-                TextColumn::make('action')->label('Action')->badge()->searchable(),
-                TextColumn::make('subject_type')->label('Objet')->placeholder('—'),
-                TextColumn::make('subject_id')->label('Identifiant')->placeholder('—')->copyable()->limit(8),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.date'))->dateTime('d/m/Y H:i:s'),
+                TextColumn::make('actor.email')->label(Staff::t('admin.col.actor'))->placeholder(Staff::t('admin.misc.system')),
+                Labels::badge(TextColumn::make('action')->label(Staff::t('admin.col.action'))->searchable(), 'audit'),
+                TextColumn::make('subject_type')->label(Staff::t('admin.col.object'))->placeholder('—'),
+                TextColumn::make('subject_id')->label(Staff::t('admin.col.identifier'))->placeholder('—')->copyable()->limit(8),
                 TextColumn::make('ip')->label('IP')->placeholder('—'),
             ])
             ->filters([
-                SelectFilter::make('action')->label('Action')
-                    ->options(fn (): array => AuditEntry::query()->distinct()->orderBy('action')->pluck('action', 'action')->all()),
+                SelectFilter::make('action')->label(Staff::t('admin.col.action'))
+                    ->options(fn (): array => AuditEntry::query()->distinct()->orderBy('action')->pluck('action')
+                        ->mapWithKeys(fn (string $action): array => [$action => Labels::text('audit', $action)])->all()),
             ])
             ->recordUrl(fn (AuditEntry $record): string => static::getUrl('view', ['record' => $record]))
-            ->emptyStateHeading('Journal vide');
+            ->emptyStateHeading(Staff::t('admin.empty.audit'));
     }
 
     public static function infolist(Schema $schema): Schema
@@ -67,16 +66,16 @@ class AuditEntryResource extends AdminResource
 
         return $schema->components([
             Section::make()->columns(3)->schema([
-                TextEntry::make('created_at')->label('Date')->dateTime('d/m/Y H:i:s'),
-                TextEntry::make('actor.email')->label('Acteur')->placeholder('Système'),
-                TextEntry::make('action')->label('Action')->badge(),
-                TextEntry::make('subject_type')->label('Objet')->placeholder('—'),
-                TextEntry::make('subject_id')->label('Identifiant')->placeholder('—'),
+                TextEntry::make('created_at')->label(Staff::t('admin.col.date'))->dateTime('d/m/Y H:i:s'),
+                TextEntry::make('actor.email')->label(Staff::t('admin.col.actor'))->placeholder(Staff::t('admin.misc.system')),
+                Labels::badge(TextEntry::make('action')->label(Staff::t('admin.col.action')), 'audit'),
+                TextEntry::make('subject_type')->label(Staff::t('admin.col.object'))->placeholder('—'),
+                TextEntry::make('subject_id')->label(Staff::t('admin.col.identifier'))->placeholder('—'),
                 TextEntry::make('ip')->label('IP')->placeholder('—'),
             ]),
-            Section::make('Avant / après')->columns(2)->schema([
-                KeyValueEntry::make('before')->label('Avant')->state(fn (AuditEntry $record): array => $flat(app(Audit::class)->redact($record->before ?? [])))->placeholder('—'),
-                KeyValueEntry::make('after')->label('Après')->state(fn (AuditEntry $record): array => $flat(app(Audit::class)->redact($record->after ?? [])))->placeholder('—'),
+            Section::make(Staff::t('admin.section.before_after'))->columns(2)->schema([
+                KeyValueEntry::make('before')->label(Staff::t('admin.col.before'))->state(fn (AuditEntry $record): array => $flat(app(Audit::class)->redact($record->before ?? [])))->placeholder('—'),
+                KeyValueEntry::make('after')->label(Staff::t('admin.col.after'))->state(fn (AuditEntry $record): array => $flat(app(Audit::class)->redact($record->after ?? [])))->placeholder('—'),
             ]),
         ]);
     }

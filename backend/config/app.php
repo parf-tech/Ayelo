@@ -63,6 +63,9 @@ return [
     // Identité de la personne qui lance staff:create / staff:reset-2fa en console (journal d'audit, revue N-13).
     'staff_operator' => env('STAFF_OPERATOR'),
 
+    // Langue du back-office (Filament) : fr par défaut, en pris en charge (App\Filament\Support\StaffLocale).
+    'admin_locale' => env('ADMIN_LOCALE', 'fr'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

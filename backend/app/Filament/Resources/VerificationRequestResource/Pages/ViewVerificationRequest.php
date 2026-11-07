@@ -25,27 +25,30 @@ class ViewVerificationRequest extends ViewRecord
         $pending = fn (VerificationRequest $record): bool => $record->status === 'pending' && Staff::can(Permissions::VERIFICATIONS_REVIEW);
 
         return [
-            Action::make('show_selfie')->label('Voir le selfie')->icon('heroicon-o-eye')->color('gray')
+            Action::make('show_selfie')->label(Staff::t('admin.action.show_selfie'))->icon('heroicon-o-eye')->color('gray')
                 ->visible(fn (VerificationRequest $record): bool => $record->status === 'pending' && Staff::can(Permissions::SELFIE_VIEW))
                 ->action(function (VerificationRequest $record): void {
                     Staff::run(function () use ($record): void {
                         $this->selfieUrl = app(VerificationReview::class)->viewSelfie(Staff::current(), $record->id);
-                    }, 'Consultation journalisée. Le lien expire dans '.VerificationReview::SELFIE_TTL_MINUTES.' minutes.');
+                    }, Staff::t('admin.notify.selfie_logged', ['minutes' => VerificationReview::SELFIE_TTL_MINUTES]));
                 }),
-            Action::make('approve')->label('Approuver')->icon('heroicon-o-check')->color('success')
+            Action::make('approve')->label(Staff::t('admin.action.approve'))->icon('heroicon-o-check')->color('success')
                 ->visible($pending)
                 ->requiresConfirmation()
-                ->modalDescription('Le badge « vérifié » est attribué et le selfie est supprimé.')
+                ->modalDescription(Staff::t('admin.confirm.verification.approve'))
                 ->action(function (VerificationRequest $record): void {
-                    if (Staff::run(fn () => app(VerificationReview::class)->approve(Staff::current(), $record->id), 'Profil vérifié, selfie supprimé.')) {
+                    if (Staff::run(fn () => app(VerificationReview::class)->approve(Staff::current(), $record->id), Staff::t('admin.notify.verified'))) {
                         $this->redirect(VerificationRequestResource::getUrl('index'));
                     }
                 }),
-            Action::make('reject')->label('Rejeter')->icon('heroicon-o-x-mark')->color('danger')
+            Action::make('reject')->label(Staff::t('admin.action.reject'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible($pending)
-                ->schema([Textarea::make('reason')->label('Motif (communiqué à l\'utilisateur)')->required()->minLength(3)->maxLength(300)])
+                // Le rejet supprime définitivement le selfie du stockage : confirmation explicite avec la conséquence.
+                ->requiresConfirmation()
+                ->modalDescription(Staff::t('admin.confirm.verification.reject'))
+                ->schema([Textarea::make('reason')->label(Staff::t('admin.field.reason_to_user'))->required()->minLength(3)->maxLength(300)])
                 ->action(function (VerificationRequest $record, array $data): void {
-                    if (Staff::run(fn () => app(VerificationReview::class)->reject(Staff::current(), $record->id, (string) $data['reason']), 'Vérification rejetée, selfie supprimé.')) {
+                    if (Staff::run(fn () => app(VerificationReview::class)->reject(Staff::current(), $record->id, (string) $data['reason']), Staff::t('admin.notify.verification_rejected'))) {
                         $this->redirect(VerificationRequestResource::getUrl('index'));
                     }
                 }),

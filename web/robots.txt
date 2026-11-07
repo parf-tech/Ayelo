@@ -1,0 +1,6 @@
+# Site public : tout est indexable sauf la page de confirmation de suppression (jeton dans l'URL).
+# Ne pas publier de Sitemap tant que le domaine n'est pas connu : ajouter alors
+#   Sitemap: https://<WEB_DOMAIN>/sitemap.xml
+User-agent: *
+Disallow: /confirm-deletion
+Disallow: /en/confirm-deletion

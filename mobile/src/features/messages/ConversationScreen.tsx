@@ -207,7 +207,7 @@ export function ConversationScreen() {
                 color: colors.text,
                 fontSize: 16,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: colors.borderStrong,
                 borderRadius: radius.md,
                 backgroundColor: colors.surface,
               }}

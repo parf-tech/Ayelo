@@ -32,4 +32,6 @@ export const commonEn = {
   'error.already_in_call': 'You are already in a call.',
   'error.call_unavailable': 'This call is no longer available.',
   'error.already_appealed': 'This sanction has already been appealed.',
+  'consents.terms.read': 'Read the terms of use',
+  'consents.privacy.read': 'Read the privacy policy',
 } as const;

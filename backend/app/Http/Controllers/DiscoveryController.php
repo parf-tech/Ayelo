@@ -30,6 +30,8 @@ class DiscoveryController extends Controller
             'intents' => ['nullable', 'array', 'max:5'],
             'intents.*' => [Rule::in(['marriage', 'long_lasting_love', 'flirt', 'friendship', 'lets_find_out'])],
             'verified_only' => ['nullable', 'boolean'],
+            // Fraîcheur : n'afficher que les comptes vus depuis N jours (défaut : config discovery.active_within_days, nul = désactivé).
+            'active_within_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
         $prefs = $this->preferences($user->id);
@@ -41,6 +43,7 @@ class DiscoveryController extends Controller
             'intents' => $data['intents'] ?? $prefs['intents'],
             'genders' => $prefs['seeking_genders'],
             'verified_only' => $data['verified_only'] ?? $prefs['verified_only'],
+            'active_within_days' => $data['active_within_days'] ?? config('discovery.active_within_days'),
         ];
 
         $limit = (int) ($data['limit'] ?? config('discovery.page_size'));
@@ -56,12 +59,17 @@ class DiscoveryController extends Controller
 
         $rows = $query->limit($limit + 1)->get();
         $page = $rows->take($limit);
+        // Profils + utilisateurs + médias : trois requêtes quelle que soit la taille de la page (revue CTO, risque 9).
         $profiles = Profile::with('user')->whereIn('id', $page->pluck('id'))->get()->keyBy('id');
+        $presented = $presenter->publicMany($profiles);
 
         $last = $page->last();
 
+        /**
+         * @body array{data: list<array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}>, next_cursor: string|null}
+         */
         return response()->json([
-            'data' => $page->map(fn ($r) => $presenter->public($profiles[$r->id]))->values(),
+            'data' => $page->map(fn ($r) => $presented[$profiles[$r->id]->user_id])->values(),
             'next_cursor' => $rows->count() > $limit && $last ? base64_encode($last->created_at.'|'.$last->id) : null,
         ]);
     }

@@ -1,0 +1,205 @@
+name: ci
+
+# Complète backend.yml / mobile.yml / schema.yml (revue CTO n°1, 4.1) :
+#  - infra : construction réelle de l'image Docker, validation du compose, de Caddy, des scripts shell ;
+#  - backend-prodlike : suite Pest avec le cache sur Redis (comme en production) et mesure de couverture ;
+#  - static-analysis : PHPStan / Larastan niveau 5 (informatif tant que la base de référence n'est pas mesurée).
+# Le typecheck, le lint et Jest du mobile restent dans mobile.yml (mêmes déclencheurs).
+# Les jobs marqués `continue-on-error` n'ont JAMAIS tourné : repasser en bloquant une fois la première exécution connue.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1' # lundi 03:17 UTC : détecte une dérive d'image de base ou de dépendance sans commit
+  push:
+    paths:
+      - 'infra/**'
+      - 'backend/**'
+      - 'docs/schema/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/phpstan.neon'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'backend/**'
+      - 'docs/schema/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/phpstan.neon'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Image de l'application (runtime), avec images de base à jour
+        run: docker build --pull --target runtime -f infra/php/Dockerfile -t ayelo-app:ci .
+
+      - name: Configuration PHP-FPM valide (pool de production)
+        run: docker run --rm ayelo-app:ci php-fpm -t
+
+      - name: Le pool FPM prend bien les valeurs du Dockerfile
+        run: |
+          docker run --rm ayelo-app:ci php-fpm -tt 2>&1 | tee /tmp/fpm.txt
+          grep -E 'pm.max_children = 24' /tmp/fpm.txt
+          grep -E 'request_terminate_timeout = 60' /tmp/fpm.txt
+
+      - name: Image de sauvegarde (pg_dump 16, aws, gpg)
+        run: docker build --pull -f infra/scripts/Dockerfile -t ayelo-backup:ci infra/scripts
+
+      - name: docker compose config (variables factices)
+        env:
+          REDIS_PASSWORD: ci-factice
+          DB_DATABASE: app
+          DB_USERNAME: app
+          DB_PASSWORD: ci-factice
+          ACME_EMAIL: ci@example.invalid
+          API_DOMAIN: api.example.invalid
+          WS_DOMAIN: ws.example.invalid
+          ADMIN_DOMAIN: admin.example.invalid
+          ADMIN_ALLOWED_IPS: 203.0.113.10/32
+          BACKUP_GPG_RECIPIENT: ci@example.invalid
+          BACKUP_GPG_PUBLIC_KEY_PATH: ${{ github.workspace }}/infra/.env.prod.example
+        run: |
+          cp infra/.env.prod.example infra/.env.prod
+          docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml config -q
+          echo "compose valide"
+
+      - name: Le compose refuse de démarrer sans destinataire GPG (chiffrement obligatoire)
+        env:
+          REDIS_PASSWORD: ci-factice
+          DB_DATABASE: app
+          DB_USERNAME: app
+          DB_PASSWORD: ci-factice
+          BACKUP_GPG_RECIPIENT: ''
+          BACKUP_GPG_PUBLIC_KEY_PATH: ${{ github.workspace }}/infra/.env.prod.example
+        run: |
+          cp infra/.env.prod.example infra/.env.prod
+          if docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml config -q 2>/tmp/err.txt; then
+            echo "ERREUR : le compose accepte un BACKUP_GPG_RECIPIENT vide"; exit 1
+          fi
+          grep -q BACKUP_GPG_RECIPIENT /tmp/err.txt
+
+      - name: Caddyfile valide
+        run: |
+          docker run --rm \
+            -e ACME_EMAIL=ci@example.invalid -e API_DOMAIN=api.example.invalid -e WS_DOMAIN=ws.example.invalid \
+            -e ADMIN_DOMAIN=admin.example.invalid -e WEB_DOMAIN=www.example.invalid -e ADMIN_ALLOWED_IPS=203.0.113.10/32 \
+            -v "$PWD/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.8 caddy validate --config /etc/caddy/Caddyfile
+
+      - name: "shellcheck des scripts d'infrastructure (informatif, jamais exécuté)"
+        continue-on-error: true
+        run: shellcheck --severity=warning infra/scripts/*.sh infra/scripts/tests/*.sh
+
+      - name: Test de la logique de rétention des sauvegardes
+        run: bash infra/scripts/tests/retention_test.sh
+
+      - name: hadolint (informatif)
+        continue-on-error: true
+        run: |
+          docker run --rm -i hadolint/hadolint < infra/php/Dockerfile
+          docker run --rm -i hadolint/hadolint < infra/scripts/Dockerfile
+
+  backend-prodlike:
+    # Même magasin de cache qu'en production (Redis) + couverture. Informatif : première exécution jamais observée.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, intl, sodium, gd, exif, pcntl
+          coverage: pcov
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Pest avec CACHE_STORE=redis et couverture (rapport, pas de seuil)
+        # Seuils visés par docs/13-TEST-STRATEGY.md : 70 % global, 85 % services critiques. Aucun seuil bloquant ici
+        # tant que la valeur mesurée n'est pas connue (--min=NN à ajouter après la première exécution).
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: app_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          CACHE_STORE: redis
+          REDIS_CLIENT: predis
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+        run: |
+          vendor/bin/pest --coverage --coverage-clover=coverage.xml | tee coverage.txt
+          {
+            echo '### Couverture Pest (rapport)'
+            echo '```'
+            grep -E 'Total|Cov' coverage.txt | tail -n 5 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: coverage-clover
+          path: backend/coverage.xml
+          if-no-files-found: ignore
+
+  static-analysis:
+    # PHPStan + Larastan niveau 5. Larastan n'est pas dans composer.json (composer.lock ne peut pas être régénéré
+    # sans Composer sur le poste de développement) : il est ajouté ici, dans le runner seulement.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, intl, sodium, gd, exif
+          coverage: none
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Install Larastan (runner only)
+        run: composer require --dev --no-interaction --with-all-dependencies larastan/larastan:^3.0
+      - name: PHPStan niveau 5
+        run: vendor/bin/phpstan analyse --configuration=../.github/workflows/phpstan.neon --memory-limit=1G --no-progress

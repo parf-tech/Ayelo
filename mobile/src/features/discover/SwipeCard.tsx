@@ -14,13 +14,15 @@ type Props = {
   interactive: boolean;
   onSwipe: (action: SwipeAction) => void;
   onOpen: () => void;
+  /** Signalement (une seule entrée depuis la carte) ; absent sur la carte du dessous. */
+  onReport?: () => void;
 };
 
 /**
  * Carte de profil. Geste : glisser à droite = like, à gauche = dislike, vers le haut = coup de cœur.
  * Équivalent accessible : actions d'accessibilité de la carte + boutons de l'écran (DiscoverScreen).
  */
-export function SwipeCard({ profile, interactive, onSwipe, onOpen }: Props) {
+export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: Props) {
   const { t } = useI18n();
   const { colors, radius, space } = useTheme();
   const position = useRef(new Animated.ValueXY()).current;
@@ -76,12 +78,14 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen }: Props) {
               { name: 'like', label: t('discover.like') },
               { name: 'dislike', label: t('discover.dislike') },
               { name: 'super_like', label: t('discover.superLike') },
+              ...(onReport ? [{ name: 'report', label: t('discover.reportAria', { name: profile.display_name }) }] : []),
             ]
           : undefined
       }
       onAccessibilityAction={(event) => {
         const name = event.nativeEvent.actionName;
         if (name === 'activate') onOpen();
+        else if (name === 'report') onReport?.();
         else if (name === 'like' || name === 'dislike' || name === 'super_like') onSwipe(name);
       }}
       style={{

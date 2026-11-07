@@ -26,9 +26,9 @@ export function SettingsScreen() {
   const { t } = useI18n();
   const { space } = useTheme();
   const { api, signOut } = useAuth();
-  // Statut d'abonnement : seulement pour décider d'afficher « Gérer ou résilier » ; une erreur masque simplement la ligne.
+  // Statut d'abonnement : seulement pour choisir la boutique (ou signaler un Premium offert). « Gérer mon abonnement »
+  // reste affiché même si l'appel échoue : le chemin de résiliation ne dépend pas du réseau.
   const billing = useResource(() => api.billing.status(), [api]);
-  const subscribed = billing.data?.premium === true;
   const [loggingOut, setLoggingOut] = useState(false);
   const go = (path: string) => () => router.push(path as never);
 
@@ -47,9 +47,12 @@ export function SettingsScreen() {
       <Section title={t('settings.section.account')} />
       <ListRow testID="settings-preferences" label={t('settings.preferences')} onPress={go('/settings/preferences')} />
       <ListRow testID="settings-notifications" label={t('settings.notifications')} onPress={go('/settings/notifications')} />
-      {subscribed ? (
-        <ManageSubscription testID="settings-manage-subscription" variant="row" store={billing.data?.subscription?.store} />
-      ) : null}
+      <ManageSubscription
+        testID="settings-manage-subscription"
+        variant="row"
+        store={billing.data?.subscription?.store}
+        periodEnd={billing.data?.subscription?.period_end}
+      />
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text variant="body" style={{ fontWeight: '600' }}>
           {t('settings.language')}

@@ -1,18 +1,18 @@
 # 16 : État d'avancement réel
 
-Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe et a été vérifié**, ce qui existe sans être vérifié, et ce qui n'existe pas. Il prime sur les statuts optimistes des autres documents.
+Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentest n°1, les revues CTO n°1 et design n°1). Ce document dit ce qui **existe et a été vérifié**, ce qui existe sans être vérifié, et ce qui n'existe pas. Il prime sur les statuts optimistes des autres documents.
 
 ## Preuves disponibles
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16.15) | **333 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 2114 assertions** (exécution du 2026-11-07, revues de sécurité 1 et 2, décisions Q1 à Q3 et lot de la checklist backend inclus) |
-| Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
+| Tests backend (Pest, PostgreSQL 16) | **Mesuré le 2026-11-07 (PHP 8.4.27, `memory_limit=1G`) : 465 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3085 assertions.** Le PHP 8.5 téléchargé en début de journée est bloqué par Smart App Control ; les tests tournent avec `C:\Users\pc\tools\php84`. |
+| Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec (mesuré) |
 | CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
 | Contrôle de secrets (gitleaks, historique complet) | **exécuté uniquement par la CI** (workflow `schema`), jamais en local (binaire absent du poste, téléchargement non autorisé). Dernier résultat connu : propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__`. À rejouer sur l'historique du commit final |
 | Audit des dépendances PHP | `composer audit` rejoué le 2026-11-06 : aucune faille signalée |
-| Revue de sécurité du code, 2e ronde | `reviews/code-security-2.md` ; correctifs des constats hauts et moyens appliqués (N-01 à N-08, N-10, N-11, F-08, F-10, F-23, puis lot 2 partiel : N-09, N-13, N-14) avec un test par constat (`SecurityHardeningRound2Test`) ; suivi dans `reviews/code-security-2-suivi.md`. Restent ouverts ou à décider : F-02 et F-09 résiduels, N-12 (voir `DECISIONS-PROPRIETAIRE.md`), F-06 / F-16 / F-22 résiduels. Troisième relecture ciblée N-01 / N-02 non faite |
-| Mobile (Jest, typecheck, lint, bundle) | **300 tests, typecheck et lint propres, `expo export --platform android` compile** (rejoué par le CTO le 2026-11-06). `npm audit --omit=dev` rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
+| Revue de sécurité du code, 2e ronde | `reviews/code-security-2.md` ; correctifs des constats hauts et moyens appliqués (N-01 à N-08, N-10, N-11, F-08, F-10, F-23, puis lot 2 partiel : N-09, N-13, N-14) avec un test par constat (`SecurityHardeningRound2Test`) ; suivi dans `reviews/code-security-2-suivi.md`. Lots 3 à 9 depuis (N-09, N-10, N-13, N-14 traités avec des résidus écrits ; lots 6 à 8 : F-11, F-18 à F-30). Restent ouverts ou à décider : F-02 et F-09 résiduels, N-12 (voir `DECISIONS-PROPRIETAIRE.md`), F-06 / F-16 / F-22 résiduels. Troisième relecture ciblée N-01 / N-02 non faite |
+| Mobile (Jest, typecheck, lint, bundle) | **390 tests Jest sur 20 suites (mesuré le 2026-11-07)** ; typecheck et lint propres à la dernière exécution ; `expo export --platform android` compilait avec 300 tests (rejoué par le CTO le 2026-11-06, non rejoué depuis les ajouts push et accessibilité). `npm audit --omit=dev` rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
 
 ## Backend : fait et testé
 
@@ -38,8 +38,8 @@ Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe 
 
 | lot | responsable | état |
 | --- | --- | --- |
-| Administration Filament | livrée côté code (suite de 333 tests Pest) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
-| Écrans mobiles de la phase 2 | livrés côté code (300 tests) ; jamais vus sur appareil | voir spec 010 |
+| Administration Filament | livrée côté code (465 tests Pest mesurés le 2026-11-07) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
+| Écrans mobiles de la phase 2 | livrés côté code (390 tests Jest) ; jamais vus sur appareil | voir spec 010 |
 
 ## Non fait
 
@@ -75,6 +75,17 @@ Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe 
 5. Valider le nom et faire la recherche de marque.
 6. Prototype D0 des appels sur appareils réels, puis soumission aux stores.
 7. Décisions d'exploitation : politique de confidentialité, CGU, adresse de contact du support, procédure de signalement aux autorités.
+
+## Revues réalisées (dossier `docs/reviews/`)
+
+| revue | fichiers | état |
+| --- | --- | --- |
+| Sécurité du code, rondes 1 et 2 | `code-security-1.md`, `code-security-1-suivi.md`, `code-security-2.md`, `code-security-2-suivi.md` | constats hauts et moyens traités, résidus écrits ; la suite complète n'a pas été rejouée depuis les lots 6 à 9 |
+| CTO n°1 (due diligence technique) | `cto-1.md`, `cto-1-suivi.md` (infra), `cto-1-suivi-perf.md` (performance), `cto-1-suivi-mobile.md` (push et configuration des stores) | **verdict : NO-GO pour un lancement public ; GO conditionnel pour une bêta fermée de quelques centaines d'utilisateurs, une fois remplis les neuf bloquants « B » de la section 9** (déploiement de préproduction, restauration PostgreSQL prouvée, dimensionnement et test de charge, Redis et files, supervision, mobile push et `app.json`, recette sandbox des services externes, parcours Maestro, corrections de performance). Les bloquants 1, 2, 5, 7 et 8 ne sont pas faisables sans serveur, appareil ou service externe |
+| Design n°1 (mobile et back-office) | `design-1.md`, `design-1-suivi.md` (mobile), `design-1-suivi-admin.md` (Filament) | P0 et gains rapides mobiles traités ; rendu natif (VoiceOver, TalkBack, Dynamic Type) non vérifié sur appareil ; P0-1 (pages juridiques publiées) hors code |
+| Pentest n°1 | `pentest-1.md`, `pentest-1-suivi.md`, `pentest-1-suivi-infra.md` | P-01 à P-08 corrigés avec tests ; P-15 : actions CI épinglées par SHA, images Docker non épinglées ; P-09 à P-14 ouverts |
+
+La liste unique de tout ce qui reste ouvert est dans `reviews/restant.md`.
 
 ## Gates
 

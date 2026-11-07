@@ -30,7 +30,7 @@ class EmailVerificationController extends Controller
         $user = $request->user();
 
         if ($user->email_verified_at === null) {
-            $mail->sendVerification($user);
+            $mail->sendVerificationAfterResponse($user);
         }
 
         return response()->noContent();

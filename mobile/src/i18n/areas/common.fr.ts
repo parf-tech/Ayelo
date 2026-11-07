@@ -32,4 +32,6 @@ export const commonFr = {
   'error.already_in_call': 'Vous avez déjà un appel en cours.',
   'error.call_unavailable': 'Cet appel n’est plus disponible.',
   'error.already_appealed': 'Cette sanction a déjà été contestée.',
+  'consents.terms.read': 'Lire les conditions d’utilisation',
+  'consents.privacy.read': 'Lire la politique de confidentialité',
 } as const;

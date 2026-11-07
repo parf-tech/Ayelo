@@ -13,6 +13,11 @@ return [
     ],
 
     'upload_ttl_minutes' => 5,
+
+    // Revue pentest P-07 : signer `content-length` et `content-type` dans l'URL présignée de dépôt (le SDK ne le fait pas par défaut).
+    // Désactivé par défaut tant que le stockage réel (R2) n'a pas été essayé ; la suppression des dépôts hors norme
+    // (`media:purge-oversized`) s'applique dans tous les cas.
+    'sign_upload_headers' => (bool) env('MEDIA_SIGN_UPLOAD_HEADERS', false),
     'read_ttl_minutes' => 10,
 
     // Tant qu'aucun prestataire de modération n'est branché (ADR 005), tout média passe en file de revue humaine.
@@ -38,7 +43,16 @@ return [
     // à la fenêtre entre l'écriture de l'objet et celle de la ligne) et plafond de suppressions par passage.
     'orphan_grace_hours' => 48,
     'orphan_sweep_max' => 5000,
+    // Dépôts en attente contrôlés par passage de media:purge-oversized (les plus récents d'abord, par lots de 500).
+    'purge_oversized_max' => 2000,
 
     // Dépôts jamais finalisés : supprimés après ce délai (heures).
     'pending_ttl_hours' => 24,
+
+    // Décodage et ré-encodage des images hors du processus web (revue N-14) : un processus PHP jetable lance
+    // `artisan media:sanitize-stdin` avec un plafond de mémoire et de temps ; tout incident = fichier refusé.
+    // Actif par défaut, sauf sous APP_ENV=testing (les tests appellent le nettoyeur dans le processus courant).
+    'isolate_processing' => (bool) env('MEDIA_ISOLATE_PROCESSING', env('APP_ENV') !== 'testing'),
+    'process_timeout_seconds' => (int) env('MEDIA_PROCESS_TIMEOUT', 10),
+    'process_memory_limit' => env('MEDIA_PROCESS_MEMORY_LIMIT', '256M'),
 ];

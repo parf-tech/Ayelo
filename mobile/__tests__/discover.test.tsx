@@ -92,7 +92,7 @@ describe('S10 Découverte', () => {
     installFakeApi(deck());
     await renderShell(<DiscoverScreen />);
     const card = await screen.findByTestId('swipe-card');
-    expect(card.props.accessibilityActions.map((a: { name: string }) => a.name)).toEqual(['activate', 'like', 'dislike', 'super_like']);
+    expect(card.props.accessibilityActions.map((a: { name: string }) => a.name)).toEqual(['activate', 'like', 'dislike', 'super_like', 'report']);
     for (const label of ['Passer', 'Coup de cœur', 'J’aime']) {
       expect(screen.getByRole('button', { name: label })).toBeOnTheScreen();
     }
@@ -330,7 +330,7 @@ describe('S11 Détail du profil, blocage et signalement', () => {
     expect(router.back).toHaveBeenCalled();
   });
 
-  it('signaler en 3 taps : menu, Signaler, motif -> POST /reports', async () => {
+  it('signaler depuis le profil : menu, Signaler, motif puis confirmation -> POST /reports', async () => {
     const fake = installFakeApi({
       'GET /me': [200, ME],
       'GET /profiles/p1': [200, AWA],
@@ -349,7 +349,10 @@ describe('S11 Détail du profil, blocage et signalement', () => {
 
     mockParams.current = { reportedId: 'p1', name: 'Awa', contextType: 'profile', contextId: 'p1' };
     await renderShell(<ReportScreen />);
-    await user().press(screen.getByTestId('report-harassment')); // tap 3
+    const u2 = user();
+    await u2.press(screen.getByTestId('report-harassment')); // choisir le motif n'envoie rien
+    expect(fake.called('POST /reports')).toHaveLength(0);
+    await u2.press(screen.getByTestId('report-send')); // confirmation explicite
     await waitFor(() => expect(fake.called('POST /reports')).toHaveLength(1));
     expect(fake.called('POST /reports')[0]?.body).toEqual({
       reported_id: 'p1',
@@ -400,6 +403,34 @@ describe('S11 Détail du profil, blocage et signalement', () => {
   });
 });
 
+describe('S58 Signalement : confirmation du motif', () => {
+  it('sans motif choisi, « Envoyer » est désactivé et rien n’est envoyé', async () => {
+    mockParams.current = { reportedId: 'p1', name: 'Awa' };
+    const fake = installFakeApi({ 'GET /me': [200, ME], 'POST /reports': [201, { id: 'r1', status: 'received' }] } as never);
+    await renderShell(<ReportScreen />);
+    expect(screen.getByTestId('report-send')).toBeDisabled();
+    expect(screen.getByTestId('report-choose')).toBeOnTheScreen();
+    await user().press(screen.getByTestId('report-other'));
+    expect(screen.getByTestId('report-other')).toBeChecked();
+    expect(screen.getByTestId('report-send')).toBeEnabled();
+    expect(fake.called('POST /reports')).toHaveLength(0);
+  });
+});
+
+describe('Signalement depuis la carte de découverte', () => {
+  it('un bouton « Signaler » ouvre directement l’écran de signalement du profil du dessus', async () => {
+    installFakeApi(deck());
+    await renderShell(<DiscoverScreen />);
+    await screen.findByTestId('swipe-card');
+    const u = user();
+    await u.press(screen.getByTestId('swipe-report'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/report',
+      params: { reportedId: 'p1', name: 'Awa', contextType: 'profile', contextId: 'p1' },
+    });
+  });
+});
+
 describe('S58 Signalement : cas limites', () => {
   beforeEach(() => {
     mockParams.current = { reportedId: 'p1', name: 'Awa' };
@@ -411,6 +442,7 @@ describe('S58 Signalement : cas limites', () => {
     const u = user();
     await u.type(screen.getByTestId('report-details'), 'Me demande de l\'argent');
     await u.press(screen.getByTestId('report-money_request'));
+    await u.press(screen.getByTestId('report-send'));
     await waitFor(() => expect(fake.called('POST /reports')).toHaveLength(1));
     expect(fake.called('POST /reports')[0]?.body).toEqual({
       reported_id: 'p1',
@@ -422,7 +454,9 @@ describe('S58 Signalement : cas limites', () => {
   it('quota de signalements (429 quota_reached) : message dédié', async () => {
     installFakeApi({ 'GET /me': [200, ME], 'POST /reports': [429, { error: { code: 'quota_reached', message: 'x' } }] } as never);
     await renderShell(<ReportScreen />);
-    await user().press(screen.getByTestId('report-other'));
+    const u = user();
+    await u.press(screen.getByTestId('report-other'));
+    await u.press(screen.getByTestId('report-send'));
     expect(await screen.findByTestId('report-error')).toHaveTextContent(/Limite atteinte/);
   });
 });

@@ -6,14 +6,14 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Text, TextField, useToast } from '../../ui';
+import { Banner, Button, ChoiceCard, ScreenContainer, Text, TextField, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
 const CONTEXTS: readonly ReportContextType[] = ['profile', 'conversation', 'message', 'call', 'story'];
 
 /**
- * S58 : signalement. Depuis le menu (1 tap), « Signaler » (2e tap), puis un motif (3e tap) envoie le signalement :
- * les détails facultatifs se saisissent avant de choisir le motif.
+ * S58 : signalement. On choisit un motif (cartes radio), on peut ajouter des détails, puis « Envoyer le signalement »
+ * confirme explicitement : un toucher accidentel sur un motif n'envoie jamais rien.
  */
 export function ReportScreen() {
   const router = useRouter();
@@ -26,12 +26,13 @@ export function ReportScreen() {
   const contextType = CONTEXTS.find((c) => c === params.contextType);
   const contextId = typeof params.contextId === 'string' && params.contextId ? params.contextId : undefined;
   const [details, setDetails] = useState('');
-  const [sending, setSending] = useState<ReportReason | null>(null);
+  const [reason, setReason] = useState<ReportReason | null>(null);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
-  const send = async (reason: ReportReason) => {
-    if (sending || !reportedId) return;
-    setSending(reason);
+  const send = async () => {
+    if (sending || !reportedId || !reason) return;
+    setSending(true);
     setError(undefined);
     try {
       const result = await api.safety.report({
@@ -47,7 +48,7 @@ export function ReportScreen() {
       const { key, params: p } = apiErrorMessage(e);
       setError(t(key, p));
     } finally {
-      setSending(null);
+      setSending(false);
     }
   };
 
@@ -58,6 +59,18 @@ export function ReportScreen() {
         {t('report.subtitle')}
       </Text>
       {error ? <Banner testID="report-error" variant="error" message={error} style={{ marginBottom: space[3] }} /> : null}
+      <View accessibilityRole="radiogroup" accessibilityLabel={t('report.title')} style={{ gap: space[2], marginBottom: space[4] }}>
+        {REPORT_REASONS.map((r) => (
+          <ChoiceCard
+            key={r}
+            testID={`report-${r}`}
+            label={t(`report.reason.${r}`)}
+            selected={reason === r}
+            disabled={sending}
+            onPress={() => setReason(r)}
+          />
+        ))}
+      </View>
       <TextField
         testID="report-details"
         label={t('report.details')}
@@ -67,20 +80,19 @@ export function ReportScreen() {
         maxLength={1000}
         containerStyle={{ marginBottom: space[4] }}
       />
-      <View style={{ gap: space[2] }}>
-        {REPORT_REASONS.map((reason) => (
-          <Button
-            key={reason}
-            testID={`report-${reason}`}
-            variant="secondary"
-            label={t(`report.reason.${reason}`)}
-            onPress={() => void send(reason)}
-            loading={sending === reason}
-            loadingLabel={t('report.sending')}
-            disabled={sending !== null && sending !== reason}
-          />
-        ))}
-      </View>
+      <Button
+        testID="report-send"
+        label={t('report.send')}
+        onPress={() => void send()}
+        disabled={!reason}
+        loading={sending}
+        loadingLabel={t('report.sending')}
+      />
+      {!reason ? (
+        <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[2] }} testID="report-choose">
+          {t('report.choose')}
+        </Text>
+      ) : null}
     </ScreenContainer>
   );
 }

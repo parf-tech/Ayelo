@@ -183,10 +183,10 @@ it('N-13 : staff:create et staff:reset-2fa enregistrent l’opérateur de la con
     config(['app.staff_operator' => 'alice@ops']);
 
     $this->artisan('staff:create', ['email' => 'op@ayelo.test', 'role' => 'support'])->assertSuccessful();
-    expect(json_decode(Seed::audit('staff.created')->after, true))->toEqual(['email' => 'op@ayelo.test', 'role' => 'support', 'operator' => 'alice@ops']);
+    expect(json_decode(Seed::audit('staff.created')->after, true))->toEqual(['email' => 'op@ayelo.test', 'role' => 'support', 'operator' => 'alice@ops', 'host' => gethostname()]);
 
     $this->artisan('staff:reset-2fa', ['email' => 'op@ayelo.test'])->assertSuccessful();
-    expect(json_decode(Seed::audit('staff.2fa_reset')->after, true))->toEqual(['operator' => 'alice@ops']);
+    expect(json_decode(Seed::audit('staff.2fa_reset')->after, true))->toEqual(['operator' => 'alice@ops', 'host' => gethostname()]);
 });
 
 it('N-13 : sans STAFF_OPERATOR, aucune clé opérateur n’est inventée', function () {

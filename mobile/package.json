@@ -10,6 +10,8 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "check:env": "node scripts/check-env.js",
+    "eas-build-pre-install": "node scripts/check-env.js",
     "api:types": "npx --yes openapi-typescript@7.13.0 ../docs/openapi.json -o src/api/openapi.d.ts"
   },
   "dependencies": {
@@ -17,11 +19,14 @@
     "expo": "58.0.23",
     "expo-constants": "58.0.15",
     "expo-crypto": "58.0.7",
+    "expo-device": "~58.0.5",
     "expo-image-picker": "~58.0.10",
     "expo-linking": "58.0.16",
     "expo-localization": "58.0.5",
+    "expo-notifications": "~58.1.8",
     "expo-router": "58.0.30",
     "expo-secure-store": "58.0.2",
+    "expo-splash-screen": "~58.0.13",
     "expo-status-bar": "58.0.4",
     "pusher-js": "^8.6.0",
     "react": "19.3.0",

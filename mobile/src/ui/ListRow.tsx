@@ -42,7 +42,7 @@ export function ListRow({
     >
       {leading}
       <View style={{ flex: 1 }}>
-        <Text variant="body" tone={tone === 'danger' ? 'danger' : 'text'} style={{ fontWeight: '600' }} numberOfLines={1}>
+        <Text variant="body" tone={tone === 'danger' ? 'danger' : 'text'} style={{ fontWeight: '600' }} numberOfLines={2}>
           {label}
         </Text>
         {description ? (
@@ -65,11 +65,15 @@ export function ListRow({
     </View>
   );
   if (!onPress) {
+    // Ligne statique : regroupée (une seule vocalisation) seulement sans `trailing`. Avec un contrôle à droite
+    // (Acheter, Débloquer, Fermer la session), un parent `accessible` le masquerait à VoiceOver : on laisse
+    // chaque enfant focalisable.
+    const grouped = !trailing;
     return (
       <View
         testID={testID}
-        accessible
-        accessibilityLabel={accessibilityLabel}
+        accessible={grouped}
+        accessibilityLabel={grouped ? accessibilityLabel : undefined}
         style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
       >
         {content}

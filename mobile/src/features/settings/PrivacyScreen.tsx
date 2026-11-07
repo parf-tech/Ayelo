@@ -25,8 +25,9 @@ export function PrivacyScreen() {
     const previous = me.data;
     me.setData((current) => (current && current.profile ? { ...current, profile: { ...current.profile, ...patch } } : current));
     try {
+      // Le serveur renvoie l'objet /me complet : on le prend tel quel.
       const updated = await api.profile.updatePrivacy(patch);
-      me.setData((current) => (current ? { ...current, profile: updated } : current));
+      me.setData(updated);
       void refreshMe();
     } catch (error) {
       me.setData(previous);

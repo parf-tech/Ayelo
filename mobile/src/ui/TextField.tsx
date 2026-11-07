@@ -43,7 +43,7 @@ export function TextField({
   const isPassword = Boolean(secureTextEntry);
   const description = error ?? helper;
 
-  const borderColor = error ? colors.danger : focused ? colors.primary : colors.border;
+  const borderColor = error ? colors.danger : focused ? colors.primary : colors.borderStrong;
 
   return (
     <View style={containerStyle}>

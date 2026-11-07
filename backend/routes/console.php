@@ -38,6 +38,46 @@ Artisan::command('media:purge-pending', function (App\Services\Storage\MediaStor
     $this->info('Dépôts abandonnés supprimés : '.$old->count().', selfies repris : '.$retried);
 })->purpose('Supprime les envois de médias jamais finalisés');
 
+// Revue pentest P-07 : la taille d'un dépôt présigné (PUT) n'est pas liée par la signature. Un objet en attente plus gros que le
+// plafond de son type, ou que la taille déclarée, est supprimé avec sa ligne (`complete` refuserait de toute façon).
+Artisan::command('media:purge-oversized', function (App\Services\Storage\MediaStorage $storage) {
+    $removed = 0;
+    // Les dépôts les PLUS RÉCENTS d'abord (un attaquant dépose en continu : les plus anciens ont de toute façon expiré), par
+    // lots de 500 en pagination par clé (created_at, id) décroissante - stable même si des lignes sont supprimées en route.
+    $since = now()->subHours((int) config('media.pending_ttl_hours'));
+    $budget = (int) config('media.purge_oversized_max', 2000);
+    $cursor = null;
+    while ($budget > 0) {
+        $query = DB::table('media')->where('status', 'pending_upload')->where('created_at', '>=', $since)
+            ->orderByDesc('created_at')->orderByDesc('id')->limit(min(500, $budget));
+        if ($cursor !== null) {
+            $query->whereRaw('(created_at, id) < (?, ?)', [$cursor->created_at, $cursor->id]);
+        }
+        $rows = $query->get(['id', 'kind', 'storage_key', 'size_bytes', 'created_at']);
+        if ($rows->isEmpty()) {
+            break;
+        }
+        foreach ($rows as $m) {
+            try {
+                $head = $storage->head($m->storage_key);
+                $max = (int) config('media.kinds.'.$m->kind.'.max_bytes');
+                if ($head !== null && ($head['size'] > $max || $head['size'] !== (int) $m->size_bytes)) {
+                    $storage->delete($m->storage_key);
+                    DB::table('media')->where('id', $m->id)->where('status', 'pending_upload')->delete();
+                    $removed++;
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+        $budget -= $rows->count();
+        $cursor = $rows->last();
+    }
+    $this->info('Dépôts hors norme supprimés : '.$removed);
+})->purpose('Supprime les dépôts en attente dont la taille dépasse le plafond ou la taille déclarée');
+
+Schedule::command('media:purge-oversized')->everyFiveMinutes()->withoutOverlapping();
+
 Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $storage) {
     $old = DB::table('data_exports')->where(fn ($q) => $q->where('expires_at', '<=', now())->orWhere('status', 'failed'))->get();
     foreach ($old as $e) {

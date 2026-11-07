@@ -31,27 +31,43 @@ class SwipeController extends Controller
         $premium = Premium::active($user->id);
         $today = now()->toDateString();
 
-        if ($data['action'] === 'super_like') {
-            if (! $premium) {
-                return response()->json(['error' => ['code' => 'premium_required', 'message' => 'Réservé aux abonnés Premium.']], 402);
-            }
-            if ($this->count($user->id, $today, 'super_likes') >= config('discovery.daily_super_likes_premium')) {
-                return response()->json(['error' => ['code' => 'quota_reached', 'message' => 'Quota de super-likes atteint.']], 429);
-            }
+        if ($data['action'] === 'super_like' && ! $premium) {
+            return response()->json(['error' => ['code' => 'premium_required', 'message' => 'Réservé aux abonnés Premium.']], 402);
         }
 
-        if ($data['action'] === 'like' && ! $premium && $this->count($user->id, $today, 'likes') >= config('discovery.daily_likes_free')) {
-            return response()->json(['error' => ['code' => 'quota_reached', 'message' => 'Quota de likes atteint pour aujourd\'hui.']], 429);
+        // Quota réservé de façon atomique AVANT d'enregistrer le swipe (revue F-25) : un seul UPDATE conditionnel, donc
+        // deux requêtes parallèles ne peuvent plus dépasser le plafond comme avec « lire puis écrire ». Si le swipe n'est
+        // finalement pas enregistré (rejeu) ou échoue, la réservation est rendue.
+        $kind = match ($data['action']) {
+            'super_like' => 'super_likes',
+            'like' => $premium ? null : 'likes',
+            default => null,
+        };
+        $reserved = false;
+        if ($kind !== null) {
+            $limit = (int) ($kind === 'super_likes' ? config('discovery.daily_super_likes_premium') : config('discovery.daily_likes_free'));
+            if (! $this->reserve($user->id, $today, $kind, $limit)) {
+                return response()->json(['error' => ['code' => 'quota_reached', 'message' => $kind === 'super_likes' ? 'Quota de super-likes atteint.' : 'Quota de likes atteint pour aujourd\'hui.']], 429);
+            }
+            $reserved = true;
         }
 
-        $result = $swipes->swipe($user->id, $data['target_id'], $data['action']);
-
-        if ($result['status'] === 'recorded') {
-            if ($data['action'] === 'like') {
-                $this->increment($user->id, $today, 'likes');
-            } elseif ($data['action'] === 'super_like') {
-                $this->increment($user->id, $today, 'super_likes');
+        try {
+            $result = $swipes->swipe($user->id, $data['target_id'], $data['action']);
+        } catch (\Throwable $e) {
+            if ($reserved) {
+                $this->release($user->id, $today, $kind);
             }
+            throw $e;
+        }
+
+        if ($reserved && $result['status'] !== 'recorded') {
+            $this->release($user->id, $today, $kind);
+        }
+
+        // Premium : les likes illimités restent comptés (statistiques), sans plafond.
+        if ($result['status'] === 'recorded' && $data['action'] === 'like' && $premium) {
+            $this->increment($user->id, $today, 'likes');
         }
 
         if ($result['status'] === 'recorded') {
@@ -92,9 +108,22 @@ class SwipeController extends Controller
         return response()->json(['target_id' => $last->target_id]);
     }
 
-    private function count(string $userId, string $day, string $kind): int
+    /** Réserve une unité de quota si le plafond n'est pas atteint (INSERT … ON CONFLICT … WHERE count < limite, atomique). */
+    private function reserve(string $userId, string $day, string $kind, int $limit): bool
     {
-        return (int) DB::table('daily_counters')->where(['user_id' => $userId, 'day' => $day, 'kind' => $kind])->value('count');
+        if ($limit < 1) {
+            return false;
+        }
+
+        return DB::select(
+            'insert into daily_counters (user_id, day, kind, count) values (?, ?, ?, 1) on conflict (user_id, day, kind) do update set count = daily_counters.count + 1 where daily_counters.count < ? returning count',
+            [$userId, $day, $kind, $limit]
+        ) !== [];
+    }
+
+    private function release(string $userId, string $day, string $kind): void
+    {
+        DB::table('daily_counters')->where(['user_id' => $userId, 'day' => $day, 'kind' => $kind])->where('count', '>', 0)->decrement('count');
     }
 
     private function increment(string $userId, string $day, string $kind): void

@@ -39,6 +39,19 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
     }
   }
 
+  // WCAG 1.4.11 : contours de composants (champs, cases, piste d'interrupteur) >= 3:1.
+  for (const scheme of ['light', 'dark'] as const) {
+    for (const bg of ['bg', 'surface'] as const) {
+      it(`${scheme} : borderStrong sur ${bg} >= 3 (non textuel)`, () => {
+        expect(contrast(colors[scheme].borderStrong, colors[scheme][bg])).toBeGreaterThanOrEqual(3);
+      });
+    }
+    it(`${scheme} : like et dislike sur bg >= 3 (non textuel)`, () => {
+      expect(contrast(colors[scheme].like, colors[scheme].bg)).toBeGreaterThanOrEqual(3);
+      expect(contrast(colors[scheme].dislike, colors[scheme].bg)).toBeGreaterThanOrEqual(3);
+    });
+  }
+
   it('clair et sombre exposent les mêmes tokens', () => {
     expect(Object.keys(colors.dark).sort()).toEqual(Object.keys(colors.light).sort());
   });

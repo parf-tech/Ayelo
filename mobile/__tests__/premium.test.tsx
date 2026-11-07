@@ -156,22 +156,46 @@ describe('S30 Offres Premium', () => {
     await renderShell(<PremiumScreen />, { premium: new UnavailablePurchaseProvider('expo_go') });
     expect(await screen.findByTestId('premium-unavailable')).toHaveTextContent(/Expo Go/);
     expect(screen.getByTestId('plan-premium_1m')).toBeOnTheScreen();
-    expect(screen.getAllByText('Prix indisponible')).toHaveLength(3);
+    expect(screen.getAllByText('Prix indisponible')).toHaveLength(2);
+    expect(screen.getByText('Prix indisponible · Meilleur prix')).toBeOnTheScreen();
     await user().press(screen.getByTestId('plan-premium_3m'));
     expect(screen.getByTestId('premium-subscribe')).toBeDisabled();
     expect(router.replace).not.toHaveBeenCalled();
   });
 
-  it('plans triés par durée, avec mention de renouvellement automatique et liens non configurés', async () => {
+  it('plans triés par durée, mention de renouvellement automatique et liens légaux toujours actifs', async () => {
+    delete process.env.EXPO_PUBLIC_TERMS_URL;
     installFakeApi(routes());
     await renderShell(<PremiumScreen />, { premium: new FakeStore() });
     await screen.findByTestId('plan-premium_1m');
     expect(screen.getByTestId('premium-renewal')).toHaveTextContent(/se renouvelle automatiquement/);
-    expect(screen.getByTestId('premium-terms')).toBeDisabled();
+    // Sans URL configurée, le lien mène à l'écran de repli de l'application (jamais un bouton mort).
+    expect(screen.getByTestId('premium-terms')).toBeEnabled();
+    await user().press(screen.getByTestId('premium-terms'));
+    expect(router.push).toHaveBeenCalledWith('/legal/terms');
+    await user().press(screen.getByTestId('premium-privacy'));
+    expect(router.push).toHaveBeenCalledWith('/legal/privacy');
     const labels = screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel as string);
     expect(labels[0]).toMatch(/^1 mois/);
     expect(labels[1]).toMatch(/^3 mois/);
     expect(labels[2]).toMatch(/^12 mois/);
+  });
+
+  it('prix par mois sur les offres de plusieurs mois, quand le store donne montant, devise et période', async () => {
+    installFakeApi(routes());
+    const store = new FakeStore();
+    store.getProducts = async (ids: string[]) =>
+      ids.map((id) => {
+        const months = Number(id.replace(/[^0-9]/g, ''));
+        const price = months === 1 ? 9.99 : months === 3 ? 24.99 : 59.99;
+        return { productId: id, title: id, priceString: `${price} €`, price, currencyCode: 'EUR', subscriptionPeriod: `P${months}M` };
+      });
+    await renderShell(<PremiumScreen />, { premium: store });
+    const m3 = await screen.findByTestId('plan-premium_3m');
+    expect(m3).toHaveProp('accessibilityLabel', expect.stringMatching(/soit 8,33.*par mois/));
+    expect(screen.getByTestId('plan-premium_12m')).toHaveProp('accessibilityLabel', expect.stringMatching(/soit 5,00.*par mois.*Meilleur prix/));
+    // 1 mois : le prix est déjà mensuel, pas de ligne en plus.
+    expect(screen.getByTestId('plan-premium_1m')).not.toHaveProp('accessibilityLabel', expect.stringMatching(/par mois/));
   });
 
   it('app_user_id RevenueCat = user.id ; déconnexion du SDK au démontage', async () => {
@@ -273,7 +297,7 @@ describe("Gérer ou résilier l'abonnement", () => {
     apiFor(activeStatus('apple'));
     await renderShell(<PremiumScreen />, { premium: new FakeStore() });
     const button = await screen.findByTestId('premium-manage');
-    expect(button).toHaveProp('accessibilityLabel', 'Gérer ou résilier mon abonnement');
+    expect(button).toHaveProp('accessibilityLabel', 'Gérer mon abonnement');
     expect(screen.getByTestId('premium-manage-info')).toHaveTextContent(/fin de la période déjà payée/);
     await user().press(button);
     expect(openURL).toHaveBeenCalledWith('https://apps.apple.com/account/subscriptions');
@@ -290,7 +314,7 @@ describe("Gérer ou résilier l'abonnement", () => {
   it('en anglais : libellé et explication traduits', async () => {
     apiFor(activeStatus('apple'));
     await renderShell(<PremiumScreen />, { premium: new FakeStore(), locale: 'en' });
-    expect(await screen.findByTestId('premium-manage')).toHaveProp('accessibilityLabel', 'Manage or cancel my subscription');
+    expect(await screen.findByTestId('premium-manage')).toHaveProp('accessibilityLabel', 'Manage my subscription');
     expect(screen.getByTestId('premium-manage-info')).toHaveTextContent(/end of the period you already paid for/);
   });
 
@@ -323,7 +347,9 @@ describe('S31 Crédits', () => {
     await user().press(screen.getByTestId('buy-conversation_5'));
     await waitFor(() => expect(store.purchases).toEqual([['conversation_5', 'consumable']]));
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/premium/result' })));
-    expect(screen.getByTestId('pack-conversation_1')).toHaveProp('accessibilityLabel', expect.stringMatching(/^1 crédit/));
+    // Ligne non cliquable avec bouton : le bouton porte le libellé complet et n'est pas masqué par un parent accessible.
+    expect(screen.getByTestId('buy-conversation_1')).toHaveProp('accessibilityLabel', 'Acheter 1 crédit');
+    expect(screen.getByTestId('pack-conversation_1')).toHaveProp('accessible', false);
   });
 
   it('indisponible dans Expo Go : bouton désactivé', async () => {
@@ -417,3 +443,98 @@ describe('S32 Validation de l\'achat par le serveur', () => {
 function CreditsScreenProbe() {
   return null;
 }
+
+describe('Paywall : conformité et textes utilisateur', () => {
+  const routes = () => ({
+    'GET /me': [200, ME],
+    'GET /billing/offers': [200, OFFERS],
+    'GET /billing/status': [200, STATUS_FREE],
+  }) as never;
+
+  it('offre la plus longue présélectionnée ; prix et période près du bouton, renouvellement lisible (>= 14)', async () => {
+    installFakeApi(routes());
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await screen.findByTestId('plan-premium_12m');
+    expect(screen.getByTestId('plan-premium_12m')).toBeChecked();
+    expect(screen.getByText('12,99 € · Meilleur prix')).toBeOnTheScreen();
+    expect(screen.getByTestId('premium-subscribe')).toBeEnabled();
+    expect(screen.getByTestId('premium-subscribe')).toHaveProp('accessibilityLabel', 'S’abonner, 12,99 €');
+    expect(screen.getByTestId('premium-summary')).toHaveTextContent('12 mois, 12,99 €. Renouvellement automatique jusqu’à résiliation.');
+    const renewal = screen.getByTestId('premium-renewal');
+    const style = Object.assign({}, ...[renewal.props.style].flat(2).filter(Boolean));
+    expect(style.fontSize).toBeGreaterThanOrEqual(14);
+    await user().press(screen.getByTestId('plan-premium_1m'));
+    expect(screen.getByTestId('premium-summary')).toHaveTextContent(/^1 mois, 1,99 €\./);
+  });
+
+  it("achat de l'offre présélectionnée sans autre geste", async () => {
+    installFakeApi(routes());
+    const store = new FakeStore();
+    await renderShell(<PremiumScreen />, { premium: store });
+    await screen.findByTestId('plan-premium_12m');
+    await user().press(screen.getByTestId('premium-subscribe'));
+    await waitFor(() => expect(store.purchases).toEqual([['premium_12m', 'subscription']]));
+  });
+
+  it("liens légaux : l'URL configurée est ouverte, sinon repli dans l'application", async () => {
+    process.env.EXPO_PUBLIC_PRIVACY_URL = 'https://example.test/privacy';
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    try {
+      installFakeApi(routes());
+      await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+      await screen.findByTestId('plan-premium_12m');
+      await user().press(screen.getByTestId('premium-privacy'));
+      expect(openURL).toHaveBeenCalledWith('https://example.test/privacy');
+      expect(router.push).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.EXPO_PUBLIC_PRIVACY_URL;
+      openURL.mockRestore();
+    }
+  });
+
+  it('hors développement : aucun texte technique (RevenueCat, Expo Go, EXPO_PUBLIC_) montré', async () => {
+    const globals = globalThis as unknown as { __DEV__: boolean };
+    const previous = globals.__DEV__;
+    globals.__DEV__ = false;
+    try {
+      installFakeApi(routes());
+      for (const reason of ['expo_go', 'missing_key', 'not_installed'] as const) {
+        const view = await renderShell(<PremiumScreen />, { premium: new UnavailablePurchaseProvider(reason) });
+        const banner = await screen.findByTestId('premium-unavailable');
+        expect(banner).toHaveTextContent(/Les achats sont momentanément indisponibles\. Réessayez plus tard\./);
+        expect(banner).not.toHaveTextContent(/RevenueCat|Expo Go|EXPO_PUBLIC/);
+        view.unmount();
+      }
+    } finally {
+      globals.__DEV__ = previous;
+    }
+  });
+
+  it('Premium offert (promotional) : message explicatif au lieu de la page de boutique', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    try {
+      installFakeApi({
+        'GET /me': [200, ME],
+        'GET /billing/offers': [200, OFFERS],
+        'GET /billing/status': [200, { premium: true, subscription: { product_id: 'premium_promo', status: 'active', period_end: '2026-12-15T00:00:00Z', store: 'promotional' }, credits: { conversation: 0 } }],
+      } as never);
+      await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+      expect(await screen.findByTestId('premium-manage-info')).toHaveTextContent(/Premium offert jusqu’au .* Rien à résilier/);
+      expect(screen.queryByRole('button', { name: 'Gérer mon abonnement' })).not.toBeOnTheScreen();
+      expect(openURL).not.toHaveBeenCalled();
+    } finally {
+      openURL.mockRestore();
+    }
+  });
+
+  it('abonné via une boutique : plus de bouton S’abonner (pas de double souscription)', async () => {
+    installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/offers': [200, OFFERS],
+      'GET /billing/status': [200, { premium: true, subscription: { product_id: 'premium_1m', status: 'active', period_end: '2026-12-15T00:00:00Z', store: 'apple' }, credits: { conversation: 0 } }],
+    } as never);
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await screen.findByTestId('premium-active');
+    expect(screen.queryByTestId('premium-subscribe')).not.toBeOnTheScreen();
+  });
+});

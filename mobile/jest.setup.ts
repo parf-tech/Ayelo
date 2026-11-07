@@ -25,6 +25,9 @@ jest.mock('expo-crypto', () => ({
     const n = String(mockUuidCounter).padStart(12, '0');
     return `00000000-0000-4000-8000-${n}`;
   }),
+  getRandomBytes: jest.fn((n: number) => new Uint8Array(require('crypto').randomBytes(n))),
+  digestStringAsync: jest.fn(async (_algorithm: string, data: string) => require('crypto').createHash('sha256').update(data).digest('hex')),
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
 }));
 
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);

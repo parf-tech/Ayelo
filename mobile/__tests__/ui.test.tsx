@@ -7,6 +7,7 @@ import {
   Button,
   CheckboxField,
   ChoiceCard,
+  ListRow,
   EmptyState,
   ProgressBar,
   ScreenContainer,
@@ -224,5 +225,46 @@ describe('Banner, Toast, Skeleton, EmptyState, ProgressBar, ScreenContainer', ()
     );
     expect(screen.getByText('contenu')).toBeOnTheScreen();
     expect(screen.getByText('pied')).toBeOnTheScreen();
+  });
+});
+
+describe('ListRow : accessibilité des lignes avec bouton', () => {
+  function accessibleAncestors(node: { parent: unknown }): number {
+    let count = 0;
+    let current = (node as { parent: { props?: { accessible?: boolean }; parent: unknown } | null }).parent;
+    while (current) {
+      if (current.props?.accessible === true) count += 1;
+      current = current.parent as typeof current | null;
+    }
+    return count;
+  }
+
+  it('une ligne sans onPress avec bouton en trailing ne regroupe pas son bouton (VoiceOver)', async () => {
+    const onPress = jest.fn();
+    await renderThemed(
+      <ListRow
+        testID="row"
+        label="Pack 50 crédits"
+        description="9,99 €"
+        accessibilityLabel="Pack 50 crédits. 9,99 €"
+        trailing={<Button label="Acheter" accessibilityLabel="Acheter le pack 50 crédits" onPress={onPress} />}
+      />,
+    );
+    const button = screen.getByRole('button', { name: 'Acheter le pack 50 crédits' });
+    expect(accessibleAncestors(button)).toBe(0);
+    expect(screen.getByTestId('row').props.accessible).toBe(false);
+    await userEvent.setup().press(button);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('une ligne purement informative reste regroupée', async () => {
+    await renderThemed(<ListRow testID="row" label="Version" value="1.0" accessibilityLabel="Version 1.0" />);
+    expect(screen.getByTestId('row').props.accessible).toBe(true);
+    expect(screen.getByLabelText('Version 1.0')).toBeTruthy();
+  });
+
+  it('une ligne cliquable est un seul bouton', async () => {
+    await renderThemed(<ListRow label="Langue" onPress={jest.fn()} />);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 });

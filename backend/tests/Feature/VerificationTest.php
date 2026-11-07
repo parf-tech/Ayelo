@@ -29,7 +29,16 @@ function ver(string $b)
     return test()->withHeader('Authorization', $b);
 }
 
-it('donne une pose stable dans la journée', function () {
+/** Parcours réel : consigne d'abord, selfie déposé ensuite (la demande refuse un selfie antérieur à la consigne). */
+function verSubmit(string $b, string $selfie)
+{
+    ver($b)->getJson('/api/v1/me/verification/pose')->assertOk();
+    DB::table('media')->where('id', $selfie)->update(['created_at' => now()->addSecond()]);
+
+    return ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => $selfie]);
+}
+
+it('donne une pose stable tant que la consigne est valable', function () {
     [, $b] = verifUser();
     $a = ver($b)->getJson('/api/v1/me/verification/pose')->assertOk()->json('pose');
     expect(ProfileVerification::POSES)->toContain($a)->and(ver($b)->getJson('/api/v1/me/verification/pose')->json('pose'))->toBe($a);
@@ -42,7 +51,7 @@ it('exige le consentement biométrique, un selfie valide et une seule demande en
     DB::table('user_consents')->insert(['id' => (string) Str::uuid(), 'user_id' => $u->id, 'kind' => 'verification_biometric', 'version' => 'v1', 'granted' => true, 'created_at' => now(), 'updated_at' => now()]);
     ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => (string) Str::uuid()])->assertStatus(422);
 
-    ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => $selfie])->assertCreated();
+    verSubmit($b, $selfie)->assertCreated();
     expect(DB::table('profiles')->where('user_id', $u->id)->value('verification_status'))->toBe('pending');
     ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => $selfie])->assertStatus(409);
 });
@@ -58,7 +67,7 @@ it('approuve : badge vérifié, selfie supprimé du stockage, résultat conserv�
     $storage = new FakeMediaStorage;
     app()->instance(MediaStorage::class, $storage);
     [$u, $b, $selfie] = verifUser();
-    $id = ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => $selfie])->json('id');
+    $id = verSubmit($b, $selfie)->json('id');
 
     app(ProfileVerification::class)->approve($id);
 
@@ -78,7 +87,7 @@ it('refuse avec un motif, autorise une nouvelle tentative et limite à 3 par jou
         $selfie = (string) Str::uuid();
         DB::table('media')->insert(['id' => $selfie, 'user_id' => $u->id, 'kind' => 'verification_selfie', 'status' => 'processing', 'storage_key' => "k/$selfie",
             'mime_type' => 'image/jpeg', 'position' => 0, 'created_at' => now(), 'updated_at' => now()]);
-        $id = ver($b)->postJson('/api/v1/me/verification', ['selfie_media_id' => $selfie])->assertCreated()->json('id');
+        $id = verSubmit($b, $selfie)->assertCreated()->json('id');
         app(ProfileVerification::class)->reject($id, 'photo floue');
         expect(DB::table('profiles')->where('user_id', $u->id)->value('verification_status'))->toBe('rejected');
     }

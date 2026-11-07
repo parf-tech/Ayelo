@@ -1,6 +1,7 @@
 export const premiumFr = {
   'premium.title': 'Abonnement Premium',
-  'premium.subtitle': 'Likes illimités, coups de cœur, retour en arrière et conversations sans crédit.',
+  'premium.subtitle':
+    'J’aime illimités, coups de cœur, retour en arrière et conversations sans crédit.',
   'premium.active': 'Premium actif jusqu’au {date}.',
   'premium.activeNoDate': 'Premium actif.',
   'premium.plan.1': '1 mois',
@@ -9,19 +10,17 @@ export const premiumFr = {
   'premium.plan.other': '{months} mois',
   'premium.price.unknown': 'Prix indisponible',
   'premium.subscribe': 'S’abonner',
-  'premium.selectPlan': 'Choisissez une durée.',
   'premium.restore': 'Restaurer mes achats',
   'premium.restore.done': 'Vos achats ont été restaurés. Le serveur met à jour votre compte.',
   'premium.restore.error': 'La restauration a échoué. Réessayez.',
   'premium.renewal':
     'L’abonnement se renouvelle automatiquement à la fin de chaque période, au même tarif, tant que vous ne l’annulez pas dans les réglages de votre boutique (App Store ou Google Play) au moins 24 h avant le renouvellement.',
-  'premium.manage.cta': 'Gérer ou résilier mon abonnement',
+  'premium.manage.cta': 'Gérer mon abonnement',
   'premium.manage.info':
-    'La résiliation se fait dans la boutique (App Store ou Google Play), en quelques secondes. Elle prend effet à la fin de la période déjà payée : vous gardez Premium jusque-là.',
+    'Résiliation dans l’App Store ou Google Play, prise en compte à la fin de la période déjà payée : vous gardez Premium jusque-là.',
   'premium.manage.openError': 'Impossible d’ouvrir la boutique. Ouvrez les abonnements depuis l’App Store ou Google Play.',
   'premium.terms': 'Conditions d’utilisation',
   'premium.privacy': 'Politique de confidentialité',
-  'premium.linkMissing': 'Lien non configuré',
   'premium.credits.cta': 'Acheter des crédits',
   'premium.unavailable.expo_go':
     'Les achats ne fonctionnent pas dans Expo Go : un build de développement est nécessaire. Aucun achat n’est simulé.',
@@ -30,7 +29,8 @@ export const premiumFr = {
   'premium.unavailable.not_installed':
     'Le module d’achat n’est pas disponible dans cette version. Aucun achat n’est simulé.',
   'premium.pending': 'Achat en attente d’approbation. Il sera pris en compte dès sa validation par la boutique.',
-  'premium.purchaseError': 'L’achat n’a pas abouti. Vous n’avez pas été débité si l’écran de paiement ne s’est pas terminé.',
+  'premium.purchaseError':
+    'L’achat n’a pas abouti. Si le paiement a été effectué, il sera pris en compte dans quelques minutes ; sinon, aucun montant n’est prélevé.',
   'premium.offers.empty': 'Aucune offre disponible pour le moment.',
   'premium.balance': 'Crédits « Conversation » : {count}',
 
@@ -51,4 +51,12 @@ export const premiumFr = {
   'purchase.check': 'Vérifier à nouveau',
   'purchase.support': 'Contacter le support',
   'purchase.done': 'Terminé',
+  'premium.manage.promo': 'Premium offert jusqu’au {date}. Rien à résilier.',
+  'premium.manage.promoNoDate': 'Premium offert par l’équipe. Rien à résilier.',
+  'premium.bestValue': 'Meilleur prix',
+  'premium.perMonth': 'soit {amount} par mois',
+  'premium.subscribePrice': 'S’abonner, {price}',
+  'premium.summary': '{plan}, {price}. Renouvellement automatique jusqu’à résiliation.',
+  'premium.summary.noPrice': '{plan}. Renouvellement automatique jusqu’à résiliation.',
+  'premium.unavailable.generic': 'Les achats sont momentanément indisponibles. Réessayez plus tard.',
 } as const;

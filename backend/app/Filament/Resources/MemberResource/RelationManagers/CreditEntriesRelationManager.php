@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\MemberResource\RelationManagers;
 
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -11,7 +13,10 @@ class CreditEntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'creditEntries';
 
-    protected static ?string $title = 'Registre des crédits';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return Staff::t('admin.section.credit_ledger');
+    }
 
     public function isReadOnly(): bool
     {
@@ -28,11 +33,11 @@ class CreditEntriesRelationManager extends RelationManager
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('credit_type')->label('Type')->badge(),
-                TextColumn::make('delta')->label('Variation'),
-                TextColumn::make('reason')->label('Raison'),
-                TextColumn::make('note')->label('Note')->placeholder('—')->limit(60),
-                TextColumn::make('created_at')->label('Date')->dateTime(),
+                Labels::badge(TextColumn::make('credit_type')->label(Staff::t('admin.col.type')), 'credit_type'),
+                TextColumn::make('delta')->label(Staff::t('admin.col.delta')),
+                TextColumn::make('reason')->label(Staff::t('admin.col.reason')),
+                TextColumn::make('note')->label(Staff::t('admin.col.note'))->placeholder('—')->limit(60),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.date'))->dateTime(),
             ]);
     }
 }

@@ -57,7 +57,8 @@ export const discoverFr = {
   'detail.verified': 'Profil vérifié',
 
   'report.title': 'Signaler',
-  'report.subtitle': 'Appuyez sur un motif pour envoyer le signalement. Il reste confidentiel.',
+  'report.subtitle':
+    'Choisissez un motif, puis confirmez l’envoi. Votre signalement reste confidentiel.',
   'report.details': 'Détails (facultatif)',
   'report.reason.money_request': 'Demande d’argent',
   'report.reason.harassment': 'Harcèlement',
@@ -68,4 +69,8 @@ export const discoverFr = {
   'report.sent': 'Merci, votre signalement a été reçu.',
   'report.already': 'Vous avez déjà signalé cette personne pour ce motif.',
   'report.sending': 'Envoi du signalement',
+  'report.send': 'Envoyer le signalement',
+  'report.choose': 'Choisissez un motif pour envoyer le signalement.',
+  'discover.report': 'Signaler',
+  'discover.reportAria': 'Signaler {name}',
 } as const;

@@ -8,14 +8,16 @@ import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Button, CheckboxField, ScreenContainer, Text } from '../../ui';
 import { BackButton } from '../common/BackButton';
+import { useLegalOpener } from '../legal/useLegalOpener';
 
-/** S63 : consentements. Cases distinctes ; terms, privacy et sensitive_data obligatoires, marketing facultatif. */
+/** S63 : consentements, après le contrôle d'âge (S68). Cases distinctes ; terms, privacy et sensitive_data obligatoires, marketing facultatif. */
 export function ConsentsScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { space } = useTheme();
   const { state, dispatch } = useSignupFlow();
   const guard = useSignupGuard('consents');
+  const openLegal = useLegalOpener();
 
   const [consents, setConsents] = useState<ConsentsPayload>(
     state.consents ?? { terms: false, privacy: false, sensitive_data: false, marketing: false },
@@ -29,7 +31,7 @@ export function ConsentsScreen() {
   const next = () => {
     if (!canContinue) return;
     dispatch({ type: 'CONSENTS_ACCEPTED', consents });
-    router.push(SIGNUP_ROUTES.birthdate as never);
+    router.push(SIGNUP_ROUTES.account as never);
   };
 
   return (
@@ -63,6 +65,7 @@ export function ConsentsScreen() {
           checked={consents.terms}
           onChange={set('terms')}
         />
+        <Button testID="consent-terms-read" variant="ghost" label={t('consents.terms.read')} onPress={() => void openLegal('terms')} />
         <CheckboxField
           testID="consent-privacy"
           label={t('consents.privacy.label')}
@@ -71,6 +74,7 @@ export function ConsentsScreen() {
           checked={consents.privacy}
           onChange={set('privacy')}
         />
+        <Button testID="consent-privacy-read" variant="ghost" label={t('consents.privacy.read')} onPress={() => void openLegal('privacy')} />
         <CheckboxField
           testID="consent-sensitive"
           label={t('consents.sensitive.label')}

@@ -28,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', \App\Http\Middleware\EnsureAccountActive::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Refus attendus (mauvais mot de passe, trop d'essais) : réponses normales, pas des incidents à journaliser.
+        $exceptions->dontReport([\App\Exceptions\ReauthenticationRefused::class, \App\Exceptions\ReauthenticationThrottled::class]);
+
         // Format d'erreur unique de l'API (docs/10-API-SPECIFICATIONS.md) :
         // { "error": { "code", "message", "fields"? } }
         $exceptions->render(function (ValidationException $e, Request $request) {

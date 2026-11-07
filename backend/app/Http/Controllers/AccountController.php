@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ReauthenticationRefused;
+use App\Exceptions\ReauthenticationThrottled;
 use App\Jobs\BuildDataExport;
 use App\Mail\AccountDeletionMail;
 use App\Models\User;
@@ -11,6 +13,7 @@ use App\Services\OAuth\OAuthVerifier;
 use App\Services\OneTimeCodes;
 use App\Services\Registrar;
 use App\Services\Storage\MediaStorage;
+use App\Support\SafetyState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,27 +33,96 @@ class AccountController extends Controller
     {
         $user = $request->user();
 
-        if ($user->password !== null) {
-            $data = $request->validate(['password' => ['required', 'string']]);
-            if (! Hash::check($data['password'], $user->password)) {
-                return response()->json(['error' => ['code' => 'invalid_credentials', 'message' => 'Mot de passe incorrect.']], 403);
-            }
-        } else {
-            $data = $request->validate(['provider' => ['required', Rule::in(['google', 'apple'])], 'id_token' => ['required', 'string', 'max:5000']]);
-            try {
-                $identity = $verifier->verify($data['provider'], $data['id_token']);
-            } catch (InvalidOAuthToken) {
-                return response()->json(['error' => ['code' => 'invalid_oauth_token', 'message' => 'Ré-authentification refusée.']], 403);
-            }
-            $owns = DB::table('auth_identities')->where(['user_id' => $user->id, 'provider' => $data['provider'], 'provider_user_id' => $identity->subject])->exists();
-            if (! $owns) {
-                return response()->json(['error' => ['code' => 'invalid_oauth_token', 'message' => 'Ré-authentification refusée.']], 403);
-            }
-        }
+        $this->reauthenticate($request, $user, $verifier);
 
         $deletion->request($user);
 
+        /**
+         * Suppression programmée (délai de grâce avant la purge).
+         *
+         * @status 202
+         *
+         * @body array{status: 'scheduled', purge_after_days: int}
+         */
         return response()->json(['status' => 'scheduled', 'purge_after_days' => AccountDeletion::GRACE_DAYS], 202);
+    }
+
+    /**
+     * Ré-authentification explicite (suppression, export - revues F-20 et F-21) : mot de passe pour un compte avec mot de passe ;
+     * sinon id_token du fournisseur, émis depuis moins de `safety.oauth.reauth_max_age_seconds` secondes (claim `iat`), lié au
+     * compte, et au `nonce` si le client en envoie un. Les échecs sont comptés dans le magasin d'état non évincé
+     * (`safety.state_store`) : 5 par 15 minutes pour un couple compte + IP, 20 par compte toutes IP confondues. Une
+     * ré-authentification réussie remet les compteurs à zéro.
+     *
+     * Un refus interrompt la requête (403 `invalid_credentials` / `invalid_oauth_token`, 429 `rate_limited`) : la méthode ne
+     * renvoie rien, donc le contrat OpenAPI n'en tire pas de réponse 200 vide.
+     *
+     * @throws ReauthenticationRefused
+     * @throws ReauthenticationThrottled
+     */
+    private function reauthenticate(Request $request, User $user, OAuthVerifier $verifier): void
+    {
+        $limiter = SafetyState::limiter();
+        $key = 'reauth-fail:'.$user->id.'|'.$request->ip();
+        $accountKey = 'reauth-fail-account:'.$user->id;
+        foreach ([[$key, 5], [$accountKey, 20]] as [$k, $max]) {
+            if ($limiter->tooManyAttempts($k, $max)) {
+                throw new ReauthenticationThrottled($limiter->availableIn($k));
+            }
+        }
+        $fail = function () use ($limiter, $key, $accountKey): void {
+            $limiter->hit($key, 900);
+            $limiter->hit($accountKey, 900);
+        };
+        $succeed = function () use ($limiter, $key, $accountKey): void {
+            $limiter->clear($key);
+            $limiter->clear($accountKey);
+        };
+
+        if ($user->password !== null) {
+            $data = $request->validate(['password' => ['required', 'string', 'max:200']]);
+            if (! Hash::check($data['password'], $user->password)) {
+                $fail();
+
+                throw ReauthenticationRefused::wrongPassword();
+            }
+            $succeed();
+
+            return;
+        }
+
+        $data = $request->validate([
+            'provider' => ['required', Rule::in(['google', 'apple'])],
+            'id_token' => ['required', 'string', 'max:5000'],
+            'nonce' => ['nullable', 'string', 'max:200'],
+        ]);
+        $refuse = function () use ($fail): never {
+            $fail();
+
+            throw ReauthenticationRefused::wrongToken();
+        };
+
+        try {
+            $identity = $verifier->verify($data['provider'], $data['id_token']);
+        } catch (InvalidOAuthToken) {
+            $refuse();
+        }
+
+        if (! $identity->isFresh((int) config('safety.oauth.reauth_max_age_seconds', 600))) {
+            $refuse();
+        }
+
+        $nonce = $data['nonce'] ?? null;
+        if ($nonce !== null ? ! $identity->matchesNonce($nonce) : (bool) config('safety.oauth.require_nonce')) {
+            $refuse();
+        }
+
+        $owns = DB::table('auth_identities')->where(['user_id' => $user->id, 'provider' => $data['provider'], 'provider_user_id' => $identity->subject])->exists();
+
+        if (! $owns) {
+            $refuse();
+        }
+        $succeed();
     }
 
     /** Demande publique de suppression (page web exigée par les stores) : lien de confirmation envoyé par e-mail. */
@@ -60,12 +132,30 @@ class AccountController extends Controller
         $user = User::where('email', strtolower($data['email']))->where('status', 'active')->first();
 
         if ($user !== null) {
-            $token = $codes->issue($user->id, 'account_deletion', 60);
-            $link = rtrim((string) config('app.web_url'), '/').'/confirm-deletion?token='.urlencode($token);
-            Mail::to($user->email)->locale($user->locale)->send(new AccountDeletionMail($link));
+            // Après la réponse : même durée de requête que le compte existe ou non (revue F-11).
+            $done = false;
+            app()->terminating(function () use ($codes, $user, &$done) {
+                if ($done) {
+                    return;
+                }
+                $done = true;
+
+                try {
+                    $token = $codes->issue($user->id, 'account_deletion', 60);
+                    $link = rtrim((string) config('app.web_url'), '/').'/confirm-deletion?token='.urlencode($token);
+                    Mail::to($user->email)->locale($user->locale)->send(new AccountDeletionMail($link));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
         }
 
         // Réponse identique que le compte existe ou non.
+        /**
+         * Demande enregistrée, sans corps. Réponse identique que l'adresse corresponde à un compte ou non.
+         *
+         * @status 202
+         */
         return response()->noContent(202);
     }
 
@@ -80,12 +170,23 @@ class AccountController extends Controller
 
         $deletion->request(User::findOrFail($userId));
 
+        /**
+         * Suppression programmée, sans corps (délai de grâce avant la purge).
+         *
+         * @status 202
+         */
         return response()->noContent(202);
     }
 
-    public function requestExport(Request $request): JsonResponse
+    /**
+     * Export des données : ré-authentification obligatoire comme la suppression (revue F-20), car le fichier contient e-mail,
+     * date de naissance et messages envoyés. Un jeton volé ne suffit donc pas à les exfiltrer.
+     */
+    public function requestExport(Request $request, OAuthVerifier $verifier): JsonResponse|Response
     {
         $me = $request->user()->id;
+
+        $this->reauthenticate($request, $request->user(), $verifier);
 
         // Une demande par jour.
         if (DB::table('data_exports')->where('user_id', $me)->where('created_at', '>=', now()->subDay())->exists()) {
@@ -96,11 +197,20 @@ class AccountController extends Controller
         DB::table('data_exports')->insert(['id' => $id, 'user_id' => $me, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()]);
         BuildDataExport::dispatch($id);
 
+        /**
+         * Export demandé : il sera préparé en arrière-plan.
+         *
+         * @status 202
+         *
+         * @body array{id: string, status: 'pending'}
+         */
         return response()->json(['id' => $id, 'status' => 'pending'], 202);
     }
 
     public function export(Request $request, string $id, MediaStorage $storage): JsonResponse
     {
+        // Identifiant mal formé : 404 (la requête SQL sur une colonne uuid échouerait en 500 - revue F-24).
+        abort_unless(Str::isUuid($id), 404);
         $export = DB::table('data_exports')->where('id', $id)->where('user_id', $request->user()->id)->first();
         abort_if($export === null, 404);
 

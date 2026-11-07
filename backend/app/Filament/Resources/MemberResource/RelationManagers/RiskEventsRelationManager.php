@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\MemberResource\RelationManagers;
 
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -11,7 +13,10 @@ class RiskEventsRelationManager extends RelationManager
 {
     protected static string $relationship = 'riskEvents';
 
-    protected static ?string $title = 'Événements de risque';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return Staff::t('admin.section.risk_events');
+    }
 
     public function isReadOnly(): bool
     {
@@ -28,9 +33,9 @@ class RiskEventsRelationManager extends RelationManager
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('signal')->label('Signal')->badge(),
-                TextColumn::make('weight')->label('Poids'),
-                TextColumn::make('created_at')->label('Date')->dateTime(),
+                Labels::badge(TextColumn::make('signal')->label(Staff::t('admin.col.signal')), 'risk_signal'),
+                TextColumn::make('weight')->label(Staff::t('admin.col.weight')),
+                TextColumn::make('created_at')->label(Staff::t('admin.col.date'))->dateTime(),
             ]);
     }
 }

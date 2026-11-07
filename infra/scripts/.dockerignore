@@ -1,0 +1,7 @@
+# Contexte de construction de l'image `backup` (infra/scripts/Dockerfile) : seuls les trois scripts et le Dockerfile
+# sont copiés. Rien d'autre (tests, secrets, clés) n'entre dans le contexte. Revue pentest P-08.
+*
+!Dockerfile
+!backup.sh
+!restore.sh
+!retention.sh

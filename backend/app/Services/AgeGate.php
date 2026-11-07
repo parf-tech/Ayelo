@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Support\DeviceId;
+use App\Support\SafetyState;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 
 /**
  * Contrôle d'âge exécuté AVANT la création du compte (docs FR-I-12).
@@ -72,6 +74,12 @@ class AgeGate
         return $ip !== null && BannedIdentifiers::has('age_refusal', self::ipKey($ip));
     }
 
+    /** Refus d'âge encore actif pour l'IP seule (fenêtre de 30 minutes) : la tentative suit de près la déclaration de minorité. */
+    public function isIpRefused(?string $ip): bool
+    {
+        return $ip !== null && BannedIdentifiers::has('age_refusal', self::ipKey($ip));
+    }
+
     public function isEmailRefused(string $email): bool
     {
         return BannedIdentifiers::has('age_refusal', self::emailKey($email));
@@ -97,6 +105,11 @@ class AgeGate
         }
     }
 
+    /*
+     * Pas de mémorisation d'un e-mail simplement SAISI (revue pentest P-03) : sans preuve de possession, elle permettait de
+     * bloquer l'inscription d'un tiers. Seules les identités prouvées (rememberIdentity, appelé depuis OAuth) sont étendues.
+     */
+
     public function isAdult(string $birthdate): bool
     {
         return CarbonImmutable::parse($birthdate)->startOfDay()->lte(CarbonImmutable::today()->subYears(self::MIN_AGE));
@@ -116,8 +129,46 @@ class AgeGate
         return Crypt::encryptString(json_encode([
             'birthdate' => CarbonImmutable::parse($birthdate)->toDateString(),
             'device' => DeviceId::hash($deviceId),
+            'jti' => (string) Str::uuid(),
             'exp' => now()->addMinutes(self::TOKEN_TTL_MINUTES)->getTimestamp(),
         ], JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * Usage unique (revue F-29) : le jeton est « consommé » à l'inscription, par un `add` atomique (magasin d'état, safety.state_store) sur son identifiant.
+     * À appeler seulement après `readToken` valide. Renvoie false si le jeton a déjà servi. En cas d'échec de la création du
+     * compte, `releaseToken` le rend de nouveau utilisable (il reste valable 10 minutes au total).
+     */
+    public function claimToken(?string $token): bool
+    {
+        $key = $this->claimKey($token);
+
+        return $key !== null && SafetyState::store()->add($key, 1, now()->addMinutes(self::TOKEN_TTL_MINUTES + 1));
+    }
+
+    public function releaseToken(?string $token): void
+    {
+        if (($key = $this->claimKey($token)) !== null) {
+            SafetyState::store()->forget($key);
+        }
+    }
+
+    private function claimKey(?string $token): ?string
+    {
+        if (! $token) {
+            return null;
+        }
+
+        try {
+            $data = json_decode(Crypt::decryptString($token), true, 512, JSON_THROW_ON_ERROR);
+        } catch (DecryptException|\JsonException) {
+            return null;
+        }
+
+        // Jeton émis avant l'ajout de `jti` : l'empreinte du jeton chiffré (unique par émission) en tient lieu.
+        $id = is_array($data) && is_string($data['jti'] ?? null) ? $data['jti'] : hash('sha256', $token);
+
+        return 'age-token-used:'.$id;
     }
 
     /**
@@ -135,7 +186,7 @@ class AgeGate
             return null;
         }
 
-        if (($data['exp'] ?? 0) < now()->getTimestamp()) {
+        if (! is_array($data) || ($data['exp'] ?? 0) < now()->getTimestamp()) {
             return null;
         }
 

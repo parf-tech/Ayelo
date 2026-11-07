@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Confirm deletion – [Application name]</title>
+<meta name="description" content="Confirmation of the account deletion requested by e-mail.">
+<link rel="alternate" hreflang="fr" href="../confirm-deletion.html">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Skip to content</a>
+<div class="banner" role="note"><div class="wrap"><p><strong>Provisional version, to be validated by a lawyer.</strong> This text is a technical draft, it is not legal advice and must not be treated as final. <mark class="todo">[TO BE COMPLETED]</mark> marks are fields the service owner must fill in. The French text is the reference draft.</p></div></div>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html">[Application name]</a>
+<nav aria-label="Site pages"><ul>
+<li><a href="index.html">Home</a></li>
+<li><a href="legal/terms.html">Terms of use</a></li>
+<li><a href="legal/privacy.html">Privacy</a></li>
+<li><a href="legal/community.html">Community rules</a></li>
+<li><a href="safety.html">Safety and reporting</a></li>
+<li><a href="support.html">Support</a></li>
+<li><a href="account/delete.html">Delete my account</a></li>
+</ul></nav>
+<p class="lang"><a href="../confirm-deletion.html" lang="fr" hreflang="fr" aria-label="Lire cette page en français">Français</a></p>
+</div></header>
+<main id="contenu"><div class="wrap">
+<h1>Confirm the deletion of my account</h1>
+<p>You asked to delete your account. By confirming, your profile is hidden immediately and your personal data is anonymised after 30 days. A Premium subscription is not cancelled: do it in the store.</p>
+<form method="post" action="https://api.example.invalid/api/v1/account-deletion-requests/confirm" data-deletion-form="confirm"
+ data-msg-sending="Sending…" data-msg-done="Deletion requested. Your profile is hidden. Final deletion in 30 days."
+ data-msg-throttled="Too many requests. Try again in a few minutes." data-msg-invalid="Invalid or expired link. Start the request again from the deletion page."
+ data-msg-error="Something went wrong. Try again later or contact support."
+ data-msg-unconfigured="This form is not yet connected to the service (API address to be set). Use the application or contact support.">
+  <label for="token">Confirmation code (filled in automatically from the e-mail link)</label>
+  <input id="token" name="token" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="200">
+  <button type="submit">Confirm the deletion of my account</button>
+  <div class="status" role="status" aria-live="polite"></div>
+</form>
+<noscript><p class="small">Without JavaScript the code is not filled in automatically: copy it from the link address (the part after <code>token=</code>).</p></noscript>
+<p class="small">Expired link, or not requested by you? Ignore it, nothing is deleted until you confirm. <a href="account/delete.html">Back to the deletion page</a>.</p>
+</div></main>
+<footer class="site"><div class="wrap">
+<ul>
+<li><a href="index.html">Home</a></li>
+<li><a href="legal/terms.html">Terms of use</a></li>
+<li><a href="legal/privacy.html">Privacy</a></li>
+<li><a href="legal/community.html">Community rules</a></li>
+<li><a href="safety.html">Safety and reporting</a></li>
+<li><a href="support.html">Support</a></li>
+<li><a href="account/delete.html">Delete my account</a></li>
+</ul>
+<p>Provisional site version, draft 0.1 (2026-11-07). No tracking, no analytics, no external resource.</p>
+</div></footer>
+<script src="../assets/deletion.js" defer></script>
+</body>
+</html>

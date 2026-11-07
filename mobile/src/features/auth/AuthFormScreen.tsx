@@ -18,7 +18,7 @@ type FieldErrors = { email?: string; password?: string };
 
 /**
  * S02 : connexion (mode `login`, atteint depuis S01, sans S63 ni S68) ou inscription (mode `register`,
- * atteint depuis S68 uniquement : exige les consentements et le jeton d'âge).
+ * atteint depuis S63 uniquement : exige le jeton d'âge et les consentements).
  */
 export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const router = useRouter();
@@ -27,7 +27,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const { api, signIn, clientInfo } = useAuth();
   const { state: flow, dispatch } = useSignupFlow();
   const isRegister = mode === 'register';
-  // Inscription : la garde exige S63 puis S68 (consentements + jeton d'âge). Connexion : aucune garde de parcours.
+  // Inscription : la garde exige S68 puis S63 (jeton d'âge + consentements). Connexion : aucune garde de parcours.
   const access = resolveSignupScreen(flow, 'account');
 
   const [email, setEmail] = useState('');
@@ -109,7 +109,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
       router.replace('/login' as never);
     } else {
       dispatch({ type: 'RESET' });
-      router.push(SIGNUP_ROUTES.consents as never);
+      router.push(SIGNUP_ROUTES.birthdate as never);
     }
   };
 

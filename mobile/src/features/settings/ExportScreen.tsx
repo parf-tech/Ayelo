@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { isApiError } from '../../api/errors';
 import type { DataExport } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
+import { availableOAuthProviders, type OAuthProof } from '../../auth/oauthProof';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Skeleton, Text } from '../../ui';
+import { Banner, Button, ScreenContainer, Skeleton, Text, TextField } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { openExternal } from '../legal/links';
+import { SocialReauth } from './SocialReauth';
 
 export const EXPORT_POLL_MS = 5000;
 
@@ -18,6 +21,9 @@ export function ExportScreen() {
   const [job, setJob] = useState<DataExport | null>(null);
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState<string | undefined>();
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [social, setSocial] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const alive = useRef(true);
 
@@ -50,16 +56,30 @@ export function ExportScreen() {
     };
   }, []);
 
-  const request = async () => {
+  const request = async (proof?: OAuthProof) => {
     setBanner(undefined);
+    if (!proof && password === '') {
+      setPasswordError(t('export.passwordRequired'));
+      return;
+    }
+    setPasswordError(undefined);
     setLoading(true);
     try {
-      const created = await api.auth.requestExport();
+      // Ré-authentification comme DELETE /me : le mot de passe n'est jamais conservé.
+      const created = await api.auth.requestExport(proof ?? { password });
+      setPassword('');
       setJob(created);
       timer.current = setTimeout(() => void poll(created.id), EXPORT_POLL_MS);
     } catch (error) {
-      const { key, params } = apiErrorMessage(error);
-      setBanner(t(key, params));
+      if (isApiError(error) && error.isValidation && (error.fieldError('provider') || error.fieldError('id_token'))) {
+        setSocial(true);
+        setBanner(availableOAuthProviders().length === 0 ? t('export.social') : undefined);
+      } else if (isApiError(error) && error.status === 403 && error.code === 'invalid_credentials') {
+        setPasswordError(t('export.wrongPassword'));
+      } else {
+        const { key, params } = apiErrorMessage(error);
+        setBanner(t(key, params));
+      }
     } finally {
       setLoading(false);
     }
@@ -76,7 +96,26 @@ export function ExportScreen() {
         {t('export.body')}
       </Text>
       {banner ? <Banner testID="export-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
-      {!job ? <Button testID="export-request" label={t('export.request')} onPress={() => void request()} loading={loading} /> : null}
+      {!job ? (
+        <>
+          {social ? <SocialReauth testID="export-reauth" disabled={loading} onProof={(proof) => request(proof)} /> : null}
+          <TextField
+            testID="export-password"
+            label={t('export.password')}
+            helper={t('export.passwordHelp')}
+            value={password}
+            onChangeText={setPassword}
+            error={passwordError}
+            disabled={loading}
+            secureTextEntry
+            passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+            autoCapitalize="none"
+            autoComplete="current-password"
+            containerStyle={{ marginBottom: space[3] }}
+          />
+          <Button testID="export-request" label={t('export.request')} onPress={() => void request()} loading={loading} />
+        </>
+      ) : null}
       {job?.status === 'pending' ? (
         <>
           <Text variant="body" accessibilityLiveRegion="polite" testID="export-pending" style={{ marginBottom: space[2] }}>

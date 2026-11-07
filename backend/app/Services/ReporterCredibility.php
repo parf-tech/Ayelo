@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 /**
  * Crédibilité des signaleurs pour la suspension préventive « mineur suspecté » (revue F-09, décision Q2-B).
  * Un signaleur crédible a un compte d'au moins `safety.reporter_min_age_days` jours, un e-mail vérifié, et au moins une
- * interaction (conversation ou match) avec la personne visée. Deux comptes jetables ne suffisent donc plus.
+ * interaction réciproque avec la personne visée (match, ou conversation où elle a écrit ; voir hasInteraction). Deux comptes
+ * jetables ne suffisent donc plus, ni une conversation ouverte d'office par un seul des deux.
  */
 class ReporterCredibility
 {
@@ -22,14 +23,25 @@ class ReporterCredibility
             ->where('created_at', '<=', now()->subDays($minAge))->exists();
     }
 
-    /** Conversation ou match (quel que soit son statut) entre les deux comptes. */
+    /**
+     * Interaction RÉCIPROQUE entre les deux comptes (revue pentest P-02) : un match (les deux se sont choisis), ou une conversation
+     * dans laquelle la personne visée a elle-même écrit au moins un message. Une conversation ouverte d'office par un crédit ou
+     * le Premium, sans réponse de l'autre, ne prouve rien : sinon un compte dormant pouvait « fabriquer » l'interaction exigée
+     * puis faire suspendre la cible. `$userId` est le signaleur, `$otherId` la personne visée.
+     */
     public function hasInteraction(string $userId, string $otherId): bool
     {
         $pair = [$userId, $otherId];
         sort($pair, SORT_STRING);
 
-        return DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->exists()
-            || DB::table('matches')->where('user_a', $pair[0])->where('user_b', $pair[1])->exists();
+        if (DB::table('matches')->where('user_a', $pair[0])->where('user_b', $pair[1])->exists()) {
+            return true;
+        }
+
+        return DB::table('conversations')->join('messages', 'messages.conversation_id', '=', 'conversations.id')
+            ->where('conversations.user_a', $pair[0])->where('conversations.user_b', $pair[1])
+            ->where('messages.sender_id', $otherId)->whereNotIn('messages.type', ['system', 'call_missed'])
+            ->exists();
     }
 
     public function isCredible(string $userId, string $targetId): bool

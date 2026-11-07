@@ -78,16 +78,20 @@ export const settingsEn = {
   'blocked.unblocked': 'Person unblocked.',
 
   'delete.title': 'Delete my account',
-  'delete.warning': 'This is final after a cooling-off period. Your profile, photos and conversations will be deleted.',
-  'delete.grace': 'Your account will be permanently deleted in {days} days.',
+  'delete.warning':
+    'Your profile, photos and conversations are hidden right away, then permanently deleted after 30 days.',
+  'delete.grace': 'Permanent deletion in {days} days.',
   'delete.password': 'Current password',
   'delete.passwordHelp': 'For your security, confirm your password.',
   'delete.social':
     'Your account uses Google or Apple sign-in: re-authentication with these providers is not available in this version yet. Contact support to delete your account.',
-  'delete.confirm': 'Permanently delete my account',
+  'reauth.google': 'Confirm with Google',
+  'reauth.apple': 'Confirm with Apple',
+  'reauth.failed': 'The confirmation did not go through. Try again.',
+  'delete.confirm': 'Delete my account',
   'delete.passwordRequired': 'Enter your password.',
   'delete.wrongPassword': 'Wrong password.',
-  'delete.done': 'Request recorded. You will be signed out.',
+  'delete.done': 'Request recorded. Your profile is hidden.',
 
   'export.title': 'Export my data',
   'export.body': 'You can request a copy of your personal data. One request per day.',
@@ -99,6 +103,12 @@ export const settingsEn = {
   'export.failed': 'The export failed. Try again tomorrow or contact support.',
   'export.expired': 'This link has expired. Make a new request.',
   'export.check': 'Check status',
+  'export.password': 'Current password',
+  'export.passwordHelp': 'For your security, confirm your password before requesting the export.',
+  'export.passwordRequired': 'Enter your password.',
+  'export.wrongPassword': 'Wrong password.',
+  'export.social':
+    'Your account uses Google or Apple sign-in: re-authentication with these services is not available in this version yet. Contact support to get your data.',
 
   'support.title': 'Help and support',
   'support.subject': 'Subject',
@@ -160,4 +170,11 @@ export const settingsEn = {
   'appeal.invalid': 'Between 10 and 2,000 characters.',
   'appeal.send': 'Send the appeal',
   'appeal.sent': 'Appeal sent. We will get back to you.',
+  'legal.fallback.body':
+    'The full text of this document is not yet reachable from this version of the app. You can get a copy by writing to support.',
+  'legal.fallback.contact': 'Write to {email}',
+  'delete.cancelHint': 'To cancel the deletion before that date, contact support.',
+  'delete.signOut': 'Sign out',
+  'delete.subscription':
+    'Deleting your account does not cancel your Premium subscription. Cancel it in the store, otherwise you will keep being charged.',
 } as const;

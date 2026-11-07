@@ -100,24 +100,17 @@ it('Q1-B : l’expiration de 30 minutes par IP et de 90 jours par appareil est c
     r5_from(R5_D1, '203.0.113.99')->postJson('/api/v1/auth/age-check', ['birthdate' => '1990-05-10'])->assertOk();
 });
 
-it('Q1-B : l’e-mail présenté depuis un appareil refusé est mémorisé (HMAC) et refusé ailleurs, alias compris', function () {
+it('Q1-B / P-03 : l’e-mail simplement saisi depuis un appareil refusé n’est PAS mémorisé (pas de blocage d’un tiers)', function () {
     r5_minor(R5_D1, '203.0.113.5');
     r5_register(R5_D1, '203.0.113.5', 'Jean.Dupont@gmail.com')->assertForbidden()->assertJsonPath('error.code', 'age_not_eligible');
 
-    // Autre appareil, autre IP, jeton d’âge valide : même identité (alias Gmail) refusée.
+    // Autre appareil, autre IP, jeton d’âge valide : la vraie propriétaire (alias compris) s’inscrit normalement.
+    expect((new AgeGate)->isEmailRefused('jeandupont@gmail.com'))->toBeFalse();
     $token = r5_token(R5_D2, '198.51.100.7');
-    r5_register(R5_D2, '198.51.100.7', 'jeandupont+bis@gmail.com', $token)->assertForbidden()->assertJsonPath('error.code', 'age_not_eligible');
-    expect(User::where('email', 'jeandupont+bis@gmail.com')->exists())->toBeFalse();
+    r5_register(R5_D2, '198.51.100.7', 'jeandupont+bis@gmail.com', $token)->assertCreated();
 
-    // Une autre adresse n’est pas touchée.
-    r5_register(R5_D2, '198.51.100.7', 'autre@example.com', $token)->assertCreated();
-
-    // Seule l’empreinte est stockée, jamais l’adresse.
-    $hash = BannedIdentifiers::hash('email:jeandupont@gmail.com');
-    $row = DB::table('banned_identifiers')->where('kind', 'age_refusal')->where('value_hash', $hash)->first();
-    expect($row)->not->toBeNull()->and($row->reason)->toBe('age_under_18');
-    expect(DB::table('banned_identifiers')->where('value_hash', 'like', '%jean%')->exists())->toBeFalse();
-    expect(Carbon\Carbon::parse($row->expires_at)->isAfter(now()->addDays(89)))->toBeTrue();
+    // Aucune empreinte d’e-mail n’a été écrite par la saisie : seulement appareil et IP.
+    expect(DB::table('banned_identifiers')->where('kind', 'age_refusal')->where('value_hash', BannedIdentifiers::hash('email:jeandupont@gmail.com'))->exists())->toBeFalse();
 });
 
 it('Q1-B : le refus est étendu à l’identité sociale et à l’e-mail vérifié, depuis n’importe quel appareil', function () {

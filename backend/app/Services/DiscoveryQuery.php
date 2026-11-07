@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class DiscoveryQuery
 {
     /**
-     * @param  array<string, mixed>  $filters  age_min, age_max, countries[], origins[], intents[], genders[], verified_only
+     * @param  array<string, mixed>  $filters  age_min, age_max, countries[], origins[], intents[], genders[], verified_only, active_within_days
      */
     public function build(string $viewerId, array $filters): Builder
     {
@@ -52,6 +52,13 @@ class DiscoveryQuery
         }
         if (! empty($filters['verified_only'])) {
             $q->where('profiles.verification_status', 'verified');
+        }
+        // Fraîcheur (revue CTO 2.1) : `last_seen_at` n'est renseigné qu'à la connexion ; un compte jamais vu (null) reste
+        // éligible tant qu'il est récent, pour ne pas masquer les nouveaux inscrits. Index users_active_last_seen_idx.
+        if (! empty($filters['active_within_days'])) {
+            $since = CarbonImmutable::now()->subDays((int) $filters['active_within_days']);
+            $q->where(fn ($w) => $w->where('users.last_seen_at', '>=', $since)
+                ->orWhere(fn ($x) => $x->whereNull('users.last_seen_at')->where('users.created_at', '>=', $since)));
         }
 
         return $q;

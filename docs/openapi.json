@@ -39,7 +39,7 @@
                 },
                 "responses": {
                     "202": {
-                        "description": ""
+                        "description": "Demande enregistr\u00e9e, sans corps. R\u00e9ponse identique que l'adresse corresponde \u00e0 un compte ou non."
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -74,7 +74,7 @@
                 },
                 "responses": {
                     "202": {
-                        "description": ""
+                        "description": "Suppression programm\u00e9e, sans corps (d\u00e9lai de gr\u00e2ce avant la purge)."
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -89,19 +89,57 @@
                 "tags": [
                     "Account"
                 ],
-                "parameters": [
-                    {
-                        "name": "password",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                "requestBody": {
+                    "description": "Mot de passe, ou jeton d'identit\u00e9 frais du fournisseur (compte social) avec le `nonce` \u00e9ventuel.",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "password": {
+                                                "type": "string",
+                                                "maxLength": 200
+                                            }
+                                        },
+                                        "required": [
+                                            "password"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "provider": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "google",
+                                                    "apple"
+                                                ]
+                                            },
+                                            "id_token": {
+                                                "type": "string",
+                                                "maxLength": 5000
+                                            },
+                                            "nonce": {
+                                                "type": "string",
+                                                "maxLength": 200
+                                            }
+                                        },
+                                        "required": [
+                                            "provider",
+                                            "id_token"
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "202": {
-                        "description": "",
+                        "description": "Suppression programm\u00e9e (d\u00e9lai de gr\u00e2ce avant la purge).",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -112,8 +150,7 @@
                                             "const": "scheduled"
                                         },
                                         "purge_after_days": {
-                                            "type": "integer",
-                                            "const": 30
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -125,68 +162,10 @@
                         }
                     },
                     "403": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "anyOf": [
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "error": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "code": {
-                                                            "type": "string",
-                                                            "const": "invalid_oauth_token"
-                                                        },
-                                                        "message": {
-                                                            "type": "string",
-                                                            "const": "R\u00e9-authentification refus\u00e9e."
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "code",
-                                                        "message"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "error"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "error": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "code": {
-                                                            "type": "string",
-                                                            "const": "invalid_credentials"
-                                                        },
-                                                        "message": {
-                                                            "type": "string",
-                                                            "const": "Mot de passe incorrect."
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "code",
-                                                        "message"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "error"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/ReauthenticationRefused"
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                    "429": {
+                        "$ref": "#/components/responses/ReauthenticationThrottled"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -411,12 +390,61 @@
         "/me/export": {
             "post": {
                 "operationId": "account.requestExport",
+                "summary": "Export des donn\u00e9es : r\u00e9-authentification obligatoire comme la suppression (revue F-20), car le fichier contient e-mail,\ndate de naissance et messages envoy\u00e9s. Un jeton vol\u00e9 ne suffit donc pas \u00e0 les exfiltrer",
                 "tags": [
                     "Account"
                 ],
+                "requestBody": {
+                    "description": "Mot de passe, ou jeton d'identit\u00e9 frais du fournisseur (compte social) avec le `nonce` \u00e9ventuel.",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "password": {
+                                                "type": "string",
+                                                "maxLength": 200
+                                            }
+                                        },
+                                        "required": [
+                                            "password"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "provider": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "google",
+                                                    "apple"
+                                                ]
+                                            },
+                                            "id_token": {
+                                                "type": "string",
+                                                "maxLength": 5000
+                                            },
+                                            "nonce": {
+                                                "type": "string",
+                                                "maxLength": 200
+                                            }
+                                        },
+                                        "required": [
+                                            "provider",
+                                            "id_token"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "202": {
-                        "description": "",
+                        "description": "Export demand\u00e9 : il sera pr\u00e9par\u00e9 en arri\u00e8re-plan.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -439,36 +467,10 @@
                         }
                     },
                     "429": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "object",
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "const": "quota_reached"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Une seule demande d'export par jour."
-                                                }
-                                            },
-                                            "required": [
-                                                "code",
-                                                "message"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "error"
-                                    ]
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/ReauthenticationThrottled"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ReauthenticationRefused"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -1213,22 +1215,61 @@
             }
         },
         "/broadcasting/auth": {
-            "get": {
-                "operationId": "broadcast.authenticate",
-                "summary": "Authenticate the request for channel access",
+            "post": {
+                "operationId": "broadcastAuth",
+                "description": "Canaux `private-user.{id}` et `private-conversation.{id}`, selon `routes/channels.php`. Protocole Pusher : le client envoie l'identifiant de socket et le nom du canal, le serveur r\u00e9pond avec la signature.\nRefus (403) si le compte n'est pas autoris\u00e9 sur ce canal.",
+                "summary": "Autorise l'abonnement WebSocket \u00e0 un canal priv\u00e9",
                 "tags": [
-                    "Broadcast"
+                    "BroadcastAuth"
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "socket_id": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "channel_name": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    }
+                                },
+                                "required": [
+                                    "socket_id",
+                                    "channel_name"
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "properties": {
+                                        "auth": {
+                                            "type": "string"
+                                        },
+                                        "channel_data": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "auth"
+                                    ]
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -1337,6 +1378,38 @@
                                     "required": [
                                         "id",
                                         "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "call_limit"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Trop d'appels rest\u00e9s sans r\u00e9ponse. R\u00e9essayez plus tard."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
                                     ]
                                 }
                             }
@@ -1544,18 +1617,47 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview.",
-                                            "examples": [
-                                                ""
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "error": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "code": {
+                                                            "type": "string",
+                                                            "const": "conversation_closed"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "const": "Cette conversation n'est plus disponible."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "code",
+                                                        "message"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "error"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "description": "Error overview.",
+                                                    "examples": [
+                                                        ""
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
                                             ]
                                         }
-                                    },
-                                    "required": [
-                                        "message"
                                     ]
                                 }
                             }
@@ -1750,6 +1852,38 @@
                                                 "error"
                                             ]
                                         }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "conversation_closed"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Cette conversation n'est plus disponible."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
                                     ]
                                 }
                             }
@@ -2110,6 +2244,38 @@
                             }
                         }
                     },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "conversation_conflict"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Ouverture d\u00e9j\u00e0 en cours. R\u00e9essayez dans un instant."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     },
@@ -2194,6 +2360,38 @@
                 "responses": {
                     "204": {
                         "description": "No content"
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "push_token_in_use"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Ce jeton de notification est d\u00e9j\u00e0 utilis\u00e9 par un autre compte."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -2383,6 +2581,19 @@
                                 "boolean",
                                 "null"
                             ]
+                        }
+                    },
+                    {
+                        "name": "active_within_days",
+                        "in": "query",
+                        "description": "Fra\u00eecheur : n'afficher que les comptes vus depuis N jours (d\u00e9faut : config discovery.active_within_days, nul = d\u00e9sactiv\u00e9).",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 365
                         }
                     }
                 ],
@@ -3296,6 +3507,38 @@
                     "204": {
                         "description": "No content"
                     },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "media_retained"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Ce fichier est conserv\u00e9 et ne peut pas \u00eatre supprim\u00e9 pour le moment."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
                     }
@@ -3637,38 +3880,6 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "object",
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "const": "conversation_closed"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Cette conversation n'est plus disponible."
-                                                }
-                                            },
-                                            "required": [
-                                                "code",
-                                                "message"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "error"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "200": {
                         "description": "",
                         "content": {
@@ -3740,6 +3951,38 @@
                                         "delivered_at",
                                         "read_at",
                                         "created_at"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "conversation_closed"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Cette conversation n'est plus disponible."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
                                     ]
                                 }
                             }
@@ -3927,12 +4170,44 @@
                                     },
                                     "consents": {
                                         "type": [
-                                            "array",
+                                            "object",
                                             "null"
                                         ],
-                                        "items": {
-                                            "type": "string"
+                                        "description": "M\u00eame rigueur que l'inscription par e-mail (revue F-19) : \"false\", [1], 0 sont refus\u00e9s ; absent = inscription \u00e0 finaliser (409).",
+                                        "properties": {
+                                            "terms": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "privacy": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "sensitive_data": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "marketing": {
+                                                "type": [
+                                                    "boolean",
+                                                    "null"
+                                                ]
+                                            }
                                         }
+                                    },
+                                    "nonce": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Nonce (revue F-21) : li\u00e9 \u00e0 la demande de connexion c\u00f4t\u00e9 application ; contr\u00f4l\u00e9 quand il est envoy\u00e9, exig\u00e9 si\nsafety.oauth.require_nonce est actif. L'application mobile doit l'envoyer d\u00e8s que le SDK du fournisseur le permet.",
+                                        "maxLength": 200
                                     }
                                 },
                                 "required": [
@@ -3968,11 +4243,11 @@
                                                     "properties": {
                                                         "code": {
                                                             "type": "string",
-                                                            "const": "registration_required"
+                                                            "const": "account_exists"
                                                         },
                                                         "message": {
                                                             "type": "string",
-                                                            "const": "Inscription \u00e0 finaliser."
+                                                            "const": "Un compte existe d\u00e9j\u00e0 avec cette adresse. Connectez-vous avec votre e-mail."
                                                         }
                                                     },
                                                     "required": [
@@ -3993,11 +4268,11 @@
                                                     "properties": {
                                                         "code": {
                                                             "type": "string",
-                                                            "const": "account_exists"
+                                                            "const": "registration_required"
                                                         },
                                                         "message": {
                                                             "type": "string",
-                                                            "const": "Un compte existe d\u00e9j\u00e0 avec cette adresse. Connectez-vous avec votre e-mail."
+                                                            "const": "Inscription \u00e0 finaliser."
                                                         }
                                                     },
                                                     "required": [
@@ -4117,7 +4392,7 @@
         "/auth/password/forgot": {
             "post": {
                 "operationId": "password.forgot",
-                "summary": "R\u00e9ponse identique que l'e-mail existe ou non (pas d'\u00e9num\u00e9ration de comptes)",
+                "summary": "R\u00e9ponse identique que l'e-mail existe ou non (pas d'\u00e9num\u00e9ration de comptes) : m\u00eame code, et l'envoi (cr\u00e9ation du jeton\npuis e-mail) part apr\u00e8s la r\u00e9ponse, donc le temps de r\u00e9ponse ne d\u00e9pend pas de l'existence du compte (revue F-11)",
                 "tags": [
                     "Password"
                 ],
@@ -6046,57 +6321,31 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "anyOf": [
-                                        {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
                                             "type": "object",
                                             "properties": {
-                                                "error": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "code": {
-                                                            "type": "string",
-                                                            "const": "quota_reached"
-                                                        },
-                                                        "message": {
-                                                            "type": "string",
-                                                            "const": "Quota de likes atteint pour aujourd'hui."
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "code",
-                                                        "message"
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "quota_reached"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Quota de super-likes atteint.",
+                                                        "Quota de likes atteint pour aujourd'hui."
                                                     ]
                                                 }
                                             },
                                             "required": [
-                                                "error"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "error": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "code": {
-                                                            "type": "string",
-                                                            "const": "quota_reached"
-                                                        },
-                                                        "message": {
-                                                            "type": "string",
-                                                            "const": "Quota de super-likes atteint."
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "code",
-                                                        "message"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "error"
+                                                "code",
+                                                "message"
                                             ]
                                         }
+                                    },
+                                    "required": [
+                                        "error"
                                     ]
                                 }
                             }
@@ -6347,38 +6596,6 @@
                             }
                         }
                     },
-                    "429": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "object",
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "const": "quota_reached"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Trop de tentatives. R\u00e9essayez demain."
-                                                }
-                                            },
-                                            "required": [
-                                                "code",
-                                                "message"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "error"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "409": {
                         "description": "",
                         "content": {
@@ -6413,6 +6630,38 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "quota_reached"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Trop de tentatives. R\u00e9essayez demain."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "An error",
@@ -6474,7 +6723,7 @@
         "/me/verification/pose": {
             "get": {
                 "operationId": "verification.pose",
-                "summary": "Consignes : le selfie doit reproduire la pose demand\u00e9e (\u00e9vite la r\u00e9utilisation d'une photo existante)",
+                "summary": "Consigne : le selfie doit reproduire la pose demand\u00e9e (\u00e9vite la r\u00e9utilisation d'une photo existante).\nLa pose est tir\u00e9e au hasard pour ce compte, valable une heure ou jusqu'\u00e0 l'envoi de la demande (revue F-28) : elle\nn'est plus d\u00e9terministe par jour, donc non pr\u00e9visible \u00e0 l'avance, et elle est consomm\u00e9e par la demande qui l'enregistre",
                 "tags": [
                     "Verification"
                 ],
@@ -6531,6 +6780,73 @@
                             "required": [
                                 "message",
                                 "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ReauthenticationRefused": {
+                "description": "R\u00e9-authentification refus\u00e9e (mot de passe ou jeton du fournisseur incorrect).",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "string",
+                                            "enum": [
+                                                "invalid_credentials",
+                                                "invalid_oauth_token"
+                                            ]
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "code",
+                                        "message"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "error"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ReauthenticationThrottled": {
+                "description": "Trop d'\u00e9checs de r\u00e9-authentification (en-t\u00eate Retry-After en secondes).",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "string",
+                                            "enum": [
+                                                "rate_limited"
+                                            ]
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "code",
+                                        "message"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "error"
                             ]
                         }
                     }

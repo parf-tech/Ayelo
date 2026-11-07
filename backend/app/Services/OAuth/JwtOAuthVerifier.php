@@ -41,6 +41,12 @@ class JwtOAuthVerifier implements OAuthVerifier
             throw new InvalidOAuthToken('Sujet manquant.');
         }
 
+        // Un jeton réel porte toujours `iat` (Google, Apple) : sans lui, la fraîcheur ne se vérifie pas, donc refus (revue F-21).
+        $iat = $claims['iat'] ?? null;
+        if (! is_int($iat) && ! (is_string($iat) && ctype_digit($iat))) {
+            throw new InvalidOAuthToken('Date d\'émission manquante.');
+        }
+
         $verified = $claims['email_verified'] ?? false;
 
         return new OAuthIdentity(
@@ -48,6 +54,8 @@ class JwtOAuthVerifier implements OAuthVerifier
             subject: $sub,
             email: isset($claims['email']) ? strtolower((string) $claims['email']) : null,
             emailVerified: $verified === true || $verified === 'true',
+            issuedAt: (int) $iat,
+            nonce: isset($claims['nonce']) && is_string($claims['nonce']) ? $claims['nonce'] : null,
         );
     }
 

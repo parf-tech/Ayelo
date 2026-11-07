@@ -1,11 +1,13 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
+import { Linking } from 'react-native';
 import { AuthFormScreen } from '../src/features/auth/AuthFormScreen';
 import { BasicProfileScreen } from '../src/features/onboarding/BasicProfileScreen';
 import { AgeRefusedScreen } from '../src/features/signup/AgeRefusedScreen';
 import { BirthdateScreen } from '../src/features/signup/BirthdateScreen';
 import { ConsentsScreen } from '../src/features/signup/ConsentsScreen';
+import { setDeletionNotice } from '../src/features/settings/deletionNotice';
 import { WelcomeScreen } from '../src/features/welcome/WelcomeScreen';
 import { initialSignupState, SignupState } from '../src/flow/signupMachine';
 import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
@@ -16,7 +18,11 @@ import { redirects, resetRouterMocks, router } from './helpers/routerMock';
 jest.mock('expo-router', () => require('./helpers/routerMock').expoRouterMock);
 
 const consents = { terms: true, privacy: true, sensitive_data: true, marketing: false };
-const atBirthdate: SignupState = { ...initialSignupState, step: 'birthdate', consents };
+// Ordre du parcours : S68 (âge) -> S63 (consentements) -> S02 (compte).
+const atBirthdate: SignupState = initialSignupState;
+const atConsents: SignupState = { step: 'consents', consents: null, ageToken: 'age-token-xyz', ageTokenExpiresAt: Date.now() + 10 * 60 * 1000 };
+// Jeton d'âge expiré après les consentements : retour à S68 avec les consentements conservés.
+const atBirthdateWithConsents: SignupState = { step: 'birthdate', consents, ageToken: null, ageTokenExpiresAt: null };
 const atAccount: SignupState = {
   step: 'account',
   consents,
@@ -43,10 +49,11 @@ function lastRequest() {
 }
 
 describe('S01 Accueil', () => {
-  it('propose connexion et inscription ; l\'inscription démarre à S63', async () => {
+  it('propose connexion et inscription ; l\'inscription démarre par S68 (âge), avant S63', async () => {
     await renderApp(<WelcomeScreen />);
     await user().press(screen.getByRole('button', { name: 'Créer un compte' }));
-    expect(router.push).toHaveBeenCalledWith('/signup/consents');
+    expect(router.push).toHaveBeenCalledWith('/signup/birthdate');
+    expect(router.push).not.toHaveBeenCalledWith('/signup/consents');
   });
 
   it('la connexion mène directement à S02 (ni S63 ni S68)', async () => {
@@ -55,6 +62,18 @@ describe('S01 Accueil', () => {
     expect(router.push).toHaveBeenCalledWith('/login');
     expect(router.push).not.toHaveBeenCalledWith(expect.stringContaining('consents'));
     expect(router.push).not.toHaveBeenCalledWith(expect.stringContaining('birthdate'));
+  });
+
+  it('après une suppression de compte, l’accueil réaffiche le délai de grâce et comment annuler', async () => {
+    setDeletionNotice({ days: 30 });
+    try {
+      await renderApp(<WelcomeScreen />);
+      const notice = screen.getByTestId('welcome-deletion-notice');
+      expect(notice).toHaveTextContent(/Suppression définitive dans 30 jours/);
+      expect(notice).toHaveTextContent(/contactez le support/);
+    } finally {
+      setDeletionNotice(null);
+    }
   });
 
   it('la langue se change depuis l\'accueil', async () => {
@@ -66,7 +85,7 @@ describe('S01 Accueil', () => {
 
 describe('S63 Consentements', () => {
   it('« Continuer » reste désactivé tant que les 3 cases obligatoires ne sont pas cochées', async () => {
-    await renderApp(<ConsentsScreen />);
+    await renderApp(<ConsentsScreen />, atConsents);
     const next = screen.getByTestId('consents-continue');
     expect(next).toBeDisabled();
     const u = user();
@@ -83,8 +102,27 @@ describe('S63 Consentements', () => {
     expect(next).toBeEnabled();
   });
 
+  it('liens vers les conditions et la politique : page web si configurée, sinon écran de repli', async () => {
+    process.env.EXPO_PUBLIC_TERMS_URL = 'https://example.test/cgu';
+    delete process.env.EXPO_PUBLIC_PRIVACY_URL;
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    try {
+      await renderApp(<ConsentsScreen />, atConsents);
+      const u = user();
+      await u.press(screen.getByTestId('consent-terms-read'));
+      expect(openURL).toHaveBeenCalledWith('https://example.test/cgu');
+      await u.press(screen.getByTestId('consent-privacy-read'));
+      expect(router.push).toHaveBeenCalledWith('/legal/privacy');
+      // Lire un texte ne coche rien.
+      expect(screen.getByTestId('consent-terms')).not.toBeChecked();
+    } finally {
+      delete process.env.EXPO_PUBLIC_TERMS_URL;
+      openURL.mockRestore();
+    }
+  });
+
   it('cases distinctes : chaque case a son propre rôle checkbox et son état', async () => {
-    await renderApp(<ConsentsScreen />);
+    await renderApp(<ConsentsScreen />, atConsents);
     expect(screen.getAllByRole('checkbox')).toHaveLength(4);
     await user().press(screen.getByTestId('consent-terms'));
     expect(screen.getByTestId('consent-terms')).toBeChecked();
@@ -92,31 +130,37 @@ describe('S63 Consentements', () => {
     expect(screen.getByTestId('consent-sensitive')).not.toBeChecked();
   });
 
-  it('continuer enregistre les consentements et avance vers S68', async () => {
-    await renderApp(<ConsentsScreen />);
+  it("sans contrôle d'âge préalable : redirigé vers S68 (l'âge est demandé avant les données sensibles)", async () => {
+    await renderApp(<ConsentsScreen />, atBirthdate);
+    expect(redirects).toContain('/signup/birthdate');
+    expect(screen.queryByTestId('screen-consents')).not.toBeOnTheScreen();
+  });
+
+  it('continuer enregistre les consentements et avance vers S02', async () => {
+    await renderApp(<ConsentsScreen />, atConsents);
     const u = user();
     for (const id of ['consent-terms', 'consent-privacy', 'consent-sensitive']) {
       await u.press(screen.getByTestId(id));
     }
     await u.press(screen.getByTestId('consents-continue'));
-    expect(probe.flow()).toBe('birthdate');
-    expect(router.push).toHaveBeenCalledWith('/signup/birthdate');
+    expect(probe.flow()).toBe('account');
+    expect(router.push).toHaveBeenCalledWith('/signup/account');
   });
 
   it('textes bilingues : français puis anglais', async () => {
-    await renderApp(<ConsentsScreen />);
+    await renderApp(<ConsentsScreen />, atConsents);
     expect(screen.getByText('Avant de commencer')).toBeOnTheScreen();
     expect(screen.getByText("J'accepte le traitement de mes données sensibles")).toBeOnTheScreen();
   });
 
   it('textes bilingues : version anglaise', async () => {
-    await renderApp(<ConsentsScreen />, initialSignupState, 'en');
+    await renderApp(<ConsentsScreen />, atConsents, 'en');
     expect(screen.getByText('Before you start')).toBeOnTheScreen();
     expect(screen.getByText('I agree to the processing of my sensitive data')).toBeOnTheScreen();
   });
 
   it('le bouton retour revient en arrière', async () => {
-    await renderApp(<ConsentsScreen />);
+    await renderApp(<ConsentsScreen />, atConsents);
     await user().press(screen.getByTestId('back-button'));
     expect(router.back).toHaveBeenCalled();
   });
@@ -130,9 +174,10 @@ describe('S68 Date de naissance', () => {
     await u.press(screen.getByLabelText(`Année ${year}`));
   }
 
-  it('sans consentements : redirigé vers S63', async () => {
-    await renderApp(<BirthdateScreen />);
-    expect(redirects).toContain('/signup/consents');
+  it('première étape du parcours : accessible sans consentements, sans redirection', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    expect(redirects).toEqual([]);
+    expect(screen.getByTestId('screen-birthdate')).toBeOnTheScreen();
   });
 
   it('« Continuer » désactivé tant que la date est incomplète', async () => {
@@ -142,7 +187,7 @@ describe('S68 Date de naissance', () => {
     expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
   });
 
-  it('majeur : appelle age-check avec X-Device-Id puis passe à S02', async () => {
+  it('majeur : appelle age-check avec X-Device-Id puis passe aux consentements (S63)', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { age_token: 'AGE', expires_in: 600 }));
     await renderApp(<BirthdateScreen />, atBirthdate);
     await pickDate(7, 'mars', 1990);
@@ -153,6 +198,16 @@ describe('S68 Date de naissance', () => {
     expect(body).toEqual({ birthdate: '1990-03-07' });
     expect(headers['X-Device-Id']).toMatch(/^[0-9a-f-]{36}$/i);
     expect(headers.Authorization).toBeUndefined();
+    expect(probe.flow()).toBe('consents');
+    expect(router.push).toHaveBeenCalledWith('/signup/consents');
+    expect(router.push).not.toHaveBeenCalledWith('/signup/account');
+  });
+
+  it('jeton expiré en cours de parcours : consentements déjà donnés, la nouvelle date mène directement à S02', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { age_token: 'AGE2', expires_in: 600 }));
+    await renderApp(<BirthdateScreen />, atBirthdateWithConsents);
+    await pickDate(7, 'mars', 1990);
+    await user().press(screen.getByTestId('birthdate-continue'));
     expect(probe.flow()).toBe('account');
     expect(router.push).toHaveBeenCalledWith('/signup/account');
   });
@@ -266,8 +321,13 @@ describe('S02 Connexion (F00)', () => {
 });
 
 describe('S02 Inscription (F01)', () => {
-  it('sans passer par S63 / S68 : redirigé', async () => {
+  it('sans passer par S68 / S63 : redirigé vers la première étape manquante (S68)', async () => {
     await renderApp(<AuthFormScreen mode="register" />);
+    expect(redirects).toContain('/signup/birthdate');
+  });
+
+  it('âge contrôlé mais consentements manquants : redirigé vers S63', async () => {
+    await renderApp(<AuthFormScreen mode="register" />, atConsents);
     expect(redirects).toContain('/signup/consents');
   });
 

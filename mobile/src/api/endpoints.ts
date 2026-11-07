@@ -19,6 +19,7 @@ import type {
   DeviceRegistration,
   DiscoverFilters,
   DiscoverResponse,
+  ExportRequest,
   ListResponse,
   LoginRequest,
   Match,
@@ -32,13 +33,14 @@ import type {
   PageQuery,
   Preferences,
   PrivacyInput,
+  PrivacyUpdateResponse,
   ProfileInput,
+  ProfileUpsertResponse,
   PublicProfile,
   RegisterRequest,
   ReportRequest,
   ReportResponse,
   Sanction,
-  SelfProfile,
   SendMessageRequest,
   Session,
   SupportTicket,
@@ -72,6 +74,7 @@ export function createEndpoints(client: ApiClient) {
     logout: () => request<void>('POST', '/auth/logout'),
     me: () => request<Me>('GET', '/me'),
 
+    /** `nonce` : valeur BRUTE (le serveur accepte aussi son SHA-256), revue F-21 / P-06. */
     oauth: (provider: OAuthProvider, body: Refine<OpRequest<'auth.oAuth'>, { platform: string; age_token?: string }>) =>
       request<AuthResponse>('POST', `/auth/oauth/${provider}`, { auth: false, body }),
     /** Lien reçu par e-mail : { token }. 422 invalid_token si le lien est expiré. */
@@ -89,16 +92,17 @@ export function createEndpoints(client: ApiClient) {
     updateConsent: (body: ConsentUpdate) => request<void>('POST', '/me/consents', { body }),
     /** Ré-authentification : mot de passe, ou { provider, id_token } pour un compte social. */
     deleteAccount: (body: DeleteAccountRequest) => request<DeleteAccountResponse>('DELETE', '/me', { body }),
-    requestExport: () => request<DataExport>('POST', '/me/export'),
+    requestExport: (body: ExportRequest) => request<DataExport>('POST', '/me/export', { body }),
     getExport: (id: string) => request<DataExport>('GET', `/me/export/${id}`),
   };
 
   const profile = {
-    /** Création (201) ou mise à jour (200) ; à la création tous les champs sont obligatoires. */
-    update: (body: ProfileInput) => request<SelfProfile>('PUT', '/me/profile', { body }),
+    /** Création (201) ou mise à jour (200) ; à la création tous les champs sont obligatoires. Renvoie l'objet /me complet. */
+    update: (body: ProfileInput) => request<ProfileUpsertResponse>('PUT', '/me/profile', { body }),
     preferences: () => request<Preferences>('GET', '/me/preferences'),
     updatePreferences: (body: Partial<Preferences>) => request<Preferences>('PUT', '/me/preferences', { body }),
-    updatePrivacy: (body: PrivacyInput) => request<SelfProfile>('PATCH', '/me/privacy', { body }),
+    /** Renvoie l'objet /me complet (profil mis à jour, crédits, premium), comme GET /me. */
+    updatePrivacy: (body: PrivacyInput) => request<PrivacyUpdateResponse>('PATCH', '/me/privacy', { body }),
     createUploadUrl: (body: UploadUrlRequest) => request<UploadUrlResponse>('POST', '/media/upload-url', { body }),
     completeUpload: (mediaId: string) => request<MediaCompleteResponse>('POST', `/media/${mediaId}/complete`),
     orderMedia: (ids: string[]) => request<{ ids: string[] }>('PUT', '/me/media/order', { body: { ids } }),

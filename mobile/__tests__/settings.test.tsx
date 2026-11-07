@@ -14,6 +14,7 @@ import { SessionsScreen } from '../src/features/settings/SessionsScreen';
 import { SettingsScreen } from '../src/features/settings/SettingsScreen';
 import { SupportScreen } from '../src/features/settings/SupportScreen';
 import { getLegalLinks } from '../src/features/legal/links';
+import { LegalFallbackScreen } from '../src/features/legal/LegalFallbackScreen';
 import { ProfileEditScreen } from '../src/features/profile/ProfileEditScreen';
 import { ProfileTabScreen } from '../src/features/profile/ProfileTabScreen';
 import { probe } from './helpers/app';
@@ -75,7 +76,7 @@ describe('S50 Paramètres', () => {
     }
   });
 
-  it('abonné : « Gérer ou résilier mon abonnement » ouvre la page des abonnements de la boutique', async () => {
+  it('abonné : « Gérer mon abonnement » ouvre la page des abonnements de la boutique', async () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     installFakeApi({
       'GET /me': [200, ME],
@@ -86,22 +87,37 @@ describe('S50 Paramètres', () => {
     } as never);
     await renderShell(<SettingsScreen />);
     const row = await screen.findByTestId('settings-manage-subscription');
-    expect(row).toHaveProp('accessibilityLabel', 'Gérer ou résilier mon abonnement');
+    expect(row).toHaveProp('accessibilityLabel', 'Gérer mon abonnement');
     expect(screen.getByTestId('settings-manage-subscription-info')).toHaveTextContent(/fin de la période déjà payée/);
     await user().press(row);
     expect(openURL).toHaveBeenCalledWith('https://play.google.com/store/account/subscriptions');
     openURL.mockRestore();
   });
 
-  it('non abonné ou statut indisponible : pas de ligne de résiliation', async () => {
+  it('statut indisponible (erreur réseau) : la ligne reste affichée et ouvre la boutique de la plateforme', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     const fake = installFakeApi({
       'GET /me': [200, ME],
-      'GET /billing/status': [200, { premium: false, subscription: null, credits: { conversation: 0 } }],
+      'GET /billing/status': [500, { error: { code: 'server_error', message: 'x' } }],
     } as never);
     await renderShell(<SettingsScreen />);
     await screen.findByTestId('settings-preferences');
     await waitFor(() => expect(fake.called('GET /billing/status')).toHaveLength(1));
-    expect(screen.queryByTestId('settings-manage-subscription')).not.toBeOnTheScreen();
+    await user().press(screen.getByTestId('settings-manage-subscription'));
+    expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/apps\.apple\.com|play\.google\.com/));
+    openURL.mockRestore();
+  });
+
+  it('Premium offert par l’équipe : message explicatif, pas de page de boutique vide', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    installFakeApi({
+      'GET /me': [200, ME],
+      'GET /billing/status': [200, { premium: true, subscription: { product_id: 'premium_promo', status: 'active', period_end: '2026-12-15T00:00:00Z', store: 'promotional' }, credits: { conversation: 0 } }],
+    } as never);
+    await renderShell(<SettingsScreen />);
+    await waitFor(() => expect(screen.getByTestId('settings-manage-subscription-info')).toHaveTextContent(/Premium offert jusqu’au .*Rien à résilier/));
+    expect(openURL).not.toHaveBeenCalled();
+    openURL.mockRestore();
   });
 
   it('se déconnecter : POST /auth/logout puis session effacée', async () => {
@@ -121,7 +137,7 @@ describe('S51 Confidentialité', () => {
   it('bascule envoyée en PATCH /me/privacy et conservée', async () => {
     const fake = installFakeApi({
       'GET /me': [200, ME],
-      'PATCH /me/privacy': [200, selfProfile({ hide_distance: true })],
+      'PATCH /me/privacy': [200, meFixture({ profile: selfProfile({ hide_distance: true }) })],
     });
     await renderShell(<PrivacyScreen />);
     await screen.findByTestId('privacy-distance');
@@ -261,7 +277,7 @@ describe('S55 Suppression du compte', () => {
     expect(fake.called('DELETE /me')).toHaveLength(0);
   });
 
-  it('ré-authentification par mot de passe : DELETE /me puis déconnexion', async () => {
+  it('DELETE /me : la confirmation (délai, annulation, abonnement) reste affichée AVANT toute déconnexion', async () => {
     const fake = installFakeApi({
       'GET /me': [200, ME],
       'DELETE /me': [202, { status: 'scheduled', purge_after_days: 30 }],
@@ -273,7 +289,22 @@ describe('S55 Suppression du compte', () => {
     await u.press(screen.getByTestId('delete-confirm'));
     await waitFor(() => expect(fake.called('DELETE /me')).toHaveLength(1));
     expect(fake.called('DELETE /me')[0]?.body).toEqual({ password: 'Motdepasse123' });
+    expect(await screen.findByTestId('delete-grace')).toHaveTextContent('Suppression définitive dans 30 jours.');
+    expect(screen.getByTestId('delete-cancel-hint')).toHaveTextContent(/contactez le support/);
+    expect(screen.getByTestId('delete-subscription')).toHaveTextContent(/ne résilie pas votre abonnement/);
+    expect(screen.getByTestId('delete-manage-subscription')).toBeOnTheScreen();
+    expect(probe.auth()).toBe('signedIn');
+    expect(fake.called('POST /auth/logout')).toHaveLength(0);
+    await u.press(screen.getByTestId('delete-signout'));
     await waitFor(() => expect(probe.auth()).toBe('signedOut'));
+    expect(fake.called('POST /auth/logout')).toHaveLength(1);
+  });
+
+  it('le formulaire mentionne déjà l’abonnement à résilier avant de supprimer', async () => {
+    installFakeApi({ 'GET /me': [200, ME] });
+    await renderShell(<DeleteAccountScreen />);
+    expect(screen.getByTestId('delete-subscription')).toHaveTextContent(/continuera d’être facturé/);
+    expect(screen.getByTestId('delete-confirm')).toHaveProp('accessibilityLabel', 'Supprimer mon compte');
   });
 
   it('mot de passe incorrect (403) : message sur le champ, compte conservé', async () => {
@@ -314,9 +345,13 @@ describe('S67 Export des données', () => {
       });
       await renderShell(<ExportScreen />);
       await act(async () => {
+        fireEvent.changeText(screen.getByTestId('export-password'), 'Motdepasse123');
+      });
+      await act(async () => {
         await fireEvent.press(screen.getByTestId('export-request'));
       });
       expect(await screen.findByTestId('export-pending')).toBeOnTheScreen();
+      expect(fake.called('POST /me/export')[0]?.body).toEqual({ password: 'Motdepasse123' });
       await act(async () => {
         jest.advanceTimersByTime(EXPORT_POLL_MS + 100);
       });
@@ -334,8 +369,43 @@ describe('S67 Export des données', () => {
   it('une demande par jour : 429 quota_reached affiche la limite', async () => {
     installFakeApi({ 'GET /me': [200, ME], 'POST /me/export': [429, { error: { code: 'quota_reached', message: 'x' } }] });
     await renderShell(<ExportScreen />);
-    await user().press(screen.getByTestId('export-request'));
+    const u = user();
+    await u.type(screen.getByTestId('export-password'), 'Motdepasse123');
+    await u.press(screen.getByTestId('export-request'));
     expect(await screen.findByTestId('export-banner')).toHaveTextContent(/Limite atteinte/);
+  });
+
+  it('exige le mot de passe avant tout appel', async () => {
+    const fake = installFakeApi({ 'GET /me': [200, ME] });
+    await renderShell(<ExportScreen />);
+    await user().press(screen.getByTestId('export-request'));
+    expect(screen.getByText('Saisissez votre mot de passe.')).toBeOnTheScreen();
+    expect(fake.called('POST /me/export')).toHaveLength(0);
+  });
+
+  it('mot de passe incorrect (403) : message sur le champ, aucun export affiché', async () => {
+    installFakeApi({
+      'GET /me': [200, ME],
+      'POST /me/export': [403, { error: { code: 'invalid_credentials', message: 'Mot de passe incorrect.' } }],
+    });
+    await renderShell(<ExportScreen />);
+    const u = user();
+    await u.type(screen.getByTestId('export-password'), 'faux');
+    await u.press(screen.getByTestId('export-request'));
+    expect(await screen.findByText('Mot de passe incorrect.')).toBeOnTheScreen();
+    expect(screen.queryByTestId('export-pending')).not.toBeOnTheScreen();
+  });
+
+  it('compte social (422 provider / id_token) : explication et support', async () => {
+    installFakeApi({
+      'GET /me': [200, ME],
+      'POST /me/export': [422, { error: { code: 'validation_failed', message: 'x', fields: { provider: ['requis'], id_token: ['requis'] } } }],
+    });
+    await renderShell(<ExportScreen />);
+    const u = user();
+    await u.type(screen.getByTestId('export-password'), 'x');
+    await u.press(screen.getByTestId('export-request'));
+    expect(await screen.findByTestId('export-banner')).toHaveTextContent(/Google ou Apple/);
   });
 });
 
@@ -395,16 +465,47 @@ describe('S57 Mentions légales', () => {
     });
   });
 
-  it('lien non configuré : indiqué et non cliquable ; lien configuré : ouvert', async () => {
+  it('lien configuré : ouvert ; lien non configuré : repli dans l’application (jamais un lien mort)', async () => {
     process.env.EXPO_PUBLIC_TERMS_URL = 'https://example.test/cgu';
     delete process.env.EXPO_PUBLIC_PRIVACY_URL;
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     installFakeApi({ 'GET /me': [200, ME] });
     await renderShell(<LegalScreen />);
-    expect(screen.getAllByText('Lien non configuré dans cette version.').length).toBeGreaterThanOrEqual(1);
     await user().press(screen.getByTestId('legal-terms'));
     expect(openURL).toHaveBeenCalledWith('https://example.test/cgu');
+    await user().press(screen.getByTestId('legal-privacy'));
+    expect(router.push).toHaveBeenCalledWith('/legal/privacy');
     delete process.env.EXPO_PUBLIC_TERMS_URL;
+    openURL.mockRestore();
+  });
+
+  it('hors développement : ni « lien non configuré » ni note de brouillon', async () => {
+    const globals = globalThis as unknown as { __DEV__: boolean };
+    const previous = globals.__DEV__;
+    globals.__DEV__ = false;
+    try {
+      delete process.env.EXPO_PUBLIC_TERMS_URL;
+      installFakeApi({ 'GET /me': [200, ME] });
+      await renderShell(<LegalScreen />);
+      expect(screen.queryByText(/non configuré/)).not.toBeOnTheScreen();
+      expect(screen.queryByText(/validés par un juriste/)).not.toBeOnTheScreen();
+    } finally {
+      globals.__DEV__ = previous;
+    }
+  });
+
+  it('écran de repli : titre du document, explication claire et contact support', async () => {
+    process.env.EXPO_PUBLIC_SUPPORT_EMAIL = 'aide@example.test';
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    mockParams.current = { doc: 'privacy' };
+    installFakeApi({ 'GET /me': [200, ME] });
+    await renderShell(<LegalFallbackScreen />);
+    expect(screen.getByText('Politique de confidentialité')).toBeOnTheScreen();
+    expect(screen.getByTestId('legal-fallback-body')).toHaveTextContent(/n’est pas encore accessible/);
+    await user().press(screen.getByTestId('legal-fallback-contact'));
+    expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^mailto:aide@example\.test/));
+    delete process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
+    openURL.mockRestore();
   });
 });
 
@@ -516,7 +617,7 @@ describe('S59 / S60 Mon profil', () => {
   it('édition : seuls les champs modifiés sont envoyés (PUT /me/profile)', async () => {
     const fake = installFakeApi({
       'GET /me': [200, ME],
-      'PUT /me/profile': [200, selfProfile({ bio: 'Nouvelle bio' })],
+      'PUT /me/profile': [200, meFixture({ profile: selfProfile({ bio: 'Nouvelle bio' }) })],
     });
     await renderShell(<ProfileEditScreen />);
     const u = user();

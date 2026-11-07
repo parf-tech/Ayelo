@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\MemberResource\RelationManagers;
 
+use App\Filament\Support\Labels;
+use App\Filament\Support\Staff;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -11,7 +13,10 @@ class SanctionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'sanctions';
 
-    protected static ?string $title = 'Sanctions';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return Staff::t('admin.section.sanctions');
+    }
 
     public function isReadOnly(): bool
     {
@@ -28,10 +33,10 @@ class SanctionsRelationManager extends RelationManager
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('kind')->label('Type')->badge(),
-                TextColumn::make('reason')->label('Motif'),
-                TextColumn::make('starts_at')->label('Début')->dateTime(),
-                TextColumn::make('ends_at')->label('Fin')->dateTime()->placeholder('Sans fin'),
+                Labels::badge(TextColumn::make('kind')->label(Staff::t('admin.col.type')), 'sanction'),
+                TextColumn::make('reason')->label(Staff::t('admin.col.reason')),
+                TextColumn::make('starts_at')->label(Staff::t('admin.col.start'))->dateTime(),
+                TextColumn::make('ends_at')->label(Staff::t('admin.col.end'))->dateTime()->placeholder(Staff::t('admin.misc.no_end')),
             ]);
     }
 }

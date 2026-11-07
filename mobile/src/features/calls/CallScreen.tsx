@@ -84,13 +84,7 @@ export function CallScreen() {
       subtitle = formatDuration(elapsed);
       actions = (
         <View style={{ gap: space[2] }}>
-          <View style={{ flexDirection: 'row', gap: space[2], justifyContent: 'center' }}>
-            <Button testID="call-mute" variant="secondary" label={t('call.mute')} disabled={!calls.mediaAvailable} onPress={() => undefined} />
-            {call.kind === 'video' ? (
-              <Button testID="call-camera" variant="secondary" label={t('call.camera')} disabled={!calls.mediaAvailable} onPress={() => undefined} />
-            ) : null}
-            <Button testID="call-speaker" variant="secondary" label={t('call.speaker')} disabled={!calls.mediaAvailable} onPress={() => undefined} />
-          </View>
+          {/* Micro, caméra et haut-parleur : masqués tant que le média n'est pas branché (un bouton sans effet trompe l'utilisateur). */}
           <Button
             testID="call-report"
             variant="ghost"
@@ -119,7 +113,14 @@ export function CallScreen() {
         <Text variant="title" header align="center">
           {title}
         </Text>
-        <Text variant="body" tone="textMuted" align="center" accessibilityLiveRegion="polite" testID="call-status">
+        {/* Région vivante pour les changements d'état (sonnerie, connecté, terminé) ; pas pour le chronomètre, qui changerait chaque seconde. */}
+        <Text
+          variant="body"
+          tone="textMuted"
+          align="center"
+          accessibilityLiveRegion={state.phase === 'active' ? 'none' : 'polite'}
+          testID="call-status"
+        >
           {subtitle}
         </Text>
         {mediaBanner}

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\Storage\MediaStorage;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /** Représentation JSON des profils : complète pour soi, restreinte pour les autres. */
@@ -22,7 +24,10 @@ class ProfilePresenter
      */
     public function self(User $user, ?Profile $profile): array
     {
-        $balance = fn (string $type) => (int) DB::table('credit_ledger')->where('user_id', $user->id)->where('credit_type', $type)->sum('delta');
+        // Un seul agrégat groupé au lieu de trois `sum()` (revue CTO 2.1) ; la table de soldes reste à faire.
+        $sums = DB::table('credit_ledger')->where('user_id', $user->id)->whereIn('credit_type', ['conversation', 'proposal', 'coin'])
+            ->selectRaw('credit_type, sum(delta) as n')->groupBy('credit_type')->pluck('n', 'credit_type');
+        $balance = fn (string $type) => (int) ($sums[$type] ?? 0);
 
         return [
             'id' => $user->id,
@@ -50,16 +55,54 @@ class ProfilePresenter
         return $this->base($profile, $profile->user, false);
     }
 
-    /** @return array<string, mixed> */
-    private function base(Profile $profile, User $user, bool $owner): array
+    /**
+     * Version en lot de `public()` pour les listes (découverte, conversations, matchs) : deux requêtes au total
+     * (utilisateurs, médias) quel que soit le nombre de profils, au lieu d'une requête médias par profil (revue CTO, risque 9).
+     *
+     * @param  iterable<Profile>  $profiles
+     * @return array<string, array<string, mixed>> profils présentés, indexés par `user_id`
+     */
+    public function publicMany(iterable $profiles): array
     {
-        $media = DB::table('media')
-            ->where('user_id', $user->id)
+        $profiles = new EloquentCollection(is_array($profiles) ? $profiles : iterator_to_array($profiles, false));
+        $profiles->loadMissing('user');
+        $media = $this->mediaFor($profiles->pluck('user_id')->all(), false);
+
+        $out = [];
+        foreach ($profiles as $profile) {
+            $out[$profile->user_id] = $this->base($profile, $profile->user, false, $media->get($profile->user_id, collect()));
+        }
+
+        return $out;
+    }
+
+    /**
+     * Médias de profil de plusieurs personnes en une seule requête, groupés par `user_id`.
+     *
+     * @param  list<string>  $userIds
+     * @return Collection<string, Collection<int, object>>
+     */
+    private function mediaFor(array $userIds, bool $owner): Collection
+    {
+        if ($userIds === []) {
+            return collect();
+        }
+
+        return DB::table('media')
+            ->whereIn('user_id', $userIds)
             ->whereIn('kind', ['profile_photo', 'profile_video'])
             ->when(! $owner, fn ($q) => $q->where('status', 'approved'))
             ->when($owner, fn ($q) => $q->whereIn('status', ['pending_upload', 'processing', 'approved']))
             ->orderBy('kind')->orderBy('position')
-            ->get(['id', 'kind', 'status', 'position', 'storage_key']);
+            ->get(['id', 'user_id', 'kind', 'status', 'position', 'storage_key'])
+            ->groupBy('user_id');
+    }
+
+    /** @return array<string, mixed> */
+    private function base(Profile $profile, User $user, bool $owner, ?Collection $preloadedMedia = null): array
+    {
+        // Les listes passent leurs médias préchargés (`publicMany`) ; un profil isolé fait sa propre requête.
+        $media = $preloadedMedia ?? $this->mediaFor([$user->id], $owner)->get($user->id, collect());
 
         $data = [
             'user_id' => $user->id,

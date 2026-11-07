@@ -57,7 +57,7 @@ export const discoverEn = {
   'detail.verified': 'Verified profile',
 
   'report.title': 'Report',
-  'report.subtitle': 'Tap a reason to send the report. It stays confidential.',
+  'report.subtitle': 'Choose a reason, then confirm sending. Your report stays confidential.',
   'report.details': 'Details (optional)',
   'report.reason.money_request': 'Request for money',
   'report.reason.harassment': 'Harassment',
@@ -68,4 +68,8 @@ export const discoverEn = {
   'report.sent': 'Thank you, your report was received.',
   'report.already': 'You have already reported this person for this reason.',
   'report.sending': 'Sending the report',
+  'report.send': 'Send report',
+  'report.choose': 'Choose a reason to send the report.',
+  'discover.report': 'Report',
+  'discover.reportAria': 'Report {name}',
 } as const;

@@ -14,9 +14,12 @@ export function usePurchase() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<PurchaseNotice | undefined>();
 
+  // Les causes techniques (Expo Go, clé RevenueCat absente...) ne sont montrées qu'en développement ; l'utilisateur lit un message générique.
   const unavailableMessage = provider.available
     ? null
-    : t(`premium.unavailable.${provider.unavailableReason ?? 'expo_go'}`);
+    : __DEV__
+      ? t(`premium.unavailable.${provider.unavailableReason ?? 'expo_go'}`)
+      : t('premium.unavailable.generic');
 
   const buy = async (productId: string, kind: ProductKind) => {
     if (busyId) return;
@@ -42,7 +45,7 @@ export function usePurchase() {
         case 'cancelled':
           return;
         case 'unavailable':
-          setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.expo_go') });
+          setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.generic') });
           return;
         default:
           setNotice({ variant: 'error', message: t('premium.purchaseError') });

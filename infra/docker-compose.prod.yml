@@ -6,18 +6,25 @@
 # n'ont de `ports:` ; ils ne sont joignables que sur le réseau `internal`. Ne jamais en ajouter.
 name: ayelo
 
+# Base commune des conteneurs PHP. Elle ne porte volontairement PAS `env_file` (revue pentest P-08) : chaque service
+# choisit ce qu'il reçoit.
+#  - app, worker, worker-push, scheduler exécutent le code applicatif (jobs : e-mail, push, stockage, facturation...) et
+#    non exposés à Internet : ils reçoivent le fichier complet via `env_file: .env.prod`.
+#  - reverb, exposé à Internet derrière Caddy, ne reçoit qu'une liste explicite (aucune clé de stockage, FCM, LiveKit,
+#    RevenueCat, e-mail, ni APP_KEY ni mot de passe de base de données).
 x-app: &app
   build:
     context: ..
     dockerfile: infra/php/Dockerfile
     target: runtime
-  env_file: .env.prod
   restart: unless-stopped
   depends_on:
     postgres:
       condition: service_healthy
     redis:
-      condition: service_started
+      condition: service_healthy
+    redis-cache:
+      condition: service_healthy
   networks: [internal]
   volumes:
     - app-storage:/var/www/html/storage
@@ -36,8 +43,11 @@ services:
       WS_DOMAIN: ${WS_DOMAIN}
       ADMIN_DOMAIN: ${ADMIN_DOMAIN}
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS}
+      WEB_DOMAIN: ${WEB_DOMAIN}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Site public statique (web/), en lecture seule. tools/ est présent mais jamais servi (Caddyfile, bloc WEB_DOMAIN).
+      - ../web:/srv/web:ro
       - caddy-data:/data
       - caddy-config:/config
       - app-public:/var/www/html/public:ro
@@ -46,32 +56,131 @@ services:
 
   app:
     <<: *app
+    env_file: .env.prod
     command: ["php-fpm"]
     volumes:
       - app-storage:/var/www/html/storage
       - app-public:/var/www/html/public
+    # Mémoire plafonnée : le pool FPM (infra/php/php-fpm-pool.conf, FPM_MAX_CHILDREN) est dimensionné pour ce plafond.
+    # Changer l'un sans l'autre = soit des processus tués par le noyau (OOM), soit de la RAM inutilisée.
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEMORY_LIMIT:-2g}
+    # Vivacité réelle : interroge php-fpm via FastCGI (ping.path = /fpm-ping) ; `php-fpm -t` ne testait que la syntaxe.
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
+      test: ["CMD-SHELL", "SCRIPT_NAME=/fpm-ping SCRIPT_FILENAME=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 20s
 
+  # Files d'attente (revue CTO n°1, 2.3). `realtime` (diffusion) passe avant `default` ; `push` (FCM, lent) a son propre
+  # worker pour qu'un FCM lent ne retarde ni les messages en direct ni les e-mails.
+  # NB : une file n'a de travail que si le code y envoie (`->onQueue('realtime')`, `->onQueue('push')`). Tant que le code
+  # n'est pas adapté, tout part sur `default` et ces workers `realtime`/`push` restent au repos sans coût ni risque.
+  # Nombre de workers `default` : WORKER_REPLICAS (2 par défaut). Arrêt propre : jusqu'à 70 s pour finir le travail en cours.
   worker:
     <<: *app
-    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=60", "--sleep=1", "--max-time=3600"]
+    env_file: .env.prod
+    command: ["php", "artisan", "queue:work", "--queue=realtime,default", "--tries=3", "--timeout=60", "--sleep=1", "--max-time=3600", "--max-jobs=1000"]
+    stop_grace_period: 70s
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:wor[k]' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
+  worker-push:
+    <<: *app
+    env_file: .env.prod
+    command: ["php", "artisan", "queue:work", "--queue=push", "--tries=3", "--backoff=10", "--timeout=30", "--sleep=2", "--max-time=3600", "--max-jobs=1000"]
+    stop_grace_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:wor[k]' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Un seul planificateur (tout le nettoyage RGPD en dépend) : ne jamais répliquer ce service.
   scheduler:
     <<: *app
+    env_file: .env.prod
     command: ["php", "artisan", "schedule:work"]
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan schedule:wor[k]' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
+  # Reverb : un seul processus. Descripteurs de fichiers relevés (une connexion WebSocket = un descripteur).
+  # À partir de ~1 000 connexions simultanées : REVERB_SCALING_ENABLED=true (Redis pub/sub) et 2 instances (docs/runbooks/dimensionnement.md).
   reverb:
     <<: *app
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    # Liste minimale (P-08). Reverb ne se connecte pas à PostgreSQL : l'autorisation des canaux privés passe par l'API.
+    # Si une évolution du code lui faisait ouvrir la base ou chiffrer des données, ajouter ici le strict nécessaire
+    # (jamais `env_file: .env.prod`). Les valeurs vides retombent sur les défauts du code.
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-}
+      APP_WEB_URL: ${APP_WEB_URL:-}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+      LOG_STACK: ${LOG_STACK:-daily}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_DAILY_DAYS: ${LOG_DAILY_DAYS:-14}
+      LOG_DEPRECATIONS_CHANNEL: ${LOG_DEPRECATIONS_CHANNEL:-null}
+      REDIS_CLIENT: ${REDIS_CLIENT:-predis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_CACHE_HOST: ${REDIS_CACHE_HOST:-redis-cache}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_CONNECT_TIMEOUT: ${REDIS_CONNECT_TIMEOUT:-2}
+      REDIS_READ_WRITE_TIMEOUT: ${REDIS_READ_WRITE_TIMEOUT:-5}
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      BROADCAST_CONNECTION: ${BROADCAST_CONNECTION:-reverb}
+      REVERB_APP_ID: ${REVERB_APP_ID:-}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-}
+      REVERB_HOST: ${REVERB_HOST:-}
+      REVERB_PORT: ${REVERB_PORT:-443}
+      REVERB_SCHEME: ${REVERB_SCHEME:-https}
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS:-}
+      REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM: ${REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM:-none}
+      REVERB_APP_RATE_LIMITING_ENABLED: ${REVERB_APP_RATE_LIMITING_ENABLED:-true}
+      REVERB_SCALING_ENABLED: ${REVERB_SCALING_ENABLED:-false}
+      REVERB_APP_MAX_CONNECTIONS: ${REVERB_APP_MAX_CONNECTIONS:-}
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 8080) ? 0 : 1);'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   postgres:
     image: postgres:16
     restart: unless-stopped
-    env_file: .env.prod
+    # Pas de `env_file: .env.prod` (P-08) : PostgreSQL ne reçoit que ces trois variables.
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
@@ -85,14 +194,42 @@ services:
       retries: 10
     networks: [internal]
 
+  # Deux instances Redis (revue CTO n°1, 2.3) : une panne mémoire du cache ne doit jamais faire perdre de tâche.
+  # `redis` = file d'attente, sessions, compteurs Reverb (connexion Laravel `default`) : AOF toutes les secondes et
+  # `noeviction` (jamais d'éviction : à saturation Redis REFUSE les écritures, ce qui se voit, au lieu de perdre des tâches).
+  # Aucun port publié. Mot de passe en défense en profondeur (REDIS_PASSWORD, repris par Laravel).
   redis:
     image: redis:7
     restart: unless-stopped
-    # Aucun port publié. Mot de passe en défense en profondeur (REDIS_PASSWORD, repris par Laravel).
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     entrypoint: ["/bin/sh", "-c"]
-    command: ['exec redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly no --requirepass "$$REDIS_PASSWORD"']
+    command: ['exec redis-server --appendonly yes --appendfsync everysec --save "" --maxmemory ${REDIS_QUEUE_MAXMEMORY:-512mb} --maxmemory-policy noeviction --requirepass "$$REDIS_PASSWORD"']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  # `redis-cache` = cache applicatif et limiteurs de débit (connexion Laravel `cache`, REDIS_CACHE_HOST) : éviction LRU,
+  # aucune persistance (perdre le cache est sans conséquence ; les jetons à usage unique et compteurs se reconstruisent).
+  redis-cache:
+    image: redis:7
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['exec redis-server --appendonly no --save "" --maxmemory ${REDIS_CACHE_MAXMEMORY:-256mb} --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"']
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks: [internal]
 
   # Sauvegarde quotidienne de PostgreSQL (infra/scripts/backup.sh). Aucun port publié, réseau `internal` seulement
@@ -100,7 +237,7 @@ services:
   # Pas de `env_file: .env.prod` ici : le service ne reçoit que les variables listées, pas APP_KEY, FCM, RevenueCat, etc.
   # Les secrets viennent de infra/.env.prod au démarrage (substitution ${...}), jamais de l'image.
   # Planification : attente jusqu'à BACKUP_TIME_UTC (HH:MM, défaut 02:15) ; une erreur est journalisée et la boucle continue.
-  # Sonde de santé : « unhealthy » si aucune réussite depuis plus de 26 h (premier jour exclu).
+  # Sonde de santé : « unhealthy » si aucune réussite depuis plus de 36 h (premier jour exclu).
   # Non exécuté sur le poste de développement (Docker absent) : à valider sur le serveur.
   backup:
     build:
@@ -118,13 +255,27 @@ services:
       BACKUP_DIR: /backups
       BACKUP_TIME_UTC: ${BACKUP_TIME_UTC:-02:15}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_MONTHLY_RETENTION_MONTHS: ${BACKUP_MONTHLY_RETENTION_MONTHS:-6}
+      BACKUP_ALERT_WEBHOOK_URL: ${BACKUP_ALERT_WEBHOOK_URL:-}
       BACKUP_BUCKET: ${BACKUP_BUCKET:-}
       BACKUP_ENDPOINT: ${BACKUP_ENDPOINT:-}
       BACKUP_AWS_ACCESS_KEY_ID: ${BACKUP_AWS_ACCESS_KEY_ID:-}
       BACKUP_AWS_SECRET_ACCESS_KEY: ${BACKUP_AWS_SECRET_ACCESS_KEY:-}
-      BACKUP_GPG_RECIPIENT: ${BACKUP_GPG_RECIPIENT:-}
+      # Chiffrement OBLIGATOIRE : si BACKUP_GPG_RECIPIENT est vide, docker compose refuse de démarrer (toute commande
+      # compose échoue avec ce message). Jamais d'archive en clair dans le bucket. Seule la clé PUBLIQUE est montée ci-dessous ;
+      # la clé privée reste hors du serveur (docs/runbooks/sauvegardes-chiffrement.md).
+      BACKUP_GPG_RECIPIENT: ${BACKUP_GPG_RECIPIENT:?BACKUP_GPG_RECIPIENT obligatoire - les sauvegardes doivent etre chiffrees (voir docs/runbooks/sauvegardes-chiffrement.md)}
+      BACKUP_GPG_PUBLIC_KEY_FILE: /keys/backup-public.asc
     volumes:
       - backups:/backups
+      # Clé publique GPG (export ASCII, `gpg --armor --export <destinataire>`), fichier hors dépôt sur l'hôte.
+      # create_host_path: false : si le fichier n'existe pas, compose échoue au lieu de créer un dossier vide.
+      - type: bind
+        source: ${BACKUP_GPG_PUBLIC_KEY_PATH:?BACKUP_GPG_PUBLIC_KEY_PATH obligatoire - chemin sur l'hote du fichier de cle publique GPG}
+        target: /keys/backup-public.asc
+        read_only: true
+        bind:
+          create_host_path: false
     command:
       - /bin/bash
       - -euc
@@ -138,11 +289,11 @@ services:
           /scripts/backup.sh || echo "ECHEC de la sauvegarde (voir les lignes ci-dessus)" >&2
         done
     healthcheck:
-      test: ["CMD-SHELL", "find /backups/.last_success -mmin -1560 | grep -q ."]
+      test: ["CMD-SHELL", "find /backups/.last_success -mmin -2160 | grep -q ."]
       interval: 1h
       timeout: 10s
       retries: 1
-      start_period: 26h
+      start_period: 36h
     depends_on:
       postgres:
         condition: service_healthy
@@ -159,3 +310,4 @@ volumes:
   app-storage:
   app-public:
   backups:
+  redis-data:

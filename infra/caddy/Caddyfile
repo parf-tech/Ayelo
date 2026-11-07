@@ -30,6 +30,15 @@
 	respond @admin_blocked 403
 }
 
+# En-têtes du site public (docs/runbooks/site-public.md). `security_headers` fournit déjà HSTS, nosniff, X-Frame-Options,
+# Referrer-Policy no-referrer, etc. Le site n'a ni script externe, ni police, ni image tierce : CSP default-src 'self'.
+# connect-src et form-action n'autorisent que l'API, pour les deux formulaires de suppression de compte
+# (backend/config/cors.php n'ouvre CORS que pour ces routes et seulement à l'origine du site).
+(web_headers) {
+	import security_headers
+	header Content-Security-Policy "default-src 'self'; connect-src 'self' https://{$API_DOMAIN}; form-action 'self' https://{$API_DOMAIN}; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
+}
+
 # API REST
 {$API_DOMAIN} {
 	root * /var/www/html/public
@@ -79,4 +88,35 @@
 	}
 	php_fastcgi app:9000
 	file_server
+}
+
+# Site public statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
+# Le dossier web/ du dépôt est monté en lecture seule sur /srv/web (docker-compose.prod.yml).
+{$WEB_DOMAIN} {
+	root * /srv/web
+	encode zstd gzip
+	import web_headers
+	header Cache-Control "public, max-age=3600"
+
+	# Le dossier tools/ (scripts de génération et de contrôle) n'est jamais servi.
+	@private path /tools /tools/* /.git /.git/*
+	respond @private 404
+
+	# Les liens de la version anglaise sont relatifs : /en doit se terminer par une barre oblique.
+	redir /en /en/ permanent
+
+	# Page dont l'URL contient un jeton : jamais mise en cache.
+	@confirm path /confirm-deletion /confirm-deletion.html /en/confirm-deletion /en/confirm-deletion.html
+	header @confirm Cache-Control "no-store"
+
+	# URL propres : /legal/terms sert legal/terms.html, /en/ sert en/index.html.
+	try_files {path} {path}.html {path}/index.html
+	file_server
+
+	# 404 : la page web/404.html, avec le code 404 conservé.
+	handle_errors {
+		rewrite * /404.html
+		import web_headers
+		file_server
+	}
 }

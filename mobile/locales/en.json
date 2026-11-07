@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Ayelo",
+    "NSCameraUsageDescription": "Ayelo uses the camera for your profile verification selfie.",
+    "NSPhotoLibraryUsageDescription": "Ayelo accesses your photos so you can add them to your profile.",
+    "NSMicrophoneUsageDescription": "Ayelo uses the microphone for audio and video calls with your matches."
+  }
+}

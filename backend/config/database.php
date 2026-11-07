@@ -160,6 +160,10 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
+            // Délais courts : une panne Redis doit échouer vite (sonde /health, requêtes web) plutôt que bloquer FPM.
+            'timeout' => (float) env('REDIS_CONNECT_TIMEOUT', 2),
+            'read_write_timeout' => (float) env('REDIS_READ_WRITE_TIMEOUT', 5),
+            'read_timeout' => (float) env('REDIS_READ_TIMEOUT', 5),
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
@@ -168,11 +172,16 @@ return [
 
         'cache' => [
             'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            // Instance Redis distincte du cache (politique allkeys-lru, sans persistance) : voir docs/runbooks/redis.md.
+            // Sans REDIS_CACHE_HOST, le cache partage l'instance par défaut (développement, CI).
+            'host' => env('REDIS_CACHE_HOST', env('REDIS_HOST', '127.0.0.1')),
             'username' => env('REDIS_USERNAME'),
-            'password' => env('REDIS_PASSWORD'),
-            'port' => env('REDIS_PORT', '6379'),
+            'password' => env('REDIS_CACHE_PASSWORD', env('REDIS_PASSWORD')),
+            'port' => env('REDIS_CACHE_PORT', env('REDIS_PORT', '6379')),
             'database' => env('REDIS_CACHE_DB', '1'),
+            'timeout' => (float) env('REDIS_CONNECT_TIMEOUT', 2),
+            'read_write_timeout' => (float) env('REDIS_READ_WRITE_TIMEOUT', 5),
+            'read_timeout' => (float) env('REDIS_READ_TIMEOUT', 5),
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),

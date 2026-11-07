@@ -36,7 +36,7 @@ export function useSignupFlow(): SignupFlow {
 
 /**
  * Garde d'un écran du parcours : renvoie une redirection si l'écran n'est pas accessible
- * (ex. S68 sans consentements, ou n'importe quel écran après un refus d'âge).
+ * (ex. S63 sans contrôle d'âge, ou n'importe quel écran après un refus d'âge).
  */
 export function useSignupGuard(screen: SignupScreen): React.ReactElement | null {
   const { state } = useSignupFlow();

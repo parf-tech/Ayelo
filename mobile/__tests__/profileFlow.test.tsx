@@ -61,7 +61,7 @@ describe('S05 : envoi du profil (PUT /me/profile)', () => {
 
   it('envoie pays de résidence ET d\'origine, puis ouvre les photos', async () => {
     const api = installFakeApi({
-      'PUT /me/profile': [201, selfProfile()],
+      'PUT /me/profile': [201, meFixture()],
       'GET /me': [200, meFixture()],
     });
     await renderApp(

@@ -27,7 +27,14 @@ export class RevenueCatPurchaseProvider implements PurchaseProvider {
     const category =
       kind === 'subscription' ? Purchases.PRODUCT_CATEGORY.SUBSCRIPTION : Purchases.PRODUCT_CATEGORY.NON_SUBSCRIPTION;
     const products = await Purchases.getProducts(productIds, category);
-    return products.map((p) => ({ productId: p.identifier, title: p.title, priceString: p.priceString }));
+    return products.map((p) => ({
+      productId: p.identifier,
+      title: p.title,
+      priceString: p.priceString,
+      price: p.price,
+      currencyCode: p.currencyCode,
+      subscriptionPeriod: p.subscriptionPeriod,
+    }));
   }
 
   async purchase(productId: string, kind: ProductKind): Promise<PurchaseOutcome> {
