@@ -1,5 +1,9 @@
 # Production : un seul serveur (VPS). Aucun port de base de données ni de Redis n'est publié.
 # Non exécuté sur le poste de développement. Variables : voir infra/.env.prod.example (le vrai fichier n'est PAS dans le dépôt).
+# Les ${VAR} de ce fichier sont lues dans infra/.env.prod : toujours lancer avec
+#   docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml <commande>
+# Règle (revue F-17) : seul caddy publie des ports (80, 443). Ni postgres, ni redis, ni reverb (8080), ni php-fpm (9000)
+# n'ont de `ports:` ; ils ne sont joignables que sur le réseau `internal`. Ne jamais en ajouter.
 name: ayelo
 
 x-app: &app
@@ -25,7 +29,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    env_file: .env.prod
+    # Caddy est exposé à Internet : il ne reçoit PAS tout .env.prod (clés, mots de passe), seulement ses variables.
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      API_DOMAIN: ${API_DOMAIN}
+      WS_DOMAIN: ${WS_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -78,7 +88,11 @@ services:
   redis:
     image: redis:7
     restart: unless-stopped
-    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "no"]
+    # Aucun port publié. Mot de passe en défense en profondeur (REDIS_PASSWORD, repris par Laravel).
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['exec redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly no --requirepass "$$REDIS_PASSWORD"']
     networks: [internal]
 
   backup:

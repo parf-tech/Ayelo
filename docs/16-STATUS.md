@@ -1,17 +1,18 @@
 # 16 : État d'avancement réel
 
-Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qui existe sans être vérifié, et ce qui n'existe pas. Il prime sur les statuts optimistes des autres documents.
+Date : 2026-11-06 (mise à jour le 2026-11-07). Ce document dit ce qui **existe et a été vérifié**, ce qui existe sans être vérifié, et ce qui n'existe pas. Il prime sur les statuts optimistes des autres documents.
 
 ## Preuves disponibles
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16.15) | **242 tests, 1602 assertions, 0 échec** (exécution du CTO le 2026-11-06, y compris l'administration) |
+| Tests backend (Pest, PostgreSQL 16.15) | **260 tests Pest, 0 échec** (exécution du CTO, deuxième ronde de revue de sécurité incluse ; le nombre d'assertions n'a pas été relevé à nouveau) |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec |
 | CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
-| Contrôle de secrets (gitleaks, historique complet) | propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__` |
-| Audit des dépendances PHP | `composer audit` : aucune faille signalée (2026-11-05) |
-| Mobile (Jest, typecheck, lint, bundle) | **300 tests, typecheck et lint propres, `expo export --platform android` compile** (rejoué par le CTO le 2026-11-06). `npm audit` : 0 haute / critique, 31 modérées ou basses (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
+| Contrôle de secrets (gitleaks, historique complet) | **exécuté uniquement par la CI** (workflow `schema`), jamais en local (binaire absent du poste, téléchargement non autorisé). Dernier résultat connu : propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__`. À rejouer sur l'historique du commit final |
+| Audit des dépendances PHP | `composer audit` rejoué le 2026-11-06 : aucune faille signalée |
+| Revue de sécurité du code, 2e ronde | `reviews/code-security-2.md` ; correctifs des constats hauts et moyens appliqués (N-01 à N-08, N-10, N-11, F-08, F-10, F-23, puis lot 2 partiel : N-09, N-13, N-14) avec un test par constat (`SecurityHardeningRound2Test`) ; suivi dans `reviews/code-security-2-suivi.md`. Restent ouverts ou à décider : F-02 et F-09 résiduels, N-12 (voir `DECISIONS-PROPRIETAIRE.md`), F-06 / F-16 / F-22 résiduels. Troisième relecture ciblée N-01 / N-02 non faite |
+| Mobile (Jest, typecheck, lint, bundle) | **300 tests, typecheck et lint propres, `expo export --platform android` compile** (rejoué par le CTO le 2026-11-06). `npm audit --omit=dev` rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
 
 ## Backend : fait et testé
 
@@ -37,7 +38,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 
 | lot | responsable | état |
 | --- | --- | --- |
-| Administration Filament | livrée côté code (242 tests) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
+| Administration Filament | livrée côté code (suite de 260 tests Pest) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
 | Écrans mobiles de la phase 2 | livrés côté code (300 tests) ; jamais vus sur appareil | voir spec 010 |
 
 ## Non fait
@@ -50,7 +51,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | Transcodage vidéo | sans objet tant que les vidéos de profil ne sont pas ouvertes |
 | Redis en production | configuré dans le code (Predis) mais jamais exécuté contre un vrai Redis |
 | i18n côté serveur au-delà des e-mails | seuls les e-mails sont traduits (fr, en) ; les messages d'API sont en français |
-| Contrat OpenAPI | produit : `docs/openapi.json` (67 opérations), vérifié à jour par la CI ; types TypeScript générés mais pas encore utilisés par les écrans |
+| Contrat OpenAPI | produit : `docs/openapi.json` (67 opérations), vérifié à jour par la CI ; types TypeScript générés et utilisés par la couche API du mobile (`mobile/src/api/generated.ts`, authentification, profil, découverte, messages) ; écarts de la spec relevés dans les commentaires (enums en `string`, `POST /swipes` typé `string`, types de message et de média incomplets) |
 
 ## Non vérifié (écrit mais jamais exécuté)
 
@@ -61,7 +62,8 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 - **Google / Apple réels** : la vérification est testée avec des clés générées localement, pas avec les vrais JWKS.
 - **LiveKit réel** : les jetons sont décodés par les tests ; aucun appel établi.
 - **Applications mobiles** : jamais lancées sur appareil ni émulateur.
-- **Docker Compose** : non testé (Docker absent du poste de développement).
+- **Docker Compose, Caddyfile et image PHP** : non testés (Docker absent du poste de développement). Durcissement de production relu et complété le 2026-11-07 (en-têtes dont CSP pour l'hôte d'administration, liste blanche d'IP échec fermé, Redis protégé par mot de passe, variables limitées pour Caddy, Reverb sans événements client) **par lecture seulement** : ni `docker compose config`, ni `caddy validate`, ni la CSP dans un navigateur n'ont été exécutés.
+- **Restauration PostgreSQL** : exercice pas à pas et modèle de procès-verbal écrits (`runbooks/restauration.md`), **jamais exécutés**.
 - **Charge et concurrence réelle** : le verrou de match n'est testé que séquentiellement.
 
 ## Ce que l'équipe ne peut pas faire seule (dépend du propriétaire ou d'un tiers)
@@ -81,7 +83,7 @@ Date : 2026-11-06. Ce document dit ce qui **existe et a été vérifié**, ce qu
 | G0 cadrage | franchi |
 | G1 conception | franchi (3 relectures, CI verte) |
 | G2 module | franchi pour les modules backend ci-dessus (tests verts), pas encore pour l'administration ni le mobile |
-| G3 sécurité | **non franchi** : revue de sécurité du code faite (9 constats hauts, traités : voir `reviews/code-security-1-suivi.md`) ; seconde revue, `npm audit`, attestation d'appareil et matrice juridique manquent |
+| G3 sécurité | **non franchi** : revue de sécurité du code faite (9 constats hauts, traités : voir `reviews/code-security-1-suivi.md`) ; seconde revue faite et corrigée en grande partie, `composer audit` et `npm audit` rejoués ; manquent : décisions du propriétaire sur F-02 / F-09 / N-12, attestation d'appareil, troisième relecture ciblée, matrice juridique |
 | G4 intégration (E2E) | **non franchi** : aucun test de bout en bout mobile / backend |
 | G5 pré-production | **non franchi** : aucun déploiement, aucune sauvegarde restaurée |
 | G6 stores et appels | **non franchi** |

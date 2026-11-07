@@ -74,3 +74,49 @@ Recherche web (deux requêtes) : **aucune marque ou application nommée exacteme
 - AYLOE (enregistrement individuel sans lien visible avec les rencontres), Yelo (applications de location de voitures, banque), Aylo Health (santé).
 
 **Limites** : ce n'est pas une recherche d'antériorité. Les bases officielles (INPI, EUIPO, USPTO, CIPO canadien, OAPI pour l'Afrique) n'ont pas été interrogées ; la disponibilité dans l'App Store et Google Play n'est pas vérifiée. Avant tout achat de domaine ou publication : recherche d'antériorité par un professionnel de la propriété intellectuelle, notamment sur AILO. Le nom reste **provisoire**.
+
+## Décisions ouvertes issues de la deuxième revue de sécurité (2026-11-07)
+
+Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage produit, de budget ou d'organisation, pas d'un simple correctif. Chacun reçoit une option recommandée par le CTO, **à confirmer ou refuser par le propriétaire**. Tant que la décision n'est pas prise, le comportement actuel est conservé et le risque est considéré comme accepté pour la bêta fermée seulement (pas pour le lancement public). Sources : `reviews/code-security-2.md` et `reviews/code-security-2-suivi.md`.
+
+### Q1 : F-02, refus d'âge contournable par changement d'IP (risque résiduel Moyen)
+
+**Situation.** Un mineur refusé à l'inscription est mémorisé par appareil (90 jours) et par IP (30 minutes). Il peut recommencer en changeant d'IP (données mobiles, Wi-Fi) ou d'adresse IPv6 dans le même /64, ou en s'inscrivant avec un autre e-mail ou compte social, car le refus n'est pas mémorisé par identité. Le contrôle d'âge reste déclaratif : un mineur qui ment dès le premier essai n'est pas détecté.
+
+| option | contenu | coût / effet |
+| --- | --- | --- |
+| A. Accepter le risque | garder l'état actuel, le documenter dans les CGU et la politique de confidentialité | aucun coût ; exposition réglementaire (DSA, protection des mineurs) et risque de refus par les stores |
+| B. Durcir sans prestataire (recommandée pour la bêta) | clé d'IP IPv6 normalisée au /64 ; refus mémorisé aussi par e-mail (HMAC) et identifiant social dès qu'ils sont connus ; durée du refus par IP à rediscuter | quelques jours de développement ; ne règle pas le mensonge au premier essai ; régression à surveiller sur les réseaux à adresses partagées |
+| C. Attestation d'appareil (App Attest sur iOS, Play Integrity sur Android), spec 001 T012 | liaison du refus à un appareil physique, plus difficile à changer | développement mobile et serveur, comptes développeur requis (D5), coût d'API faible ; ne vérifie toujours pas l'âge réel |
+
+**Recommandation : B maintenant, puis C avant le lancement public** (vague 1, décision E1). Une estimation d'âge par pièce d'identité ou par visage est à étudier séparément avec le juriste (matrice légale), car elle ajoute des données sensibles.
+
+**Décision du propriétaire :** option ______ (date : ______).
+
+### Q2 : F-09, suspension préventive par deux comptes jetables (risque résiduel Moyen)
+
+**Situation.** Un signalement « mineur suspecté » suspend le compte visé si le signaleur a une conversation avec lui, ou si un second signaleur distinct s'ajoute en 7 jours. Deux comptes créés pour l'occasion remplissent cette condition (3 signalements par jour et par compte). Un harceleur peut donc faire suspendre un tiers innocent, qui devra passer par la contestation. À l'inverse, retirer la suspension automatique laisse un vrai mineur visible jusqu'à la décision humaine, ce qui est le pire cas pour la sécurité des enfants.
+
+| option | contenu | coût / effet |
+| --- | --- | --- |
+| A. Garder l'atténuation actuelle | conversation commune ou second signaleur distinct, 3 signalements par jour | aucun coût ; abus possible avec deux comptes |
+| B. Exiger des signaleurs crédibles (recommandée) | n'accepter comme « signaleur distinct » qu'un compte de plus de 7 jours, e-mail vérifié, avec au moins une interaction ; alerte sur le ratio signalements / suspensions par signaleur ; la file prioritaire du panneau (`ReportResource`) reste le filet | correctif peu coûteux ; exige que la modération humaine traite la file sous un délai fixé (par exemple 24 h) |
+| C. Suspension jamais automatique | file prioritaire seulement, décision humaine | supprime l'abus, expose les mineurs réels tant que la file n'est pas traitée ; nécessite un budget de modération 24 h / 24 non chiffré |
+
+**Recommandation : B**, combinée à un délai de traitement écrit pour la file prioritaire et à la réponse écrite aux autorités (spec 011 T008). La décision dépend aussi du budget de modération humaine (spec 011 T024), toujours non arrêté.
+
+**Décision du propriétaire :** option ______ (date : ______).
+
+### Q3 : N-12, pas de double contrôle des actions sensibles de l'administration (risque Bas)
+
+**Situation.** Un administrateur seul peut ajouter jusqu'à 1 000 crédits par action sans plafond cumulé, offrir 366 jours de Premium autant de fois qu'il veut, et réactiver un compte banni (y compris pour mineur suspecté). Toutes les actions sont motivées et journalisées dans `audit_logs`, mais rien n'alerte sur un volume anormal et une seule personne suffit.
+
+| option | contenu | coût / effet |
+| --- | --- | --- |
+| A. Accepter (équipe de 1 à 2 personnes) | journal d'audit seul, relu à la main | aucun coût ; fraude interne ou compte administrateur compromis non bloqués |
+| B. Plafonds et alertes (recommandée au lancement) | plafond quotidien de crédits et de jours Premium par acteur, alerte au-delà d'un seuil, journalisation de chaque dépassement | développement modeste ; fonctionne avec une seule personne |
+| C. Quatre yeux | seconde validation par un autre administrateur au-delà d'un seuil, et pour la réactivation d'un compte banni | développement plus important ; exige au moins deux administrateurs actifs, impossible tant que l'équipe est d'une personne |
+
+**Recommandation : B dès le lancement ; C seulement pour la réactivation d'un compte banni et dès qu'une deuxième personne a accès au panneau.** En attendant, l'accès au panneau reste limité par la liste blanche d'IP (`ADMIN_ALLOWED_IPS`) et la double authentification obligatoire.
+
+**Décision du propriétaire :** option ______ (date : ______).

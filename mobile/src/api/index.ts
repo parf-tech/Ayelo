@@ -4,3 +4,4 @@ export { createEndpoints } from './endpoints';
 export type { Api } from './endpoints';
 export { ApiError, isApiError, parseErrorResponse, LOCAL_ERROR_CODES } from './errors';
 export * from './types';
+export type { OpRequest, OpResponse, OperationId, Refine } from './generated';

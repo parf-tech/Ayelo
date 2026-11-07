@@ -1,6 +1,33 @@
 # Reverse proxy : TLS automatique (Let's Encrypt). Les domaines viennent des variables d'environnement.
+# Non exécuté sur le poste de développement : valider avec `caddy validate --config /etc/caddy/Caddyfile` sur le serveur.
 {
 	email {$ACME_EMAIL}
+}
+
+# En-têtes communs à tous les hôtes (revue F-17). Importé dans chaque bloc.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		-Server
+		-X-Powered-By
+	}
+}
+
+# Liste blanche d'IP du panneau d'administration (revue N-01 / F-17).
+# ADMIN_ALLOWED_IPS = plages CIDR séparées par des espaces (ex. "203.0.113.10/32 198.51.100.0/24").
+# Valeur par défaut = plage de documentation 192.0.2.0/24 : personne n'est autorisé tant que la variable n'est pas
+# renseignée (échec fermé). Si la variable est présente mais VIDE, Caddy refuse de démarrer : c'est voulu.
+# remote_ip = adresse du pair TCP. Valable car Caddy est en bordure (aucun CDN devant). Si un CDN est ajouté un jour,
+# déclarer ses plages dans `servers { trusted_proxies static ... }` et remplacer `remote_ip` par `client_ip`.
+(admin_ip_allowlist) {
+	@admin_blocked not remote_ip {$ADMIN_ALLOWED_IPS:192.0.2.0/24}
+	respond @admin_blocked 403
 }
 
 # API REST
@@ -10,13 +37,13 @@
 	# Le panneau et ses routes Livewire ne sont JAMAIS servis sur le domaine de l'API.
 	@panel path /admin /admin/* /livewire /livewire/* /filament /filament/*
 	respond @panel 404
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Referrer-Policy "no-referrer"
-		-Server
-	}
+	# Liste blanche (revue S9) : seuls /api/* et /up sont servis. Tout le reste, y compris /index.php/... (qui
+	# contournerait la liste noire ci-dessus), répond 404.
+	@not_api not path /api/* /up
+	respond @not_api 404
+	import security_headers
+	# API JSON : aucune ressource active n'est jamais chargée depuis une réponse de l'API.
+	header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 	php_fastcgi app:9000
 	file_server
 	request_body {
@@ -24,23 +51,32 @@
 	}
 }
 
-# WebSocket (Reverb)
+# WebSocket (Reverb). Le conteneur reverb n'est joignable que par ce proxy (aucun port publié).
 {$WS_DOMAIN} {
+	import security_headers
 	reverse_proxy reverb:8080
 }
 
-# Administration : séparée de l'API ; restreindre par IP en production si possible (ADMIN_ALLOWED_IPS).
+# Administration (Filament) : domaine séparé de l'API, restreint par IP (ADMIN_ALLOWED_IPS), jamais indexé.
 {$ADMIN_DOMAIN} {
 	root * /var/www/html/public
 	encode zstd gzip
+	import admin_ip_allowlist
+	import security_headers
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		-Server
+		# Pas de cache des pages d'administration (données personnelles) ni d'indexation.
+		Cache-Control "no-store"
+		X-Robots-Tag "noindex, nofollow"
+		# CSP adaptée à Filament 4 / Livewire / Alpine : scripts et styles en ligne et 'unsafe-eval' (Alpine, build
+		# standard) sont nécessaires, donc la CSP limite surtout les origines : pas d'iframe, pas de <base>,
+		# pas d'objet, formulaires et XHR vers soi-même uniquement. Les polices par défaut de Filament viennent de
+		# fonts.bunny.net. img-src https: permet les aperçus de médias servis par URL présignée du stockage objet.
+		# À resserrer (nonces) si Filament le permet un jour ; à vérifier dans un vrai navigateur (console CSP).
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 	}
-	@blocked not remote_ip {$ADMIN_ALLOWED_IPS:0.0.0.0/0}
-	respond @blocked 403
+	request_body {
+		max_size 2MB
+	}
 	php_fastcgi app:9000
 	file_server
 }

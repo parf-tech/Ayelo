@@ -1,8 +1,11 @@
 // Types des requêtes et réponses de l'API v1 (alignés sur les contrôleurs du backend Laravel, routes sous /api/v1).
-// Les formes marquées « provisoire » seront remplacées par le client généré depuis backend/openapi.yaml.
+// Les formes de requête et de réponse sont dérivées du contrat généré (./openapi.d.ts, via ./generated).
+// Là où le contrat est trop large ou incomplet, le type est corrigé localement avec Refine ; les écarts connus
+// sont signalés en commentaire. Les types sans opération dans le contrat restent écrits à la main.
+import type { Item, OpRequest, OpResponse, Refine } from './generated';
 
-export type Platform = 'ios' | 'android';
-export type ApiLocale = 'fr' | 'en';
+export type Platform = OpRequest<'auth.login'>['platform'];
+export type ApiLocale = NonNullable<OpRequest<'auth.register'>['locale']>;
 
 /** Format d'erreur commun : { error: { code, message, fields? } }. */
 export type ApiErrorBody = {
@@ -20,10 +23,12 @@ export type ListResponse<T> = { data: T[] };
 
 // ---- Auth ---------------------------------------------------------------------------------------
 
-export type User = { id: string; email: string; locale: ApiLocale };
+type LoginWire = OpResponse<'auth.login'>;
 
-export type AgeCheckRequest = { birthdate: string }; // YYYY-MM-DD
-export type AgeCheckResponse = { age_token: string; expires_in: number };
+export type User = Refine<LoginWire['user'], { email: string; locale: ApiLocale }>;
+
+export type AgeCheckRequest = OpRequest<'auth.ageCheck'>; // birthdate : YYYY-MM-DD
+export type AgeCheckResponse = Refine<OpResponse<'auth.ageCheck'>, { expires_in: number }>; // le contrat fige 600
 
 export type ConsentsPayload = {
   terms: boolean;
@@ -32,44 +37,24 @@ export type ConsentsPayload = {
   marketing?: boolean;
 };
 
-export type RegisterRequest = {
-  email: string;
-  password: string;
-  age_token: string;
-  platform: Platform;
-  app_version?: string;
-  locale?: ApiLocale;
-  consents: ConsentsPayload;
-};
+/** Le contrat n'accepte que des consentements « vrais » ; l'application garde les booléens des cases à cocher. */
+export type RegisterRequest = Refine<OpRequest<'auth.register'>, { consents: ConsentsPayload }>;
 
-export type LoginRequest = {
-  email: string;
-  password: string;
-  platform: Platform;
-  app_version?: string;
-};
+export type LoginRequest = OpRequest<'auth.login'>;
 
-export type AuthResponse = { token: string; user: User };
+export type AuthResponse = Refine<LoginWire, { user: User }>;
 
 export type OAuthProvider = 'google' | 'apple';
 
-export type Session = {
-  id: string;
-  platform: Platform;
-  app_version: string | null;
-  last_active_at: string | null;
-  created_at: string | null;
-  current: boolean;
-};
+/** Le contrat type platform en string et ne prévoit pas de valeur nulle pour app_version, last_active_at, created_at. */
+export type Session = Refine<
+  Item<OpResponse<'session.index'>['data']>,
+  { platform: Platform; app_version: string | null; last_active_at: string | null; created_at: string | null }
+>;
 
-export type ConsentKind =
-  | 'terms'
-  | 'privacy'
-  | 'sensitive_data'
-  | 'marketing'
-  | 'location'
-  | 'verification_biometric';
-export type ConsentUpdate = { kind: ConsentKind; version?: string; granted: boolean };
+export type ConsentKind = OpRequest<'account.consent'>['kind'];
+export type ConsentUpdate = OpRequest<'account.consent'>;
+// Le contrat décrit la réponse de GET /me/consents comme un tableau ; le serveur renvoie un objet indexé par type.
 export type ConsentState = { granted: boolean; version: string; since: string };
 export type ConsentsResponse = { data: Partial<Record<ConsentKind, ConsentState>> };
 
@@ -85,10 +70,11 @@ export type DeleteAccountRequest = { password: string } | { provider: OAuthProvi
 
 // ---- Profil -------------------------------------------------------------------------------------
 
-export type Gender = 'man' | 'woman' | 'other';
+export type ProfileInput = OpRequest<'profile.upsert'>;
+export type Gender = NonNullable<ProfileInput['gender']>;
 export const GENDERS: readonly Gender[] = ['man', 'woman', 'other'];
 
-export type Intent = 'marriage' | 'long_lasting_love' | 'flirt' | 'friendship' | 'lets_find_out';
+export type Intent = NonNullable<ProfileInput['intent']>;
 export const INTENTS: readonly Intent[] = [
   'marriage',
   'long_lasting_love',
@@ -108,32 +94,27 @@ export type UploadKind =
   | 'message_voice'
   | 'verification_selfie';
 
-/** Média d'un profil. `status` n'est renseigné que pour le propriétaire ; `url` est nulle tant que le média n'est pas lisible. */
-export type ProfileMedia = {
-  id: string;
-  kind: ProfileMediaKind;
-  position: number;
-  status: MediaStatus | null;
-  url: string | null;
-};
+type PublicProfileWire = OpResponse<'publicProfile.show'>;
 
-/** Profil public (autres utilisateurs). */
-export type PublicProfile = {
-  user_id: string;
-  display_name: string;
-  age: number;
-  gender: Gender;
-  origin_country: string;
-  residence_country: string;
-  city: string | null;
-  bio: string | null;
-  intent: Intent;
-  verified: boolean;
-  media: ProfileMedia[];
-  last_seen_at?: string | null;
-};
+/**
+ * Média d'un profil. `status` n'est renseigné que pour le propriétaire ; `url` est nulle tant que le média n'est pas lisible.
+ * Le contrat type `kind` et `status` en string et `position` en string (le serveur envoie un entier).
+ */
+export type ProfileMedia = Refine<
+  Item<PublicProfileWire['media']>,
+  { kind: ProfileMediaKind; position: number; status: MediaStatus | null }
+>;
 
-/** Profil du propriétaire (GET /me, PUT /me/profile). */
+/**
+ * Profil public (autres utilisateurs). Le contrat type `age` en string (le serveur envoie un entier) et réduit
+ * `gender` et `intent` à string ; `last_seen_at` reste facultatif côté application.
+ */
+export type PublicProfile = Refine<
+  PublicProfileWire,
+  { age: number; gender: Gender; intent: Intent; media: ProfileMedia[]; last_seen_at?: string | null }
+>;
+
+/** Profil du propriétaire (GET /me, PUT /me/profile). Le contrat omet les champs de confidentialité et de vérification. */
 export type SelfProfile = PublicProfile & {
   is_visible: boolean;
   hide_distance: boolean;
@@ -141,50 +122,38 @@ export type SelfProfile = PublicProfile & {
   verification_status: VerificationStatus;
 };
 
-export type Credits = { conversation: number; proposal: number; coin: number };
+type MeWire = OpResponse<'profile.me'>;
 
-/** GET /me. */
-export type Me = User & {
-  email_verified: boolean;
-  age: number;
-  profile: SelfProfile | null;
-  credits: Credits;
-  premium: boolean;
-};
+export type Credits = MeWire['credits'];
+
+/** GET /me. Le contrat type `age` en string et ne décrit pas les champs de confidentialité du profil. */
+export type Me = Refine<MeWire, { email: string; locale: ApiLocale; age: number; profile: SelfProfile | null }>;
 
 /** Utilisateur de la session : { id, email, locale } après connexion, puis GET /me complet. */
 export type AuthUser = User & Partial<Omit<Me, keyof User>>;
 
-export type ProfileInput = Partial<
-  Pick<SelfProfile, 'display_name' | 'gender' | 'origin_country' | 'residence_country' | 'city' | 'bio' | 'intent'>
+/** Le contrat décrit les listes de GET /me/preferences en unknown[] et les nombres en string. */
+export type Preferences = Refine<
+  OpResponse<'profile.preferences'>,
+  {
+    seeking_genders: Gender[];
+    age_min: number;
+    age_max: number;
+    countries: string[];
+    origins: string[];
+    intents: Intent[];
+    max_distance_km: number | null;
+  }
 >;
 
-export type Preferences = {
-  seeking_genders: Gender[];
-  age_min: number;
-  age_max: number;
-  countries: string[];
-  origins: string[];
-  intents: Intent[];
-  verified_only: boolean;
-  max_distance_km: number | null;
-};
+export type PrivacyInput = OpRequest<'profile.privacy'>;
 
-export type PrivacyInput = Partial<Pick<SelfProfile, 'is_visible' | 'hide_distance' | 'hide_last_seen'>>;
+/** Le contrat ne liste que photo de profil, image de message et selfie ; l'application envoie aussi vidéos et notes vocales. */
+export type UploadUrlRequest = Refine<OpRequest<'media.uploadUrl'>, { kind: UploadKind; duration_seconds?: number }>;
+export type UploadUrlResponse = OpResponse<'media.uploadUrl', 201>;
+export type MediaCompleteResponse = Refine<OpResponse<'media.complete'>, { status: MediaStatus }>;
 
-export type UploadUrlRequest = {
-  kind: UploadKind;
-  mime_type: string;
-  size_bytes: number;
-  duration_seconds?: number;
-};
-export type UploadUrlResponse = {
-  media_id: string;
-  upload: { url: string; headers: Record<string, string> };
-};
-export type MediaCompleteResponse = { media_id: string; status: MediaStatus };
-
-export type VerificationPose = { pose: string };
+export type VerificationPose = OpResponse<'verification.pose'>;
 export type VerificationRequestStatus = 'pending' | 'approved' | 'rejected';
 export type VerificationOverview = {
   verification_status: VerificationStatus;
@@ -196,7 +165,7 @@ export type VerificationOverview = {
     reviewed_at: string | null;
   } | null;
 };
-export type VerificationStartResponse = { id: string; status: 'pending' };
+export type VerificationStartResponse = OpResponse<'verification.store', 201>;
 
 // ---- Découverte ---------------------------------------------------------------------------------
 
@@ -212,31 +181,23 @@ export type DiscoverFilters = {
   limit?: number;
 };
 
-export type SwipeAction = 'like' | 'dislike' | 'super_like';
+export type SwipeRequest = OpRequest<'swipe.store'>;
+export type SwipeAction = SwipeRequest['action'];
+// Le contrat décrit la réponse de POST /swipes comme une chaîne : SwipeResult reste écrit à la main.
 export type SwipeResult = {
   status: 'recorded' | 'already_swiped';
   matched: boolean;
   match_id?: string;
   conversation_id?: string;
 };
-export type UndoSwipeResult = { target_id: string };
+export type UndoSwipeResult = OpResponse<'swipe.undo'>;
 
-export type Match = {
-  id: string;
-  created_at: string;
-  conversation_id: string | null;
-  profile: PublicProfile | null;
-};
+export type Match = Refine<Item<OpResponse<'match.index'>['data']>, { profile: PublicProfile | null }>;
 
 export type Block = { user_id: string; display_name: string; created_at: string };
 
-export type ReportReason =
-  | 'money_request'
-  | 'harassment'
-  | 'meeting_behavior'
-  | 'fake_or_spam'
-  | 'minor_suspected'
-  | 'other';
+export type ReportRequest = OpRequest<'report.store'>;
+export type ReportReason = ReportRequest['reason'];
 export const REPORT_REASONS: readonly ReportReason[] = [
   'money_request',
   'harassment',
@@ -245,14 +206,7 @@ export const REPORT_REASONS: readonly ReportReason[] = [
   'minor_suspected',
   'other',
 ];
-export type ReportContextType = 'profile' | 'conversation' | 'message' | 'call' | 'story';
-export type ReportRequest = {
-  reported_id: string;
-  reason: ReportReason;
-  details?: string;
-  context_type?: ReportContextType;
-  context_id?: string;
-};
+export type ReportContextType = NonNullable<ReportRequest['context_type']>;
 export type ReportResponse = { id?: string; status: 'received' | 'already_reported' };
 
 export type Sanction = {
@@ -272,48 +226,34 @@ export type SupportTicketCreated = { id: string; status: string };
 export type MessageType = 'text' | 'image' | 'video' | 'voice' | 'call_missed' | 'deleted';
 export type SendableMessageType = 'text' | 'image' | 'video' | 'voice';
 
-export type Message = {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  client_id: string;
-  type: MessageType | string;
-  body: string | null;
-  media_id: string | null;
-  delivered_at: string | null;
-  read_at: string | null;
-  created_at: string;
+/** Le contrat type delivered_at et read_at en string (ils sont nuls tant que le message n'est ni remis ni lu). */
+export type Message = Refine<
+  Item<OpResponse<'message.index'>['data']>,
+  { type: MessageType | string; delivered_at: string | null; read_at: string | null }
+> & {
   /** Renseigné sur la réponse d'envoi quand le serveur détecte une demande d'argent. */
   safety_hint?: 'money_request' | string;
 };
 
 export type ConversationStatus = 'active' | 'blocked' | 'archived' | string;
 
-export type ConversationLastMessage = {
-  id: string;
-  mine: boolean;
-  type: MessageType | string;
-  body: string | null;
-  created_at: string;
-};
+type ConversationWire = Item<OpResponse<'conversation.index'>['data']>;
 
-export type Conversation = {
-  id: string;
-  status: ConversationStatus;
-  unlocked_by: string;
-  unread: number;
-  last_message: ConversationLastMessage | null;
-  profile: PublicProfile | null;
-};
+export type ConversationLastMessage = NonNullable<ConversationWire['last_message']>;
 
-export type OpenConversationResponse = { id: string; status: ConversationStatus };
+export type Conversation = Refine<
+  ConversationWire,
+  { status: ConversationStatus; last_message: ConversationLastMessage | null; profile: PublicProfile | null }
+>;
 
-export type SendMessageRequest = {
-  client_id: string;
-  type: SendableMessageType;
-  body?: string;
-  media_id?: string;
-};
+// Le contrat annonce id: string | null à la création (201) ; l'application attend toujours un identifiant.
+export type OpenConversationResponse = Refine<OpResponse<'conversation.store'>, { id: string; status: ConversationStatus }>;
+
+/** Le contrat n'accepte que « text » et « image » ; l'application type aussi video et voice (SendableMessageType). */
+export type SendMessageRequest = Refine<
+  OpRequest<'message.store'>,
+  { type: SendableMessageType; body?: string; media_id?: string }
+>;
 
 // ---- Appels -------------------------------------------------------------------------------------
 

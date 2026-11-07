@@ -1,20 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
-import { GENDERS, INTENTS, type Gender, type Intent } from '../../api/types';
+import { GENDERS, INTENTS, type Preferences } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { MIN_TARGET, useTheme } from '../../theme';
 import { Button, Chip, SwitchRow, Text } from '../../ui';
 import { COUNTRY_CODES, countryKey } from '../onboarding/countries';
 
-export type PreferenceValues = {
-  seeking_genders: Gender[];
-  age_min: number;
-  age_max: number;
-  countries: string[];
-  origins: string[];
-  intents: Intent[];
-  verified_only: boolean;
-};
+/** Préférences éditables : GET /me/preferences sans la distance maximale (non proposée dans l'application). */
+export type PreferenceValues = Omit<Preferences, 'max_distance_km'>;
 
 export const AGE_MIN = 18;
 export const AGE_MAX = 99;

@@ -1,4 +1,5 @@
 import type { ApiClient } from './client';
+import type { OpRequest, Refine } from './generated';
 import type {
   AgeCheckResponse,
   AuthResponse,
@@ -42,6 +43,7 @@ import type {
   SupportTicket,
   SupportTicketCreated,
   SwipeAction,
+  SwipeRequest,
   SwipeResult,
   Transaction,
   UndoSwipeResult,
@@ -62,22 +64,22 @@ export function createEndpoints(client: ApiClient) {
   const auth = {
     /** Contrôle d'âge AVANT création du compte. 403 { code: 'age_not_eligible' } = refus. */
     ageCheck: (birthdate: string) =>
-      request<AgeCheckResponse>('POST', '/auth/age-check', { auth: false, body: { birthdate } }),
+      request<AgeCheckResponse>('POST', '/auth/age-check', { auth: false, body: { birthdate } satisfies OpRequest<'auth.ageCheck'> }),
     register: (body: RegisterRequest) =>
       request<AuthResponse>('POST', '/auth/register', { auth: false, body }),
     login: (body: LoginRequest) => request<AuthResponse>('POST', '/auth/login', { auth: false, body }),
     logout: () => request<void>('POST', '/auth/logout'),
     me: () => request<Me>('GET', '/me'),
 
-    oauth: (provider: OAuthProvider, body: { id_token: string; platform: string; age_token?: string }) =>
+    oauth: (provider: OAuthProvider, body: Refine<OpRequest<'auth.oAuth'>, { platform: string; age_token?: string }>) =>
       request<AuthResponse>('POST', `/auth/oauth/${provider}`, { auth: false, body }),
     /** Lien reçu par e-mail : { token }. 422 invalid_token si le lien est expiré. */
-    verifyEmail: (token: string) => request<void>('POST', '/auth/email/verify', { auth: false, body: { token } }),
+    verifyEmail: (token: string) => request<void>('POST', '/auth/email/verify', { auth: false, body: { token } satisfies OpRequest<'emailVerification.verify'> }),
     resendEmail: () => request<void>('POST', '/auth/email/resend'),
     forgotPassword: (email: string) =>
-      request<void>('POST', '/auth/password/forgot', { auth: false, body: { email } }),
+      request<void>('POST', '/auth/password/forgot', { auth: false, body: { email } satisfies OpRequest<'password.forgot'> }),
     resetPassword: (token: string, password: string) =>
-      request<void>('POST', '/auth/password/reset', { auth: false, body: { token, password } }),
+      request<void>('POST', '/auth/password/reset', { auth: false, body: { token, password } satisfies OpRequest<'password.reset'> }),
     sessions: () => request<ListResponse<Session>>('GET', '/auth/sessions'),
     closeSession: (id: string) => request<void>('DELETE', `/auth/sessions/${id}`),
     closeAllSessions: () => request<void>('DELETE', '/auth/sessions'),
@@ -103,7 +105,7 @@ export function createEndpoints(client: ApiClient) {
     pose: () => request<VerificationPose>('GET', '/me/verification/pose'),
     verification: () => request<VerificationOverview>('GET', '/me/verification'),
     startVerification: (selfieMediaId: string) =>
-      request<VerificationStartResponse>('POST', '/me/verification', { body: { selfie_media_id: selfieMediaId } }),
+      request<VerificationStartResponse>('POST', '/me/verification', { body: { selfie_media_id: selfieMediaId } satisfies OpRequest<'verification.store'> }),
     publicProfile: (id: string) => request<PublicProfile>('GET', `/profiles/${id}`),
   };
 
@@ -112,7 +114,7 @@ export function createEndpoints(client: ApiClient) {
       request<Page<PublicProfile>>('GET', '/discover', { query: { ...filters } }),
     /** 402 premium_required (super like), 429 quota_reached. */
     swipe: (targetId: string, action: SwipeAction) =>
-      request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } }),
+      request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } satisfies SwipeRequest }),
     /** Premium uniquement (402 premium_required) ; 409 nothing_to_undo. */
     undoSwipe: () => request<UndoSwipeResult>('POST', '/swipes/undo'),
     matches: () => request<ListResponse<Match>>('GET', '/matches'),
@@ -136,7 +138,7 @@ export function createEndpoints(client: ApiClient) {
     conversations: () => request<ListResponse<Conversation>>('GET', '/conversations'),
     /** 402 credit_required si ni Premium ni crédit « Conversation ». */
     openConversation: (targetId: string) =>
-      request<OpenConversationResponse>('POST', '/conversations', { body: { target_id: targetId } }),
+      request<OpenConversationResponse>('POST', '/conversations', { body: { target_id: targetId } satisfies OpRequest<'conversation.store'> }),
     messages: (conversationId: string, page: PageQuery = {}) =>
       request<Page<Message>>('GET', `/conversations/${conversationId}/messages`, { query: { ...page } }),
     /** Idempotent par client_id : renvoyer le même client_id ne crée pas de doublon. */
