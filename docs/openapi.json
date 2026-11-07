@@ -6550,6 +6550,8 @@
             },
             "post": {
                 "operationId": "verification.store",
+                "description": "Erreurs 422 propres \u00e0 cette route, en plus de la validation du corps (le contrat ne retient qu'une r\u00e9ponse par code\nHTTP) : `invalid_selfie` (selfie absent, d'un autre compte ou mal typ\u00e9), `pose_expired` (consigne expir\u00e9e : recharger\n`GET /me/verification/pose` puis reprendre le selfie) et `selfie_before_pose` (selfie d\u00e9pos\u00e9 avant l'\u00e9mission de la consigne).",
+                "summary": "Envoie une demande de v\u00e9rification de profil",
                 "tags": [
                     "Verification"
                 ],

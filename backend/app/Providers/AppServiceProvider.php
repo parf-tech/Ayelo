@@ -28,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Garde de production (revue CTO n°1) : le mode debug expose traces, variables d'environnement et secrets dans les erreurs.
+        if ($this->app->isProduction() && config('app.debug')) {
+            throw new \RuntimeException('APP_DEBUG doit être false en production (APP_ENV=production).');
+        }
+
         // Contrat OpenAPI : corps de la ré-authentification, que Scramble ne peut pas déduire (validation hors du contrôleur).
         // Scramble est une dépendance de développement : absente de l'image de production (composer --no-dev).
         if (class_exists(Scramble::class)) {

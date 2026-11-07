@@ -26,6 +26,13 @@ class VerificationController extends Controller
         return response()->json(['pose' => $this->challenge($request->user()->id)['pose']]);
     }
 
+    /**
+     * Envoie une demande de vérification de profil
+     *
+     * Erreurs 422 propres à cette route, en plus de la validation du corps (le contrat ne retient qu'une réponse par code
+     * HTTP) : `invalid_selfie` (selfie absent, d'un autre compte ou mal typé), `pose_expired` (consigne expirée : recharger
+     * `GET /me/verification/pose` puis reprendre le selfie) et `selfie_before_pose` (selfie déposé avant l'émission de la consigne).
+     */
     public function store(Request $request): JsonResponse
     {
         $me = $request->user();

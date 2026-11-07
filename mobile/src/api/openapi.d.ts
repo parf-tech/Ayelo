@@ -963,6 +963,12 @@ export interface paths {
         };
         get: operations["verification.show"];
         put?: never;
+        /**
+         * Envoie une demande de vérification de profil
+         * @description Erreurs 422 propres à cette route, en plus de la validation du corps (le contrat ne retient qu'une réponse par code
+         *     HTTP) : `invalid_selfie` (selfie absent, d'un autre compte ou mal typé), `pose_expired` (consigne expirée : recharger
+         *     `GET /me/verification/pose` puis reprendre le selfie) et `selfie_before_pose` (selfie déposé avant l'émission de la consigne).
+         */
         post: operations["verification.store"];
         delete?: never;
         options?: never;

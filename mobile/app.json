@@ -15,7 +15,7 @@
       "en": "./locales/en.json"
     },
     "ios": {
-      "bundleIdentifier": "com.example.ayelo",
+      "bundleIdentifier": "com.hco.ayelo",
       "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
@@ -55,7 +55,7 @@
       }
     },
     "android": {
-      "package": "com.example.ayelo",
+      "package": "com.hco.ayelo",
       "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
