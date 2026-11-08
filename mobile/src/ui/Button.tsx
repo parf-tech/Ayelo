@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -64,7 +64,7 @@ export function Button({
           borderWidth: variant === 'secondary' ? 1.5 : 0,
           backgroundColor,
           borderColor,
-          opacity: pressed && !inactive ? 0.78 : 1,
+          opacity: pressed && !inactive ? stateOpacity.pressed : 1,
         };
         return [base, style];
       }}

@@ -1,26 +1,36 @@
 /*
- * Jetons de design partagés avec l'application mobile.
- * Source de vérité : mobile/src/theme/tokens.ts (couleurs claires et sombres, espacement, rayons, typographie).
- * Spécification : docs/reviews/design-1.md section 8.3. Si tokens.ts change, mettre ce fichier à jour (valeurs recopiées à la main).
- * Le jeton `info` (#1D4ED8 / #60A5FA) vient de la spécification 8.3, il n'existe pas encore dans tokens.ts.
+ * Fichier généré, ne pas modifier.
+ * Source unique : design/tokens.json. Générateur : design/build-tokens.mjs (npm run tokens, depuis mobile/).
+ * Direction active : B (Lagune). Les mêmes jetons génèrent mobile/src/theme/tokens.ts.
  */
 :root {
   color-scheme: light dark;
 
-  --color-bg: #FFFFFF;
-  --color-surface: #F6F4F2;
-  --color-text: #1B1A19;
-  --color-text-muted: #5E5A56;
-  --color-primary: #C2410C;
+  --color-accent: #E3A92B;
+  --color-bg: #FBFAF6;
+  --color-border: #D4DFDB;
+  --color-border-strong: #677C79;
+  --color-danger: #B3261E;
+  --color-disabled-bg: #D4DFDB;
+  --color-disabled-text: #465856;
+  --color-dislike: #B3261E;
+  --color-focus-ring: #0B6468;
+  --color-info: #3446C4;
+  --color-like: #17703B;
+  --color-on-accent: #1A1405;
   --color-on-primary: #FFFFFF;
-  --color-border: #E4E0DC;
-  --color-border-strong: #85807B;
-  --color-danger: #B91C1C;
-  --color-warning: #B45309;
-  --color-success: #15803D;
-  --color-info: #1D4ED8;
-  /* Fond du marqueur « à compléter » : texte --color-text dessus (contraste vérifié >= 7:1). */
+  --color-overlay: #12201F;
+  --color-pass-neutral: #465856;
+  --color-primary: #0B6468;
+  --color-scrim: #12201F80;
+  --color-skeleton: #D4DFDB;
+  --color-success: #17703B;
+  --color-surface: #EDF3F0;
+  --color-text: #12201F;
+  --color-text-muted: #465856;
   --color-todo-bg: #FDE68A;
+  --color-verified: #3446C4;
+  --color-warning: #8A5A00;
 
   --space-0: 0;
   --space-1: 4px;
@@ -31,31 +41,113 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
   --radius-pill: 999px;
+
+  --border-width-hairline: 1px;
+  --border-width-strong: 2px;
 
   --size-target: 44px;
   --size-content-max: 760px; /* pages web : texte long ; l'application utilise 560 */
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --type-title-size: 1.75rem;
+  --type-title-line: 2.125rem;
+  --type-title-weight: 700;
+  --type-h2-size: 1.375rem;
+  --type-h2-line: 1.75rem;
+  --type-h2-weight: 600;
+  --type-h3-size: 1.125rem;
+  --type-h3-line: 1.5rem;
+  --type-h3-weight: 600;
+  --type-body-size: 1rem;
+  --type-body-line: 1.5rem;
+  --type-body-weight: 400;
+  --type-body-small-size: 0.875rem;
+  --type-body-small-line: 1.25rem;
+  --type-body-small-weight: 400;
+  --type-caption-size: 0.8125rem;
+  --type-caption-line: 1.125rem;
+  --type-caption-weight: 400;
+  --type-label-size: 0.875rem;
+  --type-label-line: 1.25rem;
+  --type-label-weight: 500;
+  --type-caption-strong-size: 0.8125rem;
+  --type-caption-strong-line: 1.125rem;
+  --type-caption-strong-weight: 600;
+
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.08);
+  --elevation-2: 0 4px 8px 0 rgb(0 0 0 / 0.12);
+  --elevation-3: 0 8px 16px 0 rgb(0 0 0 / 0.16);
+
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 180ms;
+  --motion-duration-slow: 300ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0, 0, 0, 1);
+  --motion-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  --focus-width: 2px;
+  --focus-offset: 2px;
+
+  --opacity-pressed: 0.8;
+  --opacity-hover: 0.92;
+  --opacity-disabled: 0.4;
+  --opacity-skeleton: 0.45;
+
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+
+  --hit-slop: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #121110;
-    --color-surface: #1E1C1A;
-    --color-text: #F3F1EE;
-    --color-text-muted: #A8A29E;
-    --color-primary: #FB923C;
-    --color-on-primary: #1B1A19;
-    --color-border: #3A3633;
-    --color-border-strong: #7F7973;
-    --color-danger: #F87171;
-    --color-warning: #FBBF24;
-    --color-success: #4ADE80;
-    --color-info: #60A5FA;
+    --color-accent: #F0BE55;
+    --color-bg: #0B1413;
+    --color-border: #243735;
+    --color-border-strong: #7C9692;
+    --color-danger: #FF8A80;
+    --color-disabled-bg: #243735;
+    --color-disabled-text: #9FB6B2;
+    --color-dislike: #FF8A80;
+    --color-focus-ring: #4FC9C4;
+    --color-info: #8FA6FF;
+    --color-like: #5AD98A;
+    --color-on-accent: #1A1405;
+    --color-on-primary: #06201F;
+    --color-overlay: #000000;
+    --color-pass-neutral: #9FB6B2;
+    --color-primary: #4FC9C4;
+    --color-scrim: #00000099;
+    --color-skeleton: #243735;
+    --color-success: #5AD98A;
+    --color-surface: #142120;
+    --color-text: #E9F2F0;
+    --color-text-muted: #9FB6B2;
     --color-todo-bg: #5B3A06;
+    --color-verified: #8FA6FF;
+    --color-warning: #F0BE55;
+  }
+}
+
+/* Mouvement réduit : plus de translation ni d'échelle, fondu seul, durée plafonnée. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 120ms;
+    --motion-duration-base: 120ms;
+    --motion-duration-slow: 120ms;
   }
 }

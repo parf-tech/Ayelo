@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
 
 export type ChoiceCardProps = {
@@ -34,7 +34,7 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? colors.primary : colors.borderStrong,
           backgroundColor: disabled ? colors.disabledBg : colors.surface,
-          opacity: pressed && !disabled ? 0.8 : 1,
+          opacity: pressed && !disabled ? stateOpacity.pressed : 1,
         },
         style,
       ]}

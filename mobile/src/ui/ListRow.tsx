@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
 
 export type ListRowProps = {
@@ -87,7 +87,7 @@ export function ListRow({
       accessibilityLabel={accessibilityLabel ?? (description ? `${label}. ${description}` : label)}
       onPress={onPress}
       style={({ pressed }) => ({
-        opacity: pressed ? 0.7 : 1,
+        opacity: pressed ? stateOpacity.pressed : 1,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
       })}

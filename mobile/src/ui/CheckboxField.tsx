@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
 
 export type CheckboxFieldProps = {
@@ -46,7 +46,7 @@ export function CheckboxField({
           borderWidth: 1,
           borderColor: checked ? colors.primary : colors.borderStrong,
           backgroundColor: colors.surface,
-          opacity: pressed && !disabled ? 0.8 : 1,
+          opacity: pressed && !disabled ? stateOpacity.pressed : 1,
         },
         style,
       ]}

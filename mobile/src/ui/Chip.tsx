@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
 
 export type ChipProps = {
@@ -30,7 +30,7 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
         borderWidth: selected ? 2 : 1,
         borderColor: selected ? colors.primary : colors.borderStrong,
         backgroundColor: colors.surface,
-        opacity: pressed ? 0.8 : 1,
+        opacity: pressed ? stateOpacity.pressed : 1,
       })}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>

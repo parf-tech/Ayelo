@@ -5,10 +5,14 @@ on:
   push:
     paths:
       - 'mobile/**'
+      - 'design/**'
+      - 'web/assets/tokens.css'
       - '.github/workflows/mobile.yml'
   pull_request:
     paths:
       - 'mobile/**'
+      - 'design/**'
+      - 'web/assets/tokens.css'
       - '.github/workflows/mobile.yml'
 
 # Jeton en lecture seule (pentest P-15) : aucun job n'écrit dans le dépôt.
@@ -30,6 +34,8 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - name: Install
         run: npm ci
+      - name: Jetons de design (design/tokens.json et fichiers générés)
+        run: npm run tokens:check
       - name: Typecheck
         run: npm run typecheck
       - name: Lint

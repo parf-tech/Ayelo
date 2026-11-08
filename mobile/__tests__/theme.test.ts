@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { colors, MIN_TARGET } from '../src/theme/tokens';
+import { colors, direction, MIN_TARGET, stateOpacity } from '../src/theme/tokens';
 
 function channel(v: number): number {
   const s = v / 255;
@@ -36,6 +36,11 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
     ['verified', 'surface'],
     ['warning', 'surface'],
     ['disabledText', 'disabledBg'],
+    ['info', 'bg'],
+    ['info', 'surface'],
+    ['passNeutral', 'bg'],
+    ['passNeutral', 'surface'],
+    ['onAccent', 'accent'],
   ];
   for (const scheme of ['light', 'dark'] as const) {
     for (const [fg, bg] of pairs) {
@@ -58,11 +63,29 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
     });
   }
 
-  it('lot 1 : like et dislike clairs corrigés (#137538, #C81E1E) ; le sombre est inchangé', () => {
-    expect(colors.light.like).toBe('#137538');
-    expect(colors.light.dislike).toBe('#C81E1E');
-    expect(colors.dark.like).toBe('#4ADE80');
-    expect(colors.dark.dislike).toBe('#F87171');
+  it('phase 2 : direction B (Lagune) active ; like, dislike, primary et verified suivent ses valeurs', () => {
+    expect(direction.id).toBe('B');
+    expect(colors.light.like).toBe('#17703B');
+    expect(colors.light.dislike).toBe('#B3261E');
+    expect(colors.dark.like).toBe('#5AD98A');
+    expect(colors.dark.dislike).toBe('#FF8A80');
+    expect(colors.light.primary).toBe('#0B6468');
+    expect(colors.dark.primary).toBe('#4FC9C4');
+    expect(colors.light.verified).toBe('#3446C4');
+  });
+
+  // WCAG 1.4.11 : anneau de focus et bouton « Passer » neutre.
+  for (const scheme of ['light', 'dark'] as const) {
+    for (const bg of ['bg', 'surface'] as const) {
+      it(`${scheme} : focusRing sur ${bg} >= 3 (non textuel)`, () => {
+        expect(contrast(colors[scheme].focusRing, colors[scheme][bg])).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+
+  it("l'opacité d'un composant enfoncé laisse le contenu lisible", () => {
+    expect(stateOpacity.pressed).toBeGreaterThanOrEqual(0.7);
+    expect(stateOpacity.pressed).toBeLessThan(1);
   });
 
   it('clair et sombre exposent les mêmes tokens', () => {
