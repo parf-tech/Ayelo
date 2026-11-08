@@ -117,7 +117,7 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
             {profile.display_name}, {profile.age}
           </Text>
           {profile.verified ? (
-            <Text variant="caption" tone="primary" style={{ fontWeight: '700' }}>
+            <Text variant="caption" tone="verified" style={{ fontWeight: '700' }}>
               ✓ {t('discover.verified')}
             </Text>
           ) : null}

@@ -19,6 +19,8 @@ export const en: Record<TranslationKey, string> = {
 
   'ui.password.show': 'Show password',
   'ui.password.hide': 'Hide password',
+  'ui.password.showShort': 'Show',
+  'ui.password.hideShort': 'Hide',
   'ui.toast.dismiss': 'Dismiss notification',
   'ui.banner.dismiss': 'Dismiss message',
 
@@ -67,7 +69,7 @@ export const en: Record<TranslationKey, string> = {
   'month.12': 'December',
 
   'ageRefused.title': 'Sign-up unavailable',
-  'ageRefused.body': 'We are unable to create an account at this time.',
+  'ageRefused.body': 'We are unable to create an account.',
 
   'auth.login.title': 'Welcome back',
   'auth.login.subtitle': 'Sign in to your account.',

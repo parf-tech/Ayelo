@@ -12,7 +12,7 @@ export const callsEn = {
   'call.speaker': 'Speaker',
   'call.report': 'Report',
   'call.media.unavailable':
-    'Audio and video are not available in this version (prototype D0 required). Only the ringing is transmitted.',
+    'Sound and video are not available for this call: only the ringing is transmitted.',
   'call.end.ended': 'Call ended',
   'call.end.declined': 'Call declined',
   'call.end.missed': 'Missed call',

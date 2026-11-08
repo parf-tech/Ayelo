@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { TextInputInstance, View } from 'react-native';
 import { isApiError } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
 import { isAgeTokenValid, resolveSignupScreen, SIGNUP_ROUTES } from '../../flow/signupMachine';
@@ -9,6 +9,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
+import { passwordToggleLabels } from '../common/passwordToggle';
 import { BackButton } from '../common/BackButton';
 import { validateEmail, validatePassword } from '../validation';
 
@@ -35,6 +36,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [banner, setBanner] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   if (isRegister && !access.allowed) return <Redirect href={SIGNUP_ROUTES[access.redirectTo] as never} />;
 
@@ -181,9 +183,13 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           autoCorrect={false}
           autoComplete="email"
           textContentType="emailAddress"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => passwordRef.current?.focus()}
         />
         <TextField
           testID="auth-password"
+          inputRef={passwordRef}
           label={t('auth.password')}
           value={password}
           onChangeText={setPassword}
@@ -191,11 +197,15 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           helper={isRegister ? t('auth.password.hint') : undefined}
           disabled={loading}
           secureTextEntry
-          passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+          passwordToggleLabels={passwordToggleLabels(t)}
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete={isRegister ? 'new-password' : 'current-password'}
           textContentType={isRegister ? 'newPassword' : 'password'}
+          returnKeyType="go"
+          onSubmitEditing={() => {
+            if (!loading) void submit();
+          }}
         />
       </View>
     </ScreenContainer>

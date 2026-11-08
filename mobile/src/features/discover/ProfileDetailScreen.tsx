@@ -8,7 +8,7 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { MAX_CONTENT_WIDTH, useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ScreenContainer, Text, useToast } from '../../ui';
+import { AsyncView, Banner, Button, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { countryLabel } from '../onboarding/countries';
 import { performSwipe, primaryPhotoUrl, readablePhotos } from './swipe';
@@ -205,9 +205,7 @@ export function ProfileDetailScreen() {
               </View>
             )}
             {data.verified ? (
-              <Text variant="caption" tone="primary" style={{ fontWeight: '700' }}>
-                ✓ {t('detail.verified')}
-              </Text>
+              <VerifiedBadge testID="detail-verified" label={t('detail.verified')} explanation={t('verified.explain')} hint={t('verified.hint')} />
             ) : null}
             <Text variant="body">{t('detail.lives', { place })}</Text>
             <Text variant="body" tone="textMuted">

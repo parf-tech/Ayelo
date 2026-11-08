@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Skeleton, Text, TextField } from '../../ui';
+import { passwordToggleLabels } from '../common/passwordToggle';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { openExternal } from '../legal/links';
 import { SocialReauth } from './SocialReauth';
@@ -108,7 +109,7 @@ export function ExportScreen() {
             error={passwordError}
             disabled={loading}
             secureTextEntry
-            passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+            passwordToggleLabels={passwordToggleLabels(t)}
             autoCapitalize="none"
             autoComplete="current-password"
             containerStyle={{ marginBottom: space[3] }}

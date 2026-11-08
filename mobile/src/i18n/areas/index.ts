@@ -1,3 +1,5 @@
+import { birthdateEn } from './birthdate.en';
+import { birthdateFr } from './birthdate.fr';
 import { callsEn } from './calls.en';
 import { callsFr } from './calls.fr';
 import { commonEn } from './common.en';
@@ -18,6 +20,7 @@ import { verificationFr } from './verification.fr';
 /** Textes des écrans fonctionnels, regroupés par domaine. fr.ts et en.ts les assemblent. */
 export const frAreas = {
   ...commonFr,
+  ...birthdateFr,
   ...profileFr,
   ...discoverFr,
   ...messagesFr,
@@ -28,6 +31,7 @@ export const frAreas = {
 } as const;
 export const enAreas = {
   ...commonEn,
+  ...birthdateEn,
   ...profileEn,
   ...discoverEn,
   ...messagesEn,

@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, Pressable, TextInput, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
+import { CALLS_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useRealtime } from '../../realtime';
@@ -34,7 +35,8 @@ export function ConversationScreen() {
   const peerName = known?.profile?.display_name ?? param(params.name);
   const peerId = known?.profile?.user_id ?? param(params.peerId);
   const peerPhoto = param(params.photo) || null;
-  const canCall = known?.unlocked_by === 'match';
+  const isMatch = known?.unlocked_by === 'match';
+  const canCall = CALLS_ENABLED && isMatch;
 
   const thread = useThread(conversationId);
   const [draft, setDraft] = useState('');
@@ -217,31 +219,54 @@ export function ConversationScreen() {
         )
       }
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: space[2] }}>
-        <Button testID="back-button" variant="ghost" label={t('common.back')} onPress={() => (router.canGoBack() ? router.back() : router.replace('/messages' as never))} />
-        <Avatar uri={peerPhoto} name={peerName || '?'} size={36} />
-        <Text variant="h2" header numberOfLines={1} style={{ flex: 1 }}>
-          {peerName || t('conversation.title')}
-        </Text>
-        {canCall ? (
-          <>
+      {/* En-tête sur deux lignes : actions (retour, appels, menu) puis identité. Le nom peut passer sur deux lignes
+          sans jamais repousser le menu hors de l'écran (320 pt, texte à 200 %). */}
+      <View testID="conversation-header" style={{ marginBottom: space[2] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[1] }}>
+          <Button
+            testID="back-button"
+            variant="ghost"
+            label={t('common.back')}
+            style={{ paddingHorizontal: space[2], flexShrink: 1 }}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/messages' as never))}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
+            {canCall ? (
+              <>
+                <Button
+                  testID="call-audio"
+                  variant="ghost"
+                  label="☎"
+                  style={{ paddingHorizontal: space[2] }}
+                  accessibilityLabel={t('conversation.audioCall')}
+                  onPress={() => void calls.startCall({ conversationId, kind: 'audio', peerId: peerId || null, peerName, peerPhoto })}
+                />
+                <Button
+                  testID="call-video"
+                  variant="ghost"
+                  label="▶"
+                  style={{ paddingHorizontal: space[2] }}
+                  accessibilityLabel={t('conversation.videoCall')}
+                  onPress={() => void calls.startCall({ conversationId, kind: 'video', peerId: peerId || null, peerName, peerPhoto })}
+                />
+              </>
+            ) : null}
             <Button
-              testID="call-audio"
+              testID="conversation-menu"
               variant="ghost"
-              label="☎"
-              accessibilityLabel={t('conversation.audioCall')}
-              onPress={() => void calls.startCall({ conversationId, kind: 'audio', peerId: peerId || null, peerName, peerPhoto })}
+              label="⋯"
+              style={{ paddingHorizontal: space[2] }}
+              accessibilityLabel={t('conversation.menu')}
+              onPress={() => setMenuOpen((open) => !open)}
             />
-            <Button
-              testID="call-video"
-              variant="ghost"
-              label="▶"
-              accessibilityLabel={t('conversation.videoCall')}
-              onPress={() => void calls.startCall({ conversationId, kind: 'video', peerId: peerId || null, peerName, peerPhoto })}
-            />
-          </>
-        ) : null}
-        <Button testID="conversation-menu" variant="ghost" label="⋯" accessibilityLabel={t('conversation.menu')} onPress={() => setMenuOpen((open) => !open)} />
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1] }}>
+          <Avatar uri={peerPhoto} name={peerName || '?'} size={36} />
+          <Text variant="h2" header numberOfLines={2} style={{ flex: 1, flexShrink: 1 }}>
+            {peerName || t('conversation.title')}
+          </Text>
+        </View>
       </View>
 
       {menuOpen ? (
@@ -265,7 +290,7 @@ export function ConversationScreen() {
             <>
               <Button testID="conversation-report" variant="ghost" label={t('conversation.report')} onPress={report} disabled={!peerId} />
               <Button testID="conversation-block" variant="ghost" label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
-              {canCall ? <Button testID="conversation-unmatch" variant="ghost" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
+              {isMatch ? <Button testID="conversation-unmatch" variant="ghost" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
               <Button
                 testID="conversation-hide"
                 variant="ghost"

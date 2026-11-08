@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { TextInputInstance, View } from 'react-native';
 import { isApiError } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
+import { passwordToggleLabels } from '../common/passwordToggle';
 import { validatePassword } from '../validation';
 
 /** S61 (2/2) : nouveau mot de passe (lien ayelo://reset-password?token=… ou code collé à la main). */
@@ -15,6 +16,8 @@ export function ResetPasswordScreen() {
   const { t } = useI18n();
   const { space } = useTheme();
   const { api } = useAuth();
+  const passwordRef = useRef<TextInputInstance>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
   const params = useLocalSearchParams<{ token?: string }>();
   const [token, setToken] = useState(typeof params.token === 'string' ? params.token : '');
   const [password, setPassword] = useState('');
@@ -82,9 +85,13 @@ export function ResetPasswordScreen() {
               disabled={loading}
               autoCapitalize="none"
               autoCorrect={false}
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
             <TextField
               testID="reset-password"
+              inputRef={passwordRef}
               label={t('reset.password')}
               value={password}
               onChangeText={setPassword}
@@ -92,21 +99,29 @@ export function ResetPasswordScreen() {
               helper={t('auth.password.hint')}
               disabled={loading}
               secureTextEntry
-              passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+              passwordToggleLabels={passwordToggleLabels(t)}
               autoCapitalize="none"
               autoComplete="new-password"
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => confirmRef.current?.focus()}
             />
             <TextField
               testID="reset-confirm"
+              inputRef={confirmRef}
               label={t('reset.confirm')}
               value={confirm}
               onChangeText={setConfirm}
               error={errors.confirm}
               disabled={loading}
               secureTextEntry
-              passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+              passwordToggleLabels={passwordToggleLabels(t)}
               autoCapitalize="none"
               autoComplete="new-password"
+              returnKeyType="go"
+              onSubmitEditing={() => {
+                if (!loading) void submit();
+              }}
             />
           </View>
         </>

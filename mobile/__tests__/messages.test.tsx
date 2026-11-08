@@ -1,5 +1,6 @@
 import { act, screen, userEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { Dimensions, ScaledSize } from 'react-native';
 import { ConversationScreen } from '../src/features/messages/ConversationScreen';
 import { MessagesListScreen, previewText } from '../src/features/messages/MessagesListScreen';
 import {
@@ -25,6 +26,14 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams.current,
 }));
 
+// Indicateur de fonction des appels : modifiable par test (décision de conception 1 : masqués par défaut).
+const mockFeatures = { callsEnabled: false };
+jest.mock('../src/config/features', () => ({
+  get CALLS_ENABLED() {
+    return mockFeatures.callsEnabled;
+  },
+}));
+
 const ME = meFixture();
 const PEER = publicProfile('u2', 'Awa');
 const user = () => userEvent.setup();
@@ -35,6 +44,7 @@ beforeEach(() => {
   resetDeviceIdCacheForTests();
   resetRouterMocks();
   mockParams.current = { id: 'c1', name: 'Awa', peerId: 'u2' };
+  mockFeatures.callsEnabled = false;
 });
 
 afterEach(async () => {
@@ -354,6 +364,80 @@ describe('S14 Conversation', () => {
     });
   });
 });
+
+describe('S14 Conversation : en-tête et boutons d\'appel', () => {
+  const routes = () =>
+    ({
+      'GET /me': [200, ME],
+      'GET /conversations': [200, { data: [conversation('c1', PEER)] }],
+      'GET /conversations/c1/messages': [200, { data: [], next_cursor: null }],
+    }) as never;
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it('appels masqués tant que le moteur média n\'existe pas (CALLS_ENABLED = false), même pour un match', async () => {
+    installFakeApi(routes());
+    await renderShell(<ConversationScreen />, { conversations: true });
+    await screen.findByTestId('conversation-menu');
+    expect(screen.queryByTestId('call-audio')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('call-video')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('Appel audio')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('Appel vidéo')).not.toBeOnTheScreen();
+  });
+
+  it('le menu garde « Rompre le match » même quand les appels sont masqués', async () => {
+    installFakeApi(routes());
+    await renderShell(<ConversationScreen />, { conversations: true });
+    await user().press(await screen.findByTestId('conversation-menu'));
+    expect(screen.getByTestId('conversation-unmatch')).toBeOnTheScreen();
+    expect(screen.getByTestId('conversation-report')).toBeOnTheScreen();
+    expect(screen.getByTestId('conversation-block')).toBeOnTheScreen();
+  });
+
+  it('indicateur activé : les boutons d\'appel réapparaissent pour un match (le code des appels est conservé)', async () => {
+    mockFeatures.callsEnabled = true;
+    installFakeApi(routes());
+    await renderShell(<ConversationScreen />, { conversations: true });
+    expect(await screen.findByTestId('call-audio')).toBeOnTheScreen();
+    expect(screen.getByTestId('call-video')).toBeOnTheScreen();
+  });
+
+  it('indicateur activé mais conversation non issue d\'un match : toujours pas d\'appel', async () => {
+    mockFeatures.callsEnabled = true;
+    installFakeApi({
+      ...(routes() as object),
+      'GET /conversations': [200, { data: [conversation('c1', PEER, { unlocked_by: 'credit' })] }],
+    } as never);
+    await renderShell(<ConversationScreen />, { conversations: true });
+    await screen.findByTestId('conversation-menu');
+    expect(screen.queryByTestId('call-audio')).not.toBeOnTheScreen();
+  });
+
+  it('320 pt, texte à 200 % : nom long sur deux lignes max, menu et retour sur une ligne d\'actions séparée', async () => {
+    const size: ScaledSize = { width: 320, height: 640, scale: 2, fontScale: 2 };
+    jest.spyOn(Dimensions, 'get').mockImplementation(() => size);
+    const longName = 'Marie-Antoinette de la Fontaine-Beauséjour';
+    installFakeApi({
+      ...(routes() as object),
+      'GET /conversations': [200, { data: [conversation('c1', publicProfile('u2', longName))] }],
+    } as never);
+    await renderShell(<ConversationScreen />, { conversations: true });
+    const menu = await screen.findByTestId('conversation-menu');
+    const name = screen.getByRole('header', { name: longName });
+    expect(name.props.numberOfLines).toBe(2);
+    expect(screen.getByTestId('conversation-header')).toBeOnTheScreen();
+    expect(screen.getByTestId('back-button')).toBeOnTheScreen();
+    // Le menu n'est pas dans la même ligne que le nom : il ne peut pas être repoussé hors de l'écran.
+    expect(menu.parent).not.toBe(name.parent);
+    expect(Number(flatMinHeight(menu))).toBeGreaterThanOrEqual(44);
+  });
+});
+
+function flatMinHeight(node: { props: { style?: unknown } }): number {
+  const style = node.props.style;
+  const resolved = typeof style === 'function' ? (style as (s: { pressed: boolean }) => unknown)({ pressed: false }) : style;
+  return Object.assign({}, ...[resolved].flat(Infinity).filter(Boolean)).minHeight as number;
+}
 
 describe('temps réel : abonnements', () => {
   it('s\'abonne au canal privé de la conversation et se désabonne au démontage', async () => {

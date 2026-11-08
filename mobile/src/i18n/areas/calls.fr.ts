@@ -12,7 +12,7 @@ export const callsFr = {
   'call.speaker': 'Haut-parleur',
   'call.report': 'Signaler',
   'call.media.unavailable':
-    'L’audio et la vidéo ne sont pas disponibles dans cette version (prototype D0 requis). Seule la sonnerie est transmise.',
+    'Le son et l’image ne sont pas disponibles pour cet appel : seule la sonnerie est transmise.',
   'call.end.ended': 'Appel terminé',
   'call.end.declined': 'Appel refusé',
   'call.end.missed': 'Appel manqué',

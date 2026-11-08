@@ -18,6 +18,8 @@ export const fr = {
 
   'ui.password.show': 'Afficher le mot de passe',
   'ui.password.hide': 'Masquer le mot de passe',
+  'ui.password.showShort': 'Afficher',
+  'ui.password.hideShort': 'Masquer',
   'ui.toast.dismiss': 'Fermer la notification',
   'ui.banner.dismiss': 'Fermer le message',
 
@@ -66,7 +68,7 @@ export const fr = {
   'month.12': 'décembre',
 
   'ageRefused.title': 'Inscription impossible',
-  'ageRefused.body': 'Nous ne pouvons pas créer de compte pour le moment.',
+  'ageRefused.body': 'Nous ne pouvons pas créer de compte.',
 
   'auth.login.title': 'Bon retour',
   'auth.login.subtitle': 'Connectez-vous à votre compte.',

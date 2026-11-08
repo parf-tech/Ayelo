@@ -45,7 +45,7 @@ export const messagesEn = {
   'conversation.media.image': 'Picture received',
   'conversation.media.video': 'Video received',
   'conversation.media.voice': 'Voice message received',
-  'conversation.media.unsupported': 'Attachments are not supported yet in this version.',
+  'conversation.media.unsupported': 'Attachments are not supported.',
   'conversation.missedCall.audio': 'Missed audio call',
   'conversation.missedCall.video': 'Missed video call',
   'conversation.safety.title': 'Careful: request for money',

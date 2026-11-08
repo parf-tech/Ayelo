@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, StyleProp, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, TextInput, TextInputInstance, TextInputProps, View, ViewStyle } from 'react-native';
 import { MIN_TARGET, useTheme } from '../theme';
 import { Text } from './Text';
 
@@ -11,8 +11,15 @@ export type TextFieldProps = Omit<TextInputProps, 'style' | 'accessibilityLabel'
   helper?: string;
   disabled?: boolean;
   multiline?: boolean;
-  /** Pour un champ mot de passe : textes des boutons afficher / masquer. */
-  passwordToggleLabels?: { show: string; hide: string };
+  /** Marque le champ en erreur (bordure et libellé) sans afficher de message : le message est porté par le parent. */
+  invalid?: boolean;
+  /**
+   * Pour un champ mot de passe : libellés accessibles complets (`show`, `hide`) et libellés visibles courts
+   * (`showShort`, `hideShort`, par défaut les complets) du bouton afficher / masquer.
+   */
+  passwordToggleLabels?: { show: string; hide: string; showShort?: string; hideShort?: string };
+  /** Référence du champ natif, pour enchaîner le focus d'un champ au suivant. */
+  inputRef?: React.Ref<TextInputInstance>;
   testID?: string;
   containerStyle?: StyleProp<ViewStyle>;
 };
@@ -29,8 +36,10 @@ export function TextField({
   helper,
   disabled = false,
   multiline = false,
+  invalid = false,
   secureTextEntry,
   passwordToggleLabels,
+  inputRef,
   testID,
   containerStyle,
   onFocus,
@@ -42,12 +51,13 @@ export function TextField({
   const [revealed, setRevealed] = useState(false);
   const isPassword = Boolean(secureTextEntry);
   const description = error ?? helper;
+  const hasError = Boolean(error) || invalid;
 
-  const borderColor = error ? colors.danger : focused ? colors.primary : colors.borderStrong;
+  const borderColor = hasError ? colors.danger : focused ? colors.primary : colors.borderStrong;
 
   return (
     <View style={containerStyle}>
-      <Text variant="caption" tone={error ? 'danger' : 'textMuted'} style={{ marginBottom: space[1], fontWeight: '600' }}>
+      <Text variant="caption" tone={hasError ? 'danger' : 'textMuted'} style={{ marginBottom: space[1], fontWeight: '600' }}>
         {label}
       </Text>
       <View
@@ -56,13 +66,14 @@ export function TextField({
           alignItems: multiline ? 'flex-start' : 'center',
           minHeight: MIN_TARGET + 4,
           borderRadius: radius.md,
-          borderWidth: focused || error ? 2 : 1,
+          borderWidth: focused || hasError ? 2 : 1,
           borderColor,
           backgroundColor: disabled ? colors.disabledBg : colors.surface,
           paddingHorizontal: space[3],
         }}
       >
         <TextInput
+          ref={inputRef}
           testID={testID}
           accessibilityLabel={label}
           accessibilityHint={description}
@@ -96,12 +107,15 @@ export function TextField({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={revealed ? passwordToggleLabels.hide : passwordToggleLabels.show}
+            accessibilityState={{ disabled, selected: revealed }}
             onPress={() => setRevealed((r) => !r)}
             disabled={disabled}
             style={{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, alignItems: 'center', justifyContent: 'center' }}
           >
             <Text variant="caption" tone="primary" style={{ fontWeight: '600' }}>
-              {revealed ? passwordToggleLabels.hide : passwordToggleLabels.show}
+              {revealed
+                ? (passwordToggleLabels.hideShort ?? passwordToggleLabels.hide)
+                : (passwordToggleLabels.showShort ?? passwordToggleLabels.show)}
             </Text>
           </Pressable>
         ) : null}

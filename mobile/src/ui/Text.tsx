@@ -6,7 +6,7 @@ import type { ColorTokens } from '../theme/tokens';
 export type TextVariant = 'title' | 'h2' | 'body' | 'bodySmall' | 'caption';
 export type TextTone = keyof Pick<
   ColorTokens,
-  'text' | 'textMuted' | 'primary' | 'danger' | 'success' | 'warning' | 'onPrimary'
+  'text' | 'textMuted' | 'primary' | 'danger' | 'success' | 'warning' | 'onPrimary' | 'verified'
 >;
 
 export type TextProps = RNTextProps & {

@@ -1,4 +1,4 @@
-import { act, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, screen, userEvent } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
 import { Linking } from 'react-native';
@@ -167,11 +167,11 @@ describe('S63 Consentements', () => {
 });
 
 describe('S68 Date de naissance', () => {
-  async function pickDate(day: number, month: string, year: number) {
+  async function enterDate(day: string, month: string, year: string) {
     const u = user();
-    await u.press(screen.getByLabelText(`Jour ${day}`));
-    await u.press(screen.getByLabelText(`Mois ${month}`));
-    await u.press(screen.getByLabelText(`Année ${year}`));
+    await u.type(screen.getByLabelText('Jour'), day);
+    await u.type(screen.getByLabelText('Mois'), month);
+    await u.type(screen.getByLabelText('Année'), year);
   }
 
   it('première étape du parcours : accessible sans consentements, sans redirection', async () => {
@@ -183,14 +183,73 @@ describe('S68 Date de naissance', () => {
   it('« Continuer » désactivé tant que la date est incomplète', async () => {
     await renderApp(<BirthdateScreen />, atBirthdate);
     expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
-    await user().press(screen.getByLabelText('Jour 7'));
+    await user().type(screen.getByLabelText('Jour'), '07');
     expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
+    await user().type(screen.getByLabelText('Mois'), '03');
+    await user().type(screen.getByLabelText('Année'), '199');
+    expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
+    await user().type(screen.getByLabelText('Année'), '0');
+    expect(screen.getByTestId('birthdate-continue')).toBeEnabled();
+  });
+
+  it('trois champs numériques JJ / MM / AAAA : clavier numérique, longueurs 2 / 2 / 4, libellés Jour, Mois, Année', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    expect(screen.getByLabelText('Jour').props).toMatchObject({ keyboardType: 'number-pad', maxLength: 2, returnKeyType: 'next', placeholder: 'JJ' });
+    expect(screen.getByLabelText('Mois').props).toMatchObject({ keyboardType: 'number-pad', maxLength: 2, returnKeyType: 'next', placeholder: 'MM' });
+    expect(screen.getByLabelText('Année').props).toMatchObject({ keyboardType: 'number-pad', maxLength: 4, returnKeyType: 'done', placeholder: 'AAAA' });
+  });
+
+  it('ne garde que les chiffres de la saisie', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    await user().type(screen.getByLabelText('Jour'), '0a7');
+    expect(screen.getByLabelText('Jour').props.value).toBe('07');
+  });
+
+  it('messages précis : jour hors plage, mois hors plage, année trop ancienne, date future', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    const u = user();
+    await u.type(screen.getByLabelText('Jour'), '32');
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('Le jour doit être compris entre 1 et 31.');
+    await u.clear(screen.getByLabelText('Jour'));
+    await u.type(screen.getByLabelText('Jour'), '15');
+    await u.type(screen.getByLabelText('Mois'), '13');
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('Le mois doit être compris entre 1 et 12.');
+    await u.clear(screen.getByLabelText('Mois'));
+    await u.type(screen.getByLabelText('Mois'), '06');
+    await u.type(screen.getByLabelText('Année'), '1850');
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('L’année doit comporter 4 chiffres et ne peut pas être antérieure à 1900.');
+    await u.clear(screen.getByLabelText('Année'));
+    await u.type(screen.getByLabelText('Année'), String(new Date().getFullYear() + 1));
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('La date doit être dans le passé.');
+    expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('saisie incomplète : message seulement après avoir quitté le champ année, jamais pendant la frappe', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    const u = user();
+    await u.type(screen.getByLabelText('Jour'), '07');
+    await u.type(screen.getByLabelText('Mois'), '03');
+    expect(screen.queryByTestId('birthdate-error')).not.toBeOnTheScreen();
+    await u.type(screen.getByLabelText('Année'), '19', { skipBlur: true });
+    expect(screen.queryByTestId('birthdate-error')).not.toBeOnTheScreen();
+    await fireEvent(screen.getByLabelText('Année'), 'blur');
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('Saisissez le jour, le mois et l’année de votre naissance.');
+  });
+
+  it('en anglais : libellés, repères et messages traduits', async () => {
+    await renderApp(<BirthdateScreen />, atBirthdate, 'en');
+    expect(screen.getByLabelText('Day').props.placeholder).toBe('DD');
+    expect(screen.getByLabelText('Month')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Year').props.placeholder).toBe('YYYY');
+    await user().type(screen.getByLabelText('Day'), '45');
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent('The day must be between 1 and 31.');
   });
 
   it('majeur : appelle age-check avec X-Device-Id puis passe aux consentements (S63)', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { age_token: 'AGE', expires_in: 600 }));
     await renderApp(<BirthdateScreen />, atBirthdate);
-    await pickDate(7, 'mars', 1990);
+    await enterDate('07', '03', '1990');
     await user().press(screen.getByTestId('birthdate-continue'));
 
     const { url, headers, body } = lastRequest();
@@ -206,7 +265,7 @@ describe('S68 Date de naissance', () => {
   it('jeton expiré en cours de parcours : consentements déjà donnés, la nouvelle date mène directement à S02', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { age_token: 'AGE2', expires_in: 600 }));
     await renderApp(<BirthdateScreen />, atBirthdateWithConsents);
-    await pickDate(7, 'mars', 1990);
+    await enterDate('07', '03', '1990');
     await user().press(screen.getByTestId('birthdate-continue'));
     expect(probe.flow()).toBe('account');
     expect(router.push).toHaveBeenCalledWith('/signup/account');
@@ -218,7 +277,7 @@ describe('S68 Date de naissance', () => {
     );
     const year = new Date().getFullYear() - 10;
     await renderApp(<BirthdateScreen />, atBirthdate);
-    await pickDate(1, 'janvier', year);
+    await enterDate('01', '01', String(year));
     await user().press(screen.getByTestId('birthdate-continue'));
 
     expect(lastRequest().body).toEqual({ birthdate: `${year}-01-01` });
@@ -227,12 +286,22 @@ describe('S68 Date de naissance', () => {
     expect(router.push).not.toHaveBeenCalledWith('/signup/account');
   });
 
-  it('date inexistante (31 février) : erreur locale, aucun appel réseau', async () => {
+  it('date inexistante (31 février) : erreur locale précise, Continuer désactivé, aucun appel réseau', async () => {
     await renderApp(<BirthdateScreen />, atBirthdate);
-    await pickDate(31, 'février', 1990);
-    await user().press(screen.getByTestId('birthdate-continue'));
+    await enterDate('31', '02', '1990');
     expect(screen.getByText("Cette date n'existe pas.")).toBeOnTheScreen();
+    expect(screen.getByTestId('birthdate-continue')).toBeDisabled();
+    await user().press(screen.getByTestId('birthdate-continue'));
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejet de validation côté serveur : « Cette date n\'existe pas. » et on reste sur S68', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(422, { error: { code: 'validation_failed', message: 'x', details: {} } }));
+    await renderApp(<BirthdateScreen />, atBirthdate);
+    await enterDate('07', '03', '1990');
+    await user().press(screen.getByTestId('birthdate-continue'));
+    expect(screen.getByTestId('birthdate-error')).toHaveTextContent("Cette date n'existe pas.");
+    expect(probe.flow()).toBe('birthdate');
   });
 
   it('429 : bannière avec délai, on reste sur S68', async () => {
@@ -240,7 +309,7 @@ describe('S68 Date de naissance', () => {
       jsonResponse(429, { error: { code: 'rate_limited', message: 'x' } }, { 'Retry-After': '30' }),
     );
     await renderApp(<BirthdateScreen />, atBirthdate);
-    await pickDate(7, 'mars', 1990);
+    await enterDate('07', '03', '1990');
     await user().press(screen.getByTestId('birthdate-continue'));
     expect(screen.getByText('Trop de tentatives. Réessayez dans 30 secondes.')).toBeOnTheScreen();
     expect(probe.flow()).toBe('birthdate');
@@ -249,7 +318,7 @@ describe('S68 Date de naissance', () => {
   it('panne réseau : bannière avec « Réessayer »', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
     await renderApp(<BirthdateScreen />, atBirthdate);
-    await pickDate(7, 'mars', 1990);
+    await enterDate('07', '03', '1990');
     await user().press(screen.getByTestId('birthdate-continue'));
     expect(screen.getByText('Connexion impossible. Vérifiez votre réseau et réessayez.')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeOnTheScreen();
@@ -260,7 +329,7 @@ describe('S64 Refus d\'âge', () => {
   it('message neutre, sans âge ni raison, sans retour vers la saisie', async () => {
     await renderApp(<AgeRefusedScreen />, refused);
     expect(screen.getByText('Inscription impossible')).toBeOnTheScreen();
-    expect(screen.getByText('Nous ne pouvons pas créer de compte pour le moment.')).toBeOnTheScreen();
+    expect(screen.getByText('Nous ne pouvons pas créer de compte.')).toBeOnTheScreen();
     expect(screen.queryByText(/18|ans|âge|mineur|majeur/i)).not.toBeOnTheScreen();
     expect(screen.queryByTestId('back-button')).not.toBeOnTheScreen();
     expect(screen.getAllByRole('button')).toHaveLength(1);

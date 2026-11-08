@@ -1,8 +1,11 @@
 export const verificationEn = {
   'error.invalid_selfie': 'This selfie could not be used. Take a new one.',
 
+  'verified.explain': 'This badge confirms that your selfie matches your photos. It is not a guarantee of identity.',
+  'verified.hint': 'Tap to understand what this badge means.',
+
   'verify.title': 'Verify my profile',
-  'verify.subtitle': 'A selfie that copies the requested pose proves you are the person in the photos. The badge appears after the team reviews it.',
+  'verify.subtitle': 'This badge confirms that your selfie matches your photos. It is not a guarantee of identity. It appears after the team reviews it.',
   'verify.pose': 'Requested pose',
   'verify.pose.hint': 'Take a selfie copying exactly this pose: {pose}.',
   'verify.consent.label': 'I agree to my selfie being processed to verify my profile',

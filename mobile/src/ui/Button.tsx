@@ -20,7 +20,10 @@ export type ButtonProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/** Bouton : primary, secondary, ghost, danger ; états default, pressed, disabled, loading. Cible >= 44 pt. */
+/**
+ * Bouton : primary, secondary, ghost, danger ; états default, pressed, disabled, loading. Cible >= 44 pt.
+ * Le libellé n'est jamais tronqué : il passe à la ligne quand la police est agrandie (200 %) ou l'écran étroit (320 pt).
+ */
 export function Button({
   label,
   onPress,
@@ -79,8 +82,9 @@ export function Button({
           style={{
             color: disabled ? colors.disabledText : paletteFor(variant, colors).fg,
             fontWeight: '600',
+            flexShrink: 1,
+            textAlign: 'center',
           }}
-          numberOfLines={2}
         >
           {label}
         </Text>
@@ -104,5 +108,5 @@ function paletteFor(variant: ButtonVariant, colors: ReturnType<typeof useTheme>[
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexShrink: 1, maxWidth: '100%' },
 });

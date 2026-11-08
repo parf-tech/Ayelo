@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import { MIN_TARGET, useTheme } from '../theme';
 import { Text } from './Text';
 
@@ -12,11 +12,19 @@ export type SwitchRowProps = {
   testID?: string;
 };
 
-/** Bascule étiquetée (confidentialité, notifications, consentements). */
+/**
+ * Bascule étiquetée (confidentialité, notifications, consentements).
+ * Toute la ligne est la cible tactile (>= 44 pt). Pour le lecteur d'écran, seul l'interrupteur est exposé
+ * (libellé = étiquette, indication = description) : le texte visuel est masqué pour éviter la double annonce.
+ */
 export function SwitchRow({ label, description, value, onValueChange, disabled = false, testID }: SwitchRowProps) {
   const { colors, space } = useTheme();
   return (
-    <View
+    <Pressable
+      accessible={false}
+      disabled={disabled}
+      onPress={() => onValueChange(!value)}
+      testID={testID ? `${testID}-row` : undefined}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -27,7 +35,7 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         borderBottomColor: colors.border,
       }}
     >
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text variant="body" style={{ fontWeight: '600' }}>
           {label}
         </Text>
@@ -40,6 +48,7 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
       <Switch
         testID={testID}
         accessibilityLabel={label}
+        accessibilityHint={description}
         accessibilityRole="switch"
         accessibilityState={{ checked: value, disabled }}
         value={value}
@@ -48,6 +57,6 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         trackColor={{ false: colors.borderStrong, true: colors.primary }}
         thumbColor={colors.surface}
       />
-    </View>
+    </Pressable>
   );
 }

@@ -1,7 +1,8 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import React from 'react';
-import { Text as RNText, View } from 'react-native';
+import { Dimensions, ScaledSize, Text as RNText, View } from 'react-native';
 import { colors, MIN_TARGET } from '../src/theme';
+import { FOOTER_MAX_HEIGHT_RATIO } from '../src/ui/ScreenContainer';
 import {
   Banner,
   Button,
@@ -225,6 +226,90 @@ describe('Banner, Toast, Skeleton, EmptyState, ProgressBar, ScreenContainer', ()
     );
     expect(screen.getByText('contenu')).toBeOnTheScreen();
     expect(screen.getByText('pied')).toBeOnTheScreen();
+  });
+});
+
+/** Simule une taille d'écran et un agrandissement du texte (useWindowDimensions lit Dimensions.get('window')). */
+function mockWindow(width: number, height: number, fontScale: number) {
+  const size: ScaledSize = { width, height, scale: 2, fontScale };
+  jest.spyOn(Dimensions, 'get').mockImplementation(() => size);
+}
+
+describe('Button : libellé jamais tronqué (320 pt, texte à 200 %)', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('le libellé n\'a pas de limite de lignes et peut passer à la ligne', async () => {
+    mockWindow(320, 640, 2);
+    const label = 'Continuer avec une adresse e-mail et un mot de passe';
+    await renderThemed(<Button label={label} onPress={jest.fn()} />);
+    const text = screen.getByText(label);
+    expect(text.props.numberOfLines).toBeUndefined();
+    const style = flat(text.props.style);
+    expect(style.flexShrink).toBe(1);
+    expect(style.textAlign).toBe('center');
+  });
+
+  it('garde une hauteur minimale de 48 et le remplissage horizontal', async () => {
+    await renderThemed(<Button label="OK" onPress={jest.fn()} />);
+    const style = flat(screen.getByRole('button').props.style);
+    expect(Number(style.minHeight)).toBeGreaterThanOrEqual(48);
+    expect(Number(style.paddingHorizontal)).toBeGreaterThan(0);
+  });
+});
+
+describe('ScreenContainer : pied de page borné et défilant en grande police', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  const footer = (
+    <>
+      <RNText>bouton 1</RNText>
+      <RNText>bouton 2</RNText>
+    </>
+  );
+
+  it('police normale : pied de page plafonné, sans zone de défilement ajoutée', async () => {
+    mockWindow(390, 844, 1);
+    await renderThemed(
+      <ScreenContainer testID="s" footer={footer}>
+        <RNText>contenu</RNText>
+      </ScreenContainer>,
+    );
+    expect(flat(screen.getByTestId('s-footer').props.style).maxHeight).toBe(Math.round(844 * FOOTER_MAX_HEIGHT_RATIO));
+    expect(screen.queryByTestId('s-footer-scroll')).not.toBeOnTheScreen();
+  });
+
+  it('200 % sur 320 x 640 : pied de page plafonné à 45 % de la hauteur, compact et défilant', async () => {
+    mockWindow(320, 640, 2);
+    await renderThemed(
+      <ScreenContainer testID="s" footer={footer}>
+        <RNText>contenu</RNText>
+      </ScreenContainer>,
+    );
+    const container = flat(screen.getByTestId('s-footer').props.style);
+    expect(container.maxHeight).toBe(288);
+    expect(Number(container.paddingBottom)).toBeLessThan(16);
+    expect(screen.getByTestId('s-footer-scroll')).toBeOnTheScreen();
+    expect(screen.getByText('bouton 1')).toBeOnTheScreen();
+    expect(screen.getByText('bouton 2')).toBeOnTheScreen();
+  });
+
+  it('défilant : le contenu principal reste rendu avec le pied de page', async () => {
+    mockWindow(320, 640, 2);
+    await renderThemed(
+      <ScreenContainer scroll testID="s" footer={footer}>
+        <RNText>contenu</RNText>
+      </ScreenContainer>,
+    );
+    expect(screen.getByText('contenu')).toBeOnTheScreen();
+    expect(screen.getByTestId('s-footer')).toBeOnTheScreen();
+  });
+});
+
+describe('TextField : état invalide sans message', () => {
+  it('colore le libellé et la bordure sans afficher de message', async () => {
+    await renderThemed(<TextField label="Jour" value="" onChangeText={jest.fn()} invalid testID="f" />);
+    expect(screen.queryByTestId('f-error')).not.toBeOnTheScreen();
+    expect(screen.getByText('Jour')).toBeOnTheScreen();
   });
 });
 

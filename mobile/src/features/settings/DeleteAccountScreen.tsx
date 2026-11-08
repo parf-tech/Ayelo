@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
+import { passwordToggleLabels } from '../common/passwordToggle';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { ManageSubscription } from '../premium/ManageSubscription';
 import { setDeletionNotice } from './deletionNotice';
@@ -107,7 +108,7 @@ export function DeleteAccountScreen() {
         error={error}
         disabled={loading}
         secureTextEntry
-        passwordToggleLabels={{ show: t('ui.password.show'), hide: t('ui.password.hide') }}
+        passwordToggleLabels={passwordToggleLabels(t)}
         autoCapitalize="none"
         autoComplete="current-password"
       />

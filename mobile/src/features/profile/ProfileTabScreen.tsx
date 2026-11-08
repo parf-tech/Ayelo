@@ -6,7 +6,7 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, ScreenContainer, Text, useToast } from '../../ui';
+import { AsyncView, Avatar, Banner, Button, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { countryLabel } from '../onboarding/countries';
 
@@ -68,9 +68,7 @@ export function ProfileTabScreen() {
               {[profile.city, countryLabel(t, profile.residence_country)].filter(Boolean).join(', ')}
             </Text>
             {profile.verified ? (
-              <Text variant="caption" tone="primary" style={{ fontWeight: '700' }}>
-                ✓ {t('detail.verified')}
-              </Text>
+              <VerifiedBadge testID="profile-verified" label={t('detail.verified')} explanation={t('verified.explain')} hint={t('verified.hint')} />
             ) : null}
             {data?.premium ? (
               <Text variant="caption" tone="success" style={{ fontWeight: '700' }} testID="profile-premium-badge">

@@ -45,7 +45,7 @@ export const messagesFr = {
   'conversation.media.image': 'Photo reçue',
   'conversation.media.video': 'Vidéo reçue',
   'conversation.media.voice': 'Message vocal reçu',
-  'conversation.media.unsupported': 'Les pièces jointes ne sont pas encore prises en charge dans cette version.',
+  'conversation.media.unsupported': 'Les pièces jointes ne sont pas prises en charge.',
   'conversation.missedCall.audio': 'Appel audio manqué',
   'conversation.missedCall.video': 'Appel vidéo manqué',
   'conversation.safety.title': 'Attention : demande d’argent',

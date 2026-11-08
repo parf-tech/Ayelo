@@ -51,8 +51,40 @@ export function toIsoBirthdate(parts: BirthdateParts, today: Date = new Date()):
   return { ok: true, iso: `${pad(year, 4)}-${pad(month, 2)}-${pad(day, 2)}` };
 }
 
-/** Années proposées dans le sélecteur : de l'année en cours à 100 ans en arrière (ordre décroissant). */
-export function birthYears(today: Date = new Date()): number[] {
-  const current = today.getFullYear();
-  return Array.from({ length: 101 }, (_, i) => current - i);
+/** Saisie brute des trois champs numériques JJ / MM / AAAA (chaînes de chiffres). */
+export type BirthdateFields = { day: string; month: string; year: string };
+
+/** Plus ancienne année acceptée : au-delà, la saisie est considérée comme une faute de frappe. */
+export const MIN_BIRTH_YEAR = 1900;
+
+export type BirthdateFieldsStatus =
+  | { status: 'empty' }
+  | { status: 'incomplete' }
+  | { status: 'error'; error: 'day' | 'month' | 'year' | 'invalid' | 'future' }
+  | { status: 'ok'; iso: string };
+
+/**
+ * Valide les trois champs de la date de naissance.
+ * Comme `toIsoBirthdate`, ne décide JAMAIS de l'éligibilité (>= 18 ans) : c'est le serveur qui tranche.
+ * Les erreurs de plage (jour 1-31, mois 1-12, année >= 1900) sont signalées dès que le champ est plein,
+ * le reste (date inexistante, date future) quand les trois champs sont complets.
+ */
+export function checkBirthdateFields(fields: BirthdateFields, today: Date = new Date()): BirthdateFieldsStatus {
+  const { day, month, year } = fields;
+  if (day === '' && month === '' && year === '') return { status: 'empty' };
+
+  const d = day === '' ? undefined : Number(day);
+  const m = month === '' ? undefined : Number(month);
+  const y = year.length === 4 ? Number(year) : undefined;
+
+  // Un « 0 » isolé est le début de « 07 » : pas encore une erreur.
+  if (d !== undefined && (d > 31 || (d === 0 && day.length > 1))) return { status: 'error', error: 'day' };
+  if (m !== undefined && (m > 12 || (m === 0 && month.length > 1))) return { status: 'error', error: 'month' };
+  if (y !== undefined && y < MIN_BIRTH_YEAR) return { status: 'error', error: 'year' };
+
+  if (d === undefined || m === undefined || y === undefined || d === 0 || m === 0) return { status: 'incomplete' };
+
+  const result = toIsoBirthdate({ day: d, month: m, year: y }, today);
+  if (result.ok) return { status: 'ok', iso: result.iso };
+  return result.error === 'incomplete' ? { status: 'incomplete' } : { status: 'error', error: result.error };
 }

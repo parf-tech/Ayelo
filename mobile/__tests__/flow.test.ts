@@ -10,7 +10,7 @@ import {
   signupReducer,
   SignupState,
 } from '../src/flow/signupMachine';
-import { toIsoBirthdate, validateEmail, validatePassword } from '../src/features/validation';
+import { checkBirthdateFields, toIsoBirthdate, validateEmail, validatePassword } from '../src/features/validation';
 
 const allConsents = { terms: true, privacy: true, sensitive_data: true, marketing: false };
 const run = (events: SignupEvent[], from: SignupState = initialSignupState) => events.reduce(signupReducer, from);
@@ -236,6 +236,42 @@ describe('validation des saisies', () => {
     expect(toIsoBirthdate({ day: 1, month: 1 }, today)).toEqual({ ok: false, error: 'incomplete' });
     // Une date de mineur reste « ok » côté client : c'est le serveur qui refuse et mémorise (403 age_not_eligible).
     expect(toIsoBirthdate({ day: 1, month: 1, year: 2015 }, today)).toEqual({ ok: true, iso: '2015-01-01' });
+  });
+});
+
+describe('date de naissance : trois champs JJ / MM / AAAA', () => {
+  const today = new Date(2026, 10, 5);
+  const f = (day: string, month: string, year: string) => checkBirthdateFields({ day, month, year }, today);
+
+  it('vide ou en cours de saisie : pas d\'erreur, juste incomplet', () => {
+    expect(f('', '', '')).toEqual({ status: 'empty' });
+    expect(f('07', '', '')).toEqual({ status: 'incomplete' });
+    expect(f('07', '03', '199')).toEqual({ status: 'incomplete' });
+    expect(f('0', '', '')).toEqual({ status: 'incomplete' }); // début de « 07 »
+    expect(f('07', '0', '1990')).toEqual({ status: 'incomplete' });
+  });
+
+  it('date valide : même format ISO que le sélecteur précédent (YYYY-MM-DD), jour et mois sur 1 ou 2 chiffres', () => {
+    expect(f('07', '03', '1990')).toEqual({ status: 'ok', iso: '1990-03-07' });
+    expect(f('7', '3', '1990')).toEqual({ status: 'ok', iso: '1990-03-07' });
+    expect(f('29', '02', '2000')).toEqual({ status: 'ok', iso: '2000-02-29' });
+  });
+
+  it('erreurs précises : jour, mois, année, date inexistante, date future', () => {
+    expect(f('32', '', '')).toEqual({ status: 'error', error: 'day' });
+    expect(f('00', '', '')).toEqual({ status: 'error', error: 'day' });
+    expect(f('07', '13', '')).toEqual({ status: 'error', error: 'month' });
+    expect(f('07', '00', '')).toEqual({ status: 'error', error: 'month' });
+    expect(f('07', '03', '1899')).toEqual({ status: 'error', error: 'year' });
+    expect(f('31', '02', '1990')).toEqual({ status: 'error', error: 'invalid' });
+    expect(f('29', '02', '2001')).toEqual({ status: 'error', error: 'invalid' });
+    expect(f('05', '11', '2026')).toEqual({ status: 'error', error: 'future' });
+    expect(f('06', '11', '2026')).toEqual({ status: 'error', error: 'future' });
+  });
+
+  it('ne décide jamais de l\'âge : une date de mineur est « ok », le serveur refuse', () => {
+    expect(f('01', '01', '2015')).toEqual({ status: 'ok', iso: '2015-01-01' });
+    expect(f('04', '11', '2026')).toEqual({ status: 'ok', iso: '2026-11-04' });
   });
 });
 

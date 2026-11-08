@@ -28,6 +28,12 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
     ['danger', 'bg'],
     ['danger', 'surface'],
     ['success', 'surface'],
+    ['like', 'bg'],
+    ['like', 'surface'],
+    ['dislike', 'bg'],
+    ['dislike', 'surface'],
+    ['verified', 'bg'],
+    ['verified', 'surface'],
     ['warning', 'surface'],
     ['disabledText', 'disabledBg'],
   ];
@@ -51,6 +57,13 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
       expect(contrast(colors[scheme].dislike, colors[scheme].bg)).toBeGreaterThanOrEqual(3);
     });
   }
+
+  it('lot 1 : like et dislike clairs corrigés (#137538, #C81E1E) ; le sombre est inchangé', () => {
+    expect(colors.light.like).toBe('#137538');
+    expect(colors.light.dislike).toBe('#C81E1E');
+    expect(colors.dark.like).toBe('#4ADE80');
+    expect(colors.dark.dislike).toBe('#F87171');
+  });
 
   it('clair et sombre exposent les mêmes tokens', () => {
     expect(Object.keys(colors.dark).sort()).toEqual(Object.keys(colors.light).sort());

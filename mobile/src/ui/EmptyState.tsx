@@ -14,14 +14,15 @@ export type EmptyStateProps = {
   testID?: string;
 };
 
-/** État vide : illustration + titre + explication + action. */
+/**
+ * État vide : illustration + titre + explication + action.
+ * Pas de conteneur accessible : le titre et la description se lisent dans l'ordre, et le bouton reste atteignable.
+ */
 export function EmptyState({ title, description, illustration, actionLabel, onAction, testID }: EmptyStateProps) {
   const { space } = useTheme();
   return (
     <View
       testID={testID}
-      accessible
-      accessibilityLabel={description ? `${title}. ${description}` : title}
       style={{ alignItems: 'center', justifyContent: 'center', padding: space[6] }}
     >
       {illustration ? <View style={{ marginBottom: space[4] }}>{illustration}</View> : null}

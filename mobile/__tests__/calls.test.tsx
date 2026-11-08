@@ -104,7 +104,7 @@ describe('S15 à S18 : signalisation d\'appel', () => {
     expect(fake.called('POST /calls')[0]?.body).toEqual({ conversation_id: 'c1', kind: 'audio' });
     expect(router.push).toHaveBeenCalledWith('/call');
     expect(screen.getByTestId('call-status')).toHaveTextContent('Appel audio : sonnerie en cours…');
-    expect(screen.getByTestId('call-media-unavailable')).toHaveTextContent(/prototype D0 requis/);
+    expect(screen.getByTestId('call-media-unavailable')).toHaveTextContent(/seule la sonnerie est transmise/);
   });
 
   it('refus par le correspondant (call.state sur le canal de la conversation) puis fermeture', async () => {
