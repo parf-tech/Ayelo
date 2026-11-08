@@ -9,19 +9,15 @@ Dernière mise à jour : 2026-11-08. Ce qui est fait dans le dépôt est sépar�
 - **Enregistrement du jeton** : `mobile/src/push/registerPush.ts` demande la permission seulement après la connexion et la fin de l'onboarding, puis envoie le jeton natif à `PUT /me/device`. Un jeton déjà porté par un autre compte répond 409 et n'est pas réessayé.
 - **Identifiant de l'application** : `com.hco.ayelo` (iOS et Android). Le nom de package Android saisi dans Firebase doit être exactement celui-là.
 
-## À faire par le propriétaire (je ne crée ni compte, ni clé)
+## Configuration du projet Ayelo
 
-1. **Créer le projet Firebase** dans la console Firebase, avec le compte Google du propriétaire. Noter l'identifiant du projet : c'est `FCM_PROJECT_ID`.
-2. **Ajouter l'application Android** au projet, avec le nom de package `com.hco.ayelo`. Télécharger `google-services.json`.
-3. **Fournir `google-services.json` à EAS** sans le commiter : `eas env:create --name GOOGLE_SERVICES_JSON --type file --visibility secret --environment production --environment preview` (puis le chemin du fichier). La syntaxe exacte de la commande est à vérifier avec `eas env:create --help`. Pour un build local, poser le fichier dans `mobile/google-services.json`.
-4. **Créer le compte de service d'envoi** : dans Google Cloud (même projet), vérifier que l'API « Firebase Cloud Messaging API » est activée, créer un compte de service avec le rôle « Firebase Cloud Messaging API Admin » (ou un rôle personnalisé qui n'a que la permission `cloudmessaging.messages.create`), puis créer une clé JSON. Cette clé donne le droit d'envoyer à tous vos utilisateurs : la traiter comme un mot de passe.
-5. **Renseigner le serveur** dans `infra/.env.prod`, hors du dépôt, droits 600 :
-   - `FCM_PROJECT_ID` : identifiant du projet ;
-   - `FCM_CLIENT_EMAIL` : champ `client_email` du fichier JSON ;
-   - `FCM_PRIVATE_KEY` : champ `private_key`, sur une seule ligne, avec les retours à la ligne écrits `\n` (le code les convertit).
-   Supprimer ensuite le fichier JSON de la machine locale.
-6. **Tester sur un vrai téléphone Android** avec un build de préproduction (`eas build --profile preview --platform android`) : ouvrir une session, accepter la permission, envoyer un message depuis un second compte, application en arrière-plan. Surveiller les journaux du serveur : une ligne `push FCM refusé` ou `push FCM impossible` en `critical` indique un problème de compte de service.
-7. **Rotation** : si la clé fuite, la révoquer dans Google Cloud, en créer une autre et mettre à jour `FCM_PRIVATE_KEY`, puis redémarrer les workers.
+- **Firebase** : le projet `ayelo-rencontres` contient l'application Android `com.hco.ayelo`; l'API HTTP v1 de FCM est activée.
+- **Compte de service** : `ayelo-fcm-sender@ayelo-rencontres.iam.gserviceaccount.com` a le rôle « Firebase Cloud Messaging API Admin ». Sa clé JSON est conservée hors du dépôt avec des ACL Windows restrictives. Ne jamais la commiter ni la transmettre dans le chat.
+- **EAS** : le projet `@kteya96/ayelo` est lié à l'application (`629800d3-0b65-4ce4-a4ca-6c171426d3dd`). `GOOGLE_SERVICES_JSON` est configuré comme fichier secret dans les environnements `preview` et `production`.
+- **Développement local** : la configuration privée du backend se trouve dans `backend/.env`, fichier local ignoré par Git. Renseigner `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL` et `FCM_PRIVATE_KEY` à partir du compte de service; conserver la clé JSON hors du dépôt et ne jamais ajouter ces valeurs aux fichiers suivis. La clé privée doit avoir ses retours à la ligne encodés en `\n`, que le client FCM du backend convertit avant de signer la requête.
+- **Build Android** : EAS reçoit `GOOGLE_SERVICES_JSON` en fichier secret dans `preview` et `production`; les builds locaux utilisent `mobile/google-services.json`, également ignoré par Git. Générer un APK Android avec `eas build --profile preview --platform android`, puis tester sur un vrai téléphone. Une notification réellement envoyée requiert également que le backend tourne avec accès Internet et que l'appareil ait enregistré son jeton.
+- **Production VPS** : aucun VPS n'est utilisé pour le moment; les variables FCM du serveur de production restent donc à configurer lorsque le déploiement sera décidé.
+- **Rotation** : si la clé fuit, la révoquer dans Google Cloud, en créer une autre et mettre à jour `FCM_PRIVATE_KEY`, puis redémarrer les workers.
 
 ## iOS : décision d'architecture encore ouverte
 
