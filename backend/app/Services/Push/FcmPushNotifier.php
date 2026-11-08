@@ -16,21 +16,45 @@ class FcmPushNotifier implements PushNotifier
     public function send(string $platform, string $token, string $title, string $body, array $data = []): bool
     {
         $project = config('services.fcm.project_id');
-        if (! $project) {
+        if (! $project || ! config('services.fcm.client_email') || ! config('services.fcm.private_key')) {
             Log::info('push ignoré : FCM non configuré', ['platform' => $platform]);
 
             return true;
         }
 
-        $response = Http::withToken($this->accessToken())->timeout(5)->post("https://fcm.googleapis.com/v1/projects/$project/messages:send", [
-            'message' => [
-                'token' => $token,
-                'notification' => ['title' => $title, 'body' => $body],
-                'data' => array_map('strval', $data),
-                'android' => ['priority' => 'high'],
-                'apns' => ['headers' => ['apns-priority' => '10']],
-            ],
-        ]);
+        // Sur iOS, le jeton natif est un jeton APNs (64 caractères hexadécimaux ou plus), que FCM refuse
+        // (INVALID_ARGUMENT). On ne le supprime pas : il deviendra valide quand l'app enverra un jeton FCM
+        // (voir docs/runbooks/fcm.md, section iOS).
+        if ($platform === 'ios' && preg_match('/\A[0-9a-f]{64,}\z/i', $token) === 1) {
+            Log::warning('push iOS ignoré : jeton APNs, pas un jeton FCM');
+
+            return true;
+        }
+
+        try {
+            $response = Http::withToken($this->accessToken())->timeout(5)->post("https://fcm.googleapis.com/v1/projects/$project/messages:send", [
+                'message' => [
+                    'token' => $token,
+                    'notification' => ['title' => $title, 'body' => $body],
+                    'data' => array_map('strval', $data),
+                    'android' => ['priority' => 'high'],
+                    'apns' => ['headers' => ['apns-priority' => '10']],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            // Compte de service refusé, clé mal formée, réseau : jamais de secret dans le journal.
+            Cache::forget('fcm.access_token');
+            Log::critical('push FCM impossible', ['platform' => $platform, 'exception' => $e::class]);
+
+            return true;
+        }
+
+        if ($response->status() === 401 || $response->status() === 403) {
+            Cache::forget('fcm.access_token');
+            Log::critical('push FCM refusé : vérifier le compte de service et l\'API Firebase Cloud Messaging', ['status' => $response->status()]);
+
+            return true;
+        }
 
         if ($response->status() === 404 || ($response->status() === 400 && str_contains((string) $response->body(), 'INVALID_ARGUMENT'))) {
             return false;
