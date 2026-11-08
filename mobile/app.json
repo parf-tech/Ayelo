@@ -104,9 +104,15 @@
       ]
     ],
     "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "629800d3-0b65-4ce4-a4ca-6c171426d3dd"
       }
-    }
+    },
+    "owner": "kteya96"
   }
 }
