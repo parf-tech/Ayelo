@@ -18,7 +18,7 @@ Date : 2026-11-07. Portée : `mobile/app.json`, `mobile/eas.json`, `mobile/local
 
 ## Reste à faire par le propriétaire (non faisable ici)
 
-1. Identifiant `com.hco.ayelo` posé dans `app.json` (fait) ; reste : créer le projet EAS (`eas init`) et renseigner `extra.eas.projectId`. Le nom « Ayelo » est provisoire (voir cto-1, 4.4).
+1. Identifiant `com.hco.ayelo` posé dans `app.json` (fait) ; reste : créer le projet EAS (`eas init`) et renseigner `extra.eas.projectId`. Le nom « Ayelo » est conservé (décision du propriétaire, 2026-11-08) ; recherche d'antériorité toujours à faire (voir cto-1, 4.4).
 2. **Android** : créer le projet Firebase, déposer `google-services.json` (fichier EAS secret, `android.googleServicesFile`) et la clé de compte de service FCM côté serveur. Sans cela `getDevicePushTokenAsync` échoue sur Android.
 3. **iOS** : le serveur envoie via FCM HTTP v1, mais le jeton d'appareil iOS est un jeton APNs, que FCM n'accepte pas. Il faut soit ajouter le SDK Firebase Messaging côté client iOS (jeton FCM), soit envoyer les iOS directement via APNs depuis le serveur. Décision d'architecture ouverte. Clé APNs (.p8) à fournir via EAS, jamais dans le dépôt. Capacité Push Notifications à activer sur l'identifiant d'application Apple.
 4. **Liens universels** : non configurés (`associatedDomains` iOS, `intentFilters` Android avec `autoVerify`, fichiers `apple-app-site-association` et `assetlinks.json` sur le domaine). Dépend du domaine final. Les liens `ayelo://` fonctionnent, pas les liens HTTPS des e-mails. Liens profonds du schéma `ayelo://` désormais filtrés par liste blanche (pentest P-12) ; les hôtes HTTPS à autoriser iront dans `ALLOWED_HTTPS_HOSTS` (`mobile/src/navigation/deepLinks.ts`).

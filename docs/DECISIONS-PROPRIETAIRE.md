@@ -75,6 +75,8 @@ Recherche web (deux requêtes) : **aucune marque ou application nommée exacteme
 
 **Limites** : ce n'est pas une recherche d'antériorité. Les bases officielles (INPI, EUIPO, USPTO, CIPO canadien, OAPI pour l'Afrique) n'ont pas été interrogées ; la disponibilité dans l'App Store et Google Play n'est pas vérifiée. Avant tout achat de domaine ou publication : recherche d'antériorité par un professionnel de la propriété intellectuelle, notamment sur AILO. Le nom reste **provisoire**.
 
+**Décision du propriétaire (2026-11-08) : le nom « Ayelo » est conservé.** L'identifiant d'application `com.hco.ayelo`, le schéma d'URL `ayelo://` et le nom affiché ne changent plus. Cette décision ne remplace pas la recherche d'antériorité : le risque de confusion avec AILO (même secteur) reste évalué par personne, et il est porté par le propriétaire. À faire avant toute publication sur un store, tout achat de domaine ou tout dépôt de marque : recherche d'antériorité par un professionnel de la propriété intellectuelle (INPI, EUIPO, USPTO, CIPO, OAPI), puis vérification du nom dans l'App Store et Google Play.
+
 ## Décisions ouvertes issues de la deuxième revue de sécurité (2026-11-07)
 
 Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage produit, de budget ou d'organisation, pas d'un simple correctif. Chacun reçoit une option recommandée par le CTO, **à confirmer ou refuser par le propriétaire**. Tant que la décision n'est pas prise, le comportement actuel est conservé et le risque est considéré comme accepté pour la bêta fermée seulement (pas pour le lancement public). Sources : `reviews/code-security-2.md` et `reviews/code-security-2-suivi.md`.
