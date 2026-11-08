@@ -77,6 +77,25 @@ Recherche web (deux requêtes) : **aucune marque ou application nommée exacteme
 
 **Décision du propriétaire (2026-11-08) : le nom « Ayelo » est conservé.** L'identifiant d'application `com.hco.ayelo`, le schéma d'URL `ayelo://` et le nom affiché ne changent plus. Cette décision ne remplace pas la recherche d'antériorité : le risque de confusion avec AILO (même secteur) reste évalué par personne, et il est porté par le propriétaire. À faire avant toute publication sur un store, tout achat de domaine ou tout dépôt de marque : recherche d'antériorité par un professionnel de la propriété intellectuelle (INPI, EUIPO, USPTO, CIPO, OAPI), puis vérification du nom dans l'App Store et Google Play.
 
+### Vérification du nom depuis la Côte d'Ivoire (2026-11-08)
+
+Recherche web uniquement. Aucune base officielle n'a pu être interrogée : ce n'est toujours pas une recherche d'antériorité.
+
+- **Résultat** : aucune marque ni application nommée exactement « Ayelo » trouvée (rencontres, marque, OAPI). Le voisin le plus proche reste AILO (AILO International, Inc., dépôt américain du 10 juin 2025, rencontres et mariage). Ce dépôt américain ne dit rien de la protection en zone OAPI.
+- **Nom voisin à contrôler** : « Aylo ». Il s'agirait du nouveau nom d'un groupe éditeur de sites pour adultes (information de mémoire, non vérifiée par la recherche) : risque de confusion ou d'image à faire évaluer.
+- **Base officielle de l'OAPI** (la Côte d'Ivoire n'a pas de protection nationale distincte : la marque se dépose à l'OAPI, 17 pays) : lien « Bases de données », puis « Marques », sur oapi.int, qui pointe vers `http://siege.oapi.int:9092/wopublish-search/public/trademarks`. L'adresse `bnda.oapi.int` citée par des blogs ne répond pas. La base n'a pas pu être ouverte depuis l'outil de recherche (port non standard) : elle doit être consultée depuis un navigateur.
+
+**À faire par le propriétaire, avant publication sur un store, achat de domaine ou dépôt de marque :**
+
+1. Dans la base de l'OAPI, chercher `Ayelo`, `Aylo`, `Ailo`, `Ayello`, `Aielo` et noter chaque résultat proche (titulaire, classes, statut).
+2. Classes de Nice à contrôler : 9 (applications téléchargeables), 38 (messagerie), 42 (logiciel en ligne), 45 (services de rencontres).
+3. Demander la recherche d'antériorité officielle (OIPI ou conseil en propriété industrielle). Un guide commercial cite 145 000 FCFA pour un déposant national ivoirien ; les tarifs varient selon les sources, à confirmer.
+4. Chercher aussi hors zone OAPI pour chaque marché visé : base mondiale de marques de l'OMPI, EUIPO, USPTO. Il n'est pas confirmé que les données de l'OAPI figurent dans la base de l'OMPI.
+5. Vérifier la disponibilité du nom dans l'App Store et dans Google Play.
+6. Faire évaluer le risque de confusion (AILO, Aylo) par un professionnel avant tout dépôt.
+
+**Statut : ouvert.** Résultat de la recherche à reporter ici, avec la date et le nom du professionnel consulté.
+
 ## Décisions ouvertes issues de la deuxième revue de sécurité (2026-11-07)
 
 Trois risques résiduels restent ouverts parce qu'ils relèvent d'un arbitrage produit, de budget ou d'organisation, pas d'un simple correctif. Chacun reçoit une option recommandée par le CTO, **à confirmer ou refuser par le propriétaire**. Tant que la décision n'est pas prise, le comportement actuel est conservé et le risque est considéré comme accepté pour la bêta fermée seulement (pas pour le lancement public). Sources : `reviews/code-security-2.md` et `reviews/code-security-2-suivi.md`.
