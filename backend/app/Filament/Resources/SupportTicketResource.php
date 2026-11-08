@@ -25,7 +25,7 @@ class SupportTicketResource extends AdminResource
 
     protected static string $labelKey = 'ticket';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-lifebuoy';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-lifebuoy';
 
     protected static ?int $navigationSort = 60;
 

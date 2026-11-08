@@ -4,9 +4,9 @@ namespace App\Providers;
 
 use App\OpenApi\ReauthenticationRequestBody;
 use App\Services\OAuth\JwtOAuthVerifier;
+use App\Services\OAuth\OAuthVerifier;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\PushNotifier;
-use App\Services\OAuth\OAuthVerifier;
 use App\Services\Storage\MediaStorage;
 use App\Services\Storage\S3MediaStorage;
 use Dedoc\Scramble\Scramble;

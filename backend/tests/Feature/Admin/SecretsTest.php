@@ -3,6 +3,8 @@
 use App\Filament\Models\Member;
 use App\Filament\Resources\MemberResource;
 use App\Models\StaffUser;
+use App\Services\Admin\StaffAccounts;
+use App\Services\Admin\UserAdmin;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Admin\Support\Seed;
@@ -24,7 +26,7 @@ it('n’affiche jamais mot de passe, secret TOTP, jeton ni clé de stockage dans
     $report = Seed::report($user->id);
     $appeal = Seed::appeal(Seed::sanction($user->id), $user->id);
     $ticket = Seed::ticket($user->id);
-    app(\App\Services\Admin\UserAdmin::class)->adjustCredits($admin, $user->id, 'coin', 3, 'Compensation test');
+    app(UserAdmin::class)->adjustCredits($admin, $user->id, 'coin', 3, 'Compensation test');
     $entry = DB::table('audit_logs')->value('id');
 
     $this->actingAs($admin, 'staff');
@@ -39,7 +41,7 @@ it('n’affiche jamais mot de passe, secret TOTP, jeton ni clé de stockage dans
             if ($path === '/admin/media-queue' && $secret === 'secret-object-key') {
                 continue;
             }
-            expect(str_contains($body, (string) $secret))->toBeFalse("{$path} contient " . substr((string) $secret, 0, 6) . '…');
+            expect(str_contains($body, (string) $secret))->toBeFalse("{$path} contient ".substr((string) $secret, 0, 6).'…');
         }
     }
 });
@@ -69,8 +71,8 @@ it('cache mot de passe et secrets du personnel à la sérialisation', function (
 it('le journal d’audit ne contient jamais de secret après connexion, ajustement et création de compte', function () {
     $admin = Seed::staff('admin');
     $this->actingAs($admin, 'staff');
-    app(\App\Services\Admin\UserAdmin::class)->adjustCredits($admin, Seed::user()->id, 'coin', 2, 'Test sans secret');
-    app(\App\Services\Admin\StaffAccounts::class)->create('nouveau@staff.test', 'support', 'mot-de-passe-secret-123');
+    app(UserAdmin::class)->adjustCredits($admin, Seed::user()->id, 'coin', 2, 'Test sans secret');
+    app(StaffAccounts::class)->create('nouveau@staff.test', 'support', 'mot-de-passe-secret-123');
 
     $all = json_encode(DB::table('audit_logs')->get());
     expect($all)->not->toContain('mot-de-passe-secret-123')->and($all)->not->toContain('JBSWY3DPEHPK3PXP')->and($all)->not->toContain(Seed::PASSWORD);

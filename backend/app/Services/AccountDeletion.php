@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 /**
  * Suppression de compte en deux temps (FR-A-8) :

@@ -7,6 +7,7 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Str;
 
 /**
  * Journalise les connexions du personnel (réussies après 2FA, échouées, déconnexions) et met à jour last_login_at.
@@ -38,7 +39,7 @@ class StaffAuthAudit
             return;
         }
         $user = $event->user instanceof StaffUser ? $event->user : null;
-        $this->audit->record($user, 'staff.login_failed', 'staff_users', $user?->id, null, ['email' => \Illuminate\Support\Str::limit(is_string($event->credentials['email'] ?? null) ? $event->credentials['email'] : '', 190, '')]);
+        $this->audit->record($user, 'staff.login_failed', 'staff_users', $user?->id, null, ['email' => Str::limit(is_string($event->credentials['email'] ?? null) ? $event->credentials['email'] : '', 190, '')]);
     }
 
     public function onLogout(Logout $event): void

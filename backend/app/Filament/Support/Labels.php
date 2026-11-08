@@ -53,7 +53,7 @@ final class Labels
         return collect($keys)->mapWithKeys(fn (string $key): array => [$key => self::text($group, $key)])->all();
     }
 
-    public static function badge(TextColumn | TextEntry $component, string $group): TextColumn | TextEntry
+    public static function badge(TextColumn|TextEntry $component, string $group): TextColumn|TextEntry
     {
         return $component->badge()
             ->formatStateUsing(fn ($state): string => self::text($group, $state))

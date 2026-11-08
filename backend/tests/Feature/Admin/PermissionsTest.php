@@ -2,9 +2,17 @@
 
 use App\Filament\Widgets\AdminStatsWidget;
 use App\Models\StaffUser;
+use App\Services\Admin\AppealReview;
+use App\Services\Admin\Audit;
 use App\Services\Admin\DashboardStats;
+use App\Services\Admin\MediaModeration;
 use App\Services\Admin\Permissions;
+use App\Services\Admin\ReportModeration;
+use App\Services\Admin\TicketDesk;
+use App\Services\Admin\VerificationReview;
 use Filament\Facades\Filament;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -44,7 +52,7 @@ it('applique la matrice aussi sur les fiches (objets existants)', function () {
     $ticket = Seed::ticket($u->id);
     [$ver] = Seed::verification(Seed::user('Vera')->id);
     $appeal = Seed::appeal(Seed::sanction($u->id, 'warning', null), $u->id);
-    app(\App\Services\Admin\Audit::class)->record(Seed::staff('admin'), 'x.y');
+    app(Audit::class)->record(Seed::staff('admin'), 'x.y');
     $entry = DB::table('audit_logs')->value('id');
 
     $records = [
@@ -97,7 +105,7 @@ it('un compte désactivé n’a plus aucun droit, même sur les services', funct
     DB::table('staff_users')->where('id', $mod->id)->update(['is_active' => false]);
 
     expect(Permissions::can($mod->fresh(), Permissions::MEDIA_MODERATE))->toBeFalse();
-    expect(fn () => app(\App\Services\Admin\MediaModeration::class)->approve($mod->fresh(), $m))->toThrow(\Illuminate\Auth\Access\AuthorizationException::class);
+    expect(fn () => app(MediaModeration::class)->approve($mod->fresh(), $m))->toThrow(AuthorizationException::class);
 });
 
 it('le support ne peut agir sur aucune file de modération ni sur les sanctions via les services', function () {
@@ -106,12 +114,12 @@ it('le support ne peut agir sur aucune file de modération ni sur les sanctions 
     $r = Seed::report($u->id);
     [$ver] = Seed::verification(Seed::user('Vera')->id);
     $appeal = Seed::appeal(Seed::sanction($u->id, 'warning'), $u->id);
-    $denied = \Illuminate\Auth\Access\AuthorizationException::class;
+    $denied = AuthorizationException::class;
 
-    expect(fn () => app(\App\Services\Admin\ReportModeration::class)->decide($support, $r, 'ban', 'motif correct'))->toThrow($denied);
-    expect(fn () => app(\App\Services\Admin\AppealReview::class)->accept($support, $appeal))->toThrow($denied);
-    expect(fn () => app(\App\Services\Admin\VerificationReview::class)->viewSelfie($support, $ver))->toThrow($denied);
-    expect(fn () => app(\App\Services\Admin\VerificationReview::class)->approve($support, $ver))->toThrow($denied);
+    expect(fn () => app(ReportModeration::class)->decide($support, $r, 'ban', 'motif correct'))->toThrow($denied);
+    expect(fn () => app(AppealReview::class)->accept($support, $appeal))->toThrow($denied);
+    expect(fn () => app(VerificationReview::class)->viewSelfie($support, $ver))->toThrow($denied);
+    expect(fn () => app(VerificationReview::class)->approve($support, $ver))->toThrow($denied);
     expect(DB::table('reports')->find($r)->status)->toBe('open')->and(Seed::auditCount())->toBe(0);
 });
 
@@ -119,7 +127,7 @@ it('le modérateur ne peut pas traiter les tickets', function () {
     $mod = Seed::staff('moderator');
     $t = Seed::ticket(Seed::user()->id);
 
-    expect(fn () => app(\App\Services\Admin\TicketDesk::class)->update($mod, $t, 'closed', null))->toThrow(\Illuminate\Auth\Access\AuthorizationException::class);
+    expect(fn () => app(TicketDesk::class)->update($mod, $t, 'closed', null))->toThrow(AuthorizationException::class);
 });
 
 it('le tableau de bord ne montre à chaque rôle que ses indicateurs', function () {
@@ -179,5 +187,5 @@ it('affiche le tableau de bord (widget) sans erreur pour chaque rôle', function
 
 it('ne reconnaît que les rôles du schéma', function () {
     expect(StaffUser::ROLES)->toBe(['moderator', 'support', 'admin']);
-    expect(fn () => DB::transaction(fn () => DB::table('staff_users')->insert(['id' => (string) Str::uuid(), 'email' => 'x@y.test', 'password' => 'x', 'role' => 'root'])))->toThrow(\Illuminate\Database\QueryException::class);
+    expect(fn () => DB::transaction(fn () => DB::table('staff_users')->insert(['id' => (string) Str::uuid(), 'email' => 'x@y.test', 'password' => 'x', 'role' => 'root'])))->toThrow(QueryException::class);
 });

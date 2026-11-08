@@ -15,9 +15,13 @@ use Illuminate\Support\Facades\DB;
 class ReportModeration extends AdminService
 {
     public const WARNING = 'warning';
+
     public const SUSPENSION = 'suspension';
+
     public const BAN = 'ban';
+
     public const DISMISS = 'dismiss';
+
     public const LIFT_PREVENTIVE = 'lift_preventive';
 
     public const DECISIONS = [self::WARNING, self::SUSPENSION, self::BAN, self::DISMISS, self::LIFT_PREVENTIVE];

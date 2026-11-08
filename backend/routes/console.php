@@ -1,6 +1,9 @@
 <?php
 
 use App\Services\AccountDeletion;
+use App\Services\Calls;
+use App\Services\RevenueCatProcessor;
+use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
@@ -11,14 +14,14 @@ Artisan::command('accounts:purge', function (AccountDeletion $deletion) {
 
 Schedule::command('accounts:purge')->dailyAt('03:15')->onOneServer();
 
-Artisan::command('calls:expire', function (App\Services\Calls $calls) {
+Artisan::command('calls:expire', function (Calls $calls) {
     $r = $calls->expire();
     $this->info("Appels manqués : {$r['missed']}, terminés (durée maximale) : {$r['ended']}");
 })->purpose('Marque les appels sans réponse comme manqués et termine ceux de plus de 20 minutes');
 
 Schedule::command('calls:expire')->everyMinute()->withoutOverlapping();
 
-Artisan::command('media:purge-pending', function (App\Services\Storage\MediaStorage $storage) {
+Artisan::command('media:purge-pending', function (MediaStorage $storage) {
     $old = DB::table('media')->where('status', 'pending_upload')->where('created_at', '<=', now()->subHours((int) config('media.pending_ttl_hours')))->get();
     foreach ($old as $m) {
         $storage->delete($m->storage_key);
@@ -40,7 +43,7 @@ Artisan::command('media:purge-pending', function (App\Services\Storage\MediaStor
 
 // Revue pentest P-07 : la taille d'un dépôt présigné (PUT) n'est pas liée par la signature. Un objet en attente plus gros que le
 // plafond de son type, ou que la taille déclarée, est supprimé avec sa ligne (`complete` refuserait de toute façon).
-Artisan::command('media:purge-oversized', function (App\Services\Storage\MediaStorage $storage) {
+Artisan::command('media:purge-oversized', function (MediaStorage $storage) {
     $removed = 0;
     // Les dépôts les PLUS RÉCENTS d'abord (un attaquant dépose en continu : les plus anciens ont de toute façon expiré), par
     // lots de 500 en pagination par clé (created_at, id) décroissante - stable même si des lignes sont supprimées en route.
@@ -78,7 +81,7 @@ Artisan::command('media:purge-oversized', function (App\Services\Storage\MediaSt
 
 Schedule::command('media:purge-oversized')->everyFiveMinutes()->withoutOverlapping();
 
-Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $storage) {
+Artisan::command('exports:purge', function (MediaStorage $storage) {
     $old = DB::table('data_exports')->where(fn ($q) => $q->where('expires_at', '<=', now())->orWhere('status', 'failed'))->get();
     foreach ($old as $e) {
         if ($e->storage_key) {
@@ -91,7 +94,7 @@ Artisan::command('exports:purge', function (App\Services\Storage\MediaStorage $s
 
 // Objets sans ligne `media` (échec entre l'écriture de l'objet et celle de la ligne, suppression partielle) : revue N-14.
 // Seuls les objets de médias (`u/`) plus anciens que le délai de grâce sont supprimés ; les exports (`exports/`) ont leur propre purge.
-Artisan::command('media:sweep-orphans {--dry-run : Compter sans supprimer}', function (App\Services\Storage\MediaStorage $storage) {
+Artisan::command('media:sweep-orphans {--dry-run : Compter sans supprimer}', function (MediaStorage $storage) {
     $cutoff = now()->subHours((int) config('media.orphan_grace_hours'))->timestamp;
     $limit = (int) config('media.orphan_sweep_max');
     $dry = (bool) $this->option('dry-run');
@@ -133,7 +136,7 @@ Schedule::command('exports:purge')->dailyAt('03:30');
 // Lève les suspensions à durée limitée arrivées à échéance (sinon le compte reste bloqué : voir specs/009).
 Schedule::command('sanctions:expire')->everyMinute()->withoutOverlapping();
 
-Artisan::command('billing:replay-unknown', function (App\Services\RevenueCatProcessor $processor) {
+Artisan::command('billing:replay-unknown', function (RevenueCatProcessor $processor) {
     $done = 0;
     DB::table('webhook_events')->whereNull('processed_at')->where('error', 'utilisateur inconnu')->orderBy('created_at')->limit(500)->get()
         ->each(function ($row) use ($processor, &$done) {

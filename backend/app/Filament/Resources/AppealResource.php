@@ -25,7 +25,7 @@ class AppealResource extends AdminResource
 
     protected static string $labelKey = 'appeal';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-scale';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-scale';
 
     protected static ?int $navigationSort = 30;
 

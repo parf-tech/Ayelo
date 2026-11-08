@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Models\StaffUser;
 use DomainException;
 use Illuminate\Support\Str;
+use PragmaRX\Google2FA\Google2FA;
 
 /**
  * Comptes du personnel, côté console uniquement (aucune inscription publique).
@@ -83,7 +84,7 @@ class StaffAccounts
      */
     public function enrollTwoFactor(StaffUser $staff): array
     {
-        $google2fa = new \PragmaRX\Google2FA\Google2FA;
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
         $staff->saveAppAuthenticationSecret($secret);
 

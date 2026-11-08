@@ -5,13 +5,14 @@ use App\Logging\RedactLogs;
 use App\Logging\RedactSensitiveData;
 use App\Models\StaffUser;
 use App\Models\User;
+use App\Services\OAuth\InvalidOAuthToken;
 use App\Services\OAuth\JwtOAuthVerifier;
 use App\Services\Premium;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoDataSeeder;
 use Firebase\JWT\JWK;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Bus\Queueable;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Queue\Job as QueueJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -160,7 +161,7 @@ describe('RevenueCat', function () {
         expect(Premium::active($u->id))->toBeTrue();
     });
 
-    it("ignore un événement plus ancien livré après un plus récent pour le même abonnement", function () {
+    it('ignore un événement plus ancien livré après un plus récent pour le même abonnement', function () {
         $u = chkBuyer();
         $newEnd = now()->addMonths(2)->getTimestampMs();
 
@@ -205,7 +206,7 @@ describe('RevenueCat', function () {
         expect(DB::table('subscriptions')->count())->toBe(1)->and(DB::table('webhook_events')->where('id', 'evt-idem')->count())->toBe(1);
     });
 
-    it("applique encore un événement sans horodatage (format historique)", function () {
+    it('applique encore un événement sans horodatage (format historique)', function () {
         $u = chkBuyer();
         $evt = chkPurchase($u);
         unset($evt['event_timestamp_ms']);
@@ -282,7 +283,7 @@ it('masque adresses e-mail, jetons porteurs et longs secrets dans le message', f
     expect($record->message)->toStartWith('Connexion de');
 });
 
-it("masque les clés password, token et secret du contexte, à toute profondeur, et nettoie les valeurs textuelles", function () {
+it('masque les clés password, token et secret du contexte, à toute profondeur, et nettoie les valeurs textuelles', function () {
     $record = (new RedactSensitiveData)(chkRecord('événement', [
         'password' => 'hunter2', 'new_password_confirmation' => 'hunter2', 'api_token' => 'abc', 'client_secret' => 'def', 'Authorization' => 'Bearer zzz',
         'user_id' => '0f3c1c2e-7a41-4d6b-9f0e-1a2b3c4d5e6f', 'attempts' => 3,
@@ -336,7 +337,7 @@ it('masque bien les données écrites par un vrai canal Laravel', function (stri
 // (5) Vrais JWKS de Google et Apple (facultatif : RUN_NETWORK_TESTS=1)
 // ---------------------------------------------------------------------------------------------------------------------
 
-it("analyse les vrais JWKS publics avec le code de vérification OAuth du projet", function (string $provider) {
+it('analyse les vrais JWKS publics avec le code de vérification OAuth du projet', function (string $provider) {
     $url = config("services.oauth.$provider.jwks_url");
     expect($url)->toStartWith('https://');
 
@@ -355,5 +356,5 @@ it("analyse les vrais JWKS publics avec le code de vérification OAuth du projet
     // Un jeton signé par une autre clé est refusé proprement (InvalidOAuthToken), jamais par une erreur d'analyse.
     config(["services.oauth.$provider.client_ids" => ['client-de-test']]);
     expect(fn () => app(JwtOAuthVerifier::class)->verify($provider, 'eyJhbGciOiJSUzI1NiIsImtpZCI6Im5vbiJ9.e30.c2ln'))
-        ->toThrow(App\Services\OAuth\InvalidOAuthToken::class);
+        ->toThrow(InvalidOAuthToken::class);
 })->with(['google', 'apple'])->skip(fn () => getenv('RUN_NETWORK_TESTS') !== '1', 'Test réseau : définir RUN_NETWORK_TESTS=1 pour le lancer.');

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Admin\Audit;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
@@ -53,7 +54,7 @@ class StaffUser extends Authenticatable implements FilamentUser, HasAppAuthentic
         // Toute modification de la 2FA (activation, désactivation, codes de secours, réinitialisation) est journalisée.
         static::updated(function (self $staff): void {
             $actor = auth('staff')->user();
-            $audit = app(\App\Services\Admin\Audit::class);
+            $audit = app(Audit::class);
             if ($staff->wasChanged('totp_secret_encrypted')) {
                 $audit->record($actor instanceof self ? $actor : null, $staff->hasTwoFactor() ? 'staff.2fa_enabled' : 'staff.2fa_disabled', 'staff_users', (string) $staff->getKey());
             } elseif ($staff->wasChanged('recovery_codes_encrypted')) {

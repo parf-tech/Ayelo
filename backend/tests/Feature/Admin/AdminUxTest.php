@@ -4,18 +4,22 @@ use App\Filament\Models\MediaItem;
 use App\Filament\Models\Member;
 use App\Filament\Models\Report;
 use App\Filament\Models\VerificationRequest;
+use App\Filament\Resources\MediaItemResource;
 use App\Filament\Resources\MediaItemResource\Pages\ListMediaItems;
 use App\Filament\Resources\MemberResource\Pages\ListMembers;
 use App\Filament\Resources\MemberResource\Pages\ViewMember;
 use App\Filament\Resources\ReportResource;
 use App\Filament\Resources\ReportResource\Pages\ListReports;
 use App\Filament\Resources\ReportResource\Pages\ViewReport;
+use App\Filament\Resources\VerificationRequestResource;
 use App\Filament\Resources\VerificationRequestResource\Pages\ListVerificationRequests;
 use App\Filament\Resources\VerificationRequestResource\Pages\ViewVerificationRequest;
 use App\Filament\Support\Labels;
 use App\Filament\Support\Mask;
 use App\Filament\Support\Sla;
+use App\Filament\Support\Staff;
 use App\Filament\Widgets\AdminStatsWidget;
+use App\Models\StaffUser;
 use App\Services\Admin\MediaModeration;
 use App\Services\Admin\Permissions;
 use App\Services\Storage\MediaStorage;
@@ -23,6 +27,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\Feature\Admin\Support\Seed;
 use Tests\Support\FakeMediaStorage;
@@ -65,14 +70,14 @@ it('suit la langue du back-office (app.admin_locale) : français par défaut, an
     $u = Seed::user('Awa');
     $r = Seed::report($u->id, 'harassment', 2);
 
-    expect(\App\Filament\Support\Staff::t('admin.action.ban'))->toBe('Bannir');
+    expect(Staff::t('admin.action.ban'))->toBe('Bannir');
     config(['app.admin_locale' => 'en']);
     Livewire::test(ListReports::class)->assertTableColumnFormattedStateSet('status', 'Open', Report::find($r))
         ->assertTableColumnFormattedStateSet('priority', 'Critical', Report::find($r));
-    expect(\App\Filament\Support\Staff::t('admin.action.ban'))->toBe('Ban');
+    expect(Staff::t('admin.action.ban'))->toBe('Ban');
 
     config(['app.admin_locale' => 'de']);
-    expect(\App\Filament\Support\Staff::t('admin.action.ban'))->toBe('Bannir');
+    expect(Staff::t('admin.action.ban'))->toBe('Bannir');
 });
 
 it('a les mêmes clés en français et en anglais, et toutes les clés utilisées existent', function () {
@@ -216,7 +221,7 @@ it('n’expose aucun extrait de conversation : aucun rôle ne peut lire les mess
     $this->actingAs(Seed::staff('moderator'), 'staff');
     $u = Seed::user('Awa');
     $r = Seed::report($u->id, 'harassment');
-    DB::table('reports')->where('id', $r)->update(['context_type' => 'conversation', 'context_id' => (string) Illuminate\Support\Str::uuid()]);
+    DB::table('reports')->where('id', $r)->update(['context_type' => 'conversation', 'context_id' => (string) Str::uuid()]);
 
     Livewire::test(ViewReport::class, ['record' => $r])->assertSee('Conversation')->assertSee('aucun rôle du personnel n\'a le droit de lire les messages');
 });
@@ -300,7 +305,7 @@ it('masque les e-mails en liste pour le support et ne les montre en entier que s
     Livewire::test(ListMembers::class)->assertSee(Mask::email($u->email))->assertDontSee($u->email);
     // Recherche inchangée : elle porte sur la vraie valeur.
     Livewire::test(ListMembers::class)->searchTable($u->email)->assertCanSeeTableRecords([Member::find($u->id)]);
-    Livewire::test(\App\Filament\Resources\MemberResource\Pages\ViewMember::class, ['record' => $u->id])->assertSee($u->email);
+    Livewire::test(ViewMember::class, ['record' => $u->id])->assertSee($u->email);
 });
 
 it('masque l’e-mail du déposant dans la file média pour l’admin, et le cache au modérateur', function () {
@@ -363,14 +368,14 @@ it('ne modifie pas la matrice des droits ni la politique du selfie', function ()
     expect(Permissions::for('support'))->toEqualCanonicalizing([Permissions::TICKETS_MANAGE, Permissions::USERS_VIEW])
         ->and(Permissions::for('moderator'))->not->toContain(Permissions::USERS_VIEW)
         ->and(Permissions::for('moderator'))->toContain(Permissions::SELFIE_VIEW);
-    expect(Permissions::violations([\App\Models\StaffUser::ROLE_SUPPORT => [Permissions::VERIFICATIONS_REVIEW]], []))->not->toBe([]);
+    expect(Permissions::violations([StaffUser::ROLE_SUPPORT => [Permissions::VERIFICATIONS_REVIEW]], []))->not->toBe([]);
 });
 
 it('garde les files fermées aux rôles sans droit : le support ne voit ni signalements ni médias ni vérifications', function () {
     $this->actingAs(Seed::staff('support'), 'staff');
     expect(ReportResource::canViewAny())->toBeFalse()
-        ->and(\App\Filament\Resources\MediaItemResource::canViewAny())->toBeFalse()
-        ->and(\App\Filament\Resources\VerificationRequestResource::canViewAny())->toBeFalse();
+        ->and(MediaItemResource::canViewAny())->toBeFalse()
+        ->and(VerificationRequestResource::canViewAny())->toBeFalse();
     $this->get('/admin/reports')->assertForbidden();
 });
 

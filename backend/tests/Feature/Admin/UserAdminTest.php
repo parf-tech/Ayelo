@@ -1,15 +1,22 @@
 <?php
 
 use App\Filament\Models\Member;
+use App\Filament\Models\SupportTicket;
 use App\Filament\Resources\MemberResource\Pages\ListMembers;
 use App\Filament\Resources\MemberResource\Pages\ViewMember;
+use App\Filament\Resources\MemberResource\RelationManagers\RiskEventsRelationManager;
+use App\Filament\Resources\MemberResource\RelationManagers\SanctionsRelationManager;
 use App\Filament\Resources\SupportTicketResource\Pages\ListSupportTickets;
 use App\Filament\Resources\SupportTicketResource\Pages\ViewSupportTicket;
+use App\Services\Admin\TicketDesk;
 use App\Services\Admin\UserAdmin;
+use App\Services\Conversations;
 use App\Services\Premium;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\Feature\Admin\Support\Seed;
 
@@ -36,13 +43,13 @@ it('recherche un utilisateur par e-mail, identifiant ou nom', function () {
 
 it('affiche la fiche : statut, score de risque, événements, sanctions, crédits', function () {
     $u = Seed::user('Awa Diallo', 'active', ['risk_score' => 42]);
-    DB::table('risk_events')->insert(['id' => (string) Illuminate\Support\Str::uuid(), 'user_id' => $u->id, 'signal' => 'many_reports', 'weight' => 30, 'created_at' => now()]);
+    DB::table('risk_events')->insert(['id' => (string) Str::uuid(), 'user_id' => $u->id, 'signal' => 'many_reports', 'weight' => 30, 'created_at' => now()]);
     Seed::sanction($u->id, 'warning', null, 'Premier rappel');
 
     $this->get('/admin/users/'.$u->id)->assertOk()->assertSee('Awa Diallo')->assertSee('42');
-    Livewire::test(\App\Filament\Resources\MemberResource\RelationManagers\RiskEventsRelationManager::class, ['ownerRecord' => Member::find($u->id), 'pageClass' => ViewMember::class])
+    Livewire::test(RiskEventsRelationManager::class, ['ownerRecord' => Member::find($u->id), 'pageClass' => ViewMember::class])
         ->assertSee('many_reports');
-    Livewire::test(\App\Filament\Resources\MemberResource\RelationManagers\SanctionsRelationManager::class, ['ownerRecord' => Member::find($u->id), 'pageClass' => ViewMember::class])
+    Livewire::test(SanctionsRelationManager::class, ['ownerRecord' => Member::find($u->id), 'pageClass' => ViewMember::class])
         ->assertSee('Premier rappel');
 });
 
@@ -107,7 +114,7 @@ it('ajuste les crédits : ligne admin_adjust, created_by, clé d’idempotence, 
     $a = Seed::audit('credits.adjusted');
     expect($a->actor_staff_id)->toBe($this->admin->id)->and($a->subject_id)->toBe($u->id)
         ->and(json_decode($a->after, true))->toMatchArray(['balance' => 5, 'delta' => 5, 'ledger_id' => $row->id]);
-    expect(app(\App\Services\Conversations::class)->creditBalance($u->id))->toBe(5);
+    expect(app(Conversations::class)->creditBalance($u->id))->toBe(5);
 });
 
 it('une double soumission du même formulaire n’ajuste qu’une fois', function () {
@@ -142,7 +149,7 @@ it('offre le Premium : abonnement promotional, granted_by, actif, audit', functi
 
     $sub = DB::table('subscriptions')->where('user_id', $u->id)->first();
     expect($sub->store)->toBe('promotional')->and($sub->granted_by)->toBe($this->admin->id)->and($sub->original_transaction_id)->toBeNull()->and($sub->status)->toBe('active');
-    expect(\Illuminate\Support\Carbon::parse($sub->period_end)->diffInDays(now(), true))->toBeGreaterThan(29.9)->toBeLessThan(30.1);
+    expect(Carbon::parse($sub->period_end)->diffInDays(now(), true))->toBeGreaterThan(29.9)->toBeLessThan(30.1);
     expect(Premium::active($u->id))->toBeTrue();
     $a = Seed::audit('premium.granted');
     expect($a->actor_staff_id)->toBe($this->admin->id)->and($a->subject_id)->toBe($u->id)->and(json_decode($a->after, true)['subscription_id'])->toBe($sub->id);
@@ -163,7 +170,7 @@ it('retire un Premium offert, jamais un abonnement de store', function () {
     $svc = app(UserAdmin::class);
     $svc->grantPremium($this->admin, $u->id, now()->addDays(30), 'Offert par erreur');
     $promo = DB::table('subscriptions')->where('user_id', $u->id)->value('id');
-    $store = (string) Illuminate\Support\Str::uuid();
+    $store = (string) Str::uuid();
     DB::table('subscriptions')->insert(['id' => $store, 'user_id' => $u->id, 'store' => 'apple', 'product_id' => 'premium_1m', 'status' => 'active',
         'period_start' => now(), 'period_end' => now()->addMonth(), 'original_transaction_id' => 'tx-1', 'created_at' => now(), 'updated_at' => now()]);
 
@@ -211,7 +218,7 @@ it('met à jour le statut et l’attribution d’un ticket, avec audit', functio
     $u = Seed::user();
     $t = Seed::ticket($u->id);
 
-    Livewire::test(ListSupportTickets::class)->callTableAction('update', \App\Filament\Models\SupportTicket::find($t), data: ['status' => 'pending', 'assigned_to' => $support->id]);
+    Livewire::test(ListSupportTickets::class)->callTableAction('update', SupportTicket::find($t), data: ['status' => 'pending', 'assigned_to' => $support->id]);
 
     expect(DB::table('support_tickets')->find($t))->toMatchArray(['status' => 'pending', 'assigned_to' => $support->id]);
     $a = Seed::audit('ticket.updated');
@@ -226,6 +233,6 @@ it('s’attribue un ticket depuis la fiche et refuse d’attribuer à un modéra
     Livewire::test(ViewSupportTicket::class, ['record' => $t])->callAction('assign_me');
     expect(DB::table('support_tickets')->find($t)->assigned_to)->toBe($support->id);
 
-    expect(fn () => app(\App\Services\Admin\TicketDesk::class)->update($support, $t, 'open', Seed::staff('moderator')->id))->toThrow(DomainException::class);
-    expect(fn () => app(\App\Services\Admin\TicketDesk::class)->update($support, $t, 'inconnu', null))->toThrow(DomainException::class);
+    expect(fn () => app(TicketDesk::class)->update($support, $t, 'open', Seed::staff('moderator')->id))->toThrow(DomainException::class);
+    expect(fn () => app(TicketDesk::class)->update($support, $t, 'inconnu', null))->toThrow(DomainException::class);
 });

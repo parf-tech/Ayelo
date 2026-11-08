@@ -35,7 +35,7 @@ class MemberResource extends AdminResource
 
     protected static string $labelKey = 'member';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?int $navigationSort = 50;
 

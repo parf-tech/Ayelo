@@ -29,6 +29,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -76,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
     public static function warnIfUnbound(): void
     {
         if (app()->isProduction() && self::adminDomain() === null) {
-            \Illuminate\Support\Facades\Log::critical('ADMIN_DOMAIN est vide en production : le panneau d administration est servi sur tous les domaines.');
+            Log::critical('ADMIN_DOMAIN est vide en production : le panneau d administration est servi sur tous les domaines.');
         }
     }
 

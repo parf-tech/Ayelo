@@ -3,8 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Support\Staff;
-use Filament\Resources\Resource;
 use Closure;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -30,12 +30,12 @@ abstract class AdminResource extends Resource
     }
 
     /** Clé de route valide pour ce modèle (uuid par défaut) : une clé mal formée donne 404, jamais une erreur SQL. */
-    protected static function isValidRecordKey(int | string $key): bool
+    protected static function isValidRecordKey(int|string $key): bool
     {
         return Str::isUuid((string) $key);
     }
 
-    public static function resolveRecordRouteBinding(int | string $key, ?Closure $modifyQuery = null): ?Model
+    public static function resolveRecordRouteBinding(int|string $key, ?Closure $modifyQuery = null): ?Model
     {
         return static::isValidRecordKey($key) ? parent::resolveRecordRouteBinding($key, $modifyQuery) : null;
     }

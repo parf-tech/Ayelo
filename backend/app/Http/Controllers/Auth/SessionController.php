@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\DeviceSessions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 class SessionController extends Controller
 {

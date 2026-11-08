@@ -5,9 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Models\AuditEntry;
 use App\Filament\Resources\AuditEntryResource\Pages\ListAuditEntries;
 use App\Filament\Resources\AuditEntryResource\Pages\ViewAuditEntry;
-use App\Services\Admin\Audit;
 use App\Filament\Support\Labels;
 use App\Filament\Support\Staff;
+use App\Services\Admin\Audit;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -26,11 +26,11 @@ class AuditEntryResource extends AdminResource
 
     protected static string $labelKey = 'audit';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?int $navigationSort = 90;
 
-    protected static function isValidRecordKey(int | string $key): bool
+    protected static function isValidRecordKey(int|string $key): bool
     {
         return ctype_digit((string) $key);
     }

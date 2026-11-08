@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 const DEVICE = '11111111-2222-4333-8444-555555555555';
 

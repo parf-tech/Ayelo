@@ -9,8 +9,10 @@ use App\Events\BillingUpdated;
 use App\Events\CallEvent;
 use App\Models\User;
 use App\Services\AccountDeletion;
+use App\Services\BannedIdentifiers;
 use App\Services\MediaSanitizer;
 use App\Services\Storage\MediaStorage;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -126,7 +128,7 @@ it('F-03 : un compte réactivé retrouve l’accès avec le même jeton', functi
 // ---------- F-04 : adresse IP derrière un proxy ----------
 
 it('F-04 : l’en-tête X-Forwarded-For n’est cru que depuis un proxy de confiance', function () {
-    Route::middleware('api')->get('/api/v1/_ip', fn (Illuminate\Http\Request $r) => ['ip' => $r->ip()]);
+    Route::middleware('api')->get('/api/v1/_ip', fn (Request $r) => ['ip' => $r->ip()]);
 
     $trusted = test()->withServerVariables(['REMOTE_ADDR' => '10.1.2.3'])->withHeader('X-Forwarded-For', '203.0.113.7')->getJson('/api/v1/_ip');
     $untrusted = test()->withServerVariables(['REMOTE_ADDR' => '198.51.100.9'])->withHeader('X-Forwarded-For', '1.1.1.1')->getJson('/api/v1/_ip');
@@ -372,7 +374,7 @@ it('F-15 : supprimer un message le masque mais conserve le contenu pour la revue
 // ---------- F-16 : identifiants bannis ----------
 
 it('F-16 : un e-mail banni ne peut pas se réinscrire', function () {
-    \App\Services\BannedIdentifiers::remember('email', 'Banni@Example.com', 'sanctioned_account_deleted');
+    BannedIdentifiers::remember('email', 'Banni@Example.com', 'sanctioned_account_deleted');
     $dev = (string) Str::uuid();
     $age = h_anon()->withHeader('X-Device-Id', $dev)->postJson('/api/v1/auth/age-check', ['birthdate' => '1990-01-01'])->json('age_token');
 

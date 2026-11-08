@@ -4,6 +4,7 @@ use App\Jobs\BuildDataExport;
 use App\Mail\AccountDeletionMail;
 use App\Models\User;
 use App\Services\AccountDeletion;
+use App\Services\DataExport;
 use App\Services\OAuth\InvalidOAuthToken;
 use App\Services\OAuth\OAuthIdentity;
 use App\Services\OAuth\OAuthVerifier;
@@ -141,7 +142,7 @@ it('génère un export JSON des données, une demande par jour, accessible à so
 
     life($b)->getJson("/api/v1/me/export/$id")->assertOk()->assertJsonPath('status', 'pending')->assertJsonPath('url', null);
 
-    app(BuildDataExport::class, ['exportId' => $id])->handle(app(App\Services\DataExport::class));
+    app(BuildDataExport::class, ['exportId' => $id])->handle(app(DataExport::class));
     $res = life($b)->getJson("/api/v1/me/export/$id")->assertOk()->assertJsonPath('status', 'ready');
     expect($res->json('url'))->toContain('exports/'.$u->id);
 

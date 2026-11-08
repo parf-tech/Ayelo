@@ -7,6 +7,7 @@ use App\Services\Premium;
 use App\Services\SwipeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -99,7 +100,7 @@ class SwipeController extends Controller
         }
 
         $last = DB::table('swipes')->where('swiper_id', $userId)->orderByDesc('created_at')->first();
-        if ($last === null || $last->action !== 'dislike' || \Illuminate\Support\Carbon::parse($last->created_at)->lt(now()->subHour())) {
+        if ($last === null || $last->action !== 'dislike' || Carbon::parse($last->created_at)->lt(now()->subHour())) {
             return response()->json(['error' => ['code' => 'nothing_to_undo', 'message' => 'Rien à annuler.']], 409);
         }
 

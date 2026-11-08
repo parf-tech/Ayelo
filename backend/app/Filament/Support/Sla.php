@@ -13,7 +13,9 @@ use Illuminate\Support\Carbon;
 final class Sla
 {
     public const STANDARD_HOURS = 24;
+
     public const CRITICAL_HOURS = 2;
+
     public const WARNING_RATIO = 0.75;
 
     public static function applies(Report $report): bool

@@ -1,0 +1,24 @@
+# Fins de ligne : LF dans le dépôt pour tout le texte (évite les avertissements CRLF/LF et les faux diffs sous Windows).
+* text=auto eol=lf
+
+# Binaires
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.p8 binary
+*.p12 binary
+*.jks binary
+
+# Fichiers générés : ne pas les afficher dans les diffs
+docs/openapi.json linguist-generated=true
+mobile/src/api/openapi.d.ts linguist-generated=true
+*.lock linguist-generated=true
+package-lock.json linguist-generated=true

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AccountMail;
 use App\Services\AgeGate;
+use App\Services\BannedIdentifiers;
 use App\Services\DeviceSessions;
 use App\Services\Registrar;
 use App\Support\DeviceId;
@@ -46,7 +47,7 @@ class RegisterController extends Controller
         ]);
 
         // Un e-mail associé à un compte sanctionné puis supprimé ne peut pas se réinscrire (revue F-16).
-        if (\App\Services\BannedIdentifiers::has('email', $data['email']) || $gate->isEmailRefused($data['email'])) {
+        if (BannedIdentifiers::has('email', $data['email']) || $gate->isEmailRefused($data['email'])) {
             return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
         }
 

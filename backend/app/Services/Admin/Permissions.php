@@ -12,15 +12,25 @@ use Illuminate\Auth\Access\AuthorizationException;
 final class Permissions
 {
     public const MEDIA_MODERATE = 'media.moderate';
+
     public const REPORTS_REVIEW = 'reports.review';
+
     public const APPEALS_REVIEW = 'appeals.review';
+
     public const VERIFICATIONS_REVIEW = 'verifications.review';
+
     public const SELFIE_VIEW = 'verifications.selfie';
+
     public const USERS_VIEW = 'users.view';
+
     public const USERS_MANAGE = 'users.manage';
+
     public const CREDITS_ADJUST = 'credits.adjust';
+
     public const PREMIUM_GRANT = 'premium.grant';
+
     public const TICKETS_MANAGE = 'tickets.manage';
+
     public const AUDIT_VIEW = 'audit.view';
 
     /** @var array<string, list<string>> */
@@ -38,6 +48,7 @@ final class Permissions
     ];
 
     public const SELFIE_OPENS = 'selfie';
+
     public const REJECT_ONLY = 'reject_only';
 
     /**

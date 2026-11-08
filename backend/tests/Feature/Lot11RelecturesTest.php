@@ -9,13 +9,14 @@
 use App\Events\CallEvent;
 use App\Jobs\CloseCallRoom;
 use App\Models\User;
-use App\Services\AgeGate;
 use App\Services\Admin\SanctionLedger;
+use App\Services\AgeGate;
 use App\Services\Calls;
 use App\Services\CallsRoomService;
 use App\Services\LiveKitRoomService;
 use App\Services\Storage\MediaStorage;
 use App\Support\SafetyState;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\Support\FakeCallsRoomService;
+use Tests\Support\FakeMediaStorage;
 
 function l11User(array $user = []): array
 {
@@ -141,7 +143,7 @@ it('Calls::expire et la fin d’appel ferment la salle via la file (exécutée e
 
 it('les tests sont hermétiques : salles LiveKit simulées par défaut, requête HTTP sortante non déclarée refusée', function () {
     expect(app(CallsRoomService::class))->toBeInstanceOf(FakeCallsRoomService::class)
-        ->and(app(MediaStorage::class))->toBeInstanceOf(Tests\Support\FakeMediaStorage::class);
+        ->and(app(MediaStorage::class))->toBeInstanceOf(FakeMediaStorage::class);
     expect(fn () => Http::get('https://exemple-non-declare.test/'))->toThrow(RuntimeException::class);
 
     Http::fake(['https://declare.test/*' => Http::response('ok')]);
@@ -205,7 +207,7 @@ it('safety.state_store : jeton d’âge à usage unique et compteur de ré-authe
     l11As($b)->postJson('/api/v1/me/export', ['password' => 'mauvais'])->assertForbidden();
     $key = 'reauth-fail:'.$u->id.'|127.0.0.1';
     expect(SafetyState::limiter()->attempts($key))->toBe(1)
-        ->and(app(Illuminate\Cache\RateLimiter::class)->attempts($key))->toBe(0);
+        ->and(app(RateLimiter::class)->attempts($key))->toBe(0);
 });
 
 it('safety.state_store : sans configuration, le magasin de cache par défaut est utilisé', function () {

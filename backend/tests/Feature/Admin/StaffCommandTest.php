@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\Feature\Admin\Support\Seed;
 
 it('crée un compte avec un mot de passe généré, affiché une seule fois et stocké haché', function () {
@@ -20,7 +21,7 @@ it('crée un compte avec un mot de passe généré, affiché une seule fois et s
 
 it('affiche le mot de passe généré, qui permet de se connecter, et ne l’écrit nulle part ailleurs', function () {
     Log::spy();
-    $output = new Symfony\Component\Console\Output\BufferedOutput;
+    $output = new BufferedOutput;
     Artisan::call('staff:create', ['email' => 'mod@ayelo.test', 'role' => 'moderator'], $output);
     $text = $output->fetch();
 
@@ -39,7 +40,7 @@ it('affiche le mot de passe généré, qui permet de se connecter, et ne l’éc
 it('génère un mot de passe différent à chaque appel', function () {
     $passwords = [];
     foreach (['a@ayelo.test', 'b@ayelo.test'] as $email) {
-        $output = new Symfony\Component\Console\Output\BufferedOutput;
+        $output = new BufferedOutput;
         Artisan::call('staff:create', ['email' => $email, 'role' => 'support'], $output);
         preg_match('/(?<![A-Za-z0-9])([A-Za-z0-9]{20})(?![A-Za-z0-9])/', $output->fetch(), $m);
         $passwords[] = $m[1];

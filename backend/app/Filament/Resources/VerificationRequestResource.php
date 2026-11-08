@@ -28,7 +28,7 @@ class VerificationRequestResource extends AdminResource
 
     protected static string $labelKey = 'verification';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
 
     protected static ?int $navigationSort = 40;
 

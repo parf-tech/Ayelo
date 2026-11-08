@@ -1,12 +1,20 @@
 <?php
 
 use App\Filament\Models\AuditEntry;
+use App\Filament\Policies\AuditEntryPolicy;
 use App\Filament\Resources\AuditEntryResource;
 use App\Models\StaffUser;
 use App\Services\Admin\AdminService;
+use App\Services\Admin\AppealReview;
 use App\Services\Admin\Audit;
+use App\Services\Admin\MediaModeration;
+use App\Services\Admin\ReportModeration;
+use App\Services\Admin\TicketDesk;
+use App\Services\Admin\UserAdmin;
+use App\Services\Admin\VerificationReview;
 use App\Services\Storage\MediaStorage;
 use Filament\Facades\Filament;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -24,7 +32,7 @@ it('écrit acteur, action, objet, avant/après et IP', function () {
     $u = Seed::user();
     $m = Seed::media($u->id);
 
-    app(\App\Services\Admin\MediaModeration::class)->approve($admin, $m);
+    app(MediaModeration::class)->approve($admin, $m);
 
     $row = Seed::audit('media.approved');
     expect($row->actor_staff_id)->toBe($admin->id)->and($row->subject_type)->toBe('media')->and($row->subject_id)->toBe($m)
@@ -65,7 +73,7 @@ it('n’offre dans l’interface aucune page ni action d’écriture sur le jour
     expect(array_keys(AuditEntryResource::getPages()))->toBe(['index', 'view']);
     expect(AuditEntryResource::canCreate())->toBeFalse()->and(AuditEntryResource::canEdit($entry))->toBeFalse()->and(AuditEntryResource::canDelete($entry))->toBeFalse()
         ->and(AuditEntryResource::canDeleteAny())->toBeFalse();
-    $policy = new \App\Filament\Policies\AuditEntryPolicy;
+    $policy = new AuditEntryPolicy;
     expect($policy->update($admin, $entry))->toBeFalse()->and($policy->delete($admin, $entry))->toBeFalse()->and($policy->forceDelete($admin, $entry))->toBeFalse();
 
     $this->get('/admin/audit-log')->assertOk()->assertSee('test.action');
@@ -93,8 +101,8 @@ it('journalise sans acteur uniquement pour la console (création de comptes)', f
 
 it('chaque service d’administration exige un acteur StaffUser sur toutes ses méthodes publiques', function () {
     $services = [
-        \App\Services\Admin\MediaModeration::class, \App\Services\Admin\ReportModeration::class, \App\Services\Admin\AppealReview::class,
-        \App\Services\Admin\VerificationReview::class, \App\Services\Admin\UserAdmin::class, \App\Services\Admin\TicketDesk::class,
+        MediaModeration::class, ReportModeration::class, AppealReview::class,
+        VerificationReview::class, UserAdmin::class, TicketDesk::class,
     ];
 
     foreach ($services as $class) {
@@ -120,7 +128,7 @@ it('une action est impossible si le journal ne peut pas être écrit : tout est 
     $ticket = Seed::ticket($u->id);
 
     // Approuver exige d'avoir ouvert le selfie : on l'ouvre AVANT de casser le journal.
-    app(\App\Services\Admin\VerificationReview::class)->viewSelfie($admin, $vr);
+    app(VerificationReview::class)->viewSelfie($admin, $vr);
 
     app()->bind(Audit::class, fn () => new class extends Audit
     {
@@ -131,16 +139,16 @@ it('une action est impossible si le journal ne peut pas être écrit : tout est 
     });
 
     $calls = [
-        fn () => app(\App\Services\Admin\MediaModeration::class)->approve($admin, $m),
-        fn () => app(\App\Services\Admin\MediaModeration::class)->reject($admin, $m, 'spam'),
-        fn () => app(\App\Services\Admin\ReportModeration::class)->decide($admin, $r, 'ban', 'motif valable'),
-        fn () => app(\App\Services\Admin\AppealReview::class)->accept($admin, $appeal),
-        fn () => app(\App\Services\Admin\VerificationReview::class)->approve($admin, $vr),
-        fn () => app(\App\Services\Admin\VerificationReview::class)->viewSelfie($admin, $vr),
-        fn () => app(\App\Services\Admin\UserAdmin::class)->suspend($admin, $u->id, 'motif valable', 3),
-        fn () => app(\App\Services\Admin\UserAdmin::class)->adjustCredits($admin, $u->id, 'conversation', 5, 'geste commercial'),
-        fn () => app(\App\Services\Admin\UserAdmin::class)->grantPremium($admin, $u->id, now()->addDays(30), 'geste commercial'),
-        fn () => app(\App\Services\Admin\TicketDesk::class)->update($admin, $ticket, 'closed', null),
+        fn () => app(MediaModeration::class)->approve($admin, $m),
+        fn () => app(MediaModeration::class)->reject($admin, $m, 'spam'),
+        fn () => app(ReportModeration::class)->decide($admin, $r, 'ban', 'motif valable'),
+        fn () => app(AppealReview::class)->accept($admin, $appeal),
+        fn () => app(VerificationReview::class)->approve($admin, $vr),
+        fn () => app(VerificationReview::class)->viewSelfie($admin, $vr),
+        fn () => app(UserAdmin::class)->suspend($admin, $u->id, 'motif valable', 3),
+        fn () => app(UserAdmin::class)->adjustCredits($admin, $u->id, 'conversation', 5, 'geste commercial'),
+        fn () => app(UserAdmin::class)->grantPremium($admin, $u->id, now()->addDays(30), 'geste commercial'),
+        fn () => app(TicketDesk::class)->update($admin, $ticket, 'closed', null),
     ];
     foreach ($calls as $call) {
         expect($call)->toThrow(RuntimeException::class, 'journal indisponible');
@@ -163,7 +171,7 @@ it('un refus de droits n’écrit rien, ni action ni audit', function () {
     $m = Seed::media($u->id);
     $before = Seed::auditCount();
 
-    expect(fn () => app(\App\Services\Admin\MediaModeration::class)->approve($support, $m))->toThrow(\Illuminate\Auth\Access\AuthorizationException::class);
+    expect(fn () => app(MediaModeration::class)->approve($support, $m))->toThrow(AuthorizationException::class);
 
     expect(DB::table('media')->find($m)->status)->toBe('processing')->and(Seed::auditCount())->toBe($before);
 });

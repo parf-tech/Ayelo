@@ -4,7 +4,8 @@ namespace App\Filament\Pages\Auth;
 
 use App\Services\Admin\Audit;
 use Filament\Auth\Pages\EditProfile;
-use Filament\Facades\Filament;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 /**
@@ -27,9 +28,9 @@ class EditStaffProfile extends EditProfile
         app(Audit::class)->record($this->getUser(), 'staff.password_changed', 'staff_users', (string) $this->getUser()->getKey());
     }
 
-    protected function getCurrentPasswordFormComponent(): \Filament\Schemas\Components\Component
+    protected function getCurrentPasswordFormComponent(): Component
     {
         return parent::getCurrentPasswordFormComponent()
-            ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => filled($get('password')));
+            ->visible(fn (Get $get): bool => filled($get('password')));
     }
 }

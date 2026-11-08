@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\Storage\MediaStorage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Support\FakeMediaStorage;
 use Tests\Support\TestImages;
 
@@ -29,7 +30,7 @@ function profileData(array $o = []): array
 function makeProfile(User $user, array $o = []): void
 {
     DB::table('profiles')->insert(array_merge([
-        'id' => (string) Illuminate\Support\Str::uuid(), 'user_id' => $user->id, 'display_name' => 'Nom'.substr($user->id, 0, 4),
+        'id' => (string) Str::uuid(), 'user_id' => $user->id, 'display_name' => 'Nom'.substr($user->id, 0, 4),
         'gender' => 'woman', 'origin_country' => 'CM', 'residence_country' => 'FR', 'intent' => 'flirt',
         'created_at' => now(), 'updated_at' => now(),
     ], $o));
@@ -104,7 +105,7 @@ it('affiche le profil d’un autre utilisateur seulement s’il est visible et n
     $this->withHeader('Authorization', $vb)->getJson('/api/v1/profiles/'.$target->id)->assertNotFound();
 
     DB::table('profiles')->where('user_id', $target->id)->update(['is_visible' => true]);
-    DB::table('blocks')->insert(['id' => (string) Illuminate\Support\Str::uuid(), 'blocker_id' => $target->id, 'blocked_id' => $viewer->id, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('blocks')->insert(['id' => (string) Str::uuid(), 'blocker_id' => $target->id, 'blocked_id' => $viewer->id, 'created_at' => now(), 'updated_at' => now()]);
     $this->withHeader('Authorization', $vb)->getJson('/api/v1/profiles/'.$target->id)->assertNotFound();
 });
 
@@ -126,7 +127,7 @@ it('ne montre que les médias approuvés aux autres, et masque la dernière conn
     makeProfile($viewer);
     makeProfile($target, ['hide_last_seen' => true]);
     foreach (['approved' => 0, 'processing' => 1, 'rejected' => 2] as $status => $pos) {
-        DB::table('media')->insert(['id' => (string) Illuminate\Support\Str::uuid(), 'user_id' => $target->id, 'kind' => 'profile_photo', 'status' => $status,
+        DB::table('media')->insert(['id' => (string) Str::uuid(), 'user_id' => $target->id, 'kind' => 'profile_photo', 'status' => $status,
             'storage_key' => "k/$status", 'mime_type' => 'image/jpeg', 'position' => $pos, 'created_at' => now(), 'updated_at' => now()]);
     }
 
@@ -249,5 +250,5 @@ it('exige l’authentification pour toutes les routes de profil et de média', f
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->putJson('/api/v1/me/profile', profileData())->assertUnauthorized();
     $this->postJson('/api/v1/media/upload-url', [])->assertUnauthorized();
-    $this->getJson('/api/v1/profiles/'.Illuminate\Support\Str::uuid())->assertUnauthorized();
+    $this->getJson('/api/v1/profiles/'.Str::uuid())->assertUnauthorized();
 });

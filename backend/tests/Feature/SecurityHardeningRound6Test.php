@@ -6,23 +6,30 @@
  * compromis est remplace par Http::fake.
  */
 
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Jobs\BuildDataExport;
+use App\Mail\AccountDeletionMail;
 use App\Mail\PasswordResetMail;
 use App\Mail\VerifyEmailMail;
 use App\Models\User;
 use App\Services\AccountMail;
 use App\Services\AgeGate;
+use App\Services\BannedIdentifiers;
 use App\Services\OAuth\InvalidOAuthToken;
 use App\Services\OAuth\JwtOAuthVerifier;
 use App\Services\OAuth\OAuthIdentity;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\OneTimeCodes;
+use App\Support\DeviceId;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -417,8 +424,8 @@ it('F-29 : le jeton d’âge ne sert qu’une fois (e-mail et OAuth), reste vala
 
 it('F-29 : les anciens jetons sans identifiant restent acceptés une fois', function () {
     // Jeton émis avant l'ajout de `jti` : l'empreinte du jeton chiffré tient lieu d'identifiant.
-    $legacy = Illuminate\Support\Facades\Crypt::encryptString(json_encode([
-        'birthdate' => '1990-05-10', 'device' => App\Support\DeviceId::hash(R6_D1), 'exp' => now()->addMinutes(5)->getTimestamp(),
+    $legacy = Crypt::encryptString(json_encode([
+        'birthdate' => '1990-05-10', 'device' => DeviceId::hash(R6_D1), 'exp' => now()->addMinutes(5)->getTimestamp(),
     ]));
     $gate = app(AgeGate::class);
     expect($gate->readToken($legacy, R6_D1))->toBe('1990-05-10')->and($gate->claimToken($legacy))->toBeTrue()->and($gate->claimToken($legacy))->toBeFalse();
@@ -468,7 +475,7 @@ it('P-01 : le vrai propriétaire reprend l’adresse squattée par « mot de pas
 
     $fresh = $squatter->fresh();
     expect($fresh->email_verified_at)->not->toBeNull()
-        ->and(Illuminate\Support\Facades\Hash::check('NouveauMotdepasse2026', $fresh->password))->toBeTrue()
+        ->and(Hash::check('NouveauMotdepasse2026', $fresh->password))->toBeTrue()
         ->and(DB::table('personal_access_tokens')->where('id', $old->accessToken->getKey())->exists())->toBeFalse();
 });
 
@@ -520,7 +527,7 @@ it('P-03 : PoC du rapport, saisir l’e-mail d’une victime depuis un appareil 
     r6_register(R6_D1, 'victime-age@example.com', 'invalide', '203.0.113.5')->assertForbidden();
     r6_register(R6_D1, 'victime-age@example.com', 'invalide', '203.0.113.5', ['email' => 'Victime-Age@Example.com'])->assertForbidden();
     expect(app(AgeGate::class)->isEmailRefused('victime-age@example.com'))->toBeFalse()
-        ->and(DB::table('banned_identifiers')->where('kind', 'age_refusal')->where('value_hash', App\Services\BannedIdentifiers::hash('email:victime-age@example.com'))->exists())->toBeFalse();
+        ->and(DB::table('banned_identifiers')->where('kind', 'age_refusal')->where('value_hash', BannedIdentifiers::hash('email:victime-age@example.com'))->exists())->toBeFalse();
 
     // La vraie propriétaire, autre appareil et autre IP : inscription possible.
     $token = r6_age(R6_D2, '198.51.100.20');
@@ -564,14 +571,14 @@ it('F-11 : le renvoi de vérification et la demande web de suppression partent a
     Mail::fake();
     $u = User::factory()->create(['password' => R6_PWD, 'email_verified_at' => null]);
 
-    $web = app(App\Http\Controllers\AccountController::class)->requestWebDeletion(Request::create('/x', 'POST', ['email' => $u->email]), app(OneTimeCodes::class));
+    $web = app(AccountController::class)->requestWebDeletion(Request::create('/x', 'POST', ['email' => $u->email]), app(OneTimeCodes::class));
     expect($web->getStatusCode())->toBe(202);
     Mail::assertNothingSent();
     app()->terminate();
-    Mail::assertSent(App\Mail\AccountDeletionMail::class, 1);
+    Mail::assertSent(AccountDeletionMail::class, 1);
 
     Mail::fake();
-    $resend = app(App\Http\Controllers\Auth\EmailVerificationController::class)->resend(Request::create('/x', 'POST')->setUserResolver(fn () => $u), app(AccountMail::class));
+    $resend = app(EmailVerificationController::class)->resend(Request::create('/x', 'POST')->setUserResolver(fn () => $u), app(AccountMail::class));
     expect($resend->getStatusCode())->toBe(204);
     Mail::assertNothingSent();
     app()->terminate();

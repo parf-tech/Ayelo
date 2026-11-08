@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\StaffUser;
 use DomainException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,7 @@ class UserAdmin extends AdminService
 
     /** Garde-fous contre une erreur de saisie. */
     public const MAX_CREDIT_DELTA = 1000;
+
     public const MAX_PREMIUM_DAYS = 366;
 
     public function __construct(Audit $audit, private SanctionLedger $sanctions)
@@ -118,7 +120,7 @@ class UserAdmin extends AdminService
     public function grantPremium(StaffUser $actor, string $userId, \DateTimeInterface $endsAt, string $note): void
     {
         $note = $this->reason($note);
-        $end = \Illuminate\Support\Carbon::instance($endsAt);
+        $end = Carbon::instance($endsAt);
         if ($end->lessThanOrEqualTo(now()->addMinute()) || $end->greaterThan(now()->addDays(self::MAX_PREMIUM_DAYS))) {
             throw new DomainException('La date de fin doit être dans le futur et à moins de '.self::MAX_PREMIUM_DAYS.' jours.');
         }
@@ -151,7 +153,7 @@ class UserAdmin extends AdminService
             if ($sub === null || $sub->store !== 'promotional' || $sub->status !== 'active') {
                 throw new DomainException('Seul un Premium offert encore actif peut être retiré.');
             }
-            $end = now()->greaterThan(\Illuminate\Support\Carbon::parse($sub->period_start)->addSecond()) ? now() : \Illuminate\Support\Carbon::parse($sub->period_start)->addSecond();
+            $end = now()->greaterThan(Carbon::parse($sub->period_start)->addSecond()) ? now() : Carbon::parse($sub->period_start)->addSecond();
             DB::table('subscriptions')->where('id', $subscriptionId)->update(['status' => 'expired', 'period_end' => $end, 'updated_at' => now()]);
 
             return new Change(null, ['status' => 'active', 'period_end' => $sub->period_end, 'user_id' => $sub->user_id], ['status' => 'expired', 'note' => $note]);
@@ -159,7 +161,7 @@ class UserAdmin extends AdminService
     }
 
     /** Jours de Premium comptés pour une fin donnée (arrondi au jour supérieur, au moins 1). */
-    private static function premiumDays(\Illuminate\Support\Carbon $end): int
+    private static function premiumDays(Carbon $end): int
     {
         return max(1, (int) ceil(now()->diffInSeconds($end, true) / 86400));
     }

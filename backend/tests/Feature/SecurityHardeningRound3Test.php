@@ -13,6 +13,8 @@ use App\Services\Admin\SanctionLedger;
 use App\Services\BannedIdentifiers;
 use App\Services\Push\PushNotifier;
 use App\Services\Storage\MediaStorage;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -62,7 +64,7 @@ it('N-14 : media:sweep-orphans supprime les objets sans ligne, au-delà du déla
 });
 
 it('N-14 : le balayage est planifié chaque jour', function () {
-    $events = collect(app(Illuminate\Console\Scheduling\Schedule::class)->events())->filter(fn ($e) => str_contains($e->command, 'media:sweep-orphans'));
+    $events = collect(app(Schedule::class)->events())->filter(fn ($e) => str_contains($e->command, 'media:sweep-orphans'));
     expect($events)->toHaveCount(1);
 });
 
@@ -140,7 +142,7 @@ it('F-06 : la date de naissance est ramenée à l’année à l’anonymisation,
     [$u] = r3_member(['birthdate' => '1990-06-15']);
 
     // Hors suppression, le déclencheur refuse toujours tout changement.
-    expect(fn () => DB::transaction(fn () => DB::table('users')->where('id', $u->id)->update(['birthdate' => '1990-01-01'])))->toThrow(Illuminate\Database\QueryException::class);
+    expect(fn () => DB::transaction(fn () => DB::table('users')->where('id', $u->id)->update(['birthdate' => '1990-01-01'])))->toThrow(QueryException::class);
 
     DB::table('users')->where('id', $u->id)->update(['status' => 'deleting', 'deletion_requested_at' => now()->subDays(31)]);
     expect(app(AccountDeletion::class)->purgeDue())->toBe(1);

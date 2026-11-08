@@ -5,6 +5,7 @@ use App\Events\MatchCreated;
 use App\Events\MessageCreated;
 use App\Jobs\SendPush;
 use App\Models\User;
+use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\PushNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -289,7 +290,7 @@ it('ignore l’envoi FCM quand il n’est pas configuré', function () {
     config(['services.fcm.project_id' => null]);
     Http::fake();
 
-    expect(app(App\Services\Push\FcmPushNotifier::class)->send('android', 'tok', 't', 'b'))->toBeTrue();
+    expect(app(FcmPushNotifier::class)->send('android', 'tok', 't', 'b'))->toBeTrue();
     Http::assertNothingSent();
 });
 

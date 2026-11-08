@@ -26,7 +26,7 @@ class MediaItemResource extends AdminResource
 
     protected static string $labelKey = 'media';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-photo';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-photo';
 
     protected static ?int $navigationSort = 10;
 

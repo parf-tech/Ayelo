@@ -1,6 +1,8 @@
 <?php
 
+use App\OpenApi\ReauthenticationExceptionResponses;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
+use Dedoc\Scramble\OpenApiVersion;
 
 return [
     /*
@@ -44,7 +46,7 @@ return [
     /*
      * OpenAPI version of the resulting document.
      */
-    'openapi_version' => \Dedoc\Scramble\OpenApiVersion::V3_1,
+    'openapi_version' => OpenApiVersion::V3_1,
 
     'info' => [
         /*
@@ -162,7 +164,7 @@ return [
     ],
 
     'extensions' => [
-        \App\OpenApi\ReauthenticationExceptionResponses::class,
+        ReauthenticationExceptionResponses::class,
     ],
 
     /*

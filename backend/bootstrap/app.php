@@ -1,5 +1,9 @@
 <?php
 
+use App\Exceptions\ReauthenticationRefused;
+use App\Exceptions\ReauthenticationThrottled;
+use App\Http\Middleware\EnsureAccountActive;
+use App\Http\Middleware\TouchLastSeen;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,13 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Limite générale par compte ou par IP, et refus des comptes suspendus/bannis sur les jetons déjà émis (F-03, F-12).
         $middleware->throttleApi('api');
-        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureAccountActive::class);
+        $middleware->appendToGroup('api', EnsureAccountActive::class);
         // Dernière activité : au plus une écriture par heure et par compte, aucune requête tant que le cache la couvre.
-        $middleware->appendToGroup('api', \App\Http\Middleware\TouchLastSeen::class);
+        $middleware->appendToGroup('api', TouchLastSeen::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Refus attendus (mauvais mot de passe, trop d'essais) : réponses normales, pas des incidents à journaliser.
-        $exceptions->dontReport([\App\Exceptions\ReauthenticationRefused::class, \App\Exceptions\ReauthenticationThrottled::class]);
+        $exceptions->dontReport([ReauthenticationRefused::class, ReauthenticationThrottled::class]);
 
         // Format d'erreur unique de l'API (docs/10-API-SPECIFICATIONS.md) :
         // { "error": { "code", "message", "fields"? } }

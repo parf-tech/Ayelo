@@ -212,7 +212,8 @@ it('P-13 : l\'environnement de l\'enfant ne contient ni secret, ni base, ni stoc
     putenv('DB_PASSWORD');
     unset($_SERVER['AWS_SECRET_ACCESS_KEY']);
 
-    expect($env['FCM_PRIVATE_KEY'])->toBeFalse()
+    // Absent, ou vidé quand le nom est déclaré dans le .env local (l'enfant le met à vide pour que Laravel ne le relise pas).
+    expect(in_array($env['FCM_PRIVATE_KEY'], [false, ''], true))->toBeTrue()
         ->and(in_array($env['AWS_SECRET_ACCESS_KEY'], [false, ''], true))->toBeTrue()
         ->and(in_array($env['DB_PASSWORD'], [false, ''], true))->toBeTrue()
         ->and($env['APP_KEY'])->toStartWith('base64:')->and($env['APP_KEY'])->not->toBe(config('app.key'));

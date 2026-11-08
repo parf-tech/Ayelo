@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MemberResource\RelationManagers;
 
 use App\Filament\Support\Labels;
 use App\Filament\Support\Staff;
+use App\Services\Admin\Permissions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,7 +26,7 @@ class CreditEntriesRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return \App\Filament\Support\Staff::can(\App\Services\Admin\Permissions::USERS_VIEW);
+        return Staff::can(Permissions::USERS_VIEW);
     }
 
     public function table(Table $table): Table

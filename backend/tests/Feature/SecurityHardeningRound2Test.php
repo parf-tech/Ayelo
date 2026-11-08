@@ -6,10 +6,12 @@
 
 use App\Models\User;
 use App\Providers\AdminPanelProvider;
+use App\Services\MediaSanitizer;
 use App\Services\RevenueCatProcessor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Tests\Support\FakeMediaStorage;
 
 function r2_member(array $user = []): array
 {
@@ -213,11 +215,11 @@ it('N-11 : /broadcasting/auth n’existe que sous /api/v1, avec jeton, et / ne s
 it('N-14 : une image au-delà de 20 Mpx est refusée avant tout décodage', function () {
     $png = "\x89PNG\r\n\x1a\n".pack('N', 13).'IHDR'.pack('NN', 5000, 5000)."\x08\x02\x00\x00\x00".pack('N', 0);
 
-    expect((new App\Services\MediaSanitizer)->clean($png, 'image/png'))->toBeNull();
+    expect((new MediaSanitizer)->clean($png, 'image/png'))->toBeNull();
 });
 
 it('N-14 : la lecture d’un objet est bornée à max_bytes + 1 octets', function () {
-    $storage = new Tests\Support\FakeMediaStorage;
+    $storage = new FakeMediaStorage;
     $storage->upload('k', str_repeat('a', 100), 'image/jpeg');
 
     expect(strlen($storage->get('k', 10)))->toBe(11)->and(strlen($storage->get('k')))->toBe(100);

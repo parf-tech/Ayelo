@@ -34,7 +34,7 @@ class ReportResource extends AdminResource
 
     protected static string $labelKey = 'report';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-flag';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-flag';
 
     protected static ?int $navigationSort = 20;
 
@@ -49,7 +49,7 @@ class ReportResource extends AdminResource
     }
 
     /** Rouge dès qu'un signalement critique (mineur suspecté, délai de 2 h) est ouvert. */
-    public static function getNavigationBadgeColor(): string | array | null
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Report::query()->where('status', 'open')->where('priority', 2)->exists() ? 'danger' : 'warning';
     }

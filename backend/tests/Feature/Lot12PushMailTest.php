@@ -12,6 +12,9 @@ use App\Services\MailSuppression;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\PushNotifier;
 use App\Services\Push\RetryablePushException;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -186,7 +189,7 @@ it('SendPush : un seul exemplaire en file par utilisateur et message (ShouldBeUn
     $x = new SendPush($u->id, 'messages', 't', 'b');
     $y = new SendPush($u->id, 'messages', 't', 'b');
 
-    expect($a)->toBeInstanceOf(Illuminate\Contracts\Queue\ShouldBeUnique::class)
+    expect($a)->toBeInstanceOf(ShouldBeUnique::class)
         ->and($a->uniqueId())->toBe($b->uniqueId())
         ->and($a->uniqueId())->not->toBe($c->uniqueId())
         ->and($x->uniqueId())->not->toBe($y->uniqueId()); // sans identifiant métier : jamais dédoublonné
@@ -240,7 +243,7 @@ it('FCM : 500, 503 et 429 lèvent RetryablePushException, jeton conservé', func
 it('FCM : délai dépassé ou réseau coupé lève RetryablePushException', function () {
     l12_fcm();
     Http::fake(['oauth2.googleapis.com/*' => Http::response(['access_token' => 'a'], 200),
-        'fcm.googleapis.com/*' => fn () => throw new Illuminate\Http\Client\ConnectionException('cURL error 28: timeout')]);
+        'fcm.googleapis.com/*' => fn () => throw new ConnectionException('cURL error 28: timeout')]);
 
     expect(fn () => (new FcmPushNotifier)->send('android', 't1', 'a', 'b'))->toThrow(RetryablePushException::class);
 });
@@ -336,7 +339,7 @@ it('webhook e-mail : idempotent, charges mal formées ignorées avec un 200, auc
 
 it('webhook e-mail : le motif ne peut pas être forcé par la charge, la table refuse un motif inconnu', function () {
     expect(app(MailSuppression::class)->suppress('x@example.com', 'autre', 'postmark'))->toBeFalse();
-    expect(fn () => DB::table('email_suppressions')->insert(['email' => 'y@example.com', 'reason' => 'autre', 'provider' => 'p']))->toThrow(Illuminate\Database\QueryException::class);
+    expect(fn () => DB::table('email_suppressions')->insert(['email' => 'y@example.com', 'reason' => 'autre', 'provider' => 'p']))->toThrow(QueryException::class);
 });
 
 it('e-mails de compte : une adresse supprimée ne reçoit rien, sans jeton créé et avec la même réponse HTTP', function () {

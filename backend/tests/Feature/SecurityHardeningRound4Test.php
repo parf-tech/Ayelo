@@ -6,11 +6,12 @@
  | durées de conservation du texte libre (F-06).
  */
 
+use App\Filament\Models\MediaItem;
 use App\Filament\Models\Member;
+use App\Filament\Resources\MediaItemResource\Pages\ListMediaItems;
 use App\Filament\Resources\MemberResource;
 use App\Filament\Resources\MemberResource\Pages\ViewMember;
 use App\Filament\Resources\MemberResource\RelationManagers\RiskEventsRelationManager;
-use App\Filament\Resources\MediaItemResource\Pages\ListMediaItems;
 use App\Models\User;
 use App\Services\AccountDeletion;
 use App\Services\Admin\MediaModeration;
@@ -243,7 +244,7 @@ it('N-09 : l’aperçu d’un média de la file écrit « media.preview » (sans
 
     // Dans l'interface : le clic écrit la ligne avant de remettre le lien.
     $this->actingAs($mod, 'staff');
-    Livewire::test(ListMediaItems::class)->callTableAction('preview', \App\Filament\Models\MediaItem::find($m))->assertNotified('Aperçu journalisé.');
+    Livewire::test(ListMediaItems::class)->callTableAction('preview', MediaItem::find($m))->assertNotified('Aperçu journalisé.');
     expect(Seed::auditCount('media.preview'))->toBe(2);
 });
 
@@ -356,7 +357,7 @@ it('F-06 : reports.details et sanctions.reason sont effacés après la durée de
     $reporter = Seed::user('Rep');
     $old = now()->subDays(40);
 
-    $mk = function (string $reported, ?string $reporterId, \DateTimeInterface $at, ?string $retainUntil = null) {
+    $mk = function (string $reported, ?string $reporterId, DateTimeInterface $at, ?string $retainUntil = null) {
         $id = Seed::report($reported, 'harassment', 0, $reporterId, $at);
         DB::table('reports')->where('id', $id)->update(['details' => 'texte libre '.$id, 'evidence_retain_until' => $retainUntil]);
 

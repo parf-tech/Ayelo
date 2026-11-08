@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AgeGate;
+use App\Services\BannedIdentifiers;
 use App\Services\DeviceSessions;
 use App\Services\EmailSquatReclaim;
 use App\Services\OAuth\InvalidOAuthToken;
@@ -99,7 +100,7 @@ class OAuthController extends Controller
                 return response()->json(['error' => ['code' => 'email_not_verified', 'message' => 'Adresse e-mail non vérifiée par le fournisseur.']], 422);
             }
 
-            if (\App\Services\BannedIdentifiers::has('email', $identity->email)) {
+            if (BannedIdentifiers::has('email', $identity->email)) {
                 return response()->json(['error' => ['code' => 'age_not_eligible', 'message' => 'Inscription impossible.']], 403);
             }
 
