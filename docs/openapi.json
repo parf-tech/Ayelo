@@ -1901,6 +1901,31 @@
                 "tags": [
                     "Conversation"
                 ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 200
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -2090,14 +2115,32 @@
                                                     "profile"
                                                 ]
                                             }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "next_cursor"
+                                            ]
                                         }
                                     },
                                     "required": [
-                                        "data"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -3042,6 +3085,94 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/webhooks/mail": {
+            "post": {
+                "operationId": "mailWebhook",
+                "summary": "\u00c9v\u00e9nement trait\u00e9 (ou ignor\u00e9) ; la r\u00e9ponse ne dit jamais quelles adresses sont supprim\u00e9es",
+                "tags": [
+                    "MailWebhook"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "result": {
+                                                    "type": "string",
+                                                    "const": "ok"
+                                                },
+                                                "suppressed": {
+                                                    "type": "integer",
+                                                    "const": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "result",
+                                                "suppressed"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "result": {
+                                                    "type": "string",
+                                                    "const": "ignored"
+                                                },
+                                                "suppressed": {
+                                                    "type": "integer",
+                                                    "const": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "result",
+                                                "suppressed"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "unauthorized"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Non autoris\u00e9."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }

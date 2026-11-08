@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\AccountDeletionMail;
 use App\Mail\PasswordResetMail;
 use App\Mail\VerifyEmailMail;
 use App\Models\User;
@@ -14,10 +15,18 @@ class AccountMail
 
     public const RESET_TTL_MINUTES = 60;
 
-    public function __construct(private OneTimeCodes $codes) {}
+    public function __construct(private OneTimeCodes $codes, private MailSuppression $suppression) {}
 
+    /**
+     * Les trois envois (vérification, réinitialisation, suppression de compte) ignorent en silence une adresse en rebond définitif
+     * ou en plainte (MailSuppression) : aucun jeton créé, aucune erreur, réponse HTTP identique (pas d'énumération).
+     */
     public function sendVerification(User $user): void
     {
+        if ($this->suppression->isSuppressed($user->email)) {
+            return;
+        }
+
         $token = $this->codes->issue($user->id, 'email', self::VERIFY_TTL_MINUTES);
 
         Mail::to($user->email)->locale($user->locale)->send(new VerifyEmailMail($this->link('verify-email', $token)));
@@ -25,9 +34,23 @@ class AccountMail
 
     public function sendPasswordReset(User $user): void
     {
+        if ($this->suppression->isSuppressed($user->email)) {
+            return;
+        }
+
         $token = $this->codes->issue($user->id, 'password_reset', self::RESET_TTL_MINUTES);
 
         Mail::to($user->email)->locale($user->locale)->send(new PasswordResetMail($this->link('reset-password', $token)));
+    }
+
+    /** Lien de confirmation de suppression de compte (le jeton `account_deletion` est émis par l'appelant). */
+    public function sendAccountDeletion(User $user, string $link): void
+    {
+        if ($this->suppression->isSuppressed($user->email)) {
+            return;
+        }
+
+        Mail::to($user->email)->locale($user->locale)->send(new AccountDeletionMail($link));
     }
 
     /**

@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Exceptions\ReauthenticationRefused;
 use App\Exceptions\ReauthenticationThrottled;
 use App\Jobs\BuildDataExport;
-use App\Mail\AccountDeletionMail;
 use App\Models\User;
 use App\Services\AccountDeletion;
+use App\Services\AccountMail;
 use App\Services\OAuth\InvalidOAuthToken;
+use App\Services\MailSuppression;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\OneTimeCodes;
 use App\Services\Registrar;
@@ -18,7 +19,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
@@ -141,9 +141,13 @@ class AccountController extends Controller
                 $done = true;
 
                 try {
+                    // Adresse en rebond ou signalée en spam : ni jeton ni e-mail, même réponse HTTP.
+                    if (app(MailSuppression::class)->isSuppressed($user->email)) {
+                        return;
+                    }
                     $token = $codes->issue($user->id, 'account_deletion', 60);
                     $link = rtrim((string) config('app.web_url'), '/').'/confirm-deletion?token='.urlencode($token);
-                    Mail::to($user->email)->locale($user->locale)->send(new AccountDeletionMail($link));
+                    app(AccountMail::class)->sendAccountDeletion($user, $link);
                 } catch (\Throwable $e) {
                     report($e);
                 }

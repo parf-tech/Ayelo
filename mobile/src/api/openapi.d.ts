@@ -515,6 +515,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Événement traité (ou ignoré) ; la réponse ne dit jamais quelles adresses sont supprimées */
+        post: operations["mailWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/matches": {
         parameters: {
             query?: never;
@@ -1970,7 +1987,10 @@ export interface operations {
     };
     "conversation.index": {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number | null;
+                cursor?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2020,10 +2040,14 @@ export interface operations {
                                 last_seen_at?: string | null;
                             } | null;
                         }[];
+                        meta: {
+                            next_cursor: string | null;
+                        };
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "conversation.store": {
@@ -2446,6 +2470,50 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    mailWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        result: "ok";
+                        /** @constant */
+                        suppressed: 0;
+                    } | {
+                        /** @constant */
+                        result: "ignored";
+                        /** @constant */
+                        suppressed: 0;
+                    };
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "unauthorized";
+                            /** @constant */
+                            message: "Non autorisé.";
+                        };
+                    };
+                };
+            };
         };
     };
     "match.index": {

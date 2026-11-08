@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import type { Conversation, ConversationLastMessage } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
@@ -53,7 +53,7 @@ export function MessagesListScreen() {
   const router = useRouter();
   const { t, locale } = useI18n();
   const { colors, radius, space } = useTheme();
-  const { status, error, conversations, refresh } = useConversations();
+  const { status, error, conversations, refresh, loadMore, loadingMore } = useConversations();
   const [refreshing, setRefreshing] = useState(false);
 
   const open = (c: Conversation) =>
@@ -89,6 +89,9 @@ export function MessagesListScreen() {
           testID="messages-list"
           data={visible}
           keyExtractor={(c) => c.id}
+          onEndReached={() => void loadMore()}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={loadingMore ? <ActivityIndicator testID="messages-loading-more" color={colors.primary} style={{ paddingVertical: space[3] }} /> : undefined}
           refreshing={refreshing}
           onRefresh={async () => {
             setRefreshing(true);

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ReportController extends Controller
 {
@@ -29,6 +30,7 @@ class ReportController extends Controller
             'context_id' => ['nullable', 'uuid'],
         ]);
         abort_if($data['reported_id'] === $me, 422, 'Action impossible.');
+        $this->assertContext($data, $me);
 
         // Quota anti-abus : 20 signalements par jour et par compte.
         $today = DB::table('reports')->where('reporter_id', $me)->where('created_at', '>=', now()->startOfDay())->count();
@@ -95,6 +97,42 @@ class ReportController extends Controller
         $credibility->alertIfAbnormal($me);
 
         return response()->json(['id' => $id, 'status' => 'received'], 201);
+    }
+
+    /**
+     * Le contexte d'un signalement doit concerner CE couple signaleur / signalé (revue P-10) : sinon un identifiant
+     * étranger (message, appel, story d'un tiers) serait attaché au dossier et exposé au modérateur comme une preuve.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function assertContext(array $data, string $me): void
+    {
+        $type = $data['context_type'] ?? null;
+        $id = $data['context_id'] ?? null;
+        if ($id === null) {
+            return;
+        }
+
+        $other = $data['reported_id'];
+        // Conversation du couple : participants (user_a, user_b) = {signaleur, signalé}.
+        $pair = fn ($q) => $q->where(fn ($w) => $w->where('user_a', $me)->where('user_b', $other))
+            ->orWhere(fn ($w) => $w->where('user_a', $other)->where('user_b', $me));
+
+        $ok = match ($type) {
+            'profile' => $id === $other,
+            'conversation' => DB::table('conversations')->where('id', $id)->where($pair)->exists(),
+            'message' => DB::table('messages')->join('conversations', 'conversations.id', '=', 'messages.conversation_id')
+                ->where('messages.id', $id)->where(fn ($q) => $pair($q))->exists(),
+            'call' => DB::table('call_sessions')->where('id', $id)->where(fn ($q) => $q
+                ->where(fn ($w) => $w->where('caller_id', $me)->where('callee_id', $other))
+                ->orWhere(fn ($w) => $w->where('caller_id', $other)->where('callee_id', $me)))->exists(),
+            'story' => DB::table('stories')->where('id', $id)->where('user_id', $other)->exists(),
+            default => false,
+        };
+
+        if (! $ok) {
+            throw ValidationException::withMessages(['context_id' => ['Contexte invalide pour ce signalement.']]);
+        }
     }
 
     private function risk(string $userId, string $signal, int $weight): void

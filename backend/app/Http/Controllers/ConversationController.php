@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class ConversationController extends Controller
@@ -22,15 +23,34 @@ class ConversationController extends Controller
     {
         $me = $request->user()->id;
 
-        $rows = DB::table('conversations')
+        // Pagination optionnelle et rétrocompatible : sans paramètre, jusqu'à 100 conversations comme avant.
+        $params = $request->validate(['limit' => ['nullable', 'integer', 'min:1', 'max:100'], 'cursor' => ['nullable', 'string', 'max:200']]);
+        $limit = (int) ($params['limit'] ?? 100);
+
+        $query = DB::table('conversations')
+            ->select('conversations.*')->selectRaw('coalesce(last_message_at, created_at) as sort_at')
             ->where(fn ($q) => $q->where('user_a', $me)->orWhere('user_b', $me))
             ->whereNotIn('status', ['blocked'])
             // « Supprimée » côté soi : réapparaît seulement si un message arrive après.
             ->where(function ($q) use ($me) {
                 $q->whereRaw('(user_a = ? and (hidden_by_a_at is null or last_message_at > hidden_by_a_at))', [$me])
                     ->orWhereRaw('(user_b = ? and (hidden_by_b_at is null or last_message_at > hidden_by_b_at))', [$me]);
-            })
-            ->orderByRaw('coalesce(last_message_at, created_at) desc')->limit(100)->get();
+            });
+
+        if (! empty($params['cursor'])) {
+            $parts = explode('|', (string) base64_decode($params['cursor'], true), 2);
+            // Format strict (horodatage + uuid) : PostgreSQL refuserait autrement le texte en 500.
+            if (count($parts) !== 2 || ! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $parts[1]) || ! $this->validTimestamp($parts[0])) {
+                throw ValidationException::withMessages(['cursor' => ['Curseur invalide.']]);
+            }
+            $query->whereRaw('(coalesce(last_message_at, created_at), id) < (?::timestamptz, ?::uuid)', $parts);
+        }
+
+        // Dernière activité décroissante, égalités départagées par l'identifiant : pas de doublon ni de trou entre pages.
+        $fetched = $query->orderByRaw('coalesce(last_message_at, created_at) desc')->orderByDesc('id')->limit($limit + 1)->get();
+        $rows = $fetched->take($limit);
+        $lastRow = $rows->last();
+        $nextCursor = $fetched->count() > $limit && $lastRow ? base64_encode($lastRow->sort_at.'|'.$lastRow->id) : null;
 
         $others = $rows->map(fn ($c) => $conversations->other($c, $me));
         $ids = $rows->pluck('id')->all();
@@ -54,7 +74,7 @@ class ConversationController extends Controller
         ))->keyBy('conversation_id');
 
         /**
-         * @body array{data: list<array{id: string, status: string, unlocked_by: string, unread: int, last_message: array{id: string, mine: bool, type: string, body: string|null, created_at: string}|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}|null}>}
+         * @body array{data: list<array{id: string, status: string, unlocked_by: string, unread: int, last_message: array{id: string, mine: bool, type: string, body: string|null, created_at: string}|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}|null}>, meta: array{next_cursor: string|null}}
          */
         return response()->json(['data' => $rows->map(function ($c) use ($me, $conversations, $presented, $unread, $lastByConversation) {
             $other = $conversations->other($c, $me);
@@ -68,7 +88,16 @@ class ConversationController extends Controller
                 'last_message' => $last ? ['id' => $last->id, 'mine' => $last->sender_id === $me, 'type' => $last->type, 'body' => $last->type === 'text' ? $last->body : null, 'created_at' => $last->created_at] : null,
                 'profile' => $presented[$other] ?? null,
             ];
-        })->values()]);
+        })->values(), 'meta' => ['next_cursor' => $nextCursor]]);
+    }
+
+    private function validTimestamp(string $value): bool
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(\.\d{1,6})?(Z|[+-]\d{2}(:?\d{2})?)?$/', $value, $m)) {
+            return false;
+        }
+
+        return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) && (int) $m[4] < 24 && (int) $m[5] < 60 && (int) $m[6] < 60;
     }
 
     /**

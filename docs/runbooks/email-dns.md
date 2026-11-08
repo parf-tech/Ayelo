@@ -108,10 +108,22 @@ Pour que DMARC passe, **au moins un** des deux alignements doit réussir : le do
 - [ ] **mail-tester.com** : envoyer un message de réinitialisation vers l'adresse jetable que le site fournit ; viser **9/10 ou plus** ; lire le détail (SPF, DKIM, DMARC, liste noire, contenu).
 - [ ] Le message arrive en boîte de réception, pas en courrier indésirable, chez Gmail, Outlook et au moins un fournisseur local d'un marché de la vague 1.
 - [ ] Le lien du message pointe vers `APP_WEB_URL` (HTTPS), pas vers `localhost` ni `example.invalid`.
-- [ ] Rebonds et plaintes : le tableau de bord du prestataire reçoit bien les rebonds (envoi vers une adresse inexistante sur un domaine d'essai). **Écart connu** : l'application ne traite pas encore les webhooks de rebond du prestataire ; une adresse en rebond reste dans la base. À décider (backlog).
+- [ ] Rebonds et plaintes : le tableau de bord du prestataire reçoit bien les rebonds (envoi vers une adresse inexistante sur un domaine d'essai), et le webhook de la section 5 bis est branché (une ligne apparaît dans `email_suppressions`).
 - [ ] Rapports DMARC agrégés reçus pendant deux semaines avant de durcir `p=`.
 - [ ] Réputation : inscrire le domaine d'envoi à Google Postmaster Tools.
 - [ ] Mettre à jour `replica/backend.md` (ligne « Expéditeur sur le domaine du produit, SPF/DKIM/DMARC ») et `docs/legal/02-politique-confidentialite.md` (nom du prestataire).
+
+## 5 bis. Rebonds et plaintes (webhook)
+
+Une adresse en rebond définitif ou en plainte pour courrier indésirable ne doit plus recevoir d'e-mail : l'insister abîme la réputation du domaine d'envoi. L'application tient la table `email_suppressions` (adresse, motif `hard_bounce` ou `complaint`, prestataire, date) ; `AccountMail` (vérification d'adresse, réinitialisation du mot de passe, confirmation de suppression de compte) ignore en silence ces adresses : aucun jeton créé, aucune erreur, réponse HTTP identique à celle d'une adresse normale (pas d'énumération).
+
+1. Générer un secret : `openssl rand -hex 32`, le mettre dans `MAIL_WEBHOOK_SECRET` (`infra/.env.prod`), redémarrer. Vide : la route répond 401 à tout (aucune suppression).
+2. Chez le prestataire, créer un webhook `POST https://<API>/api/v1/webhooks/mail` avec l'en-tête `X-Mail-Webhook-Secret: <secret>` (ou `Authorization: Bearer <secret>`).
+   - **Postmark** : événements « Bounce » et « Spam complaint » ; en-tête personnalisé disponible dans la configuration du webhook. Sont retenus : `RecordType` `Bounce` avec `Type` `HardBounce` ou `SpamComplaint`, et `RecordType` `SpamComplaint` (champ `Email`). Les rebonds temporaires sont ignorés.
+   - **Resend** : événements `email.bounced` et `email.complained` (adresses dans `data.to[]`). Un `data.bounce.type` autre que `Permanent` est ignoré. **Réserve** : Resend signe ses webhooks (Svix) et ne permet pas, à notre connaissance, un en-tête secret personnalisé ; à vérifier dans la documentation au moment de la mise en place. Sans en-tête possible, il faut soit un relais qui ajoute l'en-tête, soit ajouter la vérification de la signature Svix au contrôleur (non fait).
+3. Le webhook est idempotent (un doublon est sans effet) et répond 200 même pour un événement ignoré. Les journaux n'enregistrent aucune adresse.
+4. Lever une suppression (adresse corrigée par la personne, faux positif) : `delete from email_suppressions where email = '<adresse>';` après vérification auprès du prestataire que l'adresse n'est plus en liste de blocage de son côté.
+5. Contrôle : envoyer un rebond d'essai (Postmark propose des événements de test) puis `select reason, provider, created_at from email_suppressions order by created_at desc limit 5;`.
 
 ## 6. En cas de problème
 - Courrier indésirable : vérifier d'abord l'alignement DMARC et la présence de DKIM, puis la réputation de l'IP partagée (demander une IP dédiée seulement si le volume le justifie).

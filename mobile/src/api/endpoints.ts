@@ -12,7 +12,7 @@ import type {
   CallTokenResponse,
   ConsentUpdate,
   ConsentsResponse,
-  Conversation,
+  ConversationListResponse,
   DataExport,
   DeleteAccountRequest,
   DeleteAccountResponse,
@@ -140,7 +140,9 @@ export function createEndpoints(client: ApiClient) {
   };
 
   const messaging = {
-    conversations: () => request<ListResponse<Conversation>>('GET', '/conversations'),
+    /** Sans paramètre : jusqu'à 100 conversations. `meta.next_cursor` non nul : page suivante via `cursor`. */
+    conversations: (page: PageQuery = {}) =>
+      request<ConversationListResponse>('GET', '/conversations', { query: { ...page } }),
     /** 402 credit_required si ni Premium ni crédit « Conversation ». */
     openConversation: (targetId: string) =>
       request<OpenConversationResponse>('POST', '/conversations', { body: { target_id: targetId } satisfies OpRequest<'conversation.store'> }),

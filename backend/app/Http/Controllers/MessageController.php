@@ -110,12 +110,9 @@ class MessageController extends Controller
         MessageCreated::dispatch($id, $payload);
 
         $recipient = $conversations->other($conversation, $me->id);
-        // Confidentialité (revue F-28) : par défaut la notification ne contient pas le texte du message (écran verrouillé,
-        // transit par FCM/APNs). PUSH_MESSAGE_PREVIEW=true rétablit l'aperçu de 80 caractères.
-        $preview = config('push.message_preview')
-            ? ($data['type'] === 'text' ? Str::limit((string) $data['body'], (int) config('push.message_preview_chars', 80)) : 'Média reçu')
-            : 'Vous avez reçu un nouveau message.';
-        SendPush::dispatch($recipient, 'messages', 'Nouveau message', $preview, ['conversation_id' => $id, 'type' => 'message']);
+        // Confidentialité (revues F-28 et P-14) : la file ne transporte que l'identifiant du message ; le job construit le corps
+        // à l'envoi (texte générique par défaut, aperçu de 80 caractères avec PUSH_MESSAGE_PREVIEW=true).
+        SendPush::dispatch($recipient, 'messages', 'Nouveau message', 'Vous avez reçu un nouveau message.', ['conversation_id' => $id, 'type' => 'message'], $messageId);
 
         /**
          * Message créé ; `safety_hint` apparaît quand un texte ressemble à une demande d'argent.

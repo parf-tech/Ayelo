@@ -568,3 +568,12 @@ end $$;
 
 create trigger users_lock_birthdate before update on users
   for each row execute function lock_birthdate();
+
+-- adresses en rebond définitif ou en plainte (webhooks du prestataire d'e-mail) : plus aucun e-mail de compte ne leur est envoyé.
+-- Pas de clé étrangère : la suppression survit à l'effacement du compte. Migration miroir : 2026_11_09_000000_create_email_suppressions.php
+create table email_suppressions (
+  email citext primary key,
+  reason text not null check (reason in ('hard_bounce','complaint')),
+  provider text not null,
+  created_at timestamptz not null default now()
+);

@@ -6,13 +6,13 @@ Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentes
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16) | **Mesuré le 2026-11-07 (PHP 8.4.27, `memory_limit=1G`) : 465 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3085 assertions.** Le PHP 8.5 téléchargé en début de journée est bloqué par Smart App Control ; les tests tournent avec `C:\Users\pc\tools\php84`. |
+| Tests backend (Pest, PostgreSQL 16) | **Mesuré le 2026-11-07 (PHP 8.4.27, `memory_limit=1G`) : 515 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3373 assertions.** Le PHP 8.5 téléchargé en début de journée est bloqué par Smart App Control ; les tests tournent avec `C:\Users\pc\tools\php84`. |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec (mesuré) |
 | CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
 | Contrôle de secrets (gitleaks, historique complet) | **exécuté uniquement par la CI** (workflow `schema`), jamais en local (binaire absent du poste, téléchargement non autorisé). Dernier résultat connu : propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__`. À rejouer sur l'historique du commit final |
 | Audit des dépendances PHP | `composer audit` rejoué le 2026-11-06 : aucune faille signalée |
 | Revue de sécurité du code, 2e ronde | `reviews/code-security-2.md` ; correctifs des constats hauts et moyens appliqués (N-01 à N-08, N-10, N-11, F-08, F-10, F-23, puis lot 2 partiel : N-09, N-13, N-14) avec un test par constat (`SecurityHardeningRound2Test`) ; suivi dans `reviews/code-security-2-suivi.md`. Lots 3 à 9 depuis (N-09, N-10, N-13, N-14 traités avec des résidus écrits ; lots 6 à 8 : F-11, F-18 à F-30). Restent ouverts ou à décider : F-02 et F-09 résiduels, N-12 (voir `DECISIONS-PROPRIETAIRE.md`), F-06 / F-16 / F-22 résiduels. Troisième relecture ciblée N-01 / N-02 non faite |
-| Mobile (Jest, typecheck, lint, bundle) | **390 tests Jest sur 20 suites (mesuré le 2026-11-07)** ; typecheck et lint propres à la dernière exécution ; `expo export --platform android` compilait avec 300 tests (rejoué par le CTO le 2026-11-06, non rejoué depuis les ajouts push et accessibilité). `npm audit --omit=dev` rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
+| Mobile (Jest, typecheck, lint, bundle) | **393 tests Jest sur 21 suites (mesuré le 2026-11-07)** ; typecheck et lint propres à la dernière exécution ; `expo export --platform android` compilait avec 300 tests (rejoué par le CTO le 2026-11-06, non rejoué depuis les ajouts push et accessibilité). `npm audit --omit=dev` rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (transitives, outils de build ; le correctif proposé est un retour à Expo 52, refusé) |
 
 ## Backend : fait et testé
 
@@ -38,8 +38,8 @@ Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentes
 
 | lot | responsable | état |
 | --- | --- | --- |
-| Administration Filament | livrée côté code (465 tests Pest mesurés le 2026-11-07) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
-| Écrans mobiles de la phase 2 | livrés côté code (390 tests Jest) ; jamais vus sur appareil | voir spec 010 |
+| Administration Filament | livrée côté code (515 tests Pest mesurés le 2026-11-07) ; rendu navigateur et 2FA avec une vraie application non vérifiés | voir spec 009 |
+| Écrans mobiles de la phase 2 | livrés côté code (393 tests Jest) ; jamais vus sur appareil | voir spec 010 |
 
 ## Non fait
 

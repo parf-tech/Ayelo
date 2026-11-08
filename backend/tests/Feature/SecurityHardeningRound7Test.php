@@ -314,7 +314,9 @@ it('F-28 : la notification d’un message ne contient pas le texte par défaut, 
 
     config(['push.message_preview' => true]);
     r7As($ab)->postJson("/api/v1/conversations/$conv/messages", ['client_id' => (string) Str::uuid(), 'type' => 'text', 'body' => $secret])->assertCreated();
-    Queue::assertPushed(SendPush::class, fn ($j) => str_starts_with($j->body, 'secret secret') && mb_strlen($j->body) <= 83 && ! str_contains($j->body, str_repeat('secret ', 12)));
+    // Revue P-14 : le texte ne transite plus par la file ; la tâche porte l'identifiant du message et l'aperçu (80 caractères)
+    // est construit à l'envoi (voir « P-14 : le corps est construit à l'envoi » dans Lot12PushMailTest).
+    Queue::assertPushed(SendPush::class, fn ($j) => $j->messageId !== null && ! str_contains(serialize($j), 'secret'));
 });
 
 it('F-28 : un jeton push connu n’est pas transférable à un autre compte sur un autre appareil ; même téléphone ou même compte : réaffecté', function () {

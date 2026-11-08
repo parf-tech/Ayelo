@@ -87,7 +87,7 @@ return [
     'field' => [
         'message_to_user' => 'Message communiqué à l\'utilisateur', 'reason_to_user' => 'Motif communiqué à l\'utilisateur', 'internal_note' => 'Note interne',
         'justification' => 'Justification', 'duration' => 'Durée', 'reason' => 'Motif', 'note_optional' => 'Note (facultative)',
-        'decision_note' => 'Note de décision (obligatoire)', 'assign_to' => 'Attribuer à', 'reason_required' => 'Motif (obligatoire)', 'delta' => 'Variation (+ ou −)',
+        'decision_note' => 'Note de décision (obligatoire)', 'assign_to' => 'Attribuer à', 'reason_required' => 'Motif (obligatoire)', 'reason_visible_hint' => 'Ce motif est communiqué à l\'utilisateur. N\'y inscrivez aucune note interne.', 'delta' => 'Variation (+ ou −)',
     ],
     'days' => '{1} :count jour|[2,*] :count jours',
     'confirm' => [

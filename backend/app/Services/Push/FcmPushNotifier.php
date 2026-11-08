@@ -3,6 +3,8 @@
 namespace App\Services\Push;
 
 use Firebase\JWT\JWT;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +43,23 @@ class FcmPushNotifier implements PushNotifier
                     'apns' => ['headers' => ['apns-priority' => '10']],
                 ],
             ]);
+        } catch (ConnectionException) {
+            // Délai dépassé ou réseau coupé : le jeton n'est pas en cause, la tâche réessaie avec un délai croissant.
+            Log::warning('push FCM injoignable, nouvel essai', ['platform' => $platform]);
+
+            throw new RetryablePushException('fcm unreachable');
+        } catch (RequestException $e) {
+            // Échec de l'échange du jeton d'accès (oauth2.googleapis.com) : 5xx et 429 sont temporaires.
+            $status = $e->response->status();
+            Cache::forget('fcm.access_token');
+            if ($status === 429 || $status >= 500) {
+                Log::warning('push FCM : jeton d\'accès indisponible, nouvel essai', ['status' => $status]);
+
+                throw new RetryablePushException('fcm token endpoint unavailable');
+            }
+            Log::critical('push FCM impossible', ['platform' => $platform, 'exception' => $e::class, 'status' => $status]);
+
+            return true;
         } catch (\Throwable $e) {
             // Compte de service refusé, clé mal formée, réseau : jamais de secret dans le journal.
             Cache::forget('fcm.access_token');
@@ -54,6 +73,13 @@ class FcmPushNotifier implements PushNotifier
             Log::critical('push FCM refusé : vérifier le compte de service et l\'API Firebase Cloud Messaging', ['status' => $response->status()]);
 
             return true;
+        }
+
+        // Quota (429) ou panne côté Google (5xx) : temporaire, on réessaie sans effacer le jeton.
+        if ($response->status() === 429 || $response->status() >= 500) {
+            Log::warning('push FCM temporairement indisponible, nouvel essai', ['status' => $response->status()]);
+
+            throw new RetryablePushException('fcm unavailable');
         }
 
         if ($response->status() === 404 || ($response->status() === 400 && str_contains((string) $response->body(), 'INVALID_ARGUMENT'))) {

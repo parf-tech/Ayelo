@@ -20,6 +20,11 @@ export type Page<T> = { data: T[]; next_cursor: string | null };
 export type PageQuery = { cursor?: string; limit?: number };
 /** Liste sans curseur (le backend renvoie { data: [...] }). */
 export type ListResponse<T> = { data: T[] };
+/**
+ * GET /conversations : pagination par curseur optionnelle (`limit` 1-100, `cursor` opaque). `meta` est facultatif :
+ * un serveur plus ancien ne le renvoie pas, la liste est alors complète. À remplacer par le type généré une fois le contrat régénéré.
+ */
+export type ConversationListResponse = { data: Conversation[]; meta?: { next_cursor: string | null } };
 
 // ---- Auth ---------------------------------------------------------------------------------------
 

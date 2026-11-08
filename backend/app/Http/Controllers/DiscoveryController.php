@@ -78,11 +78,23 @@ class DiscoveryController extends Controller
     private function decode(string $cursor): array
     {
         $parts = explode('|', (string) base64_decode($cursor, true), 2);
-        if (count($parts) !== 2 || ! preg_match('/^[0-9a-f-]{36}$/', $parts[1]) || strtotime($parts[0]) === false) {
+        // Format strict : strtotime() accepte des textes (« tomorrow ») que PostgreSQL refuse en 500 (revue F-24).
+        if (count($parts) !== 2
+            || ! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $parts[1])
+            || ! $this->validTimestamp($parts[0])) {
             throw ValidationException::withMessages(['cursor' => ['Curseur invalide.']]);
         }
 
         return $parts;
+    }
+
+    private function validTimestamp(string $value): bool
+    {
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(\.\d{1,6})?(Z|[+-]\d{2}(:?\d{2})?)?$/', $value, $m)) {
+            return false;
+        }
+
+        return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) && (int) $m[4] < 24 && (int) $m[5] < 60 && (int) $m[6] < 60;
     }
 
     /** @return array<string, mixed> */

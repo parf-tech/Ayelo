@@ -49,6 +49,12 @@ return [
         'private_key' => env('FCM_PRIVATE_KEY'),
     ],
 
+    // Webhooks de rebond / plainte du prestataire d'e-mail (Postmark, Resend). Secret partagé envoyé dans l'en-tête
+    // X-Mail-Webhook-Secret (ou Authorization: Bearer) ; vide = route fermée (401). Voir docs/runbooks/email-dns.md.
+    'mail_webhook' => [
+        'secret' => env('MAIL_WEBHOOK_SECRET'),
+    ],
+
     // LiveKit : la clé et le secret d'API ne quittent jamais le serveur ; le client reçoit un jeton de 10 minutes.
     'livekit' => [
         'url' => env('LIVEKIT_URL'),

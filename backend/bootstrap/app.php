@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Limite générale par compte ou par IP, et refus des comptes suspendus/bannis sur les jetons déjà émis (F-03, F-12).
         $middleware->throttleApi('api');
         $middleware->appendToGroup('api', \App\Http\Middleware\EnsureAccountActive::class);
+        // Dernière activité : au plus une écriture par heure et par compte, aucune requête tant que le cache la couvre.
+        $middleware->appendToGroup('api', \App\Http\Middleware\TouchLastSeen::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Refus attendus (mauvais mot de passe, trop d'essais) : réponses normales, pas des incidents à journaliser.
