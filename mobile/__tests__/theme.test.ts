@@ -63,14 +63,17 @@ describe('contrastes des tokens (WCAG AA : 4,5:1 pour le texte)', () => {
     });
   }
 
-  it('phase 2 : direction B (Lagune) active ; like, dislike, primary et verified suivent ses valeurs', () => {
-    expect(direction.id).toBe('B');
-    expect(colors.light.like).toBe('#17703B');
+  it('direction D (Prune) active ; like, dislike, primary, brand et verified suivent ses valeurs', () => {
+    expect(direction.id).toBe('D');
+    expect(colors.light.like).toBe('#127850');
     expect(colors.light.dislike).toBe('#B3261E');
-    expect(colors.dark.like).toBe('#5AD98A');
-    expect(colors.dark.dislike).toBe('#FF8A80');
-    expect(colors.light.primary).toBe('#0B6468');
-    expect(colors.dark.primary).toBe('#4FC9C4');
+    expect(colors.dark.like).toBe('#4FD39A');
+    expect(colors.dark.dislike).toBe('#FF8F86');
+    // Rose assombri : #E6007A (rose du handoff) ne passe que de justesse (4,52:1) en texte et en libellé blanc.
+    expect(colors.light.primary).toBe('#C2006B');
+    expect(colors.dark.primary).toBe('#FF6FB0');
+    expect(colors.light.brand).toBe('#4B0F5B');
+    expect(colors.dark.brand).toBe('#4B0F5B');
     expect(colors.light.verified).toBe('#3446C4');
   });
 

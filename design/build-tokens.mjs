@@ -3,12 +3,12 @@
 //
 //   node design/build-tokens.mjs            valide design/tokens.json puis écrit les fichiers générés
 //   node design/build-tokens.mjs --check    ne rien écrire ; code de sortie 1 si un fichier généré est périmé
-//   node design/build-tokens.mjs --report   tableau des rapports de contraste (Markdown) pour les trois directions
+//   node design/build-tokens.mjs --report   tableau des rapports de contraste (Markdown) pour les quatre directions
 //
 // Sorties : mobile/src/theme/tokens.ts, web/assets/tokens.css, et les couleurs de mobile/app.json
 // (icône adaptative, couleur de notification, fonds de l'écran de démarrage).
 // La validation (contrastes WCAG 2.2) échoue avant toute écriture : texte 4,5:1, contrôles 3:1, clair et sombre,
-// pour les trois directions A, B et C (elles doivent rester utilisables).
+// pour les quatre directions A, B et C (elles doivent rester utilisables).
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -24,7 +24,7 @@ export const PATHS = {
 };
 
 const MODES = ['light', 'dark'];
-const DIRECTION_IDS = ['A', 'B', 'C'];
+const DIRECTION_IDS = ['A', 'B', 'C', 'D'];
 const HEX = /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/;
 const PRINT_WIDTH = 120;
 
@@ -116,7 +116,7 @@ export function validate(tokens) {
   const err = (m) => errors.push(m);
 
   if (!tokens.directions || !DIRECTION_IDS.every((id) => tokens.directions[id])) {
-    err(`directions : A, B et C doivent exister (trouvé : ${Object.keys(tokens.directions ?? {}).join(', ') || 'aucune'})`);
+    err(`directions : A, B, C et D doivent exister (trouvé : ${Object.keys(tokens.directions ?? {}).join(', ') || 'aucune'})`);
     return errors;
   }
   if (!tokens.directions[tokens.activeDirection]) {
@@ -476,7 +476,7 @@ export function run(argv = process.argv.slice(2), log = console.log, errLog = co
   const mc = min('control');
   const summary =
     `tokens : direction active ${tokens.activeDirection} (${tokens.directions[tokens.activeDirection].name}) ; ` +
-    `${rows.length} contrastes vérifiés (3 directions x 2 modes) ; ` +
+    `${rows.length} contrastes vérifiés (4 directions x 2 modes) ; ` +
     `minimum texte ${mt.ratio.toFixed(2)}:1 (${mt.direction}/${mt.mode} ${mt.fg} sur ${mt.bg}) ; ` +
     `minimum contrôle ${mc.ratio.toFixed(2)}:1 (${mc.direction}/${mc.mode} ${mc.fg} sur ${mc.bg})`;
 

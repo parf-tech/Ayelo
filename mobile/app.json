@@ -68,7 +68,7 @@
         "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#0B6468",
+        "backgroundColor": "#C2006B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -90,15 +90,15 @@
       [
         "expo-notifications",
         {
-          "color": "#0B6468"
+          "color": "#C2006B"
         }
       ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FBFAF6",
+          "backgroundColor": "#FFFFFF",
           "dark": {
-            "backgroundColor": "#0B1413"
+            "backgroundColor": "#1A0B20"
           }
         }
       ]

@@ -202,6 +202,16 @@ export const fr = {
   'demo.sample.emptyTitle': 'Rien à afficher',
   'demo.sample.emptyBody': "Il n'y a encore aucun élément ici.",
   'demo.sample.emptyAction': 'Actualiser',
+  'demo.icons': 'Icônes',
+  'demo.iconSizes': "Tailles d'icône",
+  'demo.iconTones': "Couleurs d'icône",
+  'demo.iconButtons': "Boutons d'icône",
+  'demo.sample.iconClose': 'Fermer',
+  'demo.sample.iconMenu': "Plus d'actions",
+  'demo.sample.iconFavorite': 'Favori',
+  'demo.sample.iconFilters': 'Filtres',
+  'demo.sample.iconFiltersCount': '3 filtres actifs',
+  'demo.sample.iconSend': 'Envoyer',
   ...frAreas,
 } as const;
 

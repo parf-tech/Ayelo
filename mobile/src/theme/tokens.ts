@@ -1,6 +1,6 @@
 // Fichier généré, ne pas modifier.
 // Source unique : design/tokens.json. Générateur : design/build-tokens.mjs (npm run tokens, depuis mobile/).
-// Direction active : B (Lagune). Pour changer de direction, modifier activeDirection dans tokens.json.
+// Direction active : D (Prune). Pour changer de direction, modifier activeDirection dans tokens.json.
 // Seul fichier de mobile/ autorisé à contenir des valeurs de couleur (test __tests__/theme.test.ts).
 
 export type ColorTokens = {
@@ -12,6 +12,8 @@ export type ColorTokens = {
   border: string;
   /** Contour de composant (champ, case, piste d'interrupteur) : >= 3:1 (WCAG 1.4.11). `border` reste pour les séparateurs décoratifs. */
   borderStrong: string;
+  /** Fond de marque pleine page (accueil) : prune, identique en clair et en sombre. Les directions A à C l'alignent sur primary. */
+  brand: string;
   /** Erreur, action destructrice. */
   danger: string;
   /** Fond d'un composant désactivé. */
@@ -28,6 +30,8 @@ export type ColorTokens = {
   like: string;
   /** Texte et glyphes sur accent. */
   onAccent: string;
+  /** Texte et glyphes sur brand. */
+  onBrand: string;
   /** Texte et glyphes sur primary (et sur danger). */
   onPrimary: string;
   /** Teinte opaque de fond de modale ; préférer scrim. */
@@ -54,66 +58,70 @@ export type ColorTokens = {
   warning: string;
 };
 
-export const direction = { id: 'B', name: 'Lagune' } as const;
+export const direction = { id: 'D', name: 'Prune' } as const;
 
 export const colors: { light: ColorTokens; dark: ColorTokens } = {
   light: {
-    accent: '#E3A92B',
-    bg: '#FBFAF6',
-    border: '#D4DFDB',
-    borderStrong: '#677C79',
+    accent: '#FF7A3D',
+    bg: '#FFFFFF',
+    border: '#E6DCEF',
+    borderStrong: '#85748C',
+    brand: '#4B0F5B',
     danger: '#B3261E',
-    disabledBg: '#D4DFDB',
-    disabledText: '#465856',
+    disabledBg: '#E6DCEF',
+    disabledText: '#6B5C70',
     dislike: '#B3261E',
-    focusRing: '#0B6468',
+    focusRing: '#4B0F5B',
     info: '#3446C4',
-    like: '#17703B',
-    onAccent: '#1A1405',
+    like: '#127850',
+    onAccent: '#28152F',
+    onBrand: '#FFFFFF',
     onPrimary: '#FFFFFF',
-    overlay: '#12201F',
-    passNeutral: '#465856',
-    primary: '#0B6468',
-    scrim: '#12201F80',
-    skeleton: '#D4DFDB',
-    success: '#17703B',
-    surface: '#EDF3F0',
-    text: '#12201F',
-    textMuted: '#465856',
+    overlay: '#28152F',
+    passNeutral: '#6B5C70',
+    primary: '#C2006B',
+    scrim: '#28152F80',
+    skeleton: '#E6DCEF',
+    success: '#127850',
+    surface: '#F5F0FF',
+    text: '#28152F',
+    textMuted: '#6B5C70',
     verified: '#3446C4',
     warning: '#8A5A00',
   },
   dark: {
-    accent: '#F0BE55',
-    bg: '#0B1413',
-    border: '#243735',
-    borderStrong: '#7C9692',
-    danger: '#FF8A80',
-    disabledBg: '#243735',
-    disabledText: '#9FB6B2',
-    dislike: '#FF8A80',
-    focusRing: '#4FC9C4',
-    info: '#8FA6FF',
-    like: '#5AD98A',
-    onAccent: '#1A1405',
-    onPrimary: '#06201F',
+    accent: '#FF9A6B',
+    bg: '#1A0B20',
+    border: '#432A50',
+    borderStrong: '#9C86A6',
+    brand: '#4B0F5B',
+    danger: '#FF8F86',
+    disabledBg: '#432A50',
+    disabledText: '#C2B0C9',
+    dislike: '#FF8F86',
+    focusRing: '#FF8CC4',
+    info: '#A9B8FF',
+    like: '#4FD39A',
+    onAccent: '#28152F',
+    onBrand: '#FFFFFF',
+    onPrimary: '#2A0A1E',
     overlay: '#000000',
-    passNeutral: '#9FB6B2',
-    primary: '#4FC9C4',
+    passNeutral: '#C2B0C9',
+    primary: '#FF6FB0',
     scrim: '#00000099',
-    skeleton: '#243735',
-    success: '#5AD98A',
-    surface: '#142120',
-    text: '#E9F2F0',
-    textMuted: '#9FB6B2',
-    verified: '#8FA6FF',
+    skeleton: '#432A50',
+    success: '#4FD39A',
+    surface: '#2A1633',
+    text: '#F7EEF9',
+    textMuted: '#C2B0C9',
+    verified: '#A9B8FF',
     warning: '#F0BE55',
   },
 };
 
 export const space = [0, 4, 8, 12, 16, 24, 32, 48] as const;
 
-export const radius = { sm: 10, md: 16, lg: 28, pill: 999 } as const;
+export const radius = { sm: 8, md: 12, lg: 20, pill: 999 } as const;
 
 export const borderWidth = { hairline: 1, strong: 2 } as const;
 

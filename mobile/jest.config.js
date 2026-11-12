@@ -3,5 +3,8 @@ module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testMatch: ['<rootDir>/__tests__/**/*.test.ts?(x)'],
-  moduleNameMapper: {},
+  // lucide-react-native : jest-expo résout la build ESM (.mjs) que Jest ne sait pas charger ; on pointe la build CommonJS.
+  moduleNameMapper: {
+    '^lucide-react-native/icons/(.+)$': '<rootDir>/node_modules/lucide-react-native/dist/cjs/icons/$1.js',
+  },
 };

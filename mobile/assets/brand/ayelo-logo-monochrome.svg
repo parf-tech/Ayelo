@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420" role="img" aria-labelledby="title desc">
+  <title id="title">Ayelo — Rencontrez, échangez, aimez.</title>
+  <desc id="desc">Logo vectoriel composé de deux bulles de discussion en forme de cœur, dégradées orange et magenta, avec trois points blancs, accompagné du nom Ayelo.</desc>
+  <defs/>
+  <!-- Bulle arrière : conversation chaleureuse -->
+  <path d="M72 150 C72 76 132 25 207 25 C258 25 301 52 327 93 C350 129 348 173 327 207 C307 239 273 258 232 260 L173 315 L178 249 C112 231 72 198 72 150Z" fill="url(#warm)"/>
+  <!-- Bulle avant : cœur / conversation -->
+  <path d="M157 159 C157 91 207 48 270 48 C316 48 353 71 377 107 C401 143 396 185 371 216 C348 245 310 259 267 260 L218 315 L222 252 C181 233 157 201 157 159Z" fill="url(#pink)"/>
+  <!-- Noyau cœur stylisé -->
+  <path d="M270 105 C247 75 199 82 187 119 C175 157 205 184 270 231 C335 184 365 157 353 119 C341 82 293 75 270 105Z" fill="url(#inner)" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="225" cy="151" r="10" fill="#23152A"/><circle cx="270" cy="151" r="10" fill="#23152A"/><circle cx="315" cy="151" r="10" fill="#23152A"/>
+  <text x="430" y="220" font-family="Poppins, Montserrat, Arial, sans-serif" font-size="174" font-weight="700" letter-spacing="-8" fill="#23152A">Ayelo</text>
+  <text x="440" y="300" font-family="Poppins, Montserrat, Arial, sans-serif" font-size="39" font-weight="500" letter-spacing=".4" fill="#23152A">Rencontrez, échangez, aimez.</text>
+  <path d="M445 330 C570 300 695 300 810 327" fill="none" stroke="url(#pink)" stroke-width="9" stroke-linecap="round"/>
+</svg>

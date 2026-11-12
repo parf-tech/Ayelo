@@ -14,7 +14,7 @@ test('contraste : valeurs de référence WCAG', () => {
   assert.equal(contrast('#12201F', '#FBFAF6').toFixed(2), '16.06');
 });
 
-test('tokens.json : valide pour les trois directions', () => {
+test('tokens.json : valide pour les quatre directions', () => {
   assert.deepEqual(validate(tokens()), []);
 });
 
@@ -85,9 +85,9 @@ test('todoBg est réservé au web', () => {
   assert.ok(renderCss(tokens()).includes('--color-todo-bg:'));
 });
 
-test('contrastRows couvre les trois directions et les deux modes', () => {
+test('contrastRows couvre les quatre directions et les deux modes', () => {
   const t = tokens();
-  for (const id of ['A', 'B', 'C']) {
+  for (const id of ['A', 'B', 'C', 'D']) {
     const rows = contrastRows(t, id);
     assert.ok(rows.some((r) => r.mode === 'light') && rows.some((r) => r.mode === 'dark'));
     assert.ok(rows.filter((r) => r.kind !== 'info').every((r) => r.ok), id);

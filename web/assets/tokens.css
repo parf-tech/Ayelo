@@ -1,33 +1,35 @@
 /*
  * Fichier généré, ne pas modifier.
  * Source unique : design/tokens.json. Générateur : design/build-tokens.mjs (npm run tokens, depuis mobile/).
- * Direction active : B (Lagune). Les mêmes jetons génèrent mobile/src/theme/tokens.ts.
+ * Direction active : D (Prune). Les mêmes jetons génèrent mobile/src/theme/tokens.ts.
  */
 :root {
   color-scheme: light dark;
 
-  --color-accent: #E3A92B;
-  --color-bg: #FBFAF6;
-  --color-border: #D4DFDB;
-  --color-border-strong: #677C79;
+  --color-accent: #FF7A3D;
+  --color-bg: #FFFFFF;
+  --color-border: #E6DCEF;
+  --color-border-strong: #85748C;
+  --color-brand: #4B0F5B;
   --color-danger: #B3261E;
-  --color-disabled-bg: #D4DFDB;
-  --color-disabled-text: #465856;
+  --color-disabled-bg: #E6DCEF;
+  --color-disabled-text: #6B5C70;
   --color-dislike: #B3261E;
-  --color-focus-ring: #0B6468;
+  --color-focus-ring: #4B0F5B;
   --color-info: #3446C4;
-  --color-like: #17703B;
-  --color-on-accent: #1A1405;
+  --color-like: #127850;
+  --color-on-accent: #28152F;
+  --color-on-brand: #FFFFFF;
   --color-on-primary: #FFFFFF;
-  --color-overlay: #12201F;
-  --color-pass-neutral: #465856;
-  --color-primary: #0B6468;
-  --color-scrim: #12201F80;
-  --color-skeleton: #D4DFDB;
-  --color-success: #17703B;
-  --color-surface: #EDF3F0;
-  --color-text: #12201F;
-  --color-text-muted: #465856;
+  --color-overlay: #28152F;
+  --color-pass-neutral: #6B5C70;
+  --color-primary: #C2006B;
+  --color-scrim: #28152F80;
+  --color-skeleton: #E6DCEF;
+  --color-success: #127850;
+  --color-surface: #F5F0FF;
+  --color-text: #28152F;
+  --color-text-muted: #6B5C70;
   --color-todo-bg: #FDE68A;
   --color-verified: #3446C4;
   --color-warning: #8A5A00;
@@ -41,9 +43,9 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 28px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-pill: 999px;
 
   --border-width-hairline: 1px;
@@ -115,30 +117,32 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-accent: #F0BE55;
-    --color-bg: #0B1413;
-    --color-border: #243735;
-    --color-border-strong: #7C9692;
-    --color-danger: #FF8A80;
-    --color-disabled-bg: #243735;
-    --color-disabled-text: #9FB6B2;
-    --color-dislike: #FF8A80;
-    --color-focus-ring: #4FC9C4;
-    --color-info: #8FA6FF;
-    --color-like: #5AD98A;
-    --color-on-accent: #1A1405;
-    --color-on-primary: #06201F;
+    --color-accent: #FF9A6B;
+    --color-bg: #1A0B20;
+    --color-border: #432A50;
+    --color-border-strong: #9C86A6;
+    --color-brand: #4B0F5B;
+    --color-danger: #FF8F86;
+    --color-disabled-bg: #432A50;
+    --color-disabled-text: #C2B0C9;
+    --color-dislike: #FF8F86;
+    --color-focus-ring: #FF8CC4;
+    --color-info: #A9B8FF;
+    --color-like: #4FD39A;
+    --color-on-accent: #28152F;
+    --color-on-brand: #FFFFFF;
+    --color-on-primary: #2A0A1E;
     --color-overlay: #000000;
-    --color-pass-neutral: #9FB6B2;
-    --color-primary: #4FC9C4;
+    --color-pass-neutral: #C2B0C9;
+    --color-primary: #FF6FB0;
     --color-scrim: #00000099;
-    --color-skeleton: #243735;
-    --color-success: #5AD98A;
-    --color-surface: #142120;
-    --color-text: #E9F2F0;
-    --color-text-muted: #9FB6B2;
+    --color-skeleton: #432A50;
+    --color-success: #4FD39A;
+    --color-surface: #2A1633;
+    --color-text: #F7EEF9;
+    --color-text-muted: #C2B0C9;
     --color-todo-bg: #5B3A06;
-    --color-verified: #8FA6FF;
+    --color-verified: #A9B8FF;
     --color-warning: #F0BE55;
   }
 }

@@ -1,0 +1,144 @@
+{
+  "brand": {
+    "name": "Ayelo",
+    "tagline": "Rencontrez, échangez, aimez.",
+    "direction": "Premium, humaine, inclusive, internationale",
+    "logo_concept": "Double bulle de conversation formant un cœur avec trois points"
+  },
+  "color": {
+    "plum": {
+      "value": "#4B0F5B",
+      "role": "brand.primary"
+    },
+    "magenta": {
+      "value": "#E6007A",
+      "role": "brand.accent"
+    },
+    "coral": {
+      "value": "#FF7A3D",
+      "role": "brand.secondary"
+    },
+    "blush": {
+      "value": "#FFE1EB",
+      "role": "surface.soft"
+    },
+    "lavender": {
+      "value": "#EDE6FF",
+      "role": "surface.tint"
+    },
+    "ink": {
+      "value": "#28152F",
+      "role": "text.primary"
+    },
+    "muted": {
+      "value": "#786A7C",
+      "role": "text.secondary"
+    },
+    "white": {
+      "value": "#FFFFFF",
+      "role": "surface.base"
+    },
+    "success": {
+      "value": "#16845B",
+      "role": "status.success"
+    },
+    "danger": {
+      "value": "#C93552",
+      "role": "status.danger"
+    }
+  },
+  "typography": {
+    "family": "Poppins",
+    "fallback": "system-ui, sans-serif",
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "extrabold": 800
+    },
+    "scale": {
+      "display": {
+        "size": 32,
+        "lineHeight": 40,
+        "weight": 800
+      },
+      "h1": {
+        "size": 28,
+        "lineHeight": 36,
+        "weight": 700
+      },
+      "h2": {
+        "size": 24,
+        "lineHeight": 32,
+        "weight": 700
+      },
+      "h3": {
+        "size": 20,
+        "lineHeight": 28,
+        "weight": 600
+      },
+      "body": {
+        "size": 16,
+        "lineHeight": 24,
+        "weight": 400
+      },
+      "bodySmall": {
+        "size": 14,
+        "lineHeight": 20,
+        "weight": 400
+      },
+      "caption": {
+        "size": 12,
+        "lineHeight": 16,
+        "weight": 500
+      }
+    }
+  },
+  "spacing": {
+    "base": 8,
+    "scale": [
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      32,
+      40,
+      48,
+      64
+    ]
+  },
+  "radius": {
+    "small": 8,
+    "medium": 12,
+    "large": 16,
+    "card": 20,
+    "modal": 24,
+    "pill": 999
+  },
+  "elevation": {
+    "card": "0 8px 24px rgba(45, 12, 54, 0.08)",
+    "floating": "0 12px 32px rgba(45, 12, 54, 0.14)"
+  },
+  "motion": {
+    "fast": "120ms",
+    "normal": "200ms",
+    "slow": "320ms",
+    "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+  },
+  "layout": {
+    "mobileContentPadding": 20,
+    "maxContentWidth": 520,
+    "tapTargetMin": 44,
+    "bottomNavHeight": 72
+  },
+  "rules": [
+    "Gradient is an accent, not a background for every screen.",
+    "Use plum for structure and primary text; magenta for primary actions; coral sparingly.",
+    "Do not use color alone to communicate status.",
+    "Maintain AA contrast for text and controls.",
+    "Respect safe areas, keyboard insets, and platform navigation patterns."
+  ]
+}

@@ -1,0 +1,36 @@
+AYELO — MINI-CHARTE GRAPHIQUE (version de travail 1.0)
+
+POSITIONNEMENT
+Application de rencontres universelle et inclusive. Ton chaleureux, respectueux, moderne et confiant.
+Signature : « Rencontrez, échangez, aimez. »
+
+IDÉE DU SYMBOLE
+Deux bulles de conversation se rapprochent et composent un cœur. Les trois points blancs évoquent le premier échange.
+
+PALETTE
+Violet profond — #4B0F5B — couleur principale et textes sur fonds clairs.
+Rose intense — #E6007A — accent émotionnel et interactions.
+Corail — #FF7A3D — accent secondaire et chaleur.
+Rose pâle — #FFE1EB — fonds doux.
+Lavande — #EDE6FF — surfaces secondaires.
+
+TYPOGRAPHIE
+Poppins Bold : titres et nom de marque.
+Poppins SemiBold : sous-titres et boutons.
+Poppins Regular : textes et interfaces.
+Alternative système : Arial ou sans-serif.
+
+RÈGLES D’UTILISATION
+- Préserver les proportions du symbole et du mot-symbole.
+- Utiliser la version couleur sur fond blanc ou très clair.
+- Sur fond sombre, utiliser une version blanche dédiée à produire à partir du master vectoriel.
+- Prévoir une zone de protection au minimum égale à la hauteur des trois points autour du logo.
+- Ne pas étirer, incliner, ajouter d’ombre portée, ni modifier les couleurs arbitrairement.
+- Pour les très petites tailles, utiliser le symbole seul et vérifier sa lisibilité à 24, 32 et 48 px.
+
+FICHIERS FOURNIS
+ayelo_logo.svg : master vectoriel éditable (le lettrage reste du texte et utilise Poppins si installée).
+ayelo_logo.png : aperçu PNG transparent, 1400 × 420 px.
+
+À VALIDER AVANT EXPLOITATION COMMERCIALE
+Cette proposition constitue une première exécution vectorielle. Faire vérifier le dessin final, la disponibilité juridique du nom AY ELO/AYELO, les antériorités de logo et les éventuels conflits de marque dans les territoires visés. Le logo présenté dans la planche de présentation est une maquette d'ambiance ; le SVG fourni est le fichier vectoriel de référence de cette livraison.
