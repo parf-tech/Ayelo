@@ -8,7 +8,7 @@ import { usePaginated } from '../../hooks/usePaginated';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, EmptyState, ScreenContainer, Skeleton, Text, useToast } from '../../ui';
+import { AsyncView, Banner, Button, EmptyState, IconButton, ScreenContainer, Skeleton, Text, useToast } from '../../ui';
 import { useDiscoverFilters } from './DiscoverFiltersProvider';
 import { SwipeCard } from './SwipeCard';
 import { performSwipe, primaryPhotoUrl } from './swipe';
@@ -22,7 +22,7 @@ type Gate = 'quota' | 'premium' | null;
 export function DiscoverScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { colors, space } = useTheme();
+  const { space } = useTheme();
   const toast = useToast();
   const { api } = useAuth();
   const { filters } = useDiscoverFilters();
@@ -137,11 +137,13 @@ export function DiscoverScreen() {
         <Text variant="title" header>
           {t('discover.title')}
         </Text>
-        <Button
+        <IconButton
           testID="discover-filters"
-          variant="secondary"
-          label={filtersActive ? `${t('discover.filters')} •` : t('discover.filters')}
+          icon="SlidersHorizontal"
+          variant="tonal"
           accessibilityLabel={filtersActive ? `${t('discover.filters')}, ${t('filters.active')}` : t('discover.filters')}
+          selected={filtersActive}
+          badge={filtersActive ? { kind: 'dot' } : undefined}
           onPress={() => router.push('/filters' as never)}
         />
       </View>
@@ -189,33 +191,36 @@ export function DiscoverScreen() {
                 </View>
               )}
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingBottom: space[2] }}>
-              <Button
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space[5], paddingBottom: space[2] }}>
+              <IconButton
                 testID="swipe-dislike"
-                variant="secondary"
-                label="✕"
+                icon="X"
+                variant="tonal"
+                size="lg"
                 accessibilityLabel={t('discover.dislike')}
                 disabled={!top}
                 onPress={() => void act('dislike')}
-                style={{ borderColor: colors.dislike, minWidth: 56 }}
+                style={{ width: 56, height: 56, borderRadius: 28 }}
               />
-              <Button
+              <IconButton
                 testID="swipe-super"
-                variant="secondary"
-                label="★"
+                icon="Star"
+                variant="tonal"
+                size="lg"
                 accessibilityLabel={t('discover.superLike')}
                 disabled={!top}
                 onPress={() => void act('super_like')}
-                style={{ minWidth: 56 }}
+                style={{ width: 56, height: 56, borderRadius: 28 }}
               />
-              <Button
+              <IconButton
                 testID="swipe-like"
-                variant="secondary"
-                label="♥"
+                icon="Heart"
+                variant="filled"
+                size="lg"
                 accessibilityLabel={t('discover.like')}
                 disabled={!top}
                 onPress={() => void act('like')}
-                style={{ borderColor: colors.like, minWidth: 56 }}
+                style={{ width: 68, height: 68, borderRadius: 34 }}
               />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

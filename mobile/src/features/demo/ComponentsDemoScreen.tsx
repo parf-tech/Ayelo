@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
-import { useTheme } from '../../theme';
+import { ThemeProvider, useTheme } from '../../theme';
+import type { Scheme } from '../../theme';
 import {
+  Avatar,
+  ListRow,
+  VerifiedBadge,
   Banner,
   Button,
   ChoiceCard,
   EmptyState,
   Icon,
   IconButton,
+  Logo,
   ScreenContainer,
   Skeleton,
   Text,
@@ -16,6 +21,7 @@ import {
   useToast,
 } from '../../ui';
 import type { IconTone } from '../../ui';
+import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { ICON_NAMES } from '../../ui/icons';
 import { BackButton } from '../common/BackButton';
 
@@ -185,6 +191,52 @@ export function ComponentsDemoScreen() {
           />
         </View>
       </Section>
+
+      <Section title={t('demo.rows')}>
+        <View>
+          <ListRow
+            label={t('demo.sample.rowTitle')}
+            description={t('demo.sample.rowDescription')}
+            value={t('demo.sample.rowValue')}
+            leading={<Avatar name="A" size={40} />}
+            onPress={noop}
+            testID="demo-row-press"
+          />
+          <ListRow label={t('demo.sample.rowStatic')} value="1.0" testID="demo-row-static" />
+          <ListRow label={t('demo.sample.rowDanger')} tone="danger" onPress={noop} testID="demo-row-danger" />
+        </View>
+      </Section>
+
+      <Section title={t('demo.avatars')}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[4] }}>
+          <Avatar name={t('demo.sample.ringNone')} size={64} testID="demo-avatar-plain" />
+          <Avatar name={t('demo.sample.ringStory')} size={64} ring="story" testID="demo-avatar-story" />
+          <Avatar name={t('demo.sample.ringVerified')} size={64} ring="verified" testID="demo-avatar-verified" />
+        </View>
+      </Section>
+
+      <Section title={t('demo.verifiedBadge')}>
+        <VerifiedBadge
+          label={t('demo.sample.verifiedLabel')}
+          explanation={t('verified.explain')}
+          hint={t('verified.hint')}
+          testID="demo-verified"
+        />
+      </Section>
+
+      <Section title={t('demo.logo')}>
+        <LogoPanel scheme="light" title={t('demo.logoLight')} />
+        <LogoPanel scheme="dark" title={t('demo.logoDark')} />
+      </Section>
+
+      <Section title={t('demo.typography')}>
+        <Text variant="title">{t('demo.typeTitle')}</Text>
+        <Text variant="h2">{t('demo.typeH2')}</Text>
+        <Text variant="h3">{t('demo.typeH3')}</Text>
+        <Text variant="body">{t('demo.typeBody')}</Text>
+        <Text variant="label">{t('demo.typeLabel')}</Text>
+        <Text variant="caption">{t('demo.typeCaption')}</Text>
+      </Section>
       <View style={{ height: space[6] }} />
     </ScreenContainer>
   );
@@ -219,6 +271,47 @@ function ToneSample({ tone }: { tone: IconTone }) {
   return (
     <View style={{ backgroundColor, padding: space[2], borderRadius: radius.sm }}>
       <Icon name="BadgeCheck" size="lg" tone={tone} />
+    </View>
+  );
+}
+
+/** Variantes x dispositions du logo sur le fond du mode donné (le blanc sur fond de marque). */
+function LogoPanel({ scheme, title }: { scheme: Scheme; title: string }) {
+  return (
+    <ThemeProvider scheme={scheme}>
+      <LogoPanelBody title={title} scheme={scheme} />
+    </ThemeProvider>
+  );
+}
+
+function LogoPanelBody({ scheme, title }: { scheme: Scheme; title: string }) {
+  const { colors, radius, space } = useTheme();
+  return (
+    <View style={{ backgroundColor: colors.bg, borderRadius: radius.md, padding: space[4], gap: space[3], borderWidth: 1, borderColor: colors.border }}>
+      <Text variant="label" tone="textMuted">
+        {title}
+      </Text>
+      {LOGO_VARIANTS.map((variant) => (
+        <View
+          key={variant}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: space[4],
+            padding: space[3],
+            borderRadius: radius.sm,
+            backgroundColor: isOnBrandVariant(variant) ? colors.brand : undefined,
+          }}
+        >
+          <Logo variant={variant} layout="symbol" size={48} testID={`demo-logo-${scheme}-${variant}-symbol`} />
+          <Logo variant={variant} layout="horizontal" size={48} testID={`demo-logo-${scheme}-${variant}-horizontal`} />
+        </View>
+      ))}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
+        {[24, 32, 48].map((size) => (
+          <Logo key={size} size={size} testID={`demo-logo-${scheme}-small-${size}`} />
+        ))}
+      </View>
     </View>
   );
 }

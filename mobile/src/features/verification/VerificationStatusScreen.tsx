@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { usePolling } from '../../hooks/usePolling';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ScreenContainer, Text } from '../../ui';
+import { AsyncView, Banner, Button, Icon, ScreenContainer, Text, type IconName } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
 /** S41 : suivi de la vérification (en attente, vérifié, refusé avec motif). Actualisation périodique tant que c'est en attente. */
@@ -35,11 +36,17 @@ export function VerificationStatusScreen() {
           ? t('verifyStatus.rejected')
           : t('verifyStatus.none');
   const reason = data.data?.last_request?.reject_reason;
+  // Pictogramme décoratif : le texte de la bannière porte le statut (jamais la seule icône ou couleur).
+  const glyph: IconName = status === 'verified' ? 'BadgeCheck' : status === 'rejected' ? 'CircleX' : status === 'pending' ? 'Clock' : 'ShieldCheck';
+  const glyphTone = status === 'verified' ? 'success' : status === 'rejected' ? 'danger' : 'primary';
 
   return (
     <ScreenContainer scroll testID="screen-verification-status">
       <ScreenHeader title={t('verifyStatus.title')} fallbackHref="/profile" />
       <AsyncView status={data.status} error={data.error} onRetry={() => void data.reload()} testID="verification-status">
+        <View style={{ alignItems: 'center', marginBottom: space[4] }}>
+          <Icon name={glyph} size="xl" tone={glyphTone} />
+        </View>
         <Banner testID="verification-status-banner" variant={variant} message={message} style={{ marginBottom: space[3] }} />
         {status === 'rejected' && reason ? (
           <Text variant="body" tone="textMuted" testID="verification-reason" style={{ marginBottom: space[3] }}>

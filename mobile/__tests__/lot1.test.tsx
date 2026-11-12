@@ -58,7 +58,7 @@ describe('Lot 1 - 4 : badge vérifié', () => {
     const badge = screen.getByRole('button', { name: 'Profil vérifié' });
     expect(badge).toBeCollapsed();
     expect(badge.props.accessibilityHint).toBe('Touchez pour comprendre.');
-    expect(flat(screen.getByText('✓ Profil vérifié').props.style).color).toBe(colors.light.verified);
+    expect(flat(screen.getByText('Profil vérifié').props.style).color).toBe(colors.light.verified);
     expect(screen.queryByText('Explication du badge.')).toBeNull();
     await user().press(badge);
     expect(screen.getByText('Explication du badge.')).toBeOnTheScreen();
@@ -67,7 +67,7 @@ describe('Lot 1 - 4 : badge vérifié', () => {
 
   it('thème sombre : jeton verified sombre', async () => {
     await renderThemed(<VerifiedBadge {...props} />, { scheme: 'dark' });
-    expect(flat(screen.getByText('✓ Profil vérifié').props.style).color).toBe(colors.dark.verified);
+    expect(flat(screen.getByText('Profil vérifié').props.style).color).toBe(colors.dark.verified);
   });
 
   it('textes fr et en : phrase validée, plus de promesse « prouve »', () => {

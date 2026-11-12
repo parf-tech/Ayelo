@@ -55,6 +55,7 @@
   --size-content-max: 760px; /* pages web : texte long ; l'application utilise 560 */
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-brand: Poppins, system-ui, sans-serif; /* Poppins si installée localement, sinon police système ; aucun @font-face : le site fonctionne hors ligne */
   --type-title-size: 1.75rem;
   --type-title-line: 2.125rem;
   --type-title-weight: 700;
@@ -113,6 +114,11 @@
   --icon-xl: 32px;
 
   --hit-slop: 8px;
+}
+
+/* Opt-in pour l'identité Ayelo ; sans @font-face, donc aucune police distante (site public hors ligne). */
+.font-brand {
+  font-family: var(--font-brand);
 }
 
 @media (prefers-color-scheme: dark) {

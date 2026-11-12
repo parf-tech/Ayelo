@@ -101,3 +101,29 @@ test('les fichiers du dépôt sont à jour (équivalent de --check)', () => {
   }
   assert.equal(renderAppJson(tokens(), app), app);
 });
+
+test('polices : une famille par graisse utilisée, noms @expo-google-fonts, repli système, aucun @font-face', () => {
+  const t = tokens();
+  const ff = t.typography.fontFamily;
+  for (const w of Object.values(t.typography.weights)) assert.match(ff[w], /^Poppins_\d{3}[A-Za-z]+$/, `graisse ${w}`);
+  const ts = renderTs(t);
+  assert.match(ts, /export const fontFamily = \{[^}]*400: 'Poppins_400Regular'[^}]*700: 'Poppins_700Bold'/s);
+  assert.match(ts, /export const fontFamilyFallback = 'system-ui, sans-serif';/);
+  const css = renderCss(t);
+  assert.match(css, /--font-brand: Poppins, system-ui, sans-serif;/);
+  assert.ok(css.includes('.font-brand {\n  font-family: var(--font-brand);\n}'));
+  assert.ok(!/@font-face\s*\{/.test(css), 'le site public ne charge aucune police distante');
+  assert.match(css, /--font-sans: system-ui/);
+});
+
+test('polices : graisse sans famille, nom invalide ou pile web sans repli système refusés', () => {
+  const a = tokens();
+  delete a.typography.fontFamily['600'];
+  assert.ok(validate(a).some((e) => e.includes('graisse 600')));
+  const b = tokens();
+  b.typography.fontFamily['700'] = 'Poppins Bold';
+  assert.ok(validate(b).some((e) => e.includes('graisse 700')));
+  const c = tokens();
+  c.typography.fontFamily.webStack = 'Poppins';
+  assert.ok(validate(c).some((e) => e.includes('webStack')));
+});

@@ -159,6 +159,14 @@ export function validate(tokens) {
     if (!(t.weight in weights)) err(`typography.${name} : graisse « ${t.weight} » inconnue`);
     if (!(t.size > 0 && t.lineHeight >= t.size)) err(`typography.${name} : interligne ${t.lineHeight} < taille ${t.size}`);
   }
+  const ff = tokens.typography.fontFamily;
+  for (const w of new Set(Object.values(weights))) {
+    if (!/^[A-Za-z0-9_]+$/.test(ff?.[w] ?? '')) err(`typography.fontFamily : famille absente ou invalide pour la graisse ${w}`);
+  }
+  for (const k of ['fallback', 'webStack']) {
+    if (typeof ff?.[k] !== 'string' || ff[k].trim() === '') err(`typography.fontFamily.${k} manquant`);
+  }
+  if (typeof ff?.webStack === 'string' && !/system-ui|sans-serif/.test(ff.webStack)) err('typography.fontFamily.webStack : doit finir sur une pile système (le site public fonctionne hors ligne)');
   if (!(tokens.minTarget >= 44)) err(`minTarget ${tokens.minTarget} < 44`);
   const { fast, base, slow } = tokens.motion.duration;
   if (!(fast >= 100 && fast <= base && base <= slow && slow <= 400)) {
@@ -280,6 +288,13 @@ export function renderTs(tokens) {
     '',
     decl('fontWeight', Object.fromEntries(Object.entries(tokens.typography.weights).map(([k, v]) => [k, String(v)]))),
     '',
+    "/** Famille par graisse (React Native natif ne synthétise pas les graisses d'une police personnalisée). Utilisée par ui/Text.tsx une fois la police chargée. */",
+    `export type FontFamilyKey = ${weightValues.map((w) => `'${w}'`).join(' | ')};`,
+    decl('fontFamily', Object.fromEntries(weightValues.map((w) => [String(w), tokens.typography.fontFamily[w]]))),
+    '',
+    "/** Pile de repli (web) tant que la police n'est pas chargée. Natif : police système. */",
+    `export const fontFamilyFallback = ${str(tokens.typography.fontFamily.fallback)};`,
+    '',
     'export const type: Record<TypeVariant, TypeToken> = {',
   );
   for (const [name, t] of Object.entries(tokens.typography.scale)) {
@@ -359,6 +374,7 @@ export function renderCss(tokens) {
   for (const [k, v] of Object.entries(tokens.borderWidth)) push(`  --border-width-${kebab(k)}: ${v}px;`);
   push('', `  --size-target: ${tokens.minTarget}px;`, `  --size-content-max: ${tokens.contentWidth.web}px; /* pages web : texte long ; l'application utilise ${tokens.contentWidth.app} */`, '');
   push(`  --font-sans: ${tokens.typography.fontFamilyWeb};`);
+  push(`  --font-brand: ${tokens.typography.fontFamily.webStack}; /* Poppins si installée localement, sinon police système ; aucun @font-face : le site fonctionne hors ligne */`);
   for (const [name, t] of Object.entries(tokens.typography.scale)) {
     const n = kebab(name);
     push(`  --type-${n}-size: ${rem(t.size)};`, `  --type-${n}-line: ${rem(t.lineHeight)};`, `  --type-${n}-weight: ${tokens.typography.weights[t.weight]};`);
@@ -375,6 +391,7 @@ export function renderCss(tokens) {
   push('');
   for (const [k, v] of Object.entries(tokens.iconSize)) push(`  --icon-${k}: ${v}px;`);
   push('', `  --hit-slop: ${tokens.hitSlop}px;`, '}', '');
+  push("/* Opt-in pour l'identité Ayelo ; sans @font-face, donc aucune police distante (site public hors ligne). */", '.font-brand {', '  font-family: var(--font-brand);', '}', '');
 
   push('@media (prefers-color-scheme: dark) {', '  :root {', ...colorLines('dark', '    '), '  }', '}', '');
 

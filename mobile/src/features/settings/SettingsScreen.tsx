@@ -6,15 +6,16 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ListRow, ScreenContainer, Text } from '../../ui';
+import { Button, Icon, ScreenContainer, Text } from '../../ui';
 import { LanguageToggle } from '../common/LanguageToggle';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { ManageSubscription } from '../premium/ManageSubscription';
+import { NavRow, RowGroup } from './GroupedList';
 
 function Section({ title }: { title: string }) {
   const { space } = useTheme();
   return (
-    <Text variant="caption" tone="textMuted" header style={{ marginTop: space[4], fontWeight: '700' }}>
+    <Text variant="caption" tone="textMuted" header style={{ marginTop: space[5], marginBottom: space[2], marginLeft: space[1], fontWeight: '700' }}>
       {title}
     </Text>
   );
@@ -45,31 +46,51 @@ export function SettingsScreen() {
     <ScreenContainer scroll testID="screen-settings">
       <ScreenHeader title={t('settings.title')} fallbackHref="/profile" />
       <Section title={t('settings.section.account')} />
-      <ListRow testID="settings-preferences" label={t('settings.preferences')} onPress={go('/settings/preferences')} />
-      <ListRow testID="settings-notifications" label={t('settings.notifications')} onPress={go('/settings/notifications')} />
-      <ManageSubscription
-        testID="settings-manage-subscription"
-        variant="row"
-        store={billing.data?.subscription?.store}
-        periodEnd={billing.data?.subscription?.period_end}
-      />
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text variant="body" style={{ fontWeight: '600' }}>
-          {t('settings.language')}
-        </Text>
-        <LanguageToggle />
+      <RowGroup>
+        <NavRow testID="settings-preferences" icon="SlidersHorizontal" label={t('settings.preferences')} onPress={go('/settings/preferences')} />
+        <NavRow testID="settings-notifications" icon="MessageCircle" label={t('settings.notifications')} onPress={go('/settings/notifications')} />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: space[3],
+            paddingHorizontal: space[4],
+            paddingVertical: space[2],
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], flexShrink: 1 }}>
+            <Icon name="Globe" tone="primary" />
+            <Text variant="body" style={{ fontWeight: '600', flexShrink: 1 }}>
+              {t('settings.language')}
+            </Text>
+          </View>
+          <LanguageToggle />
+        </View>
+      </RowGroup>
+      <View style={{ marginTop: space[3] }}>
+        <ManageSubscription
+          testID="settings-manage-subscription"
+          variant="row"
+          store={billing.data?.subscription?.store}
+          periodEnd={billing.data?.subscription?.period_end}
+        />
       </View>
       <Section title={t('settings.section.privacy')} />
-      <ListRow testID="settings-privacy" label={t('settings.privacy')} onPress={go('/settings/privacy')} />
-      <ListRow testID="settings-sessions" label={t('settings.sessions')} onPress={go('/settings/sessions')} />
-      <ListRow testID="settings-blocked" label={t('settings.blocked')} onPress={go('/settings/blocked')} />
-      <ListRow testID="settings-consents" label={t('settings.consents')} onPress={go('/settings/consents')} />
-      <ListRow testID="settings-sanctions" label={t('settings.sanctions')} onPress={go('/settings/sanctions')} />
-      <ListRow testID="settings-export" label={t('settings.export')} onPress={go('/settings/export')} />
+      <RowGroup>
+        <NavRow testID="settings-privacy" icon="Lock" label={t('settings.privacy')} onPress={go('/settings/privacy')} />
+        <NavRow testID="settings-sessions" icon="Clock" label={t('settings.sessions')} onPress={go('/settings/sessions')} />
+        <NavRow testID="settings-blocked" icon="Ban" label={t('settings.blocked')} onPress={go('/settings/blocked')} />
+        <NavRow testID="settings-consents" icon="ShieldCheck" label={t('settings.consents')} onPress={go('/settings/consents')} />
+        <NavRow testID="settings-sanctions" icon="ShieldAlert" label={t('settings.sanctions')} onPress={go('/settings/sanctions')} />
+        <NavRow testID="settings-export" icon="Copy" label={t('settings.export')} onPress={go('/settings/export')} />
+      </RowGroup>
       <Section title={t('settings.section.help')} />
-      <ListRow testID="settings-support" label={t('settings.support')} onPress={go('/settings/support')} />
-      <ListRow testID="settings-legal" label={t('settings.legal')} onPress={go('/settings/legal')} />
-      <ListRow testID="settings-delete" label={t('settings.delete')} tone="danger" onPress={go('/settings/delete-account')} />
+      <RowGroup>
+        <NavRow testID="settings-support" icon="Info" label={t('settings.support')} onPress={go('/settings/support')} />
+        <NavRow testID="settings-legal" icon="Eye" label={t('settings.legal')} onPress={go('/settings/legal')} />
+        <NavRow testID="settings-delete" icon="Trash2" label={t('settings.delete')} tone="danger" onPress={go('/settings/delete-account')} />
+      </RowGroup>
       <View style={{ marginTop: space[5], gap: space[2] }}>
         <Button testID="settings-logout" variant="secondary" label={t('settings.logout')} onPress={() => void logout()} loading={loggingOut} />
         <Text variant="caption" tone="textMuted" align="center">

@@ -36,6 +36,8 @@ export { Icon } from './Icon';
 export type { IconProps, IconName, IconSize, IconTone } from './Icon';
 export { IconButton } from './IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonBadge } from './IconButton';
+export { Logo } from './Logo';
+export type { LogoProps, LogoVariant, LogoLayout } from './Logo';
 export { announce } from './a11y/announce';
 export { focusNode } from './a11y/focus';
 export { useReduceMotion, useMotion, useFocusRing, useCompactLayout } from './hooks';

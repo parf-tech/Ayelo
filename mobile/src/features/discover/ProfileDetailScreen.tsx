@@ -8,7 +8,7 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { MAX_CONTENT_WIDTH, useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
+import { AsyncView, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { countryLabel } from '../onboarding/countries';
 import { performSwipe, primaryPhotoUrl, readablePhotos } from './swipe';
@@ -121,16 +121,56 @@ export function ProfileDetailScreen() {
   const place = data ? [data.city, countryLabel(t, data.residence_country)].filter(Boolean).join(', ') : '';
 
   return (
-    <ScreenContainer scroll testID="screen-profile-detail">
+    <ScreenContainer
+      scroll
+      testID="screen-profile-detail"
+      footer={
+        data ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space[5] }}>
+            <IconButton
+              testID="detail-dislike"
+              icon="X"
+              variant="tonal"
+              size="lg"
+              accessibilityLabel={t('discover.dislike')}
+              disabled={busy}
+              onPress={() => void swipe('dislike')}
+              style={{ width: 56, height: 56, borderRadius: 28 }}
+            />
+            <IconButton
+              testID="detail-super"
+              icon="Star"
+              variant="tonal"
+              size="lg"
+              accessibilityLabel={t('discover.superLike')}
+              disabled={busy}
+              onPress={() => void swipe('super_like')}
+              style={{ width: 56, height: 56, borderRadius: 28 }}
+            />
+            <IconButton
+              testID="detail-like"
+              icon="Heart"
+              variant="filled"
+              size="lg"
+              accessibilityLabel={t('discover.like')}
+              disabled={busy}
+              onPress={() => void swipe('like')}
+              style={{ width: 68, height: 68, borderRadius: 34 }}
+            />
+          </View>
+        ) : undefined
+      }
+    >
       <ScreenHeader
         title={data ? `${data.display_name}, ${data.age}` : t('detail.title')}
         right={
           data ? (
-            <Button
+            <IconButton
               testID="detail-menu"
-              variant="ghost"
-              label="⋯"
+              icon="Ellipsis"
+              variant="tonal"
               accessibilityLabel={t('detail.menu')}
+              expanded={menuOpen}
               onPress={() => {
                 setMenuOpen((open) => !open);
                 setConfirmBlock(false);
@@ -153,7 +193,7 @@ export function ProfileDetailScreen() {
         <View
           testID="detail-menu-sheet"
           accessibilityViewIsModal
-          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface, padding: space[2], marginBottom: space[3] }}
+          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surface, padding: space[2], marginBottom: space[3] }}
         >
           {confirmBlock && data ? (
             <View style={{ gap: space[2], padding: space[2] }}>
@@ -184,7 +224,7 @@ export function ProfileDetailScreen() {
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={onScrollEnd}
-                  style={{ width: galleryWidth, borderRadius: radius.lg }}
+                  style={{ width: galleryWidth, borderRadius: radius.lg, overflow: 'hidden' }}
                 >
                   {photos.map((photo, index) => (
                     <Image
@@ -195,6 +235,25 @@ export function ProfileDetailScreen() {
                     />
                   ))}
                 </ScrollView>
+                {photos.length > 1 ? (
+                  <View
+                    accessible={false}
+                    importantForAccessibility="no-hide-descendants"
+                    style={{ flexDirection: 'row', justifyContent: 'center', gap: space[1], marginTop: space[2] }}
+                  >
+                    {photos.map((photo, index) => (
+                      <View
+                        key={photo.id}
+                        style={{
+                          width: index === photoIndex ? space[4] : space[2],
+                          height: space[2],
+                          borderRadius: radius.pill,
+                          backgroundColor: index === photoIndex ? colors.primary : colors.border,
+                        }}
+                      />
+                    ))}
+                  </View>
+                ) : null}
                 <Text variant="caption" tone="textMuted" align="center" style={{ marginTop: space[1] }} accessibilityLiveRegion="polite">
                   {t('detail.photoCount', { current: Math.min(photoIndex + 1, photos.length), total: photos.length })}
                 </Text>
@@ -207,23 +266,36 @@ export function ProfileDetailScreen() {
             {data.verified ? (
               <VerifiedBadge testID="detail-verified" label={t('detail.verified')} explanation={t('verified.explain')} hint={t('verified.hint')} />
             ) : null}
-            <Text variant="body">{t('detail.lives', { place })}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+              <Icon name="MapPin" size="sm" tone="textMuted" />
+              <Text variant="body" style={{ flexShrink: 1 }}>
+                {t('detail.lives', { place })}
+              </Text>
+            </View>
             <Text variant="body" tone="textMuted">
               {t('detail.origin', { country: countryLabel(t, data.origin_country) })}
             </Text>
-            <Text variant="body" tone="primary" style={{ fontWeight: '600' }}>
-              {t(`intent.${data.intent}.label`)}
-            </Text>
-            <Text variant="h2" header>
-              {t('detail.about')}
-            </Text>
-            <Text variant="body" tone={data.bio ? 'text' : 'textMuted'}>
-              {data.bio ?? t('detail.noBio')}
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: space[3] }}>
-              <Button testID="detail-dislike" variant="secondary" label="✕" accessibilityLabel={t('discover.dislike')} disabled={busy} onPress={() => void swipe('dislike')} style={{ minWidth: 56 }} />
-              <Button testID="detail-super" variant="secondary" label="★" accessibilityLabel={t('discover.superLike')} disabled={busy} onPress={() => void swipe('super_like')} style={{ minWidth: 56 }} />
-              <Button testID="detail-like" variant="secondary" label="♥" accessibilityLabel={t('discover.like')} disabled={busy} onPress={() => void swipe('like')} style={{ minWidth: 56 }} />
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                paddingHorizontal: space[3],
+                paddingVertical: space[1],
+                borderRadius: radius.pill,
+                borderWidth: 1,
+                borderColor: colors.primary,
+              }}
+            >
+              <Text variant="captionStrong" tone="primary">
+                {t(`intent.${data.intent}.label`)}
+              </Text>
+            </View>
+            <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: space[4], gap: space[2] }}>
+              <Text variant="h2" header>
+                {t('detail.about')}
+              </Text>
+              <Text variant="body" tone={data.bio ? 'text' : 'textMuted'}>
+                {data.bio ?? t('detail.noBio')}
+              </Text>
             </View>
           </View>
         ) : null}

@@ -1,7 +1,11 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
-import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { I18nManager, Pressable, View } from 'react-native';
+import { borderWidth, radius, stateOpacity, useTheme } from '../theme';
+import { Icon } from './Icon';
 import { Text } from './Text';
+
+/** Hauteur minimale d'une ligne (docs/design/03 : cible de 56 pt). */
+const ROW_MIN_HEIGHT = 56;
 
 export type ListRowProps = {
   label: string;
@@ -17,7 +21,7 @@ export type ListRowProps = {
   testID?: string;
 };
 
-/** Ligne de liste (réglages, conversations) : cible >= 44, chevron si cliquable. */
+/** Ligne de liste en carte arrondie (réglages, conversations) : hauteur >= 56, chevron `ChevronRight` si cliquable. */
 export function ListRow({
   label,
   description,
@@ -30,13 +34,22 @@ export function ListRow({
   testID,
 }: ListRowProps) {
   const { colors, space } = useTheme();
+  const card = {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: borderWidth.hairline,
+    borderColor: colors.border,
+    marginBottom: space[2],
+    overflow: 'hidden',
+  } as const;
   const content = (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        minHeight: MIN_TARGET + 12,
+        minHeight: ROW_MIN_HEIGHT,
         paddingVertical: space[2],
+        paddingHorizontal: space[4],
         gap: space[3],
       }}
     >
@@ -58,9 +71,10 @@ export function ListRow({
       ) : null}
       {trailing}
       {onPress ? (
-        <Text variant="body" tone="textMuted" accessible={false} importantForAccessibility="no">
-          ›
-        </Text>
+        // Chevron décoratif (Icon masquée de l'arbre d'accessibilité), inversé en lecture de droite à gauche.
+        <View style={{ transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }}>
+          <Icon name="ChevronRight" size="sm" tone="textMuted" testID={testID ? `${testID}-chevron` : undefined} />
+        </View>
       ) : null}
     </View>
   );
@@ -74,7 +88,7 @@ export function ListRow({
         testID={testID}
         accessible={grouped}
         accessibilityLabel={grouped ? accessibilityLabel : undefined}
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}
+        style={card}
       >
         {content}
       </View>
@@ -86,11 +100,7 @@ export function ListRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? (description ? `${label}. ${description}` : label)}
       onPress={onPress}
-      style={({ pressed }) => ({
-        opacity: pressed ? stateOpacity.pressed : 1,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-      })}
+      style={({ pressed }) => [card, { opacity: pressed ? stateOpacity.pressed : 1 }]}
     >
       {content}
     </Pressable>

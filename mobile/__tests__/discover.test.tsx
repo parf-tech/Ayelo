@@ -12,7 +12,7 @@ import { createApiClient, createEndpoints } from '../src/api';
 import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
 import { tokenStore } from '../src/storage/tokenStore';
 import { emptyBody, installFakeApi } from './helpers/fakeApi';
-import { media, meFixture, publicProfile } from './helpers/fixtures';
+import { media, meFixture, publicProfile, selfProfile } from './helpers/fixtures';
 import { resetRouterMocks, router } from './helpers/routerMock';
 import { renderShell } from './helpers/shell';
 
@@ -294,6 +294,33 @@ describe('S12 Match', () => {
     await u.press(screen.getByTestId('match-continue'));
     expect(router.back).toHaveBeenCalled();
   });
+
+  it('montre ma photo (profil connecté) à côté de celle de la personne ; sans photo à moi, une seule', async () => {
+    mockParams.current = { name: 'Awa', photo: 'https://cdn.example.test/awa.jpg', conversationId: 'c9' };
+    installFakeApi({ 'GET /me': [200, ME] } as never);
+    const { unmount } = await renderShell(<MatchScreen />);
+    await screen.findByText('C’est un match !');
+    expect(screen.getByTestId('match-avatar-self').props.source).toEqual({ uri: 'https://cdn.example.test/u1-m1.jpg' });
+    expect(screen.getByTestId('match-avatar').props.source).toEqual({ uri: 'https://cdn.example.test/awa.jpg' });
+    unmount();
+
+    installFakeApi({ 'GET /me': [200, meFixture({ profile: selfProfile({ media: [] }) })] } as never);
+    await renderShell(<MatchScreen />);
+    await screen.findByText('C’est un match !');
+    expect(screen.queryByTestId('match-avatar-self')).toBeNull();
+    expect(screen.getByTestId('match-avatar')).toBeOnTheScreen();
+  });
+});
+
+describe('S10 Carte : lisibilité du texte sur la photo', () => {
+  it('pose un fondu prune sous le nom et l’âge de la carte du dessus', async () => {
+    installFakeApi(deck());
+    await renderShell(<DiscoverScreen />);
+    await screen.findByLabelText(/Awa, 28 ans/);
+    // Décoratif : exclu de l'arbre d'accessibilité, donc cherché avec les éléments masqués.
+    expect(screen.getByTestId('swipe-card-scrim', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByText('Awa, 28')).toBeOnTheScreen();
+  });
 });
 
 describe('S11 Détail du profil, blocage et signalement', () => {
@@ -306,7 +333,7 @@ describe('S11 Détail du profil, blocage et signalement', () => {
     await renderShell(<ProfileDetailScreen />);
     expect(await screen.findByText('Awa, 28')).toBeOnTheScreen();
     expect(screen.getByText('Photo 1 sur 2')).toBeOnTheScreen();
-    expect(screen.getByText('✓ Profil vérifié')).toBeOnTheScreen();
+    expect(screen.getByText('Profil vérifié')).toBeOnTheScreen();
     expect(screen.getByText('Bonjour')).toBeOnTheScreen();
   });
 

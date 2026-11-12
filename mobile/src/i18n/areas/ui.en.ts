@@ -1,0 +1,14 @@
+export const uiEn = {
+  'demo.rows': 'List rows',
+  'demo.avatars': 'Avatars and rings',
+  'demo.verifiedBadge': 'Verified badge',
+  'demo.sample.rowTitle': 'Language',
+  'demo.sample.rowDescription': 'Choose the app language',
+  'demo.sample.rowValue': 'English',
+  'demo.sample.rowStatic': 'App version',
+  'demo.sample.rowDanger': 'Delete my account',
+  'demo.sample.ringNone': 'No ring',
+  'demo.sample.ringStory': 'Story ring',
+  'demo.sample.ringVerified': 'Verified',
+  'demo.sample.verifiedLabel': 'Verified profile',
+} as const;

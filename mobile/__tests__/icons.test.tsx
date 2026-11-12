@@ -319,7 +319,9 @@ describe('AC-ICON-7 : garde contre les imports lucide-react-native', () => {
   });
 
   it('seuls icons.ts et les illustrations peuvent importer react-native-svg', () => {
-    const allowed = (rel: string) => rel === ICONS_MODULE || rel.startsWith(path.join('src', 'ui', 'illustrations'));
+    // Logo.tsx : le logo de marque est dessiné en SVG (src/ui/brandArt.ts), ce n'est pas une icône.
+    const allowed = (rel: string) =>
+      rel === ICONS_MODULE || rel === path.join('src', 'ui', 'Logo.tsx') || rel.startsWith(path.join('src', 'ui', 'illustrations'));
     const offenders = files
       .filter((f) => /from\s+['"]react-native-svg/.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.relative(root, f))

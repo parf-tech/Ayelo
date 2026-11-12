@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import type { Conversation, ConversationLastMessage } from '../../api/types';
 import { useI18n } from '../../i18n';
-import { useTheme } from '../../theme';
-import { AsyncView, Avatar, ListRow, ScreenContainer, Text } from '../../ui';
+import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { AsyncView, Avatar, ScreenContainer, Text } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { useConversations } from './ConversationsProvider';
 
@@ -101,37 +101,52 @@ export function MessagesListScreen() {
           renderItem={({ item }) => {
             const name = item.profile?.display_name ?? '';
             const preview = previewText(t, item.last_message);
+            const unread = item.unread > 0;
             return (
-              <ListRow
+              <Pressable
                 testID={`conversation-${item.id}`}
-                label={name}
-                description={preview}
-                accessibilityLabel={
-                  item.unread > 0 ? t('messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview })
-                }
-                leading={<Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} />}
-                trailing={
-                  <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-                    <Text variant="caption" tone="textMuted">
-                      {shortTime(item.last_message?.created_at, locale)}
-                    </Text>
-                    {item.unread > 0 ? (
-                      <View
-                        testID={`unread-${item.id}`}
-                        accessible={false}
-                        style={{ minWidth: 24, height: 24, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}
-                      >
-                        <Text variant="caption" tone="onPrimary" style={{ fontWeight: '700' }}>
-                          {item.unread > 99 ? '99+' : item.unread}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                }
+                accessibilityRole="button"
+                accessibilityLabel={unread ? t('messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview })}
                 onPress={() => open(item)}
-              />
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: space[3],
+                  minHeight: MIN_TARGET + 28,
+                  paddingVertical: space[2],
+                  opacity: pressed ? stateOpacity.pressed : 1,
+                })}
+              >
+                <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={56} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text variant="body" numberOfLines={1} style={{ fontWeight: unread ? '700' : '600' }}>
+                    {name}
+                  </Text>
+                  {/* Non lu : graisse ET pastille numérique, jamais la couleur seule. */}
+                  <Text variant="bodySmall" tone={unread ? 'text' : 'textMuted'} numberOfLines={2} style={{ fontWeight: unread ? '600' : undefined }}>
+                    {preview}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: space[1], minWidth: 44 }}>
+                  <Text variant="caption" tone="textMuted">
+                    {shortTime(item.last_message?.created_at, locale)}
+                  </Text>
+                  {unread ? (
+                    <View
+                      testID={`unread-${item.id}`}
+                      accessible={false}
+                      style={{ minWidth: 24, height: 24, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}
+                    >
+                      <Text variant="caption" tone="onPrimary" style={{ fontWeight: '700' }}>
+                        {item.unread > 99 ? '99+' : item.unread}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </Pressable>
             );
           }}
+          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 56 + space[3] }} />}
         />
       </AsyncView>
     </ScreenContainer>

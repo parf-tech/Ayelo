@@ -17,6 +17,8 @@ export const messagesFr = {
   'messages.blocked': 'Conversation bloquée',
 
   'conversation.title': 'Conversation',
+  'conversation.day.today': 'Aujourd’hui',
+  'conversation.day.yesterday': 'Hier',
   'conversation.input': 'Votre message',
   'conversation.send': 'Envoyer',
   'conversation.empty': 'Envoyez le premier message.',

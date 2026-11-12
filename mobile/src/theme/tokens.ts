@@ -135,6 +135,18 @@ export type TypeVariant = 'title' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'captio
 
 export const fontWeight = { regular: '400', medium: '500', semibold: '600', bold: '700' } as const;
 
+/** Famille par graisse (React Native natif ne synthétise pas les graisses d'une police personnalisée). Utilisée par ui/Text.tsx une fois la police chargée. */
+export type FontFamilyKey = '400' | '500' | '600' | '700';
+export const fontFamily = {
+  400: 'Poppins_400Regular',
+  500: 'Poppins_500Medium',
+  600: 'Poppins_600SemiBold',
+  700: 'Poppins_700Bold',
+} as const;
+
+/** Pile de repli (web) tant que la police n'est pas chargée. Natif : police système. */
+export const fontFamilyFallback = 'system-ui, sans-serif';
+
 export const type: Record<TypeVariant, TypeToken> = {
   /** Titre d'écran. */
   title: { size: 28, weight: '700', line: 34 },

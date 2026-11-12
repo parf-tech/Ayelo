@@ -115,11 +115,16 @@ describe('aucune couleur en dur hors tokens', () => {
     });
   }
 
-  it('src/ et app/ ne contiennent de couleur que dans src/theme/tokens.ts', () => {
+  // Seule exception : l'artwork officiel du logo (dégradés et couleurs du kit d'identité, vérification juridique en
+  // attente, voir src/ui/brandArt.ts et docs/design/04-handoff-analyse.md). Un seul fichier, jamais un dossier.
+  const BRAND_ART = path.join('src', 'ui', 'brandArt.ts');
+
+  it("src/ et app/ ne contiennent de couleur que dans src/theme/tokens.ts (et l'artwork de marque src/ui/brandArt.ts)", () => {
     const offenders: string[] = [];
     for (const d of dirs) {
       for (const file of files(path.join(root, d))) {
         if (file.endsWith(path.join('theme', 'tokens.ts'))) continue;
+        if (path.relative(root, file) === BRAND_ART) continue;
         const lines = fs.readFileSync(file, 'utf8').split('\n');
         lines.forEach((line, i) => {
           if (HEX.test(line) || FUNC.test(line) || NAMED.test(line)) {
@@ -131,3 +136,19 @@ describe('aucune couleur en dur hors tokens', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("exemption de l'artwork de marque", () => {
+  const root = path.resolve(__dirname, '..');
+  it("src/ui/brandArt.ts porte la justification de l'exemption", () => {
+    const file = fs.readFileSync(path.join(root, 'src', 'ui', 'brandArt.ts'), 'utf8');
+    expect(file).toMatch(/ARTWORK DE MARQUE/);
+    expect(file).toMatch(/04-handoff-analyse\.md/);
+  });
+
+  it('les tracés du logo ne contiennent ni script ni référence externe', () => {
+    const file = fs.readFileSync(path.join(root, 'src', 'ui', 'brandArt.ts'), 'utf8');
+    expect(file).not.toMatch(/<script|javascript:|https?:|href|xlink|onload|data:/i);
+    for (const d of file.match(/'M[0-9 CLZ.]+'/g) ?? []) expect(d).toMatch(/^'[MCLZ0-9 .]+'$/);
+  });
+});
+

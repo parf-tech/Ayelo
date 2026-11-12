@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text as RNText, TextProps as RNTextProps } from 'react-native';
-import { useTheme } from '../theme';
+import { StyleSheet, Text as RNText, TextProps as RNTextProps, TextStyle } from 'react-native';
+import { fontFamilyFor, useFontsReady, useTheme } from '../theme';
 import type { ColorTokens } from '../theme/tokens';
 
 export type TextVariant = 'title' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label' | 'captionStrong';
@@ -17,10 +17,19 @@ export type TextProps = RNTextProps & {
   align?: 'left' | 'center' | 'right';
 };
 
-/** Texte typé par les tokens (taille, graisse, interligne, couleur). Redimensionnable par défaut. */
+/**
+ * Texte typé par les tokens (taille, graisse, interligne, couleur). Redimensionnable par défaut.
+ * Police : une fois Poppins chargée, la famille est choisie d'après la graisse (celle de la variante, ou le
+ * `fontWeight` passé en style) car React Native ne synthétise pas les graisses d'une police personnalisée.
+ * Avant chargement (ou si le chargement échoue) : police du système avec `fontWeight`.
+ */
 export function Text({ variant = 'body', tone = 'text', header, align, style, ...rest }: TextProps) {
   const { colors, type } = useTheme();
+  const fontsReady = useFontsReady();
   const token = type[variant];
+  const { fontWeight, ...flat }: TextStyle = StyleSheet.flatten(style) ?? {};
+  const weight = fontWeight ?? token.weight;
+  const font: TextStyle = fontsReady ? { fontFamily: fontFamilyFor(weight) } : { fontWeight: weight };
   return (
     <RNText
       accessibilityRole={header ? 'header' : rest.accessibilityRole}
@@ -28,11 +37,11 @@ export function Text({ variant = 'body', tone = 'text', header, align, style, ..
         {
           color: colors[tone],
           fontSize: token.size,
-          fontWeight: token.weight,
           lineHeight: token.line,
           textAlign: align,
         },
-        style,
+        font,
+        flat,
       ]}
       {...rest}
     />

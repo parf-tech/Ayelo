@@ -14,6 +14,8 @@ import { profileEn } from './profile.en';
 import { profileFr } from './profile.fr';
 import { settingsEn } from './settings.en';
 import { settingsFr } from './settings.fr';
+import { uiEn } from './ui.en';
+import { uiFr } from './ui.fr';
 import { verificationEn } from './verification.en';
 import { verificationFr } from './verification.fr';
 
@@ -28,6 +30,7 @@ export const frAreas = {
   ...premiumFr,
   ...settingsFr,
   ...verificationFr,
+  ...uiFr,
 } as const;
 export const enAreas = {
   ...commonEn,
@@ -39,4 +42,5 @@ export const enAreas = {
   ...premiumEn,
   ...settingsEn,
   ...verificationEn,
+  ...uiEn,
 } as const;

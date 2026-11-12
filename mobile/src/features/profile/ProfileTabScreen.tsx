@@ -6,15 +6,16 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
+import { AsyncView, Avatar, Banner, Button, Icon, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { countryLabel } from '../onboarding/countries';
+import { NavRow, RowGroup } from '../settings/GroupedList';
 
 /** S59 : mon profil (aperçu, accès à l'édition, vérification, Premium, paramètres). */
 export function ProfileTabScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, colors, radius } = useTheme();
   const toast = useToast();
   const { api } = useAuth();
   const me = useResource(() => api.auth.me(), [api]);
@@ -59,24 +60,41 @@ export function ProfileTabScreen() {
         ) : null}
 
         {profile ? (
-          <View style={{ alignItems: 'center', gap: space[2], marginBottom: space[4] }}>
-            <Avatar uri={primaryPhotoUrl(profile)} name={profile.display_name} size={120} testID="profile-avatar" />
-            <Text variant="h2" header testID="profile-name">
+          <View
+            testID="profile-card"
+            style={{
+              alignItems: 'center',
+              gap: space[2],
+              marginBottom: space[4],
+              padding: space[5],
+              borderRadius: radius.lg,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <View style={{ padding: space[1], borderRadius: 999, borderWidth: 2, borderColor: colors.primary }}>
+              <Avatar uri={primaryPhotoUrl(profile)} name={profile.display_name} size={104} testID="profile-avatar" />
+            </View>
+            <Text variant="h2" header testID="profile-name" align="center">
               {t('profileTab.age', { name: profile.display_name, age: profile.age })}
             </Text>
-            <Text variant="body" tone="textMuted">
+            <Text variant="body" tone="textMuted" align="center">
               {[profile.city, countryLabel(t, profile.residence_country)].filter(Boolean).join(', ')}
             </Text>
             {profile.verified ? (
               <VerifiedBadge testID="profile-verified" label={t('detail.verified')} explanation={t('verified.explain')} hint={t('verified.hint')} />
             ) : null}
             {data?.premium ? (
-              <Text variant="caption" tone="success" style={{ fontWeight: '700' }} testID="profile-premium-badge">
-                {t('profileTab.premiumActive')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+                <Icon name="Sparkles" size="sm" tone="success" />
+                <Text variant="caption" tone="success" style={{ fontWeight: '700' }} testID="profile-premium-badge">
+                  {t('profileTab.premiumActive')}
+                </Text>
+              </View>
             ) : null}
             {!hasApprovedPhoto || !profile.is_visible ? (
-              <Banner testID="profile-not-visible" variant="info" message={t('profileTab.notVisible')} />
+              <Banner testID="profile-not-visible" variant="info" message={t('profileTab.notVisible')} style={{ alignSelf: 'stretch' }} />
             ) : null}
           </View>
         ) : (
@@ -86,12 +104,12 @@ export function ProfileTabScreen() {
         <Text variant="body" tone="textMuted" testID="profile-credits" style={{ marginBottom: space[3] }}>
           {t('profileTab.credits', { count: data?.credits.conversation ?? 0 })}
         </Text>
-        <View style={{ gap: space[2] }}>
-          <Button testID="profile-edit" label={t('profileTab.edit')} onPress={go('/profile-edit')} disabled={!profile} />
-          <Button testID="profile-verify" variant="secondary" label={t('profileTab.verify')} onPress={go('/verification')} disabled={!profile} />
-          <Button testID="profile-premium" variant="secondary" label={t('profileTab.premium')} onPress={go('/premium')} />
-          <Button testID="profile-settings" variant="secondary" label={t('profileTab.settings')} onPress={go('/settings')} />
-        </View>
+        <RowGroup testID="profile-menu">
+          <NavRow testID="profile-edit" icon="Pencil" label={t('profileTab.edit')} onPress={go('/profile-edit')} disabled={!profile} />
+          <NavRow testID="profile-verify" icon="ShieldCheck" label={t('profileTab.verify')} onPress={go('/verification')} disabled={!profile} />
+          <NavRow testID="profile-premium" icon="Sparkles" label={t('profileTab.premium')} onPress={go('/premium')} />
+          <NavRow testID="profile-settings" icon="SlidersHorizontal" label={t('profileTab.settings')} onPress={go('/settings')} />
+        </RowGroup>
       </AsyncView>
     </ScreenContainer>
   );

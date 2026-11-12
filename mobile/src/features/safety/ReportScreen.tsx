@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ChoiceCard, ScreenContainer, Text, TextField, useToast } from '../../ui';
+import { Banner, Button, ChoiceCard, Icon, ScreenContainer, Text, TextField, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
 const CONTEXTS: readonly ReportContextType[] = ['profile', 'conversation', 'message', 'call', 'story'];
@@ -18,7 +18,7 @@ const CONTEXTS: readonly ReportContextType[] = ['profile', 'conversation', 'mess
 export function ReportScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, colors, radius } = useTheme();
   const toast = useToast();
   const { api } = useAuth();
   const params = useLocalSearchParams<{ reportedId?: string; name?: string; contextType?: string; contextId?: string }>();
@@ -55,9 +55,24 @@ export function ReportScreen() {
   return (
     <ScreenContainer scroll testID="screen-report">
       <ScreenHeader title={t('report.title')} />
-      <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
-        {t('report.subtitle')}
-      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: space[3],
+          padding: space[4],
+          marginBottom: space[4],
+          borderRadius: radius.lg,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Icon name="ShieldCheck" tone="primary" />
+        <Text variant="body" tone="textMuted" style={{ flex: 1 }}>
+          {t('report.subtitle')}
+        </Text>
+      </View>
       {error ? <Banner testID="report-error" variant="error" message={error} style={{ marginBottom: space[3] }} /> : null}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('report.title')} style={{ gap: space[2], marginBottom: space[4] }}>
         {REPORT_REASONS.map((r) => (

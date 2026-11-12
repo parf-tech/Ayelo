@@ -8,7 +8,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { pickImage, type PickedImage } from '../../media/picker';
 import { uploadMedia } from '../../media/upload';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, CheckboxField, ScreenContainer, Text } from '../../ui';
+import { AsyncView, Banner, Button, CheckboxField, Icon, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
 /**
@@ -86,16 +86,31 @@ export function VerificationScreen() {
           </View>
         ) : (
           <View style={{ gap: space[4] }}>
-            <View style={{ padding: space[4], borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
-              <Text variant="caption" tone="textMuted">
-                {t('verify.pose')}
-              </Text>
-              <Text variant="h2" testID="verify-pose">
-                {data.data?.pose}
-              </Text>
-              <Text variant="body" tone="textMuted" style={{ marginTop: space[1] }}>
-                {t('verify.pose.hint', { pose: data.data?.pose ?? '' })}
-              </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: space[3],
+                padding: space[4],
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderLeftWidth: 4,
+                borderLeftColor: colors.primary,
+                backgroundColor: colors.surface,
+              }}
+            >
+              <Icon name="Camera" size="lg" tone="primary" />
+              <View style={{ flex: 1 }}>
+                <Text variant="caption" tone="textMuted">
+                  {t('verify.pose')}
+                </Text>
+                <Text variant="h2" testID="verify-pose">
+                  {data.data?.pose}
+                </Text>
+                <Text variant="body" tone="textMuted" style={{ marginTop: space[1] }}>
+                  {t('verify.pose.hint', { pose: data.data?.pose ?? '' })}
+                </Text>
+              </View>
             </View>
             {!alreadyConsented ? (
               <View>

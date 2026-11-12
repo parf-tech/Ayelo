@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Text } from '../../ui';
 import { countryLabel } from '../onboarding/countries';
+import { Scrim } from './Scrim';
 import { decideSwipe, primaryPhotoUrl } from './swipe';
 
 type Props = {
@@ -98,36 +99,54 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: colors.border,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.brand,
         transform: interactive ? [{ translateX: position.x }, { translateY: position.y }, { rotate }] : [{ scale: 0.96 }],
       }}
     >
       {photo ? (
-        <Image source={{ uri: photo }} accessibilityIgnoresInvertColors accessible={false} style={{ flex: 1, backgroundColor: colors.skeleton }} />
+        <Image
+          source={{ uri: photo }}
+          accessibilityIgnoresInvertColors
+          accessible={false}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.skeleton }}
+        />
       ) : (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.skeleton }}>
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.skeleton }}>
           <Text variant="body" tone="textMuted">
             {t('discover.noPhoto')}
           </Text>
         </View>
       )}
-      <View style={{ padding: space[4], backgroundColor: colors.surface }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-          <Text variant="h2" numberOfLines={1} style={{ flexShrink: 1 }}>
+      <Scrim height="62%" testID={interactive ? 'swipe-card-scrim' : undefined} />
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: space[5], gap: space[1] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+          <Text variant="title" numberOfLines={1} style={{ flexShrink: 1, color: colors.onBrand }}>
             {profile.display_name}, {profile.age}
           </Text>
           {profile.verified ? (
-            <Text variant="caption" tone="verified" style={{ fontWeight: '700' }}>
+            <Text variant="captionStrong" style={{ color: colors.onBrand }}>
               ✓ {t('discover.verified')}
             </Text>
           ) : null}
         </View>
-        <Text variant="body" tone="textMuted" numberOfLines={1}>
+        <Text variant="body" numberOfLines={1} style={{ color: colors.onBrand }}>
           {[profile.city, countryLabel(t, profile.residence_country)].filter(Boolean).join(', ')}
         </Text>
-        <Text variant="caption" tone="primary">
-          {t(`intent.${profile.intent}.label`)}
-        </Text>
+        <View
+          style={{
+            alignSelf: 'flex-start',
+            marginTop: space[2],
+            paddingHorizontal: space[3],
+            paddingVertical: space[1],
+            borderRadius: radius.pill,
+            borderWidth: 1,
+            borderColor: colors.onBrand,
+          }}
+        >
+          <Text variant="captionStrong" style={{ color: colors.onBrand }}>
+            {t(`intent.${profile.intent}.label`)}
+          </Text>
+        </View>
       </View>
     </Animated.View>
   );

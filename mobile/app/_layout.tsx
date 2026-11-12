@@ -1,3 +1,4 @@
+import { useFonts } from 'expo-font';
 import { Slot, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo } from 'react';
@@ -7,7 +8,8 @@ import { SignupFlowProvider, useSignupFlow } from '../src/flow/SignupFlowProvide
 import { OnboardingProvider, useOnboardingDraft } from '../src/features/onboarding/OnboardingProvider';
 import { I18nProvider } from '../src/i18n';
 import { PushRegistration } from '../src/push/PushRegistration';
-import { ThemeProvider, useTheme } from '../src/theme';
+import { FontsReadyProvider, ThemeProvider, useTheme } from '../src/theme';
+import { FONT_ASSETS } from '../src/theme/fontAssets';
 import { buildNavigationTheme } from '../src/theme/navigationTheme';
 import { ToastProvider } from '../src/ui';
 
@@ -37,26 +39,31 @@ function ThemedStatusBar() {
 }
 
 export default function RootLayout() {
+  // Poppins se charge en arrière-plan : le premier rendu n'attend pas (police du système jusque-là) et un échec
+  // de chargement laisse simplement la police du système (l'erreur renvoyée par useFonts est volontairement ignorée).
+  const [fontsLoaded] = useFonts(FONT_ASSETS);
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <I18nProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <SignupFlowProvider>
-                <OnboardingProvider>
-                  <SessionCleanup />
-                  <PushRegistration />
-                  <ThemedStatusBar />
-                  <ThemedNavigation>
-                    <Slot />
-                  </ThemedNavigation>
-                </OnboardingProvider>
-              </SignupFlowProvider>
-            </AuthProvider>
-          </ToastProvider>
-        </I18nProvider>
-      </ThemeProvider>
+      <FontsReadyProvider ready={fontsLoaded}>
+        <ThemeProvider>
+          <I18nProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <SignupFlowProvider>
+                  <OnboardingProvider>
+                    <SessionCleanup />
+                    <PushRegistration />
+                    <ThemedStatusBar />
+                    <ThemedNavigation>
+                      <Slot />
+                    </ThemedNavigation>
+                  </OnboardingProvider>
+                </SignupFlowProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </FontsReadyProvider>
     </SafeAreaProvider>
   );
 }

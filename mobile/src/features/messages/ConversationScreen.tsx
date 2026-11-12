@@ -6,17 +6,60 @@ import { CALLS_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useRealtime } from '../../realtime';
-import { MIN_TARGET, useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, ScreenContainer, Text, useToast } from '../../ui';
+import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, type IconName } from '../../ui';
 import { useCalls } from '../calls/CallProvider';
 import { useConversations } from './ConversationsProvider';
-import { deliveryState, type LocalMessage } from './thread';
+import { DateSeparator } from './DateSeparator';
+import { MessageBubble } from './MessageBubble';
+import { dayKey } from './messageTime';
+import type { LocalMessage } from './thread';
 import { useThread } from './useThread';
-
-const STATE_GLYPH = { sending: '…', failed: '!', sent: '✓', delivered: '✓✓', read: '✓✓' } as const;
 
 function param(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
+}
+
+/** Ligne du menu de conversation : icône + libellé, cible >= 44, même testID qu'avant. */
+function MenuItem({
+  testID,
+  icon,
+  label,
+  onPress,
+  disabled,
+  danger,
+}: {
+  testID: string;
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
+  const { space } = useTheme();
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space[3],
+        minHeight: MIN_TARGET,
+        paddingHorizontal: space[3],
+        opacity: disabled ? stateOpacity.disabled : pressed ? stateOpacity.pressed : 1,
+      })}
+    >
+      <Icon name={icon} tone={danger ? 'danger' : 'text'} />
+      <Text variant="body" tone={danger ? 'danger' : 'text'} style={{ flex: 1, fontWeight: '500' }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
 }
 
 /** S14 : conversation (bulles, envoi optimiste, renvoi, accusés, pagination, « écrit… », avis de sécurité). */
@@ -80,9 +123,8 @@ export function ConversationScreen() {
       if (match) await api.discovery.deleteMatch(match.id);
     }, t('conversation.unmatchDone'));
 
-  const renderMessage = ({ item }: { item: LocalMessage }) => {
+  const renderMessage = ({ item, index }: { item: LocalMessage; index: number }) => {
     const mine = item.sender_id === thread.myId;
-    const state = mine ? deliveryState(item) : null;
     const missed = item.type === 'call_missed';
     let content: string;
     switch (item.type) {
@@ -108,72 +150,49 @@ export function ConversationScreen() {
         content = t('messages.preview.other');
     }
 
+    // Liste inversée : le message suivant dans les données est le plus ancien. Le séparateur de jour s'affiche au-dessus du
+    // plus ancien message de chaque jour (donc quand le message plus ancien est d'un autre jour, ou qu'il n'y en a pas).
+    const older = thread.messages[index + 1];
+    const startsDay = dayKey(item.created_at) !== '' && (!older || dayKey(older.created_at) !== dayKey(item.created_at));
+
+    let row: React.ReactNode;
     if (missed) {
-      return (
-        <View testID={`message-${item.id}`} accessible accessibilityLabel={content} style={{ alignItems: 'center', marginVertical: space[2] }}>
+      row = (
+        <View testID={`message-${item.id}`} accessible accessibilityLabel={content} style={{ alignItems: 'center', marginVertical: space[2], flexDirection: 'row', justifyContent: 'center', gap: space[2] }}>
+          <Icon name={item.body === 'video' ? 'VideoOff' : 'PhoneOff'} size="sm" tone="textMuted" />
           <Text variant="caption" tone="textMuted">
             {content}
           </Text>
         </View>
       );
+    } else {
+      const deletable = mine && !item.local && item.type !== 'deleted';
+      row = (
+        <MessageBubble
+          message={item}
+          mine={mine}
+          content={content}
+          deletable={deletable}
+          actionOpen={actionFor === item.id}
+          onOpenActions={() => setActionFor(item.id)}
+          onCloseActions={() => setActionFor(null)}
+          onRetry={() => void thread.retry(item.client_id)}
+          onDiscard={() => thread.discard(item.client_id)}
+          onDelete={() => {
+            setActionFor(null);
+            void thread.removeMine(item).catch((error: unknown) => {
+              const { key, params: p } = apiErrorMessage(error);
+              setNotice(t(key, p));
+            });
+          }}
+        />
+      );
     }
 
-    const deletable = mine && !item.local && item.type !== 'deleted';
     return (
-      <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', marginVertical: space[1] }}>
-        <Pressable
-          testID={`message-${item.id}`}
-          accessibilityLabel={state ? `${content}. ${t(`conversation.state.${state}`)}` : content}
-          accessibilityActions={deletable ? [{ name: 'delete', label: t('conversation.deleteMessage') }] : undefined}
-          onAccessibilityAction={() => setActionFor(item.id)}
-          onLongPress={deletable ? () => setActionFor(item.id) : undefined}
-          style={{
-            maxWidth: '80%',
-            paddingHorizontal: space[3],
-            paddingVertical: space[2],
-            borderRadius: radius.md,
-            backgroundColor: mine ? colors.primary : colors.surface,
-            borderWidth: mine ? 0 : 1,
-            borderColor: colors.border,
-          }}
-        >
-          <Text variant="body" tone={mine ? 'onPrimary' : 'text'} style={item.type === 'deleted' ? { fontStyle: 'italic' } : undefined}>
-            {content}
-          </Text>
-        </Pressable>
-        {state ? (
-          <Text
-            variant="caption"
-            tone={state === 'failed' ? 'danger' : 'textMuted'}
-            testID={`state-${item.id}`}
-            accessibilityLabel={t(`conversation.state.${state}`)}
-          >
-            {STATE_GLYPH[state]} {t(`conversation.state.${state}`)}
-          </Text>
-        ) : null}
-        {item.local === 'failed' ? (
-          <View style={{ flexDirection: 'row' }}>
-            <Button testID={`retry-${item.client_id}`} variant="ghost" label={t('conversation.retry')} onPress={() => void thread.retry(item.client_id)} />
-            <Button variant="ghost" label={t('common.delete')} accessibilityLabel={t('conversation.discard')} onPress={() => thread.discard(item.client_id)} />
-          </View>
-        ) : null}
-        {actionFor === item.id ? (
-          <View style={{ flexDirection: 'row' }}>
-            <Button
-              testID={`delete-${item.id}`}
-              variant="danger"
-              label={t('conversation.deleteMessage')}
-              onPress={() => {
-                setActionFor(null);
-                void thread.removeMine(item).catch((error: unknown) => {
-                  const { key, params: p } = apiErrorMessage(error);
-                  setNotice(t(key, p));
-                });
-              }}
-            />
-            <Button variant="ghost" label={t('common.cancel')} onPress={() => setActionFor(null)} />
-          </View>
-        ) : null}
+      <View>
+        {startsDay ? <DateSeparator iso={item.created_at} testID={`day-${item.id}`} /> : null}
+        {row}
       </View>
     );
   };
@@ -183,9 +202,22 @@ export function ConversationScreen() {
       testID="screen-conversation"
       footer={
         thread.closed ? (
-          <Text variant="caption" tone="textMuted" testID="conversation-closed">
-            {t('conversation.closed')}
-          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: space[3],
+              backgroundColor: colors.surface,
+              borderRadius: radius.lg,
+              paddingHorizontal: space[4],
+              paddingVertical: space[3],
+            }}
+          >
+            <Icon name="Lock" tone="textMuted" />
+            <Text variant="bodySmall" tone="textMuted" testID="conversation-closed" style={{ flex: 1 }}>
+              {t('conversation.closed')}
+            </Text>
+          </View>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space[2] }}>
             <TextInput
@@ -202,19 +234,27 @@ export function ConversationScreen() {
               maxLength={2000}
               style={{
                 flex: 1,
-                minHeight: MIN_TARGET,
+                minHeight: MIN_TARGET + 4,
                 maxHeight: 120,
-                paddingHorizontal: space[3],
-                paddingVertical: space[2],
+                paddingHorizontal: space[4],
+                paddingVertical: space[3],
                 color: colors.text,
                 fontSize: 16,
                 borderWidth: 1,
                 borderColor: colors.borderStrong,
-                borderRadius: radius.md,
+                borderRadius: radius.lg,
                 backgroundColor: colors.surface,
               }}
             />
-            <Button testID="conversation-send" label={t('conversation.send')} onPress={submit} disabled={draft.trim() === ''} />
+            <IconButton
+              testID="conversation-send"
+              icon="Send"
+              size="lg"
+              variant="filled"
+              accessibilityLabel={t('conversation.send')}
+              onPress={submit}
+              disabled={draft.trim() === ''}
+            />
           </View>
         )
       }
@@ -223,46 +263,40 @@ export function ConversationScreen() {
           sans jamais repousser le menu hors de l'écran (320 pt, texte à 200 %). */}
       <View testID="conversation-header" style={{ marginBottom: space[2] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[1] }}>
-          <Button
+          <IconButton
             testID="back-button"
-            variant="ghost"
-            label={t('common.back')}
-            style={{ paddingHorizontal: space[2], flexShrink: 1 }}
+            icon="ChevronLeft"
+            accessibilityLabel={t('common.back')}
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/messages' as never))}
           />
           <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
             {canCall ? (
               <>
-                <Button
+                <IconButton
                   testID="call-audio"
-                  variant="ghost"
-                  label="☎"
-                  style={{ paddingHorizontal: space[2] }}
+                  icon="Phone"
                   accessibilityLabel={t('conversation.audioCall')}
                   onPress={() => void calls.startCall({ conversationId, kind: 'audio', peerId: peerId || null, peerName, peerPhoto })}
                 />
-                <Button
+                <IconButton
                   testID="call-video"
-                  variant="ghost"
-                  label="▶"
-                  style={{ paddingHorizontal: space[2] }}
+                  icon="Video"
                   accessibilityLabel={t('conversation.videoCall')}
                   onPress={() => void calls.startCall({ conversationId, kind: 'video', peerId: peerId || null, peerName, peerPhoto })}
                 />
               </>
             ) : null}
-            <Button
+            <IconButton
               testID="conversation-menu"
-              variant="ghost"
-              label="⋯"
-              style={{ paddingHorizontal: space[2] }}
+              icon="Ellipsis"
+              expanded={menuOpen}
               accessibilityLabel={t('conversation.menu')}
               onPress={() => setMenuOpen((open) => !open)}
             />
           </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1] }}>
-          <Avatar uri={peerPhoto} name={peerName || '?'} size={36} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] }}>
+          <Avatar uri={peerPhoto} name={peerName || '?'} size={44} />
           <Text variant="h2" header numberOfLines={2} style={{ flex: 1, flexShrink: 1 }}>
             {peerName || t('conversation.title')}
           </Text>
@@ -270,7 +304,7 @@ export function ConversationScreen() {
       </View>
 
       {menuOpen ? (
-        <View testID="conversation-menu-sheet" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface, padding: space[2], marginBottom: space[2] }}>
+        <View testID="conversation-menu-sheet" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surface, padding: space[2], marginBottom: space[2] }}>
           {confirm ? (
             <View style={{ gap: space[2], padding: space[2] }}>
               <Text variant="body">{confirm === 'block' ? t('detail.blockConfirm.title', { name: peerName }) : t('conversation.unmatch')}</Text>
@@ -288,12 +322,13 @@ export function ConversationScreen() {
             </View>
           ) : (
             <>
-              <Button testID="conversation-report" variant="ghost" label={t('conversation.report')} onPress={report} disabled={!peerId} />
-              <Button testID="conversation-block" variant="ghost" label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
-              {isMatch ? <Button testID="conversation-unmatch" variant="ghost" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
-              <Button
+              <MenuItem testID="conversation-report" icon="Flag" label={t('conversation.report')} onPress={report} disabled={!peerId} />
+              <MenuItem testID="conversation-block" icon="Ban" label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
+              {isMatch ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
+              <MenuItem
                 testID="conversation-hide"
-                variant="ghost"
+                icon="Trash2"
+                danger
                 label={t('conversation.hide')}
                 onPress={() => void leave(() => api.messaging.hideConversation(conversationId), t('conversation.hidden'))}
               />
@@ -316,9 +351,12 @@ export function ConversationScreen() {
       ) : null}
       {notice ? <Banner testID="conversation-notice" variant="error" message={notice} onDismiss={() => setNotice(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[2] }} /> : null}
       {realtimeStatus !== 'connected' && thread.status === 'ready' ? (
-        <Text variant="caption" tone="textMuted" testID="realtime-off" style={{ marginBottom: space[1] }}>
-          {t('conversation.realtime.off')}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: space[1] }}>
+          <Icon name="WifiOff" size="sm" tone="textMuted" />
+          <Text variant="caption" tone="textMuted" testID="realtime-off" style={{ flex: 1 }}>
+            {t('conversation.realtime.off')}
+          </Text>
+        </View>
       ) : null}
 
       <AsyncView
@@ -339,9 +377,11 @@ export function ConversationScreen() {
           onEndReachedThreshold={0.4}
           ListHeaderComponent={
             thread.peerTyping ? (
-              <Text variant="caption" tone="textMuted" testID="peer-typing" accessibilityLiveRegion="polite">
-                {t('conversation.typing', { name: peerName })}
-              </Text>
+              <View style={{ alignSelf: 'flex-start', backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: space[3], paddingVertical: space[1], marginVertical: space[1] }}>
+                <Text variant="caption" tone="textMuted" testID="peer-typing" accessibilityLiveRegion="polite">
+                  {t('conversation.typing', { name: peerName })}
+                </Text>
+              </View>
             ) : undefined
           }
           ListFooterComponent={
