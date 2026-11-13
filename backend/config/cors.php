@@ -21,7 +21,7 @@ $origins = array_values(array_unique(array_filter(array_map(function (string $va
     return strtolower($parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : ''));
 }, explode(',', (string) (env('CORS_ALLOWED_ORIGINS') ?: env('APP_WEB_URL', '')))))));
 
-return [
+$config = [
 
     'paths' => [
         'api/v1/account-deletion-requests',
@@ -45,3 +45,29 @@ return [
     'supports_credentials' => false,
 
 ];
+
+/*
+ | Aperçu local (docs/runbooks/apercu-local.md) : l'aperçu web Expo (navigateur) appelle l'API depuis une autre origine.
+ | Branche STRICTEMENT réservée à APP_ENV=local ET à une liste CORS_DEV_ORIGINS non vide (vide par défaut). Pendant le
+ | chargement de la configuration l'environnement de l'application n'est pas encore détecté : on se rabat alors sur APP_ENV.
+ | En production (ou tout autre environnement), cette branche ne s'exécute jamais et la configuration ci-dessus reste intacte.
+ */
+$isLocal = app()->bound('env') ? app()->environment('local') : env('APP_ENV') === 'local';
+$devOrigins = $isLocal
+    ? array_values(array_unique(array_filter(array_map(function (string $value): string {
+        $parts = parse_url(trim($value));
+
+        return is_array($parts) && ! empty($parts['scheme']) && ! empty($parts['host'])
+            ? strtolower($parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : ''))
+            : '';
+    }, explode(',', (string) env('CORS_DEV_ORIGINS', ''))))))
+    : [];
+
+if ($devOrigins !== []) {
+    $config['paths'] = ['api/*'];
+    $config['allowed_methods'] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+    $config['allowed_origins'] = array_values(array_unique(array_merge($config['allowed_origins'], $devOrigins)));
+    $config['allowed_headers'] = ['Content-Type', 'Accept', 'Accept-Language', 'Authorization', 'X-Device-Id', 'Idempotency-Key', 'X-Requested-With'];
+}
+
+return $config;

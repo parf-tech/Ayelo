@@ -74,3 +74,60 @@ it('ne déduit aucune origine quand rien n\'est configuré', function () {
 
     expect($response->headers->get('Access-Control-Allow-Origin'))->toBeNull();
 });
+
+// Aperçu web local : CORS_DEV_ORIGINS n'a d'effet qu'en APP_ENV=local (docs/runbooks/apercu-local.md).
+function corsConfigFor(string $appEnv, string $devOrigins): array
+{
+    $previousEnv = app()['env'];
+    app()['env'] = $appEnv;
+    $_SERVER['CORS_DEV_ORIGINS'] = $devOrigins;
+
+    try {
+        return require config_path('cors.php');
+    } finally {
+        unset($_SERVER['CORS_DEV_ORIGINS']);
+        app()['env'] = $previousEnv;
+    }
+}
+
+it('ignore CORS_DEV_ORIGINS en production : aucune origine, méthode ni en-tête de développement', function () {
+    $config = corsConfigFor('production', 'http://localhost:8089,http://127.0.0.1:8089');
+
+    expect($config['allowed_origins'])->not->toContain('http://localhost:8089');
+    expect($config['allowed_origins'])->not->toContain('http://127.0.0.1:8089');
+    expect($config['paths'])->toBe([
+        'api/v1/account-deletion-requests',
+        'api/v1/account-deletion-requests/*',
+        'api/account-deletion-requests',
+        'api/account-deletion-requests/*',
+    ]);
+    expect($config['allowed_methods'])->toBe(['POST', 'OPTIONS']);
+    expect($config['allowed_headers'])->toBe(['Content-Type']);
+    expect($config['supports_credentials'])->toBeFalse();
+});
+
+it('ignore aussi CORS_DEV_ORIGINS en staging et en test', function () {
+    foreach (['staging', 'testing'] as $env) {
+        $config = corsConfigFor($env, 'http://localhost:8089');
+        expect($config['allowed_origins'])->not->toContain('http://localhost:8089', "environnement $env");
+        expect($config['allowed_methods'])->toBe(['POST', 'OPTIONS']);
+    }
+});
+
+it('autorise les origines de développement uniquement en local, sans joker ni identifiants', function () {
+    $config = corsConfigFor('local', 'http://localhost:8089/chemin, http://127.0.0.1:8089');
+
+    expect($config['allowed_origins'])->toContain('http://localhost:8089', 'http://127.0.0.1:8089');
+    expect($config['allowed_origins'])->not->toContain('*');
+    expect($config['paths'])->toBe(['api/*']);
+    expect($config['allowed_headers'])->toContain('Authorization', 'X-Device-Id');
+    expect($config['supports_credentials'])->toBeFalse();
+});
+
+it('garde la configuration de production en local quand CORS_DEV_ORIGINS est vide', function () {
+    $config = corsConfigFor('local', '');
+
+    expect($config['allowed_methods'])->toBe(['POST', 'OPTIONS']);
+    expect($config['allowed_headers'])->toBe(['Content-Type']);
+    expect($config['paths'])->toContain('api/v1/account-deletion-requests');
+});
