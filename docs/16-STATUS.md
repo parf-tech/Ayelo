@@ -6,7 +6,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentes
 
 | preuve | résultat |
 | --- | --- |
-| Tests backend (Pest, PostgreSQL 16) | **Mesuré le 2026-11-07 (PHP 8.4.27, `memory_limit=1G`) : 515 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3373 assertions.** Le PHP 8.5 téléchargé en début de journée est bloqué par Smart App Control ; les tests tournent avec `C:\Users\pc\tools\php84`. |
+| Tests backend (Pest, PostgreSQL 16) | **Mesuré le 2026-11-07 (PHP 8.4.27, `memory_limit=1G`) : 515 tests Pest réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3373 assertions.** Le PHP 8.5 téléchargé en début de journée est bloqué par Smart App Control ; les tests tournent avec `C:\Users\pc\tools\php84`. **Rejoué le 2026-11-13 (PHP 8.5.12 de WinGet, `intl`, `gd` et `exif` activés par un `php.ini` local) : 519 réussis, 2 ignorés, 0 échec, 3393 assertions.** |
 | Tests du schéma SQL (PostgreSQL 16.15) | 33 tests, 0 échec (mesuré) |
 | CI GitHub | trois workflows verts sur le commit `5dce604` : `backend` (Pest sur PostgreSQL 16, `composer audit`, contrat OpenAPI à jour), `schema` (33 tests SQL, gitleaks historique complet), `mobile` (types, lint, 300 tests, bundle Android, audit de production) |
 | Contrôle de secrets (gitleaks, historique complet) | **exécuté uniquement par la CI** (workflow `schema`), jamais en local (binaire absent du poste, téléchargement non autorisé). Dernier résultat connu : propre ; 4 faux positifs (mots de passe factices dans les tests) exclus par `.gitleaks.toml`, limité à `backend/tests` et `mobile/__tests__`. À rejouer sur l'historique du commit final |
