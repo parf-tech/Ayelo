@@ -2,8 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
-import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ListRow, ScreenContainer, Text } from '../../ui';
+import { borderWidth, radius, useTheme } from '../../theme';
+import { AsyncView, Banner, Button, Icon, ListRow, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { usePremium } from './PremiumProvider';
 import { usePurchase } from './usePurchase';
@@ -11,7 +11,7 @@ import { usePurchase } from './usePurchase';
 /** S31 : packs de crédits « Conversation » (consommables). */
 export function CreditsScreen() {
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { colors, space } = useTheme();
   const { provider, offers, refreshStatus } = usePremium();
   const purchase = usePurchase();
 
@@ -42,9 +42,24 @@ export function CreditsScreen() {
         empty={(data.data?.packs.length ?? 0) === 0}
         emptyTitle={t('premium.offers.empty')}
       >
-        <Text variant="body" style={{ fontWeight: '600', marginBottom: space[2] }} testID="credits-balance">
-          {t('premium.balance', { count: data.data?.status.credits.conversation ?? 0 })}
-        </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: space[3],
+            padding: space[4],
+            marginBottom: space[3],
+            backgroundColor: colors.surface,
+            borderRadius: radius.lg,
+            borderWidth: borderWidth.hairline,
+            borderColor: colors.border,
+          }}
+        >
+          <Icon name="MessageCircle" size="lg" tone="primary" />
+          <Text variant="body" style={{ fontWeight: '600', flex: 1 }} testID="credits-balance">
+            {t('premium.balance', { count: data.data?.status.credits.conversation ?? 0 })}
+          </Text>
+        </View>
         <View>
           {(data.data?.packs ?? []).map((pack) => {
             const price = data.data?.products.find((p) => p.productId === pack.product_id)?.priceString;
@@ -54,6 +69,7 @@ export function CreditsScreen() {
                 testID={`pack-${pack.product_id}`}
                 label={packLabel(pack.credits)}
                 description={price ?? t('premium.price.unknown')}
+                leading={<Icon name="MessageCircle" size="md" tone="primary" />}
                 accessibilityLabel={`${packLabel(pack.credits)}. ${price ?? t('premium.price.unknown')}`}
                 trailing={
                   <Button

@@ -58,4 +58,10 @@ export const premiumEn = {
   'premium.summary': '{plan}, {price}. Renews automatically until cancelled.',
   'premium.summary.noPrice': '{plan}. Renews automatically until cancelled.',
   'premium.unavailable.generic': 'Purchases are temporarily unavailable. Try again later.',
+  'premium.benefits.title': 'Included with Premium',
+  'premium.benefit.likes': 'Unlimited likes',
+  'premium.benefit.superlikes': 'Super likes',
+  'premium.benefit.undo': 'Undo',
+  'premium.benefit.conversations': 'Conversations without credits',
+  'premium.plans.title': 'Choose your plan length',
 } as const;

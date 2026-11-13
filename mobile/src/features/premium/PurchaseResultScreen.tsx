@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import type { BillingStatus } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Skeleton, Text } from '../../ui';
+import { Banner, Button, Icon, ScreenContainer, Skeleton, Text } from '../../ui';
 import { usePremium } from './PremiumProvider';
 
 export const POLL_INTERVAL_MS = 3000;
@@ -99,6 +99,8 @@ export function PurchaseResultScreen() {
       }
     >
       <View style={{ flex: 1, justifyContent: 'center', gap: space[3] }}>
+        {/* Pictogramme décoratif : l'état est écrit dans le titre, la bannière et le message ci-dessous. */}
+        <Icon name={phase === 'confirmed' ? 'CircleCheck' : phase === 'timeout' ? 'TriangleAlert' : 'Clock'} size="xl" tone={phase === 'confirmed' ? 'success' : phase === 'timeout' ? 'warning' : 'primary'} />
         <Text variant="title" header>
           {t('purchase.title')}
         </Text>

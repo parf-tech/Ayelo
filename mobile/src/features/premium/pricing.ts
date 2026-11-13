@@ -33,3 +33,32 @@ export function monthlyPrice(product: StoreProduct | undefined, months: number, 
     return null;
   }
 }
+
+/** Prix par mois exact (nombre) d'une offre, ou null si le store ne donne pas montant, devise et période cohérente. */
+function monthlyAmount(product: StoreProduct | undefined, months: number): number | null {
+  if (!product || !Number.isInteger(months) || months < 1) return null;
+  const { price, currencyCode, subscriptionPeriod } = product;
+  if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0 || !currencyCode) return null;
+  if (subscriptionPeriod != null && periodToMonths(subscriptionPeriod) !== months) return null;
+  return price / months;
+}
+
+/**
+ * Offre au prix par mois le plus bas, ou null : l'étiquette « Meilleur prix » ne s'affiche que si elle est DÉRIVÉE des prix réels du
+ * store (au moins deux offres chiffrées, même devise, une seule offre strictement la moins chère par mois). Sans montants, aucune
+ * promesse : la durée la plus longue n'est pas forcément la moins chère.
+ */
+export function bestValueProductId(
+  plans: readonly { product_id: string; months: number }[],
+  products: readonly StoreProduct[],
+): string | null {
+  if (plans.length < 2) return null;
+  const rows = plans.map((plan) => {
+    const product = products.find((p) => p.productId === plan.product_id);
+    return { id: plan.product_id, unit: monthlyAmount(product, plan.months), currency: product?.currencyCode };
+  });
+  if (rows.some((r) => r.unit === null) || new Set(rows.map((r) => r.currency)).size !== 1) return null;
+  const min = Math.min(...rows.map((r) => r.unit as number));
+  const cheapest = rows.filter((r) => Math.abs((r.unit as number) - min) < 1e-9);
+  return cheapest.length === 1 && cheapest[0] ? cheapest[0].id : null;
+}

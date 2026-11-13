@@ -1,4 +1,4 @@
-import { act, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { act, screen, userEvent, waitFor, within } from '@testing-library/react-native';
 import { ExecutionEnvironment } from 'expo-constants';
 import React from 'react';
 import { Linking } from 'react-native';
@@ -14,6 +14,7 @@ import {
 import { APP_STORE_SUBSCRIPTIONS_URL, PLAY_STORE_SUBSCRIPTIONS_URL, subscriptionsUrl } from '../src/features/premium/ManageSubscription';
 import { CreditsScreen } from '../src/features/premium/CreditsScreen';
 import { PremiumScreen } from '../src/features/premium/PremiumScreen';
+import { bestValueProductId } from '../src/features/premium/pricing';
 import { isPurchaseConfirmed, MAX_ATTEMPTS, POLL_INTERVAL_MS, PurchaseResultScreen } from '../src/features/premium/PurchaseResultScreen';
 import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
 import { tokenStore } from '../src/storage/tokenStore';
@@ -156,8 +157,9 @@ describe('S30 Offres Premium', () => {
     await renderShell(<PremiumScreen />, { premium: new UnavailablePurchaseProvider('expo_go') });
     expect(await screen.findByTestId('premium-unavailable')).toHaveTextContent(/Expo Go/);
     expect(screen.getByTestId('plan-premium_1m')).toBeOnTheScreen();
-    expect(screen.getAllByText('Prix indisponible')).toHaveLength(2);
-    expect(screen.getByText('Prix indisponible · Meilleur prix')).toBeOnTheScreen();
+    expect(screen.getAllByText('Prix indisponible')).toHaveLength(3);
+    // Aucun prix chiffré : aucune étiquette « Meilleur prix » (elle doit être dérivée des prix réels).
+    expect(screen.queryByText(/Meilleur prix/)).not.toBeOnTheScreen();
     await user().press(screen.getByTestId('plan-premium_3m'));
     expect(screen.getByTestId('premium-subscribe')).toBeDisabled();
     expect(router.replace).not.toHaveBeenCalled();
@@ -456,7 +458,8 @@ describe('Paywall : conformité et textes utilisateur', () => {
     await renderShell(<PremiumScreen />, { premium: new FakeStore() });
     await screen.findByTestId('plan-premium_12m');
     expect(screen.getByTestId('plan-premium_12m')).toBeChecked();
-    expect(screen.getByText('12,99 € · Meilleur prix')).toBeOnTheScreen();
+    expect(screen.getByText('12,99 €')).toBeOnTheScreen();
+    expect(screen.queryByText(/Meilleur prix/)).not.toBeOnTheScreen();
     expect(screen.getByTestId('premium-subscribe')).toBeEnabled();
     expect(screen.getByTestId('premium-subscribe')).toHaveProp('accessibilityLabel', 'S’abonner, 12,99 €');
     expect(screen.getByTestId('premium-summary')).toHaveTextContent('12 mois, 12,99 €. Renouvellement automatique jusqu’à résiliation.');
@@ -536,5 +539,85 @@ describe('Paywall : conformité et textes utilisateur', () => {
     await renderShell(<PremiumScreen />, { premium: new FakeStore() });
     await screen.findByTestId('premium-active');
     expect(screen.queryByTestId('premium-subscribe')).not.toBeOnTheScreen();
+  });
+});
+
+describe('Paywall : refonte visuelle (direction Prune)', () => {
+  const routes = () => ({
+    'GET /me': [200, ME],
+    'GET /billing/offers': [200, OFFERS],
+    'GET /billing/status': [200, STATUS_FREE],
+  }) as never;
+  const priced = (prices: Record<number, number>, currency = 'EUR') => {
+    const store = new FakeStore();
+    store.getProducts = async (ids: string[]) =>
+      ids.map((id) => {
+        const months = Number(id.replace(/[^0-9]/g, ''));
+        return { productId: id, title: id, priceString: `${prices[months]} €`, price: prices[months], currencyCode: currency, subscriptionPeriod: `P${months}M` };
+      });
+    return store;
+  };
+
+  it('avantages : seulement ceux de l’offre, avec coche (icône) et texte', async () => {
+    installFakeApi(routes());
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await screen.findByTestId('plan-premium_12m');
+    const benefits = screen.getByTestId('premium-benefits');
+    for (const label of ['J’aime illimités', 'Coups de cœur', 'Retour en arrière', 'Conversations sans crédit']) {
+      expect(within(benefits).getByText(label)).toBeOnTheScreen();
+    }
+    // Pictogrammes décoratifs, masqués aux lecteurs d'écran : le texte porte le sens.
+    expect(within(benefits).getAllByTestId('icon-CircleCheck', { includeHiddenElements: true })).toHaveLength(4);
+  });
+
+  it('« Meilleur prix » : dérivé des prix réels, sur l’offre au prix par mois le plus bas seulement', async () => {
+    installFakeApi(routes());
+    await renderShell(<PremiumScreen />, { premium: priced({ 1: 9.99, 3: 24.99, 12: 59.99 }) });
+    expect(await screen.findByTestId('plan-premium_12m')).toHaveProp('accessibilityLabel', expect.stringMatching(/Meilleur prix/));
+    expect(screen.getByTestId('plan-premium_3m')).not.toHaveProp('accessibilityLabel', expect.stringMatching(/Meilleur prix/));
+    expect(screen.getByTestId('plan-premium_1m')).not.toHaveProp('accessibilityLabel', expect.stringMatching(/Meilleur prix/));
+  });
+
+  it('« Meilleur prix » : absent si la durée la plus longue n’est pas la moins chère par mois', async () => {
+    installFakeApi(routes());
+    // 12 mois à 150 € (12,50 par mois) contre 9,99 par mois : la durée longue n'est pas la bonne affaire.
+    await renderShell(<PremiumScreen />, { premium: priced({ 1: 9.99, 3: 24.99, 12: 150 }) });
+    await screen.findByTestId('plan-premium_12m');
+    expect(screen.getByTestId('plan-premium_3m')).toHaveProp('accessibilityLabel', expect.stringMatching(/Meilleur prix/));
+    expect(screen.getByTestId('plan-premium_12m')).not.toHaveProp('accessibilityLabel', expect.stringMatching(/Meilleur prix/));
+    // La présélection (offre la plus longue) ne change pas.
+    expect(screen.getByTestId('plan-premium_12m')).toBeChecked();
+  });
+
+  it('« Meilleur prix » : absent si deux offres ont le même prix par mois ou des devises différentes', () => {
+    const plans = [
+      { product_id: 'a', months: 1 },
+      { product_id: 'b', months: 3 },
+    ];
+    const product = (productId: string, price: number, months: number, currencyCode = 'EUR') => ({
+      productId,
+      title: productId,
+      priceString: String(price),
+      price,
+      currencyCode,
+      subscriptionPeriod: `P${months}M`,
+    });
+    expect(bestValueProductId(plans, [product('a', 10, 1), product('b', 30, 3)])).toBeNull();
+    expect(bestValueProductId(plans, [product('a', 10, 1), product('b', 24, 3, 'USD')])).toBeNull();
+    expect(bestValueProductId(plans, [product('a', 10, 1)])).toBeNull();
+    expect(bestValueProductId(plans, [product('a', 10, 1), product('b', 24, 3)])).toBe('b');
+    expect(bestValueProductId(plans.slice(0, 1), [product('a', 10, 1)])).toBeNull();
+  });
+
+  it('plans : sélection portée par coche, bordure et état coché (pas la couleur seule)', async () => {
+    installFakeApi(routes());
+    await renderShell(<PremiumScreen />, { premium: new FakeStore() });
+    await screen.findByTestId('plan-premium_12m');
+    const hidden = { includeHiddenElements: true };
+    expect(screen.getByTestId('plan-premium_12m-check', hidden)).toBeOnTheScreen();
+    expect(screen.queryByTestId('plan-premium_1m-check', hidden)).not.toBeOnTheScreen();
+    await user().press(screen.getByTestId('plan-premium_1m'));
+    expect(screen.getByTestId('plan-premium_1m-check', hidden)).toBeOnTheScreen();
+    expect(screen.queryByTestId('plan-premium_12m-check', hidden)).not.toBeOnTheScreen();
   });
 });

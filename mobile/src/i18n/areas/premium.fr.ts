@@ -59,4 +59,10 @@ export const premiumFr = {
   'premium.summary': '{plan}, {price}. Renouvellement automatique jusqu’à résiliation.',
   'premium.summary.noPrice': '{plan}. Renouvellement automatique jusqu’à résiliation.',
   'premium.unavailable.generic': 'Les achats sont momentanément indisponibles. Réessayez plus tard.',
+  'premium.benefits.title': 'Inclus avec Premium',
+  'premium.benefit.likes': 'J’aime illimités',
+  'premium.benefit.superlikes': 'Coups de cœur',
+  'premium.benefit.undo': 'Retour en arrière',
+  'premium.benefit.conversations': 'Conversations sans crédit',
+  'premium.plans.title': 'Choisissez votre durée',
 } as const;
