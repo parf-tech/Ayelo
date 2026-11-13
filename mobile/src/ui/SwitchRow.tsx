@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Switch, View } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, useTheme } from '../theme';
+import { Icon, IconName } from './Icon';
 import { Text } from './Text';
 
 export type SwitchRowProps = {
@@ -9,6 +10,10 @@ export type SwitchRowProps = {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
+  /** Pictogramme décoratif à gauche du libellé. */
+  icon?: IconName;
+  /** Trait de séparation sous la ligne (défaut : oui). Désactivé quand la ligne est seule dans une section. */
+  divider?: boolean;
   testID?: string;
 };
 
@@ -17,7 +22,7 @@ export type SwitchRowProps = {
  * Toute la ligne est la cible tactile (>= 44 pt). Pour le lecteur d'écran, seul l'interrupteur est exposé
  * (libellé = étiquette, indication = description) : le texte visuel est masqué pour éviter la double annonce.
  */
-export function SwitchRow({ label, description, value, onValueChange, disabled = false, testID }: SwitchRowProps) {
+export function SwitchRow({ label, description, value, onValueChange, disabled = false, icon, divider = true, testID }: SwitchRowProps) {
   const { colors, space } = useTheme();
   return (
     <Pressable
@@ -31,12 +36,17 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         minHeight: MIN_TARGET + 12,
         paddingVertical: space[2],
         gap: space[3],
-        borderBottomWidth: 1,
+        borderBottomWidth: divider ? borderWidth.hairline : 0,
         borderBottomColor: colors.border,
       }}
     >
+      {icon ? (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Icon name={icon} size="lg" tone="primary" />
+        </View>
+      ) : null}
       <View style={{ flex: 1 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Text variant="body" style={{ fontWeight: '600' }}>
+        <Text variant="body" style={{ fontWeight: '500' }}>
           {label}
         </Text>
         {description ? (

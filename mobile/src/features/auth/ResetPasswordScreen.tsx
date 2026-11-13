@@ -8,6 +8,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
 import { passwordToggleLabels } from '../common/passwordToggle';
+import { AuthHeader } from './AuthHeader';
 import { validatePassword } from '../validation';
 
 /** S61 (2/2) : nouveau mot de passe (lien ayelo://reset-password?token=… ou code collé à la main). */
@@ -64,7 +65,8 @@ export function ResetPasswordScreen() {
         )
       }
     >
-      <Text variant="title" header style={{ marginTop: space[5] }}>
+      <AuthHeader back={false} />
+      <Text variant="title" header style={{ marginTop: space[4] }}>
         {t('reset.title')}
       </Text>
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>

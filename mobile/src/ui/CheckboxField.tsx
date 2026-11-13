@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { Icon } from './Icon';
 import { Text } from './Text';
 
 export type CheckboxFieldProps = {
@@ -43,7 +44,7 @@ export function CheckboxField({
           alignItems: 'flex-start',
           padding: space[4],
           borderRadius: radius.md,
-          borderWidth: 1,
+          borderWidth: checked ? borderWidth.strong : borderWidth.hairline,
           borderColor: checked ? colors.primary : colors.borderStrong,
           backgroundColor: colors.surface,
           opacity: pressed && !disabled ? stateOpacity.pressed : 1,
@@ -67,11 +68,7 @@ export function CheckboxField({
           marginTop: 2,
         }}
       >
-        {checked ? (
-          <Text variant="body" tone="onPrimary" style={{ fontWeight: '700', lineHeight: 20 }}>
-            ✓
-          </Text>
-        ) : null}
+        {checked ? <Icon name="Check" size="md" tone="onPrimary" testID={testID ? `${testID}-check` : undefined} /> : null}
       </View>
       <View style={{ flex: 1 }}>
         <Text variant="body" style={{ fontWeight: '600' }}>

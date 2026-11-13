@@ -1,14 +1,19 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+/** `default` : surface du thème. `onBrand` : posé sur le fond prune pleine page (accueil) ; secondary et ghost passent en clair. */
+export type ButtonTone = 'default' | 'onBrand';
 
 export type ButtonProps = {
   label: string;
   onPress: () => void;
   variant?: ButtonVariant;
+  tone?: ButtonTone;
   loading?: boolean;
   disabled?: boolean;
   /** Libellé lu par les lecteurs d'écran si différent du texte affiché. */
@@ -28,6 +33,7 @@ export function Button({
   label,
   onPress,
   variant = 'primary',
+  tone = 'default',
   loading = false,
   disabled = false,
   accessibilityLabel,
@@ -38,6 +44,8 @@ export function Button({
 }: ButtonProps) {
   const { colors, radius, space } = useTheme();
   const inactive = disabled || loading;
+  const { handlers, ringStyle } = useFocusRing();
+  const palette = paletteFor(variant, colors, tone);
 
   return (
     <Pressable
@@ -48,9 +56,9 @@ export function Button({
       disabled={inactive}
       onPress={onPress}
       testID={testID}
-      hitSlop={4}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
       style={({ pressed }) => {
-        const palette = paletteFor(variant, colors);
         const backgroundColor = disabled ? (variant === 'ghost' ? 'transparent' : colors.disabledBg) : palette.bg;
         const borderColor = disabled ? colors.disabledBg : palette.border;
         const base: ViewStyle = {
@@ -58,29 +66,29 @@ export function Button({
           minWidth: MIN_TARGET,
           paddingHorizontal: space[5],
           paddingVertical: space[3],
-          borderRadius: radius.md,
+          borderRadius: radius.pill,
           alignItems: 'center',
           justifyContent: 'center',
-          borderWidth: variant === 'secondary' ? 1.5 : 0,
+          borderWidth: variant === 'secondary' ? borderWidth.strong : 0,
           backgroundColor,
           borderColor,
           opacity: pressed && !inactive ? stateOpacity.pressed : 1,
         };
-        return [base, style];
+        return [base, ringStyle, style];
       }}
     >
       <View style={styles.row}>
         {loading ? (
           <ActivityIndicator
             testID={testID ? `${testID}-spinner` : 'button-spinner'}
-            color={paletteFor(variant, colors).fg}
+            color={palette.fg}
             style={{ marginRight: space[2] }}
           />
         ) : null}
         <Text
           variant="body"
           style={{
-            color: disabled ? colors.disabledText : paletteFor(variant, colors).fg,
+            color: disabled ? colors.disabledText : palette.fg,
             fontWeight: '600',
             flexShrink: 1,
             textAlign: 'center',
@@ -93,12 +101,13 @@ export function Button({
   );
 }
 
-function paletteFor(variant: ButtonVariant, colors: ReturnType<typeof useTheme>['colors']) {
+function paletteFor(variant: ButtonVariant, colors: ReturnType<typeof useTheme>['colors'], tone: ButtonTone) {
+  const onBrand = tone === 'onBrand';
   switch (variant) {
     case 'secondary':
-      return { bg: 'transparent', fg: colors.primary, border: colors.primary };
+      return { bg: 'transparent', fg: onBrand ? colors.onBrand : colors.primary, border: onBrand ? colors.onBrand : colors.primary };
     case 'ghost':
-      return { bg: 'transparent', fg: colors.primary, border: 'transparent' };
+      return { bg: 'transparent', fg: onBrand ? colors.onBrand : colors.primary, border: 'transparent' };
     case 'danger':
       return { bg: colors.danger, fg: colors.onPrimary, border: colors.danger };
     case 'primary':

@@ -1,7 +1,7 @@
 export { Text } from './Text';
 export type { TextProps, TextVariant, TextTone } from './Text';
 export { Button } from './Button';
-export type { ButtonProps, ButtonVariant } from './Button';
+export type { ButtonProps, ButtonVariant, ButtonTone } from './Button';
 export { TextField } from './TextField';
 export type { TextFieldProps } from './TextField';
 export { ChoiceCard } from './ChoiceCard';
@@ -41,3 +41,5 @@ export type { LogoProps, LogoVariant, LogoLayout } from './Logo';
 export { announce } from './a11y/announce';
 export { focusNode } from './a11y/focus';
 export { useReduceMotion, useMotion, useFocusRing, useCompactLayout } from './hooks';
+export { Stepper } from './Stepper';
+export type { StepperProps, StepperStep } from './Stepper';

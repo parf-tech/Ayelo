@@ -7,9 +7,9 @@ import { hasRequiredConsents, SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow, useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
-import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
-import { BackButton } from '../common/BackButton';
+import { iconSize, useTheme } from '../../theme';
+import { Banner, Button, Icon, ScreenContainer, Text, TextField } from '../../ui';
+import { AuthHeader } from '../auth/AuthHeader';
 import { checkBirthdateFields } from '../validation';
 import type { BirthdateFields } from '../validation';
 
@@ -20,7 +20,7 @@ import type { BirthdateFields } from '../validation';
 export function BirthdateScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, type } = useTheme();
   const { api } = useAuth();
   const { state: flow, dispatch } = useSignupFlow();
   const guard = useSignupGuard('birthdate');
@@ -113,8 +113,8 @@ export function BirthdateScreen() {
         />
       }
     >
-      <BackButton />
-      <Text variant="title" header style={{ marginTop: space[2] }}>
+      <AuthHeader />
+      <Text variant="title" header style={{ marginTop: space[4] }}>
         {t('birthdate.title')}
       </Text>
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2] }}>
@@ -184,16 +184,21 @@ export function BirthdateScreen() {
         />
       </View>
       {message ? (
-        <Text
-          variant="caption"
-          tone="danger"
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          testID="birthdate-error"
-          style={{ marginTop: space[2] }}
-        >
-          {message}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[1], marginTop: space[2] }}>
+          <View style={{ marginTop: (type.caption.line - iconSize.sm) / 2 }}>
+            <Icon name="CircleAlert" size="sm" tone="danger" />
+          </View>
+          <Text
+            variant="caption"
+            tone="danger"
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+            testID="birthdate-error"
+            style={{ flex: 1 }}
+          >
+            {message}
+          </Text>
+        </View>
       ) : (
         <Text variant="caption" tone="textMuted" testID="birthdate-help" style={{ marginTop: space[2] }}>
           {t('birthdate.fieldsHelp')}

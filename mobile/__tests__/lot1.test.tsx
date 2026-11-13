@@ -32,7 +32,7 @@ describe('Lot 1 - 1 : lien composants réservé au développement', () => {
     g.__DEV__ = false;
     await renderApp(<WelcomeScreen />);
     expect(screen.queryByRole('button', { name: 'Voir les composants (développement)' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Créer un compte' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Créer mon compte' })).toBeOnTheScreen();
   });
 });
 
@@ -116,22 +116,22 @@ describe("Lot 1 - 6 : refus d'âge", () => {
 describe('Lot 1 - 7 : afficher le mot de passe', () => {
   const labels = { show: 'Afficher le mot de passe', hide: 'Masquer le mot de passe', showShort: 'Afficher', hideShort: 'Masquer' };
 
-  it('texte visible court, libellé accessible complet, état sélectionné', async () => {
+  it('IconButton Eye / EyeOff : libellé accessible complet qui change avec l’état, aucun texte visible', async () => {
     await renderThemed(
       <TextField label="Mot de passe" value="x" onChangeText={jest.fn()} secureTextEntry passwordToggleLabels={labels} />,
     );
     const toggle = screen.getByRole('button', { name: 'Afficher le mot de passe' });
-    expect(toggle).toHaveTextContent(/^Afficher$/);
-    expect(toggle).not.toBeSelected();
+    expect(screen.getByTestId('icon-button-Eye-icon', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByText('Afficher')).toBeNull();
     await user().press(toggle);
-    const hide = screen.getByRole('button', { name: 'Masquer le mot de passe' });
-    expect(hide).toHaveTextContent(/^Masquer$/);
-    expect(hide).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Masquer le mot de passe' })).toBeOnTheScreen();
+    expect(screen.getByTestId('icon-button-EyeOff-icon', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
-  it('écran de connexion : bouton visible court', async () => {
+  it('écran de connexion : bascule du mot de passe en bouton d’icône nommé', async () => {
     await renderApp(<AuthFormScreen mode="login" />);
-    expect(screen.getByRole('button', { name: 'Afficher le mot de passe' })).toHaveTextContent(/^Afficher$/);
+    expect(screen.getByRole('button', { name: 'Afficher le mot de passe' })).toBeOnTheScreen();
+    expect(screen.queryByText('Afficher')).toBeNull();
   });
 
   it('parité fr/en des nouvelles clés', () => {

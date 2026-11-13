@@ -10,7 +10,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
 import { passwordToggleLabels } from '../common/passwordToggle';
-import { BackButton } from '../common/BackButton';
+import { AuthHeader } from './AuthHeader';
 import { validateEmail, validatePassword } from '../validation';
 
 export type AuthMode = 'login' | 'register';
@@ -151,8 +151,8 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
         </View>
       }
     >
-      <BackButton />
-      <Text variant="title" header style={{ marginTop: space[2] }}>
+      <AuthHeader />
+      <Text variant="title" header style={{ marginTop: space[4] }}>
         {isRegister ? t('auth.register.title') : t('auth.login.title')}
       </Text>
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>

@@ -1,19 +1,40 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { ImageSourcePropType, View } from 'react-native';
 import { SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Text } from '../../ui';
+import { Banner, Button, Logo, ScreenContainer, Text } from '../../ui';
 import { setDeletionNotice, useDeletionNotice } from '../settings/deletionNotice';
-import { LanguageToggle } from '../common/LanguageToggle';
+import { WelcomeBackdrop } from '../../ui/illustrations/WelcomeBackdrop';
+import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
+import { WelcomeBenefits } from './WelcomeBenefits';
 
-/** S01 : accueil. Deux entrées : connexion (F00, sans S63 ni S68) et inscription (F01 : S68 -> S63 -> S02). */
-export function WelcomeScreen() {
+/** Variante du logo destinée aux fonds de marque (blanche). */
+const LOGO_ON_BRAND = LOGO_VARIANTS.find(isOnBrandVariant) ?? 'color';
+
+/** Hauteur du logo blanc (symbole + mot-symbole) en pt. */
+const WELCOME_LOGO_SIZE = 72;
+
+export type WelcomeScreenProps = {
+  /**
+   * Emplacement d'une photographie d'ambiance SOUS LICENCE (aucune n'est livrée). Voir `WelcomeBackdrop`.
+   * Non renseigné : fond prune et dégradé, sans visage. `app/(public)/index.tsx` ne le renseigne pas.
+   */
+  heroImage?: ImageSourcePropType;
+  heroImageLabel?: string;
+};
+
+/**
+ * S01 : accueil, toujours sur fond prune (`colors.brand`, identique en clair et en sombre).
+ * Deux entrées : connexion (F00, sans S63 ni S68) et inscription (F01 : S68 -> S63 -> S02). Aucune connexion sociale
+ * (décision 2), aucune pagination : l'accueil est un seul écran.
+ */
+export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps = {}) {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { colors, space } = useTheme();
   const { dispatch } = useSignupFlow();
   const deletion = useDeletionNotice();
 
@@ -24,19 +45,25 @@ export function WelcomeScreen() {
 
   return (
     <ScreenContainer
+      scroll
+      tone="brand"
+      backdrop={<WelcomeBackdrop heroImage={heroImage} heroImageLabel={heroImageLabel} />}
       testID="screen-welcome"
+      contentStyle={{ justifyContent: 'center' }}
       footer={
         <View style={{ gap: space[3] }}>
-          <Button testID="welcome-create-account" label={t('welcome.createAccount')} onPress={startSignup} />
+          <Button testID="welcome-create-account" label={t('welcome.cta.create')} onPress={startSignup} />
           <Button
             testID="welcome-sign-in"
             variant="secondary"
-            label={t('welcome.signIn')}
+            tone="onBrand"
+            label={t('welcome.cta.haveAccount')}
             onPress={() => router.push('/login' as never)}
           />
           {__DEV__ ? (
             <Button
               variant="ghost"
+              tone="onBrand"
               label={t('welcome.demo')}
               onPress={() => router.push('/components-demo' as never)}
             />
@@ -44,7 +71,7 @@ export function WelcomeScreen() {
         </View>
       }
     >
-      <LanguageToggle />
+      <WelcomeLanguageToggle />
       {deletion ? (
         <Banner
           testID="welcome-deletion-notice"
@@ -55,20 +82,47 @@ export function WelcomeScreen() {
           style={{ marginTop: space[3] }}
         />
       ) : null}
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <Text variant="title" tone="primary" style={{ marginBottom: space[4] }}>
-          {t('app.name')}
+      <View style={{ alignItems: 'center', paddingVertical: space[5] }}>
+        <Logo variant={LOGO_ON_BRAND} layout="horizontal" size={WELCOME_LOGO_SIZE} testID="welcome-logo" />
+        <Text
+          variant="title"
+          header
+          style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[5] }}
+          testID="welcome-tagline"
+        >
+          {t('welcome.tagline')}
         </Text>
-        <Text variant="title" header>
-          {t('welcome.title')}
-        </Text>
-        <Text variant="body" tone="textMuted" style={{ marginTop: space[3] }}>
+        <Text variant="body" style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[3] }}>
           {t('welcome.subtitle')}
         </Text>
-        <Text variant="caption" tone="textMuted" style={{ marginTop: space[5] }}>
+        <View style={{ alignSelf: 'stretch', marginTop: space[6] }}>
+          <WelcomeBenefits />
+        </View>
+        <Text variant="caption" style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[5] }}>
           {t('welcome.safety')}
         </Text>
       </View>
     </ScreenContainer>
+  );
+}
+
+/**
+ * Bascule fr/en (réelle : même logique que `LanguageToggle`), habillée pour le fond prune.
+ * La langue du téléphone est le point de départ, le choix de l'utilisateur prime ensuite.
+ */
+function WelcomeLanguageToggle() {
+  const { locale, setLocale, t } = useI18n();
+  const other = locale === 'fr' ? 'en' : 'fr';
+  return (
+    <View style={{ alignSelf: 'flex-end' }}>
+      <Button
+        testID="language-toggle"
+        variant="ghost"
+        tone="onBrand"
+        label={t(`language.name.${other}`)}
+        accessibilityLabel={`${t('language.change')}: ${t(`language.name.${other}`)}`}
+        onPress={() => setLocale(other)}
+      />
+    </View>
   );
 }

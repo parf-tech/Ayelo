@@ -4,10 +4,10 @@ import { View } from 'react-native';
 import { GENDERS } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ChoiceCard, ProgressBar, ScreenContainer, Text, TextField } from '../../ui';
+import { Button, ChoiceCard, Text, TextField } from '../../ui';
 import { validateCity, validateDisplayName } from '../validation';
 import { CountryPicker } from './CountryPicker';
-import { ONBOARDING_STEPS } from './steps';
+import { OnboardingFrame } from './OnboardingFrame';
 import { useOnboardingDraft } from './OnboardingProvider';
 
 type Errors = { name?: string; gender?: string; country?: string; origin?: string; city?: string };
@@ -36,73 +36,74 @@ export function BasicProfileScreen() {
   };
 
   return (
-    <ScreenContainer
-      scroll
+    <OnboardingFrame
       testID="screen-profile"
+      step="profile"
+      title={t('profile.title')}
+      subtitle={t('profile.subtitle')}
       footer={<Button testID="profile-continue" label={t('common.continue')} onPress={next} />}
     >
-      <ProgressBar current={1} total={ONBOARDING_STEPS} label={t('onboarding.progress', { current: 1, total: ONBOARDING_STEPS })} />
-      <Text variant="title" header style={{ marginTop: space[4] }}>
-        {t('profile.title')}
-      </Text>
-      <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
-        {t('profile.subtitle')}
-      </Text>
+      {/* Deux groupes séparés par l'espace (32), champs d'un même groupe à 16 : aucun trait entre deux champs seuls. */}
+      <View style={{ gap: space[6] }}>
+        <View style={{ gap: space[4] }}>
+          <TextField
+            testID="profile-name"
+            label={t('profile.name')}
+            helper={t('profile.name.hint')}
+            value={draft.displayName}
+            onChangeText={(displayName) => update({ displayName })}
+            error={errors.name}
+            maxLength={40}
+            autoComplete="name"
+            textContentType="givenName"
+          />
 
-      <View style={{ gap: space[5] }}>
-        <TextField
-          testID="profile-name"
-          label={t('profile.name')}
-          helper={t('profile.name.hint')}
-          value={draft.displayName}
-          onChangeText={(displayName) => update({ displayName })}
-          error={errors.name}
-          maxLength={40}
-          autoComplete="name"
-          textContentType="givenName"
-        />
-
-        <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[2] }}>
-          <Text variant="caption" tone={errors.gender ? 'danger' : 'textMuted'} style={{ fontWeight: '600' }}>
-            {t('profile.gender')}
-          </Text>
-          {GENDERS.map((gender) => (
-            <ChoiceCard
-              key={gender}
-              testID={`gender-${gender}`}
-              label={t(`gender.${gender}`)}
-              selected={draft.gender === gender}
-              onPress={() => update({ gender })}
-            />
-          ))}
-          {errors.gender ? (
-            <Text variant="caption" tone="danger" accessibilityRole="alert">
-              {errors.gender}
+          <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[1] }}>
+            <Text variant="label" tone={errors.gender ? 'danger' : 'text'} style={{ fontWeight: '500' }}>
+              {t('profile.gender')}
             </Text>
-          ) : null}
+            <View style={{ flexDirection: 'row', gap: space[2] }}>
+              {GENDERS.map((gender) => (
+                <ChoiceCard
+                  key={gender}
+                  layout="tile"
+                  testID={`gender-${gender}`}
+                  label={t(`gender.${gender}`)}
+                  selected={draft.gender === gender}
+                  onPress={() => update({ gender })}
+                  style={{ flex: 1 }}
+                />
+              ))}
+            </View>
+            {errors.gender ? (
+              <Text variant="caption" tone="danger" accessibilityRole="alert">
+                {errors.gender}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
-        <CountryPicker value={draft.country} onChange={(country) => update({ country })} error={errors.country} />
-
-        <CountryPicker
-          idPrefix="origin"
-          label={t('profile.origin')}
-          searchPlaceholder={t('profile.origin.search')}
-          value={draft.originCountry}
-          onChange={(originCountry) => update({ originCountry })}
-          error={errors.origin}
-        />
-
-        <TextField
-          testID="profile-city"
-          label={t('profile.city')}
-          value={draft.city}
-          onChangeText={(city) => update({ city })}
-          error={errors.city}
-          maxLength={80}
-          autoComplete="postal-address-locality"
-        />
+        <View style={{ gap: space[4] }}>
+          <CountryPicker value={draft.country} onChange={(country) => update({ country })} error={errors.country} />
+          <CountryPicker
+            idPrefix="origin"
+            label={t('profile.origin')}
+            searchPlaceholder={t('profile.origin.search')}
+            value={draft.originCountry}
+            onChange={(originCountry) => update({ originCountry })}
+            error={errors.origin}
+          />
+          <TextField
+            testID="profile-city"
+            label={t('profile.city')}
+            value={draft.city}
+            onChangeText={(city) => update({ city })}
+            error={errors.city}
+            maxLength={80}
+            autoComplete="postal-address-locality"
+          />
+        </View>
       </View>
-    </ScreenContainer>
+    </OnboardingFrame>
   );
 }

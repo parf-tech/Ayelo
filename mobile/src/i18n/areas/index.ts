@@ -8,6 +8,8 @@ import { discoverEn } from './discover.en';
 import { discoverFr } from './discover.fr';
 import { messagesEn } from './messages.en';
 import { messagesFr } from './messages.fr';
+import { onboardingEn } from './onboarding.en';
+import { onboardingFr } from './onboarding.fr';
 import { premiumEn } from './premium.en';
 import { premiumFr } from './premium.fr';
 import { profileEn } from './profile.en';
@@ -16,6 +18,8 @@ import { settingsEn } from './settings.en';
 import { settingsFr } from './settings.fr';
 import { uiEn } from './ui.en';
 import { uiFr } from './ui.fr';
+import { welcomeEn } from './welcome.en';
+import { welcomeFr } from './welcome.fr';
 import { verificationEn } from './verification.en';
 import { verificationFr } from './verification.fr';
 
@@ -30,7 +34,9 @@ export const frAreas = {
   ...premiumFr,
   ...settingsFr,
   ...verificationFr,
+  ...onboardingFr,
   ...uiFr,
+  ...welcomeFr,
 } as const;
 export const enAreas = {
   ...commonEn,
@@ -42,5 +48,7 @@ export const enAreas = {
   ...premiumEn,
   ...settingsEn,
   ...verificationEn,
+  ...onboardingEn,
   ...uiEn,
+  ...welcomeEn,
 } as const;

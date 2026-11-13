@@ -4,7 +4,8 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Text } from '../../ui';
+import { Banner, Button } from '../../ui';
+import { OnboardingFrame } from '../onboarding/OnboardingFrame';
 
 export const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -86,18 +87,14 @@ export function VerifyEmailScreen() {
   const email = state.user?.email;
 
   return (
-    <ScreenContainer
+    <OnboardingFrame
       testID="screen-verify-email"
+      title={t('verifyEmail.title')}
+      subtitle={email ? t('verifyEmail.body', { email }) : t('verifyEmail.bodyNoEmail')}
       footer={
         <Button testID="verify-skip" variant="ghost" label={t('verifyEmail.skip')} onPress={() => goOn(Boolean(state.user?.profile))} />
       }
     >
-      <Text variant="title" header style={{ marginTop: space[5] }}>
-        {t('verifyEmail.title')}
-      </Text>
-      <Text variant="body" tone="textMuted" style={{ marginTop: space[3], marginBottom: space[4] }}>
-        {email ? t('verifyEmail.body', { email }) : t('verifyEmail.bodyNoEmail')}
-      </Text>
       {info ? (
         <Banner testID="verify-banner" variant={info.variant} message={info.message} style={{ marginBottom: space[3] }} />
       ) : null}
@@ -111,6 +108,6 @@ export function VerifyEmailScreen() {
         disabled={cooldown > 0}
         style={{ marginTop: space[3] }}
       />
-    </ScreenContainer>
+    </OnboardingFrame>
   );
 }

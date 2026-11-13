@@ -7,7 +7,7 @@ import { useSignupFlow, useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Button, CheckboxField, ScreenContainer, Text } from '../../ui';
-import { BackButton } from '../common/BackButton';
+import { AuthHeader } from '../auth/AuthHeader';
 import { useLegalOpener } from '../legal/useLegalOpener';
 
 /** S63 : consentements, après le contrôle d'âge (S68). Cases distinctes ; terms, privacy et sensitive_data obligatoires, marketing facultatif. */
@@ -49,8 +49,8 @@ export function ConsentsScreen() {
         </View>
       }
     >
-      <BackButton />
-      <Text variant="title" header style={{ marginTop: space[2] }}>
+      <AuthHeader />
+      <Text variant="title" header style={{ marginTop: space[4] }}>
         {t('consents.title')}
       </Text>
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>

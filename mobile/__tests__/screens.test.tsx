@@ -51,14 +51,14 @@ function lastRequest() {
 describe('S01 Accueil', () => {
   it('propose connexion et inscription ; l\'inscription démarre par S68 (âge), avant S63', async () => {
     await renderApp(<WelcomeScreen />);
-    await user().press(screen.getByRole('button', { name: 'Créer un compte' }));
+    await user().press(screen.getByRole('button', { name: 'Créer mon compte' }));
     expect(router.push).toHaveBeenCalledWith('/signup/birthdate');
     expect(router.push).not.toHaveBeenCalledWith('/signup/consents');
   });
 
   it('la connexion mène directement à S02 (ni S63 ni S68)', async () => {
     await renderApp(<WelcomeScreen />);
-    await user().press(screen.getByRole('button', { name: 'Se connecter' }));
+    await user().press(screen.getByRole('button', { name: 'J’ai déjà un compte' }));
     expect(router.push).toHaveBeenCalledWith('/login');
     expect(router.push).not.toHaveBeenCalledWith(expect.stringContaining('consents'));
     expect(router.push).not.toHaveBeenCalledWith(expect.stringContaining('birthdate'));
@@ -79,7 +79,7 @@ describe('S01 Accueil', () => {
   it('la langue se change depuis l\'accueil', async () => {
     await renderApp(<WelcomeScreen />);
     await user().press(screen.getByTestId('language-toggle'));
-    expect(screen.getByRole('button', { name: 'Create an account' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Create my account' })).toBeOnTheScreen();
   });
 });
 

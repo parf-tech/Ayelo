@@ -5,10 +5,9 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ProgressBar, ScreenContainer, Text, useToast } from '../../ui';
+import { AsyncView, Banner, Button, ScreenContainer, Text, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
-import { BackButton } from '../common/BackButton';
-import { ONBOARDING_STEPS } from '../onboarding/steps';
+import { OnboardingFrame } from '../onboarding/OnboardingFrame';
 import { PreferenceFields, type PreferenceValues } from './PreferenceFields';
 
 /** S07 : préférences de rencontre (GET/PUT /me/preferences). `onboarding` termine l'inscription, `edit` revient aux réglages. */
@@ -58,42 +57,47 @@ export function PreferencesScreen({ mode }: { mode: 'onboarding' | 'edit' }) {
   };
 
   const body = (
-    <AsyncView status={draft ? 'ready' : prefs.status === 'error' ? 'error' : 'loading'} error={prefs.error} onRetry={() => void prefs.reload()} testID="prefs">
-      {draft ? <PreferenceFields value={draft} onChange={setDraft} /> : null}
-    </AsyncView>
+    <>
+      {banner ? (
+        <Banner testID="prefs-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[4] }} />
+      ) : null}
+      <AsyncView status={draft ? 'ready' : prefs.status === 'error' ? 'error' : 'loading'} error={prefs.error} onRetry={() => void prefs.reload()} testID="prefs">
+        {draft ? <PreferenceFields value={draft} onChange={setDraft} /> : null}
+      </AsyncView>
+    </>
   );
 
+  const saveButton = (
+    <Button
+      testID="prefs-save"
+      label={mode === 'onboarding' ? t('prefs.finish') : t('prefs.save')}
+      onPress={() => void save()}
+      loading={saving}
+      disabled={!draft}
+    />
+  );
+
+  if (mode === 'onboarding') {
+    return (
+      <OnboardingFrame
+        testID="screen-preferences"
+        step="preferences"
+        backHref="/onboarding/photos"
+        title={t('prefs.title')}
+        subtitle={t('prefs.subtitle')}
+        footer={saveButton}
+      >
+        {body}
+      </OnboardingFrame>
+    );
+  }
+
   return (
-    <ScreenContainer
-      scroll
-      testID={mode === 'onboarding' ? 'screen-preferences' : 'screen-preferences-edit'}
-      footer={
-        <Button
-          testID="prefs-save"
-          label={mode === 'onboarding' ? t('prefs.finish') : t('prefs.save')}
-          onPress={() => void save()}
-          loading={saving}
-          disabled={!draft}
-        />
-      }
-    >
-      {mode === 'onboarding' ? (
-        <>
-          <ProgressBar current={4} total={ONBOARDING_STEPS} label={t('onboarding.progress', { current: 4, total: ONBOARDING_STEPS })} />
-          <BackButton fallbackHref="/onboarding/photos" />
-          <Text variant="title" header>
-            {t('prefs.title')}
-          </Text>
-        </>
-      ) : (
-        <ScreenHeader title={t('prefs.title')} fallbackHref="/profile" />
-      )}
-      <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
+    <ScreenContainer scroll testID="screen-preferences-edit" footer={saveButton}>
+      <ScreenHeader title={t('prefs.title')} fallbackHref="/profile" />
+      <Text variant="body" tone="textMuted" style={{ marginBottom: space[4] }}>
         {t('prefs.subtitle')}
       </Text>
-      {banner ? (
-        <Banner testID="prefs-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} />
-      ) : null}
       {body}
     </ScreenContainer>
   );

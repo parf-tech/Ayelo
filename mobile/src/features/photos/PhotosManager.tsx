@@ -7,8 +7,8 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { pickImage, type PickedImage } from '../../media/picker';
 import { uploadMedia } from '../../media/upload';
-import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, Text } from '../../ui';
+import { borderWidth, useTheme } from '../../theme';
+import { AsyncView, Banner, Button, Icon, IconButton, Text } from '../../ui';
 
 export const MAX_PHOTOS = 6;
 
@@ -162,20 +162,49 @@ export function PhotosManager({ onChange }: Props) {
             <View
               key={photo.id}
               testID={`photo-${photo.id}`}
-              style={{ width: tileWidth, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', backgroundColor: colors.surface }}
+              style={{ width: tileWidth, gap: space[1] }}
             >
-              {photo.url ? (
-                <Image
-                  source={{ uri: photo.url }}
-                  accessibilityLabel={t('photos.alt', { n: index + 1 })}
-                  style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }}
-                />
-              ) : (
-                <View style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }} />
-              )}
-              <Text variant="caption" tone={photo.status === 'approved' ? 'success' : 'warning'} style={{ padding: space[2], fontWeight: '600' }} testID={`photo-status-${photo.id}`}>
-                {photo.status ? t(`photos.status.${photo.status}`) : ''}
-              </Text>
+              <View style={{ borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.skeleton }}>
+                {photo.url ? (
+                  <Image
+                    source={{ uri: photo.url }}
+                    accessibilityLabel={t('photos.alt', { n: index + 1 })}
+                    style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }}
+                  />
+                ) : (
+                  <View style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }} />
+                )}
+                {photo.status ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      left: space[2],
+                      bottom: space[2],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: space[1],
+                      paddingVertical: space[1],
+                      paddingHorizontal: space[2],
+                      borderRadius: radius.pill,
+                      backgroundColor: colors.bg,
+                    }}
+                  >
+                    <Icon
+                      name={photo.status === 'approved' ? 'Check' : 'Clock'}
+                      size="sm"
+                      tone={photo.status === 'approved' ? 'success' : 'warning'}
+                    />
+                    <Text
+                      variant="caption"
+                      tone={photo.status === 'approved' ? 'success' : 'warning'}
+                      style={{ fontWeight: '500' }}
+                      testID={`photo-status-${photo.id}`}
+                    >
+                      {t(`photos.status.${photo.status}`)}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
               {confirmId === photo.id ? (
                 <View style={{ padding: space[2], gap: space[1] }}>
                   <Text variant="caption">{t('photos.deleteConfirm')}</Text>
@@ -183,27 +212,25 @@ export function PhotosManager({ onChange }: Props) {
                   <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirmId(null)} />
                 </View>
               ) : (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  <Button
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: space[1], paddingBottom: space[1] }}>
+                  <IconButton
                     testID={`photo-up-${index}`}
-                    variant="ghost"
-                    label="‹"
+                    icon="ChevronLeft"
                     accessibilityLabel={t('photos.moveUp', { n: index + 1 })}
                     disabled={index === 0}
                     onPress={() => void move(index, -1)}
                   />
-                  <Button
+                  <IconButton
                     testID={`photo-down-${index}`}
-                    variant="ghost"
-                    label="›"
+                    icon="ChevronRight"
                     accessibilityLabel={t('photos.moveDown', { n: index + 1 })}
                     disabled={index === photos.length - 1}
                     onPress={() => void move(index, 1)}
                   />
-                  <Button
+                  <IconButton
                     testID={`photo-delete-${index}`}
-                    variant="ghost"
-                    label="✕"
+                    icon="Trash2"
+                    variant="danger"
                     accessibilityLabel={t('photos.delete', { n: index + 1 })}
                     onPress={() => setConfirmId(photo.id)}
                   />
@@ -215,10 +242,10 @@ export function PhotosManager({ onChange }: Props) {
             <View
               key={`up-${upload.key}`}
               testID={`upload-${upload.key}`}
-              style={{ width: tileWidth, borderRadius: radius.md, borderWidth: 1, borderColor: upload.status === 'failed' ? colors.danger : colors.border, overflow: 'hidden', backgroundColor: colors.surface }}
+              style={{ width: tileWidth, borderRadius: radius.md, borderWidth: borderWidth.hairline, borderColor: upload.status === 'failed' ? colors.danger : colors.border, overflow: 'hidden', backgroundColor: colors.surface }}
             >
               <Image source={{ uri: upload.image.uri }} accessibilityIgnoresInvertColors accessible={false} style={{ width: '100%', aspectRatio: 3 / 4, opacity: 0.6 }} />
-              <Text variant="caption" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2], fontWeight: '600' }}>
+              <Text variant="caption" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2], fontWeight: '500' }}>
                 {upload.status === 'failed' ? (upload.message ?? t('photos.failed')) : t('photos.uploading')}
               </Text>
               {upload.status === 'failed' ? (

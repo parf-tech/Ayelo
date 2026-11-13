@@ -5,7 +5,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
-import { BackButton } from '../common/BackButton';
+import { AuthHeader } from './AuthHeader';
 import { validateEmail } from '../validation';
 
 /** S61 (1/2) : demande du lien. Réponse identique que le compte existe ou non (pas d'énumération). */
@@ -49,8 +49,8 @@ export function ForgotPasswordScreen() {
         )
       }
     >
-      <BackButton fallbackHref="/login" />
-      <Text variant="title" header>
+      <AuthHeader fallbackHref="/login" />
+      <Text variant="title" header style={{ marginTop: space[4] }}>
         {t('forgot.title')}
       </Text>
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>

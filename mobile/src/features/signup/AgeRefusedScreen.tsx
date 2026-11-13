@@ -5,6 +5,7 @@ import { useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Button, ScreenContainer, Text } from '../../ui';
+import { AuthHeader } from '../auth/AuthHeader';
 
 /**
  * S64 : refus d'âge. Message neutre, rien de plus : ni âge limite, ni raison, ni possibilité de corriger la date.
@@ -32,6 +33,7 @@ export function AgeRefusedScreen() {
       testID="screen-age-refused"
       footer={<Button testID="age-refused-close" label={t('common.close')} onPress={() => router.replace('/' as never)} />}
     >
+      <AuthHeader back={false} />
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <Text variant="title" header>
           {t('ageRefused.title')}

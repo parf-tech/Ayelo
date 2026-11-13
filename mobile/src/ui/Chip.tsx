@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { Icon } from './Icon';
 import { Text } from './Text';
 
 export type ChipProps = {
@@ -11,7 +12,12 @@ export type ChipProps = {
   testID?: string;
 };
 
-/** Choix multiple compact (genres, pays, intentions) : rôle checkbox, coche visible en plus de la couleur. */
+/**
+ * Choix multiple compact (genres, pays, intentions) : rôle checkbox.
+ * Non sélectionnée : fond `surface`. Sélectionnée : fond d'écran, bordure `primary` de 2 pt et coche `Check` : l'état
+ * n'est jamais porté par la couleur seule. La bordure fait toujours 2 pt (de la couleur du fond au repos) : rien ne
+ * bouge à la sélection. Le libellé passe à la ligne (320 pt, texte à 200 %) au lieu d'être tronqué ; cible >= 44 pt.
+ */
 export function Chip({ label, selected, onPress, disabled = false, testID }: ChipProps) {
   const { colors, radius, space } = useTheme();
   return (
@@ -24,22 +30,20 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
       onPress={onPress}
       style={({ pressed }) => ({
         minHeight: MIN_TARGET,
+        maxWidth: '100%',
         justifyContent: 'center',
-        paddingHorizontal: space[4],
+        paddingHorizontal: space[4] - borderWidth.strong,
+        paddingVertical: space[2] - borderWidth.strong,
         borderRadius: radius.pill,
-        borderWidth: selected ? 2 : 1,
-        borderColor: selected ? colors.primary : colors.borderStrong,
-        backgroundColor: colors.surface,
-        opacity: pressed ? stateOpacity.pressed : 1,
+        borderWidth: borderWidth.strong,
+        borderColor: selected ? colors.primary : colors.surface,
+        backgroundColor: selected ? colors.bg : colors.surface,
+        opacity: disabled ? 0.6 : pressed ? stateOpacity.pressed : 1,
       })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-        {selected ? (
-          <Text variant="caption" tone="primary" accessible={false} style={{ fontWeight: '700' }}>
-            ✓
-          </Text>
-        ) : null}
-        <Text variant="body" tone={selected ? 'primary' : 'text'} style={{ fontWeight: selected ? '600' : '400' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 1 }}>
+        {selected ? <Icon name="Check" size="sm" tone="primary" testID={testID ? `${testID}-check` : undefined} /> : null}
+        <Text variant="bodySmall" style={{ fontWeight: '500', flexShrink: 1 }}>
           {label}
         </Text>
       </View>

@@ -24,6 +24,7 @@ import type { IconTone } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { ICON_NAMES } from '../../ui/icons';
 import { BackButton } from '../common/BackButton';
+import { OnboardingDemo } from '../onboarding/OnboardingDemo';
 
 /** Page de démonstration des composants (docs/07 : un exemple par état). Accessible depuis S01 en développement. */
 export function ComponentsDemoScreen() {
@@ -67,6 +68,8 @@ export function ComponentsDemoScreen() {
         <ChoiceCard label={t('demo.sample.choiceA')} selected={choice === 'a'} onPress={() => setChoice('a')} />
         <ChoiceCard label={t('demo.sample.choiceB')} selected={choice === 'b'} onPress={() => setChoice('b')} />
       </Section>
+
+      <OnboardingDemo />
 
       <Section title={t('demo.banners')}>
         <Banner variant="success" message={t('demo.sample.success')} />

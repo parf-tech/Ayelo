@@ -6,10 +6,10 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ChoiceCard, ProgressBar, ScreenContainer, Text } from '../../ui';
-import { BackButton } from '../common/BackButton';
+import { Banner, Button, ChoiceCard, Text } from '../../ui';
+import { INTENT_ICONS } from './intentIcons';
+import { OnboardingFrame } from './OnboardingFrame';
 import { useOnboardingDraft } from './OnboardingProvider';
-import { ONBOARDING_STEPS } from './steps';
 
 /** S05 : intention (5 choix). Envoie le profil complet (PUT /me/profile) puis passe aux photos (S06). */
 export function IntentScreen() {
@@ -63,19 +63,14 @@ export function IntentScreen() {
   };
 
   return (
-    <ScreenContainer
-      scroll
+    <OnboardingFrame
       testID="screen-intent"
+      step="intent"
+      backHref="/onboarding/profile"
+      title={t('intent.title')}
+      subtitle={t('intent.subtitle')}
       footer={<Button testID="intent-submit" label={t('common.continue')} onPress={finish} loading={loading} loadingLabel={t('profile.saving')} />}
     >
-      <ProgressBar current={2} total={ONBOARDING_STEPS} label={t('onboarding.progress', { current: 2, total: ONBOARDING_STEPS })} />
-      <BackButton fallbackHref="/onboarding/profile" />
-      <Text variant="title" header>
-        {t('intent.title')}
-      </Text>
-      <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
-        {t('intent.subtitle')}
-      </Text>
       {banner ? (
         <Banner
           testID="intent-banner"
@@ -91,6 +86,7 @@ export function IntentScreen() {
           <ChoiceCard
             key={intent}
             testID={`intent-${intent}`}
+            icon={INTENT_ICONS[intent]}
             label={t(`intent.${intent}.label`)}
             description={t(`intent.${intent}.description`)}
             selected={draft.intent === intent}
@@ -106,6 +102,6 @@ export function IntentScreen() {
           {error}
         </Text>
       ) : null}
-    </ScreenContainer>
+    </OnboardingFrame>
   );
 }
