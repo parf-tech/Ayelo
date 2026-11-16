@@ -10,7 +10,7 @@ export type ProfileDraft = {
   intent: Intent | null;
 };
 
-export const emptyDraft: ProfileDraft = { displayName: '', gender: null, country: null, originCountry: null, city: '', intent: null };
+const emptyDraft: ProfileDraft = { displayName: '', gender: null, country: null, originCountry: null, city: '', intent: null };
 
 type OnboardingContextValue = { draft: ProfileDraft; update: (patch: Partial<ProfileDraft>) => void; reset: () => void };
 

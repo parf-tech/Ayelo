@@ -11,6 +11,7 @@ import { borderWidth, MAX_CONTENT_WIDTH, useTheme } from '../../theme';
 import { AsyncView, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { MenuItem, MenuSheet } from '../common/MenuItem';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { useGoBack } from '../common/useGoBack';
 import { countryLabel } from '../onboarding/countries';
 import { SwipeActions } from './SwipeActions';
 import { performSwipe, primaryPhotoUrl, readablePhotos } from './swipe';
@@ -20,6 +21,8 @@ type Notice = { variant: 'error' | 'warning' | 'info'; message: string; action?:
 /** S11 : détail d'un profil (galerie, bio), actions et menu Bloquer / Signaler / Écrire. */
 export function ProfileDetailScreen() {
   const router = useRouter();
+  // `/user/[id]` s'ouvre aussi par lien : sans historique, on revient à la découverte au lieu de rester sur l'écran.
+  const goBack = useGoBack('/discover');
   const { t } = useI18n();
   const { space, colors, radius } = useTheme();
   const toast = useToast();
@@ -51,7 +54,7 @@ export function ProfileDetailScreen() {
     setPendingSwipe(null);
     switch (outcome.kind) {
       case 'ok':
-        router.back();
+        goBack();
         return;
       case 'matched':
         router.replace({
@@ -104,7 +107,7 @@ export function ProfileDetailScreen() {
     try {
       await api.safety.block(data.user_id);
       toast.show({ message: t('detail.blocked'), variant: 'success' });
-      router.back();
+      goBack();
     } catch (error) {
       const { key, params } = apiErrorMessage(error);
       setNotice({ variant: 'error', message: t(key, params) });

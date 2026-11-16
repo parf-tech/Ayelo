@@ -46,6 +46,8 @@ export function ConsentsScreen() {
       testID="screen-consents"
       footer={
         <View style={{ gap: space[2] }}>
+          {/* Échec d'ouverture d'un texte légal : près du bouton, pas en haut d'une page qui défile. */}
+          {legalError ? <Banner testID="consents-legal-error" variant="error" message={t('legal.openError')} /> : null}
           {!canContinue ? (
             <Text variant="caption" tone="textMuted" testID="consents-missing" accessibilityLiveRegion="polite">
               {t('consents.missing')}
@@ -62,7 +64,6 @@ export function ConsentsScreen() {
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
         {t('consents.intro')}
       </Text>
-      {legalError ? <Banner testID="consents-legal-error" variant="error" message={t('legal.openError')} style={{ marginBottom: space[3] }} /> : null}
       <View style={{ gap: space[3] }}>
         <CheckboxField
           testID="consent-terms"

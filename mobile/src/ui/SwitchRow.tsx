@@ -29,6 +29,8 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
   return (
     <Pressable
       accessible={false}
+      // La ligne ne prend pas le focus clavier : l'interrupteur natif le porte (sinon deux arrêts pour un seul contrôle).
+      focusable={false}
       disabled={disabled}
       onPress={() => onValueChange(!value)}
       onFocus={handlers.onFocus}

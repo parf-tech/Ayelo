@@ -265,12 +265,16 @@ export function ConversationScreen() {
               icon="Ellipsis"
               expanded={menuOpen}
               accessibilityLabel={t('conversation.menu')}
-              onPress={() => setMenuOpen((open) => !open)}
+              // Rouvrir le menu ne ressuscite pas une confirmation laissée en plan.
+              onPress={() => {
+                setMenuOpen((open) => !open);
+                setConfirm(null);
+              }}
             />
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] }}>
-          <Avatar uri={peerPhoto} name={peerName || '?'} size={44} testID="conversation-peer-avatar" />
+          <Avatar uri={peerPhoto} name={peerName || '?'} size={MIN_TARGET} testID="conversation-peer-avatar" />
           <Text variant="h2" header numberOfLines={2} style={{ flex: 1, flexShrink: 1 }}>
             {peerName || t('conversation.title')}
           </Text>
@@ -312,7 +316,7 @@ export function ConversationScreen() {
           ) : (
             <>
               <MenuItem testID="conversation-report" icon="Flag" label={t('conversation.report')} onPress={report} disabled={!peerId} />
-              <MenuItem testID="conversation-block" icon="Ban" label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
+              <MenuItem testID="conversation-block" icon="Ban" danger label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
               {isMatch ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
               <MenuItem testID="conversation-hide" icon="Trash2" danger label={t('conversation.hide')} onPress={() => setConfirm('hide')} />
             </>

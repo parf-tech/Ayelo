@@ -11,6 +11,8 @@ import { useConversations } from './ConversationsProvider';
 /** Photo de la rangée, et hauteur minimale d'une rangée (photo + marges) ; le filet commence après la photo. */
 const AVATAR_SIZE = 56;
 const ROW_MIN_HEIGHT = MIN_TARGET + 28;
+/** Plafond d'agrandissement du chiffre de la pastille de non-lus : au-delà, il sortirait de la pastille. */
+const UNREAD_PILL_MAX_SCALE = 1.6;
 
 type Translate = ReturnType<typeof useI18n>['t'];
 
@@ -146,9 +148,9 @@ export function MessagesListScreen() {
                     <View
                       testID={`unread-${item.id}`}
                       accessible={false}
-                      style={{ minWidth: space[5], height: space[5], borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[1] }}
+                      style={{ minWidth: space[5], minHeight: space[5], borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[1] }}
                     >
-                      <Text variant="captionStrong" tone="onPrimary">
+                      <Text variant="captionStrong" tone="onPrimary" maxFontSizeMultiplier={UNREAD_PILL_MAX_SCALE}>
                         {item.unread > 99 ? '99+' : item.unread}
                       </Text>
                     </View>

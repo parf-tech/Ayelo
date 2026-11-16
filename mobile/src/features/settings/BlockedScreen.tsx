@@ -5,13 +5,14 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, ListRow, ScreenContainer, useToast } from '../../ui';
+import { AsyncView, Avatar, Banner, Button, ListRow, ScreenContainer, useCompactLayout, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
 /** S54 : personnes bloquées (GET /blocks, DELETE /blocks/{userId}). */
 export function BlockedScreen() {
   const { t } = useI18n();
   const { space } = useTheme();
+  const { isLarge } = useCompactLayout();
   const toast = useToast();
   const { api } = useAuth();
   const blocks = useResource(() => api.safety.blocks(), [api]);
@@ -64,6 +65,8 @@ export function BlockedScreen() {
               testID={`blocked-${b.user_id}`}
               label={b.display_name}
               leading={<Avatar name={b.display_name} />}
+              // Texte agrandi : le bouton passe sous le nom au lieu de l'écraser (action à libellé long).
+              trailingBelow={isLarge}
               trailing={
                 <Button
                   testID={`unblock-${b.user_id}`}

@@ -103,7 +103,7 @@ describe('barre d’onglets : pictogrammes Lucide, état actif non porté par la
     await renderTabs();
     await renderOption(mockCaptured.tabs.discover!.tabBarLabel!({ focused: true }));
     const active = screen.getByText('Découvrir');
-    expect(active).toHaveProp('maxFontSizeMultiplier', 1.6);
+    expect(active).toHaveProp('maxFontSizeMultiplier', 1.4);
     const activeWeight = (Array.isArray(active.props.style) ? Object.assign({}, ...active.props.style.flat(3).filter(Boolean)) : active.props.style).fontWeight;
 
     await renderOption(mockCaptured.tabs.discover!.tabBarLabel!({ focused: false }));

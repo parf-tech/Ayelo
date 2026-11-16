@@ -30,6 +30,9 @@ export type AsyncViewProps = {
   children: React.ReactNode;
 };
 
+/** Hauteur d'une ligne squelette par défaut (carte de liste). */
+const SKELETON_ROW_HEIGHT = 64;
+
 /** États communs d'une liste ou d'une page : chargement (squelettes), erreur (dont hors ligne) avec « Réessayer », vide. */
 export function AsyncView({
   status,
@@ -65,10 +68,17 @@ export function AsyncView({
         testID={testID ? `${testID}-loading` : 'async-loading'}
         accessible
         accessibilityLabel={t('common.loading')}
-        style={loadingSkeleton ? { flex: 1 } : { gap: space[3], paddingVertical: space[3] }}
+        style={loadingSkeleton ? { flex: 1 } : { paddingVertical: space[3] }}
       >
-        {loadingSkeleton ??
-          Array.from({ length: skeletonRows }, (_, i) => <Skeleton key={i} variant="card" height={64} />)}
+        {/* Le parent porte le libellé « Chargement » : les briques sont masquées (sinon Android lit un arrêt par brique). */}
+        <View
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+          style={loadingSkeleton ? { flex: 1 } : { gap: space[3] }}
+        >
+          {loadingSkeleton ??
+            Array.from({ length: skeletonRows }, (_, i) => <Skeleton key={i} variant="card" height={SKELETON_ROW_HEIGHT} />)}
+        </View>
       </View>
     );
   }
@@ -77,7 +87,8 @@ export function AsyncView({
     const offline = isApiError(error) && error.isNetwork;
     const { key, params } = apiErrorMessage(error);
     return (
-      <View testID={testID ? `${testID}-error` : 'async-error'}>
+      // Android n'a pas `announce` : région vivante + rôle alerte pour que l'erreur soit lue à son apparition.
+      <View testID={testID ? `${testID}-error` : 'async-error'} accessibilityRole="alert" accessibilityLiveRegion="polite">
         <EmptyState
           illustration={<Icon name={offline ? 'WifiOff' : 'CircleAlert'} size="xl" tone="textMuted" testID="async-error-icon" />}
           title={offline ? t('state.offline.title') : t('state.error.title')}

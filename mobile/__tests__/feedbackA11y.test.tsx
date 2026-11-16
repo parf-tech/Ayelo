@@ -16,6 +16,9 @@ import {
 import { resetAnnounceDebounce } from '../src/ui/a11y/announce';
 import { spyAnnounce } from './helpers/a11y';
 import { flatStyle as flat, renderThemed } from './helpers/render';
+import { focus, resetRouterMocks } from './helpers/routerMock';
+
+jest.mock('expo-router', () => require('./helpers/routerMock').expoRouterMock);
 
 jest.mock('expo-status-bar', () => ({
   StatusBar: (props: { style?: string }) =>
@@ -28,6 +31,7 @@ function setOS(os: 'ios' | 'android') {
 }
 
 afterEach(() => {
+  resetRouterMocks();
   jest.restoreAllMocks();
   jest.useRealTimers();
   Object.defineProperty(Platform, 'OS', { configurable: true, get: () => originalOS });
@@ -203,6 +207,16 @@ describe('Barre d’état et rôle des titres', () => {
       </ScreenContainer>,
     );
     expect(screen.getByTestId('status-bar', { includeHiddenElements: true }).props.accessibilityLabel).toBe('light');
+  });
+
+  it('ScreenContainer tone="brand" sans le focus (écran empilé sous un autre) ne touche plus à la barre d’état', async () => {
+    focus.value = false;
+    await renderThemed(
+      <ScreenContainer tone="brand">
+        <View />
+      </ScreenContainer>,
+    );
+    expect(screen.queryByTestId('status-bar', { includeHiddenElements: true })).toBeNull();
   });
 
   it('ScreenContainer par défaut ne touche pas à la barre d’état', async () => {

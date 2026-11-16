@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Linking, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, StyleSheet, View } from 'react-native';
 import type { ProfileMedia } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
@@ -8,7 +8,10 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { pickImage, type PickedImage } from '../../media/picker';
 import { uploadMedia } from '../../media/upload';
 import { borderWidth, stateOpacity, useTheme } from '../../theme';
-import { AsyncView, Banner, Button, Icon, IconButton, Text } from '../../ui';
+import { AsyncView, Banner, Button, Icon, IconButton, Text, useCompactLayout } from '../../ui';
+
+/** Proportions d'une photo de profil (portrait 3:4) : tuiles de la grille et aperçus d'envoi. */
+const PHOTO_ASPECT_RATIO = 3 / 4;
 
 export const MAX_PHOTOS = 6;
 
@@ -25,7 +28,7 @@ type Props = {
 export function PhotosManager({ onChange }: Props) {
   const { t } = useI18n();
   const { space, colors, radius } = useTheme();
-  const { width } = useWindowDimensions();
+  const { isNarrow } = useCompactLayout();
   const { api } = useAuth();
   const me = useResource(() => api.auth.me(), [api]);
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
@@ -130,8 +133,8 @@ export function PhotosManager({ onChange }: Props) {
     }
   };
 
-  // Trois boutons de 44 pt ne tiennent pas dans une demi-largeur à 320 pt : une tuile par ligne en dessous de 360 pt.
-  const tileWidth = width < 360 ? '100%' : '48%';
+  // Trois boutons de 44 pt ne tiennent pas dans une demi-largeur à 320 pt : une tuile par ligne sur écran étroit (seuil du hook, <= 360 pt).
+  const tileWidth = isNarrow ? '100%' : '48%';
 
   return (
     <View testID="photos-manager">
@@ -147,7 +150,7 @@ export function PhotosManager({ onChange }: Props) {
           variant="error"
           message={banner.message}
           actionLabel={banner.settings ? t('photos.permissionDenied.action') : undefined}
-          onAction={banner.settings ? () => void Linking.openSettings() : undefined}
+          onAction={banner.settings ? () => void Linking.openSettings().catch(() => setBanner({ message: t('legal.openError') })) : undefined}
           onDismiss={() => setBanner(undefined)}
           dismissLabel={t('ui.banner.dismiss')}
           style={{ marginBottom: space[3] }}
@@ -177,10 +180,10 @@ export function PhotosManager({ onChange }: Props) {
                     accessibilityRole="image"
                     accessibilityIgnoresInvertColors
                     accessibilityLabel={t('photos.alt', { n: index + 1 })}
-                    style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }}
+                    style={{ width: '100%', aspectRatio: PHOTO_ASPECT_RATIO, backgroundColor: colors.skeleton }}
                   />
                 ) : (
-                  <View style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }} />
+                  <View style={{ width: '100%', aspectRatio: PHOTO_ASPECT_RATIO, backgroundColor: colors.skeleton }} />
                 )}
               </View>
               {photo.status ? (
@@ -244,10 +247,10 @@ export function PhotosManager({ onChange }: Props) {
                   source={{ uri: upload.image.uri }}
                   accessibilityIgnoresInvertColors
                   accessible={false}
-                  style={{ width: '100%', aspectRatio: 3 / 4, opacity: stateOpacity.skeleton }}
+                  style={{ width: '100%', aspectRatio: PHOTO_ASPECT_RATIO, opacity: stateOpacity.skeleton }}
                 />
                 {upload.status === 'uploading' ? (
-                  <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
                     <ActivityIndicator size="large" color={colors.primary} />
                   </View>
                 ) : null}

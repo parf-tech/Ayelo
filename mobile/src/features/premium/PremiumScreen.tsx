@@ -22,6 +22,11 @@ export function PremiumScreen() {
   const purchase = usePurchase();
   const [chosen, setChosen] = useState<string | null>(null);
   const openLegal = useLegalOpener();
+  const [legalError, setLegalError] = useState(false);
+  const openLegalDoc = (doc: 'terms' | 'privacy') => {
+    setLegalError(false);
+    void openLegal(doc).then((ok) => setLegalError(!ok));
+  };
 
   const data = useResource(async () => {
     const [available, status] = await Promise.all([offers(), refreshStatus()]);
@@ -66,16 +71,17 @@ export function PremiumScreen() {
               testID="premium-subscribe"
               label={selectedPrice ? t('premium.subscribePrice', { price: selectedPrice }) : t('premium.subscribe')}
               onPress={() => selected && void purchase.buy(selected, 'subscription')}
-              disabled={!selected || !purchase.available}
+              disabled={!selected || !purchase.available || purchase.restoring}
               loading={purchase.busyId !== null}
             />
             <Text variant="bodySmall" tone="textMuted" testID="premium-renewal">
               {t('premium.renewal')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: space[4] }}>
-              <Button testID="premium-terms" variant="ghost" label={t('premium.terms')} onPress={() => void openLegal('terms')} />
-              <Button testID="premium-privacy" variant="ghost" label={t('premium.privacy')} onPress={() => void openLegal('privacy')} />
+              <Button testID="premium-terms" variant="ghost" label={t('premium.terms')} onPress={() => openLegalDoc('terms')} />
+              <Button testID="premium-privacy" variant="ghost" label={t('premium.privacy')} onPress={() => openLegalDoc('privacy')} />
             </View>
+            {legalError ? <Banner testID="premium-legal-error" variant="error" message={t('legal.openError')} /> : null}
           </View>
         ) : undefined
       }
@@ -84,11 +90,9 @@ export function PremiumScreen() {
       <View style={{ marginBottom: space[4] }}>
         <PremiumBenefits />
       </View>
-      {!purchase.available && purchase.unavailableMessage ? (
+      {/* Le même texte n'est jamais affiché deux fois : le retour d'une tentative (sous « Restaurer ») remplace l'avis permanent. */}
+      {!purchase.available && purchase.unavailableMessage && purchase.notice?.message !== purchase.unavailableMessage ? (
         <Banner testID="premium-unavailable" variant="warning" message={purchase.unavailableMessage} style={{ marginBottom: space[3] }} />
-      ) : null}
-      {purchase.notice ? (
-        <Banner testID="premium-notice" variant={purchase.notice.variant} message={purchase.notice.message} style={{ marginBottom: space[3] }} />
       ) : null}
       <AsyncView
         testID="premium"
@@ -130,7 +134,7 @@ export function PremiumScreen() {
                   description={parts.filter(Boolean).join(' · ')}
                   selected={selected === plan.product_id}
                   onPress={() => setChosen(plan.product_id)}
-                  disabled={purchase.busyId !== null}
+                  disabled={purchase.busyId !== null || purchase.restoring}
                 />
               );
             })}
@@ -147,6 +151,10 @@ export function PremiumScreen() {
           loading={purchase.restoring}
           disabled={purchase.busyId !== null}
         />
+        {/* Retour de l'achat ou de la restauration juste sous le bouton qui l'a déclenché (le bas de page n'est pas toujours à l'écran). */}
+        {purchase.notice ? (
+          <Banner testID="premium-notice" variant={purchase.notice.variant} message={purchase.notice.message} style={{ marginVertical: space[2] }} />
+        ) : null}
         <Button testID="premium-credits" variant="ghost" label={t('premium.credits.cta')} onPress={() => router.push('/premium/credits' as never)} />
       </View>
     </ScreenContainer>

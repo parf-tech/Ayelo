@@ -69,21 +69,17 @@ export function IntentScreen() {
       backHref="/onboarding/profile"
       title={t('intent.title')}
       subtitle={t('intent.subtitle')}
-      footer={<Button testID="intent-submit" label={t('common.continue')} onPress={finish} loading={loading} loadingLabel={t('profile.saving')} />}
+      footer={
+        // Les erreurs sont posées juste au-dessus du bouton qui les provoque : la liste de cartes, haute, les sortirait de l'écran.
+        <View style={{ gap: space[2] }}>
+          {banner ? (
+            <Banner testID="intent-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} />
+          ) : null}
+          {error ? <Banner testID="intent-error" variant="error" message={error} /> : null}
+          <Button testID="intent-submit" label={t('common.continue')} onPress={finish} loading={loading} loadingLabel={t('profile.saving')} />
+        </View>
+      }
     >
-      {banner ? (
-        <Banner
-          testID="intent-banner"
-          variant="error"
-          message={banner}
-          onDismiss={() => setBanner(undefined)}
-          dismissLabel={t('ui.banner.dismiss')}
-          style={{ marginBottom: space[3] }}
-        />
-      ) : null}
-      {error ? (
-        <Banner testID="intent-error" variant="error" message={error} style={{ marginBottom: space[3] }} />
-      ) : null}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('intent.title')} style={{ gap: space[3] }}>
         {INTENTS.map((intent) => (
           <ChoiceCard

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View } from 'react-native';
 import type { Session } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
@@ -20,6 +20,8 @@ export function SessionsScreen() {
   const { api, signOut } = useAuth();
   const sessions = useResource(() => api.auth.sessions(), [api]);
   const [confirm, setConfirm] = useState<Confirm>(null);
+  // Bouton « Fermer la session » de chaque ligne : le focus du lecteur d'écran y revient quand le panneau se ferme.
+  const closeButtons = useRef<Record<string, unknown>>({});
   const [banner, setBanner] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
 
@@ -90,6 +92,9 @@ export function SessionsScreen() {
                 description={`${s.current ? `${t('sessions.current')} · ` : ''}${t('sessions.lastActive', { date })}`}
                 trailing={
                   <Button
+                    ref={(node) => {
+                      closeButtons.current[s.id] = node;
+                    }}
                     testID={`session-close-${s.id}`}
                     variant="ghost"
                     label={t('sessions.close')}
@@ -107,6 +112,7 @@ export function SessionsScreen() {
                   onConfirm={() => void run()}
                   onCancel={() => setConfirm(null)}
                   loading={busy}
+                  returnFocusRef={{ get current() { return closeButtons.current[s.id]; } }}
                 />
               ) : null}
               </React.Fragment>

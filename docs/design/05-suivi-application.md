@@ -39,4 +39,17 @@ Pour chaque écran : maquette du kit comparée au produit réel (`04-handoff-ana
 
 - [ ] Poids de Poppins et fluidité mesurés sur un Android d'entrée de gamme (les polices sont chargées après le premier rendu : vérifier le saut de police visible sur les écrans longs).
 - [ ] Interligne : les jetons de ligne sont inchangés ; Poppins est plus haut que Roboto, à contrôler à 200 % de police.
-- [ ] Remplacer les `fontWeight` passés en style par de vraies variantes quand les écrans sont repris (le composant `Text` les convertit déjà en famille).
+- [x] `fontWeight` passés en style remplacés par des variantes de texte (lot 5 des corrections de revue) : plus aucun `fontWeight` en chaîne dans `src/` ni `app/`.
+
+## 4. Revues de design et limites connues (2026-11-16)
+
+Deux passes de relecture de tous les écrans (lecture seule), six lots de corrections (commits `491b1a0`, `5db5372`, `bdd6154`, `52a140c`, `9ee9e48`, puis le lot 6). **Tout ce qui suit n'a été vérifié que par des tests Jest (simulations d'expo-router, d'`AccessibilityInfo`, de `StatusBar`) et par lecture du code, jamais sur appareil ni dans un navigateur :**
+
+- **Garde de sortie de l'édition du profil** : `usePreventRemove` (expo-router 58) ; l'événement `beforeRemove` n'existe plus dans cette version. Le test passe par une simulation fidèle au contrat de la bibliothèque (`__tests__/helpers/routerMock.ts`), pas par une vraie pile de navigation.
+- **Barre d'état** : icônes claires seulement tant que l'écran a le focus (`useIsFocused`) ; effet réel sur iOS et Android non vu.
+- **Focus d'accessibilité** (retour du focus après le panneau de confirmation des sessions, annonces iOS, régions vives Android) : VoiceOver et TalkBack non testés. Retour du focus câblé seulement pour les sessions, pas pour les consentements.
+- **Largeurs et texte à 200 %** : retour à la ligne de « Annuler / Signaler » (découverte), libellés d'onglets plafonnés à 1,4 fois, pastille de non-lus, bannières à action en colonne, lignes à bouton sous le texte : calculés ou testés par style, pas rendus.
+- **Clavier Android** : la zone de saisie de la conversation et les champs de l'aide ne sont pas vérifiés avec la barre d'espace réduite (mode bord à bord).
+- **Perte de saisie** : ouvrir un texte légal depuis les consentements d'inscription (route racine hors de la pile publique) vide les cases cochées si l'adresse légale n'est pas configurée ; revenir de « nouveau mot de passe » vers « mot de passe oublié » vide l'adresse. Limite acceptée, non corrigée.
+- **Photos** : grille en une colonne dès 360 pt de large (seuil du hook `useCompactLayout`, auparavant 359 pt).
+- **Non traités** : fusion de `NavRow` et `ListRow`, file de trois toasts, jetons pour les opacités de `Stepper`, ouverture des pages légales par l'application quand une adresse est configurée.

@@ -38,6 +38,8 @@ const GRADIENT_NAMES = Object.keys(GRADIENTS) as GradientName[];
 
 /** Ligne de base de la police dans une ligne de 1,4 em (ascendante 1,05 em) : 0,35 em sous le centre de la ligne. */
 const BASELINE_BELOW_CENTER = 0.35;
+/** Interligne du mot-symbole : 1,4 em (voir ci-dessus). */
+const WORDMARK_LINE_HEIGHT_EM = 1.4;
 
 /**
  * Logo Ayelo : deux bulles qui forment un cœur, trois points. Dessin repris du kit d'identité (src/ui/brandArt.ts) ;
@@ -132,7 +134,7 @@ export function Logo({ variant = 'color', layout = 'symbol', size = 48, accessib
             color: wordColor,
             fontWeight: fontWeight.bold,
             fontSize,
-            lineHeight: fontSize * 1.4,
+            lineHeight: fontSize * WORDMARK_LINE_HEIGHT_EM,
             letterSpacing: fontSize * (WORDMARK.letterSpacing / WORDMARK.fontSize),
             includeFontPadding: false,
             // Zone de protection à droite : au moins la hauteur des trois points (charte).

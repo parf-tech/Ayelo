@@ -14,6 +14,11 @@ const FLY_OUT_DISTANCE = 700;
 const NEXT_CARD_SCALE = 0.96;
 /** Hauteur du fondu prune sur la carte : le texte (nom, lieu, intention) reste dans la zone où il dépasse 0,65 d'opacité. */
 const SCRIM_HEIGHT = '75%';
+/** Inclinaison de la carte pendant le glissement : ±8° pour ±200 pt (supprimée avec « réduire les animations »). */
+const ROTATION_RANGE = 200;
+const ROTATION_DEGREES = '8deg';
+/** Plafond d'agrandissement du texte sur la carte : au-delà, le bloc de texte dépasserait la carte (320 pt de large). */
+const CARD_TEXT_MAX_SCALE = 1.3;
 
 type Props = {
   profile: PublicProfile;
@@ -75,7 +80,10 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
     [interactive, position],
   );
 
-  const rotate = position.x.interpolate({ inputRange: [-200, 0, 200], outputRange: ['-8deg', '0deg', '8deg'] });
+  const rotate = position.x.interpolate({
+    inputRange: [-ROTATION_RANGE, 0, ROTATION_RANGE],
+    outputRange: [`-${ROTATION_DEGREES}`, '0deg', ROTATION_DEGREES],
+  });
   const photo = primaryPhotoUrl(profile);
   const base = profile.city
     ? t('discover.card', { name: profile.display_name, age: profile.age, city: profile.city })
@@ -119,7 +127,9 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
         borderWidth: borderWidth.hairline,
         borderColor: colors.border,
         backgroundColor: colors.brand,
-        transform: interactive ? [{ translateX: position.x }, { translateY: position.y }, { rotate }] : [{ scale: NEXT_CARD_SCALE }],
+        transform: interactive
+          ? [{ translateX: position.x }, { translateY: position.y }, ...(reduced ? [] : [{ rotate }])]
+          : [{ scale: NEXT_CARD_SCALE }],
       }}
     >
       {photo ? (
@@ -130,28 +140,32 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.skeleton }}
         />
       ) : (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.skeleton }}>
-          <Text variant="body" tone="textMuted">
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.skeleton }} />
+      )}
+      <Scrim height={SCRIM_HEIGHT} testID={interactive ? 'swipe-card-scrim' : undefined} />
+      {/* Sans photo : le libellé est posé APRÈS le fondu (sinon le voile prune le recouvre) et se lit sur le prune. */}
+      {photo ? null : (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+          <Text variant="body" tone="onBrand" maxFontSizeMultiplier={CARD_TEXT_MAX_SCALE}>
             {t('discover.noPhoto')}
           </Text>
         </View>
       )}
-      <Scrim height={SCRIM_HEIGHT} testID={interactive ? 'swipe-card-scrim' : undefined} />
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: space[5], gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
-          <Text variant="title" numberOfLines={1} tone="onBrand" style={{ flexShrink: 1 }}>
+          <Text variant="title" numberOfLines={1} tone="onBrand" maxFontSizeMultiplier={CARD_TEXT_MAX_SCALE} style={{ flexShrink: 1 }}>
             {profile.display_name}, {profile.age}
           </Text>
           {profile.verified ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
               <Icon name="BadgeCheck" size="sm" tone="onBrand" />
-              <Text variant="captionStrong" tone="onBrand">
+              <Text variant="captionStrong" tone="onBrand" maxFontSizeMultiplier={CARD_TEXT_MAX_SCALE}>
                 {t('discover.verified')}
               </Text>
             </View>
           ) : null}
         </View>
-        <Text variant="body" numberOfLines={1} tone="onBrand">
+        <Text variant="body" numberOfLines={1} tone="onBrand" maxFontSizeMultiplier={CARD_TEXT_MAX_SCALE}>
           {[profile.city, countryLabel(t, profile.residence_country)].filter(Boolean).join(', ')}
         </Text>
         <View
@@ -165,7 +179,7 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
             borderColor: colors.onBrand,
           }}
         >
-          <Text variant="captionStrong" tone="onBrand">
+          <Text variant="captionStrong" tone="onBrand" maxFontSizeMultiplier={CARD_TEXT_MAX_SCALE}>
             {t(`intent.${profile.intent}.label`)}
           </Text>
         </View>

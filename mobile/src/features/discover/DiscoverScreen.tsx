@@ -150,7 +150,7 @@ export function DiscoverScreen() {
   return (
     <ScreenContainer testID="screen-discover">
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space[2] }}>
-        <Text variant="title" header>
+        <Text variant="title" header style={{ flexShrink: 1 }}>
           {t('discover.title')}
         </Text>
         <IconButton
@@ -212,10 +212,12 @@ export function DiscoverScreen() {
             <View style={{ paddingBottom: space[2] }}>
               <SwipeActions idPrefix="swipe" disabled={!top} pending={pending === 'undo' ? null : pending} onAction={(a) => void act(a)} />
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {/* Les deux boutons rétrécissent et passent à la ligne : aucun n'est poussé hors de l'écran (320 pt, texte agrandi). */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <Button
                 testID="swipe-undo"
                 variant="ghost"
+                style={{ flexShrink: 1 }}
                 label={t('discover.undo')}
                 onPress={() => void undo()}
                 disabled={pending !== null}
@@ -224,6 +226,7 @@ export function DiscoverScreen() {
               <Button
                 testID="swipe-report"
                 variant="ghost"
+                style={{ flexShrink: 1 }}
                 label={t('discover.report')}
                 accessibilityLabel={top ? t('discover.reportAria', { name: top.display_name }) : t('discover.report')}
                 disabled={!top}

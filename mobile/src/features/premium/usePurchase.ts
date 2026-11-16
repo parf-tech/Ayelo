@@ -4,7 +4,7 @@ import type { ProductKind } from '../../billing/purchaseProvider';
 import { useI18n } from '../../i18n';
 import { usePremium } from './PremiumProvider';
 
-export type PurchaseNotice = { variant: 'info' | 'warning' | 'error'; message: string };
+export type PurchaseNotice = { variant: 'info' | 'success' | 'warning' | 'error'; message: string };
 
 /** Lance un achat via le PurchaseProvider ; si le store valide, ouvre S32 (validation par le serveur). Rien n'est jamais simulé. */
 export function usePurchase() {
@@ -23,7 +23,7 @@ export function usePurchase() {
       : t('premium.unavailable.generic');
 
   const buy = async (productId: string, kind: ProductKind) => {
-    if (busyId) return;
+    if (busyId || restoring) return;
     setNotice(undefined);
     if (!provider.available) {
       setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.generic') });
@@ -62,7 +62,7 @@ export function usePurchase() {
     setRestoring(true);
     try {
       const outcome = await provider.restore();
-      if (outcome.kind === 'restored') setNotice({ variant: 'info', message: t('premium.restore.done') });
+      if (outcome.kind === 'restored') setNotice({ variant: 'success', message: t('premium.restore.done') });
       else if (outcome.kind === 'unavailable') setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.generic') });
       else setNotice({ variant: 'error', message: t('premium.restore.error') });
     } catch {

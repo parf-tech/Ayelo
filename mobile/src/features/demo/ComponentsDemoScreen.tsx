@@ -9,13 +9,18 @@ import {
   VerifiedBadge,
   Banner,
   Button,
+  CheckboxField,
   ChoiceCard,
   EmptyState,
   Icon,
   IconButton,
   Logo,
+  NavRow,
+  RowGroup,
   ScreenContainer,
   Skeleton,
+  SwitchGroup,
+  SwitchRow,
   Text,
   TextField,
   useToast,
@@ -25,6 +30,7 @@ import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { ICON_NAMES } from '../../ui/icons';
 import { BackButton } from '../common/BackButton';
 import { OnboardingDemo } from '../onboarding/OnboardingDemo';
+import { ConfirmPanel } from '../settings/ConfirmPanel';
 
 /** Page de démonstration des composants (docs/07 : un exemple par état). Accessible depuis S01 en développement. */
 export function ComponentsDemoScreen() {
@@ -36,6 +42,8 @@ export function ComponentsDemoScreen() {
 
   const noop = () => undefined;
   const [favorite, setFavorite] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [switched, setSwitched] = useState(false);
 
   return (
     <ScreenContainer scroll testID="screen-components-demo">
@@ -76,11 +84,34 @@ export function ComponentsDemoScreen() {
         <Banner variant="warning" message={t('demo.sample.warning')} />
         <Banner variant="error" message={t('demo.sample.error')} />
         <Banner variant="info" message={t('demo.sample.info')} />
+        <Banner
+          variant="warning"
+          message={t('demo.sample.bannerAction')}
+          actionLabel={t('demo.sample.bannerActionLabel')}
+          onAction={noop}
+          onDismiss={noop}
+          dismissLabel={t('ui.banner.dismiss')}
+          testID="demo-banner-action"
+        />
         <Button
           label={t('demo.sample.toast')}
           variant="secondary"
           onPress={() => toast.show({ message: t('demo.sample.toastMessage'), variant: 'success' })}
         />
+      </Section>
+
+      <Section title={t('demo.controls')}>
+        <CheckboxField label={t('demo.sample.checkbox')} checked={checked} onChange={setChecked} testID="demo-checkbox" />
+        <CheckboxField label={t('demo.sample.checkboxDisabled')} checked disabled onChange={noop} testID="demo-checkbox-disabled" />
+        <SwitchGroup>
+          <SwitchRow label={t('demo.sample.switch')} value={switched} onValueChange={setSwitched} testID="demo-switch" />
+          <SwitchRow label={t('demo.sample.disabled')} value disabled onValueChange={noop} divider={false} testID="demo-switch-disabled" />
+        </SwitchGroup>
+        <RowGroup>
+          <NavRow icon="User" label={t('demo.sample.navRow')} value={t('demo.sample.rowValue')} onPress={noop} testID="demo-navrow" />
+          <NavRow icon="Trash2" tone="danger" label={t('demo.sample.rowDanger')} onPress={noop} testID="demo-navrow-danger" />
+        </RowGroup>
+        <ConfirmPanel testID="demo-confirm" message={t('demo.sample.confirm')} onConfirm={noop} onCancel={noop} />
       </Section>
 
       <Section title={t('demo.skeleton')}>
@@ -251,6 +282,8 @@ const ICON_TONES: IconTone[] = [
   'primary',
   'onPrimary',
   'onAccent',
+  'onBrand',
+  'accent',
   'danger',
   'success',
   'warning',
@@ -268,9 +301,11 @@ function ToneSample({ tone }: { tone: IconTone }) {
       ? colors.primary
       : tone === 'onAccent'
         ? colors.accent
-        : tone === 'disabledText'
-          ? colors.disabledBg
-          : colors.surface;
+        : tone === 'onBrand'
+          ? colors.brand
+          : tone === 'disabledText'
+            ? colors.disabledBg
+            : colors.surface;
   return (
     <View style={{ backgroundColor, padding: space[2], borderRadius: radius.sm }}>
       <Icon name="BadgeCheck" size="lg" tone={tone} />

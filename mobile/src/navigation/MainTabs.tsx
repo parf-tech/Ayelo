@@ -1,13 +1,17 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useIsFocused } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useConversations } from '../features/messages/ConversationsProvider';
 import { useI18n } from '../i18n';
 import { borderWidth, fontFamilyFor, useFontsReady, useTheme } from '../theme';
 import { Icon, TAB_BAR_MIN_HEIGHT, Text, useToastBottomOffset, type IconName } from '../ui';
 
 /** Plafond d'agrandissement du libellé d'onglet : au-delà, la barre déborderait (spec 5.8, AC-TAB-5). */
-const TAB_LABEL_MAX_FONT_MULTIPLIER = 1.6;
+const TAB_LABEL_MAX_FONT_MULTIPLIER = 1.4;
+/** Boîte de l'icône d'onglet (react-navigation) et marge verticale de chaque côté : base du calcul de la hauteur de la barre. */
+const TAB_ICON_BOX = 28;
+const TAB_ITEM_PADDING = 5;
 /** Largeur du repère de l'onglet actif (un trait, en plus de la couleur et du poids du libellé). */
 const TAB_MARKER_WIDTH = 24;
 /** Au-delà, la pastille affiche « 99+ » et le libellé d'accessibilité dit « plus de 99 ». */
@@ -54,10 +58,18 @@ export function MainTabs() {
   const { t } = useI18n();
   const { colors, type } = useTheme();
   const fontsReady = useFontsReady();
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
+  const focused = useIsFocused();
   const { unreadTotal } = useConversations();
 
-  // Les toasts se posent au-dessus de la barre d'onglets tant qu'elle est affichée.
-  useToastBottomOffset(TAB_BAR_MIN_HEIGHT);
+  // Les toasts se posent au-dessus de la barre d'onglets tant qu'elle est affichée : pas quand un écran (conversation,
+  // réglages, Premium...) est empilé par-dessus, la barre n'est alors plus visible.
+  useToastBottomOffset(focused ? TAB_BAR_MIN_HEIGHT : 0);
+
+  // Hauteur fixe de la barre : zone sûre + icône + libellé à l'échelle plafonnée (sinon le libellé déborde ou est rogné).
+  const labelLine = Math.ceil(type.caption.line * Math.min(fontScale, TAB_LABEL_MAX_FONT_MULTIPLIER));
+  const tabBarHeight = insets.bottom + Math.max(TAB_BAR_MIN_HEIGHT, TAB_ITEM_PADDING * 2 + TAB_ICON_BOX + labelLine);
 
   const unreadLabel =
     unreadTotal > BADGE_MAX_COUNT
@@ -73,8 +85,7 @@ export function MainTabs() {
         sceneStyle: { backgroundColor: colors.bg },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border, minHeight: TAB_BAR_MIN_HEIGHT },
-        tabBarLabelStyle: { fontSize: type.caption.size },
+        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border, height: tabBarHeight },
       }}
     >
       <Tabs.Screen

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
-import { Icon, Text, type IconName } from '../../ui';
+import { Icon, Text, useFocusRing, type IconName } from '../../ui';
 
 /** Ligne d'un menu déroulant (fiche d'un profil, conversation) : icône + libellé, cible >= 44, ton danger pour une action destructrice. */
 export function MenuItem({
@@ -23,6 +23,7 @@ export function MenuItem({
   loading?: boolean;
 }) {
   const { colors, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   return (
     <Pressable
       testID={testID}
@@ -31,6 +32,8 @@ export function MenuItem({
       accessibilityState={{ disabled: Boolean(disabled) || Boolean(loading), busy: Boolean(loading) }}
       disabled={disabled || loading}
       onPress={onPress}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
@@ -38,6 +41,7 @@ export function MenuItem({
         minHeight: MIN_TARGET,
         paddingHorizontal: space[3],
         opacity: disabled ? stateOpacity.disabled : pressed ? stateOpacity.pressed : 1,
+        ...ringStyle,
       })}
     >
       {loading ? <ActivityIndicator color={danger ? colors.danger : colors.text} /> : <Icon name={icon} tone={danger ? 'danger' : 'text'} />}

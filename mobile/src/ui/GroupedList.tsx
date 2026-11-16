@@ -1,7 +1,7 @@
 import React from 'react';
 import { I18nManager, Pressable, View } from 'react-native';
 import { borderWidth, focus, MIN_TARGET, stateOpacity, useTheme } from '../theme';
-import { useFocusRing } from './hooks';
+import { useCompactLayout, useFocusRing } from './hooks';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
@@ -46,6 +46,8 @@ export type NavRowProps = {
 export function NavRow({ label, onPress, icon, description, value, tone = 'default', disabled = false, trailing, accessibilityLabel, testID }: NavRowProps) {
   const { space } = useTheme();
   const { focused, handlers, ringStyle } = useFocusRing();
+  // Texte agrandi : la valeur (ex. langue) passe sous le libellé au lieu de lui laisser quelques points.
+  const { isLarge } = useCompactLayout();
   const danger = tone === 'danger';
   const iconTone = disabled ? 'disabledText' : danger ? 'danger' : 'primary';
   return (
@@ -81,8 +83,13 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
               {description}
             </Text>
           ) : null}
+          {value && isLarge ? (
+            <Text variant="caption" tone="textMuted">
+              {value}
+            </Text>
+          ) : null}
         </View>
-        {value ? (
+        {value && !isLarge ? (
           <Text variant="caption" tone="textMuted">
             {value}
           </Text>

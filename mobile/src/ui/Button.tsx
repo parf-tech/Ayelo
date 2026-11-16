@@ -23,6 +23,8 @@ export type ButtonProps = {
   loadingLabel?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
+  /** Référence du bouton (React 19 : `ref` est une prop) : sert à y ramener le focus du lecteur d'écran. */
+  ref?: React.Ref<React.ComponentRef<typeof Pressable>>;
 };
 
 /**
@@ -41,6 +43,7 @@ export function Button({
   loadingLabel,
   testID,
   style,
+  ref,
 }: ButtonProps) {
   const { colors, radius, space } = useTheme();
   const inactive = disabled || loading;
@@ -49,6 +52,7 @@ export function Button({
 
   return (
     <Pressable
+      ref={ref}
       accessibilityRole="button"
       accessibilityLabel={loading && loadingLabel ? loadingLabel : (accessibilityLabel ?? label)}
       accessibilityHint={accessibilityHint}

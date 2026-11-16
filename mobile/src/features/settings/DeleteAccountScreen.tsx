@@ -28,6 +28,12 @@ export function DeleteAccountScreen() {
   const [loading, setLoading] = useState(false);
   const [graceDays, setGraceDays] = useState<number | null>(null);
   const [social, setSocial] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
+  // Même traitement que SettingsScreen : un échec de déconnexion est annoncé, jamais avalé.
+  const finishSignOut = () => {
+    setSignOutError(false);
+    void signOut().catch(() => setSignOutError(true));
+  };
 
   const submit = async (proof?: OAuthProof) => {
     setBanner(undefined);
@@ -77,7 +83,12 @@ export function DeleteAccountScreen() {
       <ScreenContainer
         scroll
         testID="screen-delete-account"
-        footer={<Button testID="delete-signout" label={t('delete.signOut')} onPress={() => void signOut()} />}
+        footer={
+          <View style={{ gap: space[2] }}>
+            {signOutError ? <Banner testID="delete-signout-error" variant="error" message={t('settings.logoutError')} /> : null}
+            <Button testID="delete-signout" label={t('delete.signOut')} onPress={finishSignOut} />
+          </View>
+        }
       >
         <ScreenHeader title={t('delete.title')} hideBack />
         <View style={{ gap: space[6] }}>

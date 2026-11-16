@@ -152,7 +152,10 @@ export function VerificationScreen() {
               <Image
                 testID="verify-preview"
                 source={{ uri: selfie.uri }}
+                accessible
+                accessibilityRole="image"
                 accessibilityLabel={t('verify.preview')}
+                accessibilityIgnoresInvertColors
                 style={{ width: '100%', aspectRatio: 3 / 4, borderRadius: radius.lg, backgroundColor: colors.skeleton }}
               />
             ) : null}

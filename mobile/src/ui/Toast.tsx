@@ -31,8 +31,6 @@ export const WARNING_TOAST_DURATION_MS = 8000;
 export const ERROR_TOAST_DURATION_MS = 10000;
 /** Plancher d'un toast qui porte une action : le temps de la lire et de la toucher. */
 export const ACTION_TOAST_MIN_DURATION_MS = 10000;
-/** @deprecated Conservé pour compatibilité : la durée dépend maintenant du type du toast. */
-export const DEFAULT_TOAST_DURATION_MS = SUCCESS_TOAST_DURATION_MS;
 
 /** Hauteur minimale de la barre d'onglets (`MainTabs`) : le toast se pose au-dessus. */
 export const TAB_BAR_MIN_HEIGHT = 56;

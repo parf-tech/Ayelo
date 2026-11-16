@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { fontWeight, MIN_TARGET, useTheme } from '../theme';
+import { announce } from './a11y/announce';
 import { Icon } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
@@ -27,7 +28,11 @@ export function VerifiedBadge({ label, explanation, hint, testID }: VerifiedBadg
         accessibilityLabel={label}
         accessibilityHint={hint}
         accessibilityState={{ expanded: open }}
-        onPress={() => setOpen((o) => !o)}
+        onPress={() => {
+          // iOS n'a pas de région vivante : l'explication est annoncée à l'ouverture.
+          if (!open) announce(explanation);
+          setOpen((o) => !o);
+        }}
         onFocus={handlers.onFocus}
         onBlur={handlers.onBlur}
         style={[{ minHeight: MIN_TARGET, flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' }, ringStyle]}

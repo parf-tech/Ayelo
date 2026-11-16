@@ -23,6 +23,8 @@ const RING_WIDTH = borderWidth.strong;
 const RING_GAP = space[1];
 /** Rapport entre la taille de l'initiale et celle du disque. */
 const INITIAL_RATIO = 0.4;
+/** Interligne de l'initiale par rapport à sa taille (la police Poppins est plus haute que celle du système). */
+const INITIAL_LINE_RATIO = 1.25;
 
 /** Pastille ronde : photo si disponible, sinon initiale (décorative : le nom est porté par le texte voisin). */
 export function Avatar({ uri, name, size = 48, ring, testID }: AvatarProps) {
@@ -46,8 +48,14 @@ export function Avatar({ uri, name, size = 48, ring, testID }: AvatarProps) {
       onError={() => setFailedUri(uri ?? null)}
     />
   ) : (
-    <View testID={testID} accessible={false} style={[base, { alignItems: 'center', justifyContent: 'center' }]}>
-      <Text variant="body" tone="textMuted" style={{ fontWeight: fontWeight.bold, fontSize: initialSize, lineHeight: Math.round(initialSize * 1.25) }}>
+    <View
+      testID={testID}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      accessibilityElementsHidden
+      style={[base, { alignItems: 'center', justifyContent: 'center' }]}
+    >
+      <Text variant="body" tone="textMuted" style={{ fontWeight: fontWeight.bold, fontSize: initialSize, lineHeight: Math.round(initialSize * INITIAL_LINE_RATIO) }}>
         {name.trim().charAt(0).toUpperCase()}
       </Text>
     </View>

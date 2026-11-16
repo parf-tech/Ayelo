@@ -155,8 +155,10 @@ describe('S10 Découverte : chargement, erreur hors ligne et fin de pile', () =>
     await renderShell(<DiscoverScreen />);
     const loading = await screen.findByTestId('discover-loading');
     expect(loading.props.accessibilityLabel).toBe('Chargement');
-    expect(screen.getAllByTestId('skeleton')).toHaveLength(1);
-    expect(StyleSheet.flatten(screen.getAllByTestId('skeleton')[0]!.props.style).flex).toBe(1);
+    // Les briques sont masquées aux lecteurs d'écran (le parent porte « Chargement ») : on les cherche aussi masquées.
+    const bricks = screen.getAllByTestId('skeleton', { includeHiddenElements: true });
+    expect(bricks).toHaveLength(1);
+    expect(StyleSheet.flatten(bricks[0]!.props.style).flex).toBe(1);
   });
 
   it('erreur réseau : titre « hors ligne », pictogramme et bouton Réessayer', async () => {
@@ -297,5 +299,33 @@ describe('S58 Signalement : retour après envoi', () => {
     await u.press(screen.getByTestId('report-send'));
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/discover'));
     expect(router.back).not.toHaveBeenCalled();
+  });
+});
+
+describe('Lot 6 : découverte étroite et fiche ouverte par lien', () => {
+  it('Annuler et Signaler rétrécissent et passent à la ligne : aucun n’est poussé hors de l’écran', async () => {
+    installFakeApi(deck() as never);
+    await renderShell(<DiscoverScreen />);
+    await screen.findByLabelText(/Awa, 28 ans/);
+    for (const testID of ['swipe-undo', 'swipe-report']) {
+      expect(StyleSheet.flatten(screen.getByTestId(testID).props.style).flexShrink).toBe(1);
+    }
+    expect(StyleSheet.flatten(screen.getByText('Découvrir').props.style).flexShrink).toBe(1);
+  });
+
+  it('fiche ouverte par lien (aucun écran précédent) : après « Passer », retour à la découverte', async () => {
+    mockParams.current = { id: 'p1' };
+    router.canGoBack.mockReturnValue(false);
+    installFakeApi({
+      'GET /me': [200, ME],
+      'GET /profiles/p1': [200, AWA],
+      'POST /swipes': [201, { status: 'recorded', matched: false }],
+    } as never);
+    await renderShell(<ProfileDetailScreen />);
+    await screen.findByText('Awa, 28');
+    await user().press(screen.getByTestId('detail-dislike'));
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/discover'));
+    expect(router.back).not.toHaveBeenCalled();
+    router.canGoBack.mockReturnValue(true);
   });
 });

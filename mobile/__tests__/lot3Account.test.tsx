@@ -11,7 +11,7 @@ import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
 import { tokenStore } from '../src/storage/tokenStore';
 import { installFakeApi } from './helpers/fakeApi';
 import { meFixture } from './helpers/fixtures';
-import { emitBeforeRemove, navigation, resetRouterMocks, router } from './helpers/routerMock';
+import { emitRemove, navigation, resetRouterMocks, router } from './helpers/routerMock';
 import { renderShell } from './helpers/shell';
 
 // Revue design, lot 3 : vérification du profil (poses traduites), profil (sortie protégée).
@@ -112,7 +112,7 @@ describe('S60 Édition du profil : modifications non enregistrées', () => {
     installFakeApi({ 'GET /me': [200, ME] });
     await renderShell(<ProfileEditScreen />);
     await screen.findByTestId('edit-bio');
-    expect(emitBeforeRemove()).toBe(false);
+    expect(emitRemove()).toBe(false);
     expect(screen.queryByTestId('edit-unsaved')).toBeNull();
   });
 
@@ -122,7 +122,7 @@ describe('S60 Édition du profil : modifications non enregistrées', () => {
     await editBio();
     let prevented = false;
     await act(async () => {
-      prevented = emitBeforeRemove({ type: 'GO_BACK' });
+      prevented = emitRemove({ type: 'GO_BACK' });
     });
     expect(prevented).toBe(true);
     expect(await screen.findByTestId('edit-unsaved')).toHaveTextContent(/Vous avez des modifications non enregistrées/);
@@ -133,12 +133,12 @@ describe('S60 Édition du profil : modifications non enregistrées', () => {
     expect(navigation.dispatch).not.toHaveBeenCalled();
 
     await act(async () => {
-      emitBeforeRemove({ type: 'GO_BACK' });
+      emitRemove({ type: 'GO_BACK' });
     });
     await u.press(await screen.findByRole('button', { name: 'Quitter sans enregistrer' }));
     expect(navigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' });
     // La sortie rejouée n'est plus bloquée.
-    expect(emitBeforeRemove({ type: 'GO_BACK' })).toBe(false);
+    expect(emitRemove({ type: 'GO_BACK' })).toBe(false);
   });
 
   it('après un enregistrement réussi, on quitte sans avis', async () => {
@@ -147,7 +147,7 @@ describe('S60 Édition du profil : modifications non enregistrées', () => {
     await editBio();
     await user().press(screen.getByTestId('edit-save'));
     await waitFor(() => expect(router.back).toHaveBeenCalled());
-    expect(emitBeforeRemove()).toBe(false);
+    expect(emitRemove()).toBe(false);
   });
 });
 

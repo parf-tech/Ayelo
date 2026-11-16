@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { REPORT_REASONS, type ReportContextType, type ReportReason } from '../../api/types';
@@ -8,6 +8,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { borderWidth, useTheme } from '../../theme';
 import { Banner, Button, ChoiceCard, Icon, ScreenContainer, Text, TextField, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { useGoBack } from '../common/useGoBack';
 
 const CONTEXTS: readonly ReportContextType[] = ['profile', 'conversation', 'message', 'call', 'story'];
 
@@ -16,7 +17,7 @@ const CONTEXTS: readonly ReportContextType[] = ['profile', 'conversation', 'mess
  * confirme explicitement : un toucher accidentel sur un motif n'envoie jamais rien.
  */
 export function ReportScreen() {
-  const router = useRouter();
+  const goBack = useGoBack('/discover');
   const { t } = useI18n();
   const { space, colors, radius } = useTheme();
   const toast = useToast();
@@ -44,8 +45,7 @@ export function ReportScreen() {
       });
       toast.show({ message: result.status === 'already_reported' ? t('report.already') : t('report.sent'), variant: 'success' });
       // Sans écran précédent (ouverture par lien), on revient à la découverte plutôt que de laisser le formulaire ouvert.
-      if (router.canGoBack()) router.back();
-      else router.replace('/discover' as never);
+      goBack();
     } catch (e) {
       const { key, params: p } = apiErrorMessage(e);
       setError(t(key, p));

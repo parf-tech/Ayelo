@@ -102,7 +102,13 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
         return;
       }
       if (error.isValidation) {
-        setErrors({ email: error.fieldError('email'), password: error.fieldError('password') });
+        const fieldErrors = { email: error.fieldError('email'), password: error.fieldError('password') };
+        setErrors(fieldErrors);
+        // Un message par champ suffit : pas de bandeau en double pour la même erreur 422.
+        if (fieldErrors.email || fieldErrors.password) {
+          setCanRetry(false);
+          return;
+        }
       }
     }
     const { key, params } = apiErrorMessage(error);

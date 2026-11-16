@@ -67,17 +67,6 @@ export function ConsentSettingsScreen() {
           style={{ marginBottom: space[4] }}
         />
       ) : null}
-      {confirmRevoke ? (
-        <ConfirmPanel
-          testID="consent-revoke-confirm"
-          confirmTestID="consent-revoke-yes"
-          message={`${t('consentSettings.revokeSensitive.title')} ${t('consentSettings.revokeSensitive.body')}`}
-          confirmLabel={t('consentSettings.revokeSensitive.action')}
-          onConfirm={() => void set('sensitive_data', false)}
-          onCancel={() => setConfirmRevoke(false)}
-          loading={busy}
-        />
-      ) : null}
       <AsyncView testID="consents" status={consents.status} error={consents.error} onRetry={() => void consents.reload()}>
         <View style={{ gap: space[6] }}>
           <SwitchGroup>
@@ -94,6 +83,18 @@ export function ConsentSettingsScreen() {
               />
             ))}
           </SwitchGroup>
+          {/* Sous la liste des interrupteurs (pas au-dessus) : le panneau reste près de la ligne touchée, même avec le texte agrandi. */}
+          {confirmRevoke ? (
+            <ConfirmPanel
+              testID="consent-revoke-confirm"
+              confirmTestID="consent-revoke-yes"
+              message={`${t('consentSettings.revokeSensitive.title')} ${t('consentSettings.revokeSensitive.body')}`}
+              confirmLabel={t('consentSettings.revokeSensitive.action')}
+              onConfirm={() => void set('sensitive_data', false)}
+              onCancel={() => setConfirmRevoke(false)}
+              loading={busy}
+            />
+          ) : null}
           <View style={{ gap: space[3] }}>
             {legalError ? <Banner testID="consent-legal-error" variant="error" message={t('legal.openError')} /> : null}
             <RowGroup>

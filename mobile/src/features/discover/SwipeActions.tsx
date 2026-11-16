@@ -6,8 +6,8 @@ import { MIN_TARGET, useTheme } from '../../theme';
 import { IconButton } from '../../ui';
 
 /** Diamètre des boutons ronds Passer et Coup de cœur, et du bouton J'aime (plus grand, au centre de gravité du pouce). */
-export const ACTION_SIZE = MIN_TARGET + 12;
-export const ACTION_SIZE_PRIMARY = MIN_TARGET + 24;
+const ACTION_SIZE = MIN_TARGET + 12;
+const ACTION_SIZE_PRIMARY = MIN_TARGET + 24;
 
 type Props = {
   /** Préfixe des identifiants de test : `swipe` (pile) ou `detail` (fiche) -> `swipe-dislike`, `swipe-super`, `swipe-like`. */

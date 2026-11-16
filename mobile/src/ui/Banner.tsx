@@ -22,6 +22,11 @@ export type BannerProps = {
   onAction?: () => void;
   testID?: string;
   style?: StyleProp<ViewStyle>;
+  /**
+   * Annonce l'apparition (erreur, avertissement, succès) aux lecteurs d'écran iOS. Défaut vrai ; faux quand l'appelant
+   * déplace déjà le focus sur la bannière (le message serait lu deux fois).
+   */
+  announceOnShow?: boolean;
 } & DismissProps;
 
 const ICONS: Record<BannerVariant, IconName> = {
@@ -64,7 +69,7 @@ function BannerAction({ label, onPress }: { label: string; onPress: () => void }
       onPress={onPress}
       onFocus={handlers.onFocus}
       onBlur={handlers.onBlur}
-      style={[{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center', paddingHorizontal: space[2] }, ringStyle]}
+      style={[{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center', alignSelf: 'flex-start', paddingRight: space[2] }, ringStyle]}
     >
       <Text variant="bodyStrong" tone="primary">
         {label}
@@ -87,6 +92,7 @@ export function Banner({
   dismissLabel,
   testID,
   style,
+  announceOnShow = true,
 }: BannerProps) {
   const { colors, radius, space } = useTheme();
   const { t } = useI18n();
@@ -94,8 +100,8 @@ export function Banner({
   const spoken = `${t(bannerTypeKey(variant))}. ${message}`;
 
   useEffect(() => {
-    if (ANNOUNCED.includes(variant)) announce(spoken);
-  }, [variant, spoken]);
+    if (announceOnShow && ANNOUNCED.includes(variant)) announce(spoken);
+  }, [variant, spoken, announceOnShow]);
 
   return (
     <View
@@ -105,7 +111,7 @@ export function Banner({
       style={[
         {
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: space[2],
           padding: space[3],
           borderRadius: radius.md,
@@ -132,10 +138,13 @@ export function Banner({
       >
         <Icon name={ICONS[variant]} size="md" tone="onPrimary" testID={testID ? `${testID}-icon` : 'banner-icon'} />
       </View>
-      <Text variant="body" accessibilityLabel={spoken} style={{ flex: 1 }}>
-        {message}
-      </Text>
-      {actionLabel && onAction ? <BannerAction label={actionLabel} onPress={onAction} /> : null}
+      {/* Message puis action en colonne : une action longue passe SOUS le texte au lieu de l'écraser (spec 6.6, AC-BAN-8). */}
+      <View style={{ flex: 1, gap: space[1], paddingTop: space[1] }}>
+        <Text variant="body" accessibilityLabel={spoken}>
+          {message}
+        </Text>
+        {actionLabel && onAction ? <BannerAction label={actionLabel} onPress={onAction} /> : null}
+      </View>
       {onDismiss ? (
         <IconButton
           icon="X"

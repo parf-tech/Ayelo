@@ -1,5 +1,5 @@
-import { useNavigation, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { usePreventRemove, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { GENDERS, INTENTS, isApiError, type Gender, type Intent, type ProfileInput, type SelfProfile } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
@@ -24,13 +24,6 @@ type Form = {
   intent: Intent;
 };
 
-/** Événement `beforeRemove` du navigateur (react-navigation) : on peut annuler la sortie puis la rejouer avec `dispatch`. */
-type LeaveEvent = { preventDefault: () => void; data: { action: unknown } };
-type GuardedNavigation = {
-  addListener: (name: 'beforeRemove', listener: (event: LeaveEvent) => void) => () => void;
-  dispatch: (action: never) => void;
-};
-
 /** Longueur maximale de la présentation (même limite que le serveur) : champ, message d'erreur et validation. */
 const BIO_MAX_LENGTH = 500;
 /** Largeur minimale d'une carte de genre : trois cartes tiennent sur une ligne à 390 pt, passent à la ligne au-delà du texte agrandi. */
@@ -52,7 +45,6 @@ function changedFields(form: Form, profile: SelfProfile): ProfileInput {
 /** S60 : édition du profil (PUT /me/profile : seuls les champs modifiés sont envoyés) et gestion des photos. */
 export function ProfileEditScreen() {
   const router = useRouter();
-  const navigation = useNavigation() as unknown as GuardedNavigation;
   const { t } = useI18n();
   const { space } = useTheme();
   const toast = useToast();
@@ -63,22 +55,18 @@ export function ProfileEditScreen() {
   const [banner, setBanner] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
   const profile = me.data?.profile ?? null;
-  // Sortie interceptée tant que des modifications ne sont pas enregistrées (bouton retour, retour matériel, geste de retour).
+  // Sortie interceptée tant que des modifications ne sont pas enregistrées (bouton retour, retour matériel, geste de retour) :
+  // `usePreventRemove` (expo-router 58 ; l'événement `beforeRemove` n'existe plus). `discarded` coupe la protection quand
+  // l'utilisateur choisit de quitter ou quand l'enregistrement a réussi.
   const dirty = form !== null && profile !== null && Object.keys(changedFields(form, profile)).length > 0;
-  const leaving = useRef(false);
-  const [pendingLeave, setPendingLeave] = useState<unknown>(null);
-  useEffect(
-    () =>
-      navigation.addListener('beforeRemove', (event) => {
-        if (!dirty || leaving.current) return;
-        event.preventDefault();
-        setPendingLeave(event.data.action);
-      }),
-    [navigation, dirty],
-  );
+  const [discarded, setDiscarded] = useState(false);
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
+  const disablePrevention = usePreventRemove(dirty && !discarded, ({ repeat }) => setPendingLeave(() => repeat));
   const leaveWithoutSaving = () => {
-    leaving.current = true;
-    navigation.dispatch(pendingLeave as never);
+    const repeat = pendingLeave;
+    setPendingLeave(null);
+    setDiscarded(true);
+    repeat?.();
   };
 
   useEffect(() => {
@@ -122,7 +110,8 @@ export function ProfileEditScreen() {
       await api.profile.update(body);
       await refreshMe();
       toast.show({ message: t('edit.saved'), variant: 'success' });
-      leaving.current = true;
+      setDiscarded(true);
+      disablePrevention();
       router.back();
     } catch (error) {
       if (isApiError(error) && error.isValidation && error.fieldError('residence_country')) {
@@ -140,22 +129,25 @@ export function ProfileEditScreen() {
     <ScreenContainer
       scroll
       testID="screen-profile-edit"
-      footer={<Button testID="edit-save" label={t('common.save')} onPress={() => void save()} loading={saving} disabled={!form} />}
+      footer={
+        <View style={{ gap: space[3] }}>
+          {pendingLeave !== null ? (
+            <Banner
+              testID="edit-unsaved"
+              variant="warning"
+              message={t('edit.unsaved')}
+              actionLabel={t('edit.unsaved.leave')}
+              onAction={leaveWithoutSaving}
+              onDismiss={() => setPendingLeave(null)}
+              dismissLabel={t('edit.unsaved.stay')}
+            />
+          ) : null}
+          <Button testID="edit-save" label={t('common.save')} onPress={() => void save()} loading={saving} disabled={!form} />
+        </View>
+      }
     >
       <ScreenHeader title={t('edit.title')} fallbackHref="/profile" />
       <View style={{ paddingTop: space[3] }}>
-        {pendingLeave !== null ? (
-          <Banner
-            testID="edit-unsaved"
-            variant="warning"
-            message={t('edit.unsaved')}
-            actionLabel={t('edit.unsaved.leave')}
-            onAction={leaveWithoutSaving}
-            onDismiss={() => setPendingLeave(null)}
-            dismissLabel={t('edit.unsaved.stay')}
-            style={{ marginBottom: space[4] }}
-          />
-        ) : null}
         {banner ? (
           <Banner
             testID="edit-banner"

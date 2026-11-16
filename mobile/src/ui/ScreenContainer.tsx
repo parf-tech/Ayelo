@@ -1,8 +1,9 @@
+import { useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleProp, StyleSheet, View, ViewStyle, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MAX_CONTENT_WIDTH, useTheme } from '../theme';
+import { MAX_CONTENT_WIDTH, borderWidth, useTheme } from '../theme';
 
 export type ScreenContainerProps = {
   children: React.ReactNode;
@@ -22,6 +23,16 @@ export type ScreenContainerProps = {
 export const LARGE_FONT_SCALE = 1.3;
 /** Part maximale de la hauteur de l'écran occupée par le pied de page : le contenu garde toujours de la place. */
 export const FOOTER_MAX_HEIGHT_RATIO = 0.45;
+
+/**
+ * Icônes claires de la barre d'état sur un fond prune. Les entrées de `StatusBar` se fusionnent dans l'ordre de montage
+ * (la dernière montée l'emporte) et un écran empilé reste monté : sans le test de focus, l'accueil laissait des icônes
+ * blanches sur les écrans clairs qui s'ouvrent par-dessus (connexion, date de naissance...).
+ */
+export function BrandStatusBar() {
+  const focused = useIsFocused();
+  return focused ? <StatusBar style="light" /> : null;
+}
 
 /**
  * Conteneur d'écran : zones sûres, fond du thème, clavier, largeur centrée sur tablette.
@@ -50,8 +61,8 @@ export function ScreenContainer({
 
   return (
     <SafeAreaView testID={testID} style={{ flex: 1, backgroundColor: background }}>
-      {/* Le fond prune est le même en clair et en sombre : icônes de la barre d'état toujours claires (revient à l'écran suivant). */}
-      {tone === 'brand' ? <StatusBar style="light" /> : null}
+      {/* Le fond prune est le même en clair et en sombre : icônes de la barre d'état claires tant que l'écran a le focus. */}
+      {tone === 'brand' ? <BrandStatusBar /> : null}
       {backdrop ? (
         <View
           testID={testID ? `${testID}-backdrop` : 'screen-backdrop'}
@@ -82,7 +93,7 @@ export function ScreenContainer({
               ...inner,
               paddingTop: largeFont ? space[2] : space[3],
               paddingBottom: largeFont ? space[2] : space[4],
-              borderTopWidth: tone === 'brand' ? 0 : 1,
+              borderTopWidth: tone === 'brand' ? 0 : borderWidth.hairline,
               borderTopColor: colors.border,
               backgroundColor: backdrop ? 'transparent' : background,
               maxHeight: Math.round(height * FOOTER_MAX_HEIGHT_RATIO),

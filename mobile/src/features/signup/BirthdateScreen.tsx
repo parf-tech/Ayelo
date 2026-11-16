@@ -8,7 +8,7 @@ import { useSignupFlow, useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { iconSize, useTheme } from '../../theme';
-import { Banner, Button, Icon, ScreenContainer, Text, TextField } from '../../ui';
+import { Announce, Banner, Button, Icon, ScreenContainer, Text, TextField } from '../../ui';
 import { AuthHeader } from '../auth/AuthHeader';
 import { checkBirthdateFields } from '../validation';
 import type { BirthdateFields } from '../validation';
@@ -193,6 +193,7 @@ export function BirthdateScreen() {
       </View>
       {message ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[1], marginTop: space[2] }}>
+          <Announce message={message} />
           <View style={{ marginTop: (type.caption.line - iconSize.sm) / 2 }}>
             <Icon name="CircleAlert" size="sm" tone="danger" />
           </View>

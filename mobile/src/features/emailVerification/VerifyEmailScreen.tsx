@@ -5,10 +5,10 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button } from '../../ui';
+import { announce, Banner, Button } from '../../ui';
 import { OnboardingFrame } from '../onboarding/OnboardingFrame';
 
-export const RESEND_COOLDOWN_SECONDS = 60;
+const RESEND_COOLDOWN_SECONDS = 60;
 
 /**
  * S03 : écran d'attente de la vérification d'e-mail. Non bloquant : on peut continuer et confirmer plus tard.
@@ -41,6 +41,11 @@ export function VerifyEmailScreen() {
     if (verified) goOn(Boolean(state.user?.profile));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verified]);
+
+  // La bannière `info` n'est pas annoncée d'office (iOS n'a pas de région vivante) : le résultat de « J'ai confirmé » l'est ici.
+  useEffect(() => {
+    if (info?.variant === 'info') announce(info.message);
+  }, [info]);
 
   const startCooldown = () => {
     setCooldown(RESEND_COOLDOWN_SECONDS);

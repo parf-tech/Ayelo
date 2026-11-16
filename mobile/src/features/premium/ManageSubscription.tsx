@@ -84,7 +84,7 @@ export function ManageSubscription({ store, periodEnd, variant, testID }: Props)
           <NavRow testID={testID} icon="Sparkles" label={label} onPress={() => void open()} />
         </RowGroup>
       ) : (
-        <Button testID={testID} variant="secondary" label={label} accessibilityHint={t('premium.manage.info')} onPress={() => void open()} />
+        <Button testID={testID} variant="secondary" label={label} onPress={() => void open()} />
       )}
       <Note testID={testID ? `${testID}-info` : undefined}>{t('premium.manage.info')}</Note>
     </View>

@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { borderWidth, radius, useTheme } from '../../theme';
-import { AsyncView, Banner, Button, Icon, ListRow, ScreenContainer, Text } from '../../ui';
+import { AsyncView, Banner, Button, Icon, ListRow, ScreenContainer, Text, useCompactLayout } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { usePremium } from './PremiumProvider';
 import { usePurchase } from './usePurchase';
@@ -12,6 +12,7 @@ import { usePurchase } from './usePurchase';
 export function CreditsScreen() {
   const { t } = useI18n();
   const { colors, space } = useTheme();
+  const { isLarge } = useCompactLayout();
   const { provider, offers, refreshStatus } = usePremium();
   const purchase = usePurchase();
 
@@ -70,6 +71,7 @@ export function CreditsScreen() {
                 label={packLabel(pack.credits)}
                 description={price ?? t('premium.price.unknown')}
                 leading={<Icon name="MessageCircle" size="md" tone="primary" />}
+                trailingBelow={isLarge}
                 trailing={
                   <Button
                     testID={`buy-${pack.product_id}`}

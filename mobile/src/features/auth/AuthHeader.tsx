@@ -4,7 +4,7 @@ import { Logo } from '../../ui';
 import { BackButton } from '../common/BackButton';
 
 export type AuthHeaderProps = {
-  /** Affiche le bouton Retour (défaut oui). Absent sur les écrans sans retour possible (refus d'âge, nouveau mot de passe). */
+  /** Affiche le bouton Retour (défaut oui). Absent sur le refus d'âge et, une fois le mot de passe changé, sur « nouveau mot de passe ». */
   back?: boolean;
   /** Destination du retour quand la pile de navigation est vide. */
   fallbackHref?: string;

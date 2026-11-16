@@ -33,7 +33,8 @@ export function NotificationsScreen() {
     prefs.setData((current) => (current ? { ...current, [key]: value } : current));
     try {
       const updated = await api.notifications.updatePreferences({ [key]: value });
-      prefs.setData(updated);
+      // Seule la valeur enregistrée est reprise : la réponse d'une requête ne doit pas écraser le choix, encore en vol, d'un autre réglage.
+      prefs.setData((current) => (current ? { ...current, [key]: updated[key] } : updated));
     } catch (error) {
       prefs.setData((current) => (current ? { ...current, [key]: previousValue } : current));
       const { key: k, params } = apiErrorMessage(error);

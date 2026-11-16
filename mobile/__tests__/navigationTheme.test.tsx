@@ -26,7 +26,7 @@ jest.mock('expo-router', () => {
     },
     { Screen: () => null },
   );
-  return { Stack, Tabs, Redirect: () => null };
+  return { Stack, Tabs, Redirect: () => null, useIsFocused: () => true };
 });
 
 jest.mock('../src/features/messages/ConversationsProvider', () => ({ useConversations: () => ({ unreadTotal: 0 }) }));

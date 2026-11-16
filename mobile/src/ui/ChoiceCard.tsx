@@ -5,6 +5,11 @@ import { Icon, IconName } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
 
+/** Disque du pictogramme (carte pleine largeur), puis pastille de choix : 24 pt en carte, 20 pt en tuile. */
+const ICON_DISC_SIZE = 40;
+const RADIO_SIZE = 24;
+const RADIO_TILE_SIZE = 20;
+
 export type ChoiceCardProps = {
   label: string;
   description?: string;
@@ -62,8 +67,8 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
           accessible={false}
           importantForAccessibility="no-hide-descendants"
           style={{
-            width: 40,
-            height: 40,
+            width: ICON_DISC_SIZE,
+            height: ICON_DISC_SIZE,
             borderRadius: radius.pill,
             backgroundColor: selected ? colors.surface : colors.bg,
             alignItems: 'center',
@@ -88,8 +93,8 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
         accessible={false}
         importantForAccessibility="no-hide-descendants"
         style={{
-          width: tile ? 20 : 24,
-          height: tile ? 20 : 24,
+          width: tile ? RADIO_TILE_SIZE : RADIO_SIZE,
+          height: tile ? RADIO_TILE_SIZE : RADIO_SIZE,
           borderRadius: radius.pill,
           borderWidth: borderWidth.strong,
           borderColor: selected ? colors.primary : colors.borderStrong,

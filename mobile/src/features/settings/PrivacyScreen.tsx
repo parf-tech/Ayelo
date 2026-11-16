@@ -30,7 +30,10 @@ export function PrivacyScreen() {
     try {
       // Le serveur renvoie l'objet /me complet : on le prend tel quel.
       const updated = await api.profile.updatePrivacy(patch);
-      me.setData(updated);
+      // Seule la valeur enregistrée est reprise (voir NotificationsScreen) : un autre réglage en vol garde sa valeur optimiste.
+      me.setData((current) =>
+        current && current.profile && updated.profile ? { ...current, profile: { ...current.profile, [key]: updated.profile[key] } } : updated,
+      );
       void refreshMe();
     } catch (error) {
       me.setData((current) => (current && current.profile ? { ...current, profile: { ...current.profile, [key]: previousValue } } : current));

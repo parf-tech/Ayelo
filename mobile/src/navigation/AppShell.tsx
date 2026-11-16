@@ -41,7 +41,7 @@ function UserEvents() {
       toast.show({
         message: t('sanctions.banner'),
         variant: 'error',
-        durationMs: 8000,
+        // Avec une action, le toast reste affiché jusqu'à fermeture (Toast.tsx) : pas de durée imposée.
         actionLabel: t('sanctions.banner.action'),
         onAction: () => router.push('/settings/sanctions' as never),
       });

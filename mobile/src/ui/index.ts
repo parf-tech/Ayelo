@@ -40,6 +40,7 @@ export type { IconButtonProps, IconButtonVariant, IconButtonSize, IconButtonBadg
 export { Logo } from './Logo';
 export type { LogoProps, LogoVariant, LogoLayout } from './Logo';
 export { announce } from './a11y/announce';
+export { Announce } from './a11y/AnnounceOnChange';
 export { focusNode } from './a11y/focus';
 export { useReduceMotion, useMotion, useFocusRing, useCompactLayout } from './hooks';
 export { Stepper } from './Stepper';

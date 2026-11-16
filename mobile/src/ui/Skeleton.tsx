@@ -14,6 +14,13 @@ export type SkeletonProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+/** Durée d'une demi-pulsation (ms). Aucun jeton `motion.pulse` n'existe encore : constante décorative, hors des durées d'interaction. */
+const PULSE_MS = 800;
+/** Dimensions par défaut d'une brique (pt) : cercle, carte, ligne. */
+const DEFAULT_CIRCLE = 48;
+const DEFAULT_CARD_HEIGHT = 160;
+const DEFAULT_LINE_HEIGHT = 16;
+
 /** Placeholder de chargement. Pulsation désactivée si « réduire les animations » est actif. */
 export function Skeleton({ width, height, variant = 'line', testID, accessibilityLabel, style }: SkeletonProps) {
   const { colors, radius } = useTheme();
@@ -29,8 +36,8 @@ export function Skeleton({ width, height, variant = 'line', testID, accessibilit
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: stateOpacity.skeleton, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: stateOpacity.skeleton, duration: PULSE_MS, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: PULSE_MS, useNativeDriver: true }),
       ]),
     );
     loop.start();
@@ -39,10 +46,10 @@ export function Skeleton({ width, height, variant = 'line', testID, accessibilit
 
   const dims: ViewStyle =
     variant === 'circle'
-      ? { width: width ?? 48, height: height ?? 48, borderRadius: radius.pill }
+      ? { width: width ?? DEFAULT_CIRCLE, height: height ?? DEFAULT_CIRCLE, borderRadius: radius.pill }
       : variant === 'card'
-        ? { width: width ?? '100%', height: height ?? 160, borderRadius: radius.lg }
-        : { width: width ?? '100%', height: height ?? 16, borderRadius: radius.sm };
+        ? { width: width ?? '100%', height: height ?? DEFAULT_CARD_HEIGHT, borderRadius: radius.lg }
+        : { width: width ?? '100%', height: height ?? DEFAULT_LINE_HEIGHT, borderRadius: radius.sm };
 
   return (
     <Animated.View

@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { GENDERS, INTENTS, type Preferences } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { borderWidth, MIN_TARGET, useTheme } from '../../theme';
-import { Chip, IconButton, SwitchRow, Text } from '../../ui';
+import { Announce, Chip, IconButton, SwitchRow, Text } from '../../ui';
 import { FormSection } from '../onboarding/FormSection';
 import { COUNTRY_CODES, countryKey } from '../onboarding/countries';
 
@@ -48,6 +48,8 @@ function AgeStepper({
       <Text variant="body" testID={`${testID}-value`} accessibilityLiveRegion="polite" style={{ flex: 1 }}>
         {label}
       </Text>
+      {/* iOS : la nouvelle valeur est annoncée après chaque − / + (pas au premier rendu). */}
+      <Announce message={label} skipInitial />
       <View style={{ flexDirection: 'row', gap: space[2] }}>
         <IconButton
           testID={`${testID}-minus`}

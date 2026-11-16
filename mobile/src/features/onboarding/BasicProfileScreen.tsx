@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { GENDERS } from '../../api/types';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ChoiceCard, Text, TextField } from '../../ui';
+import { Announce, Button, ChoiceCard, Text, TextField } from '../../ui';
 import { validateCity, validateDisplayName } from '../validation';
 import { CountryPicker } from './CountryPicker';
 import { OnboardingFrame } from './OnboardingFrame';
@@ -83,6 +83,7 @@ export function BasicProfileScreen() {
             </View>
             {errors.gender ? (
               <Text variant="caption" tone="danger" accessibilityRole="alert">
+                <Announce message={errors.gender} />
                 {errors.gender}
               </Text>
             ) : null}

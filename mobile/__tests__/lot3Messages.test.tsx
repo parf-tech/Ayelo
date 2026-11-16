@@ -149,7 +149,7 @@ describe('S14 Conversation : photo, saisie, liste', () => {
     expect(await screen.findByTestId('unread-c1')).toHaveTextContent('3');
     const badge = StyleSheet.flatten(screen.getByTestId('unread-c1').props.style) as Record<string, number>;
     expect(badge.minWidth).toBe(24);
-    expect(badge.height).toBe(24);
+    expect(badge.minHeight).toBe(24);
     expect(badge.borderRadius).toBe(999);
   });
 });

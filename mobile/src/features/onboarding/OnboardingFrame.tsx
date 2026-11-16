@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,7 +5,7 @@ import { useI18n } from '../../i18n';
 import { MAX_CONTENT_WIDTH, MIN_TARGET, borderWidth, radius, useTheme } from '../../theme';
 import { IconButton, Logo, Stepper, Text } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
-import { FOOTER_MAX_HEIGHT_RATIO, LARGE_FONT_SCALE } from '../../ui/ScreenContainer';
+import { BrandStatusBar, FOOTER_MAX_HEIGHT_RATIO, LARGE_FONT_SCALE } from '../../ui/ScreenContainer';
 import { useGoBack } from '../common/useGoBack';
 import { ONBOARDING_STEP_KEYS, ONBOARDING_STEPS, OnboardingStepKey, onboardingStepNumber } from './steps';
 
@@ -48,8 +47,8 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
 
   return (
     <View testID={testID} style={{ flex: 1, backgroundColor: colors.brand }}>
-      {/* En-tête prune en clair comme en sombre : icônes de la barre d'état claires. */}
-      <StatusBar style="light" />
+      {/* En-tête prune en clair comme en sombre : icônes de la barre d'état claires tant que l'écran a le focus. */}
+      <BrandStatusBar />
       <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
@@ -118,7 +117,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
               paddingBottom: Math.max(insets.bottom, largeFont ? space[2] : space[4]),
             }}
           >
-            <View style={[inner, { paddingTop: largeFont ? space[2] : space[3] }]}>
+            <View style={[inner, { paddingTop: largeFont ? space[2] : space[3], flexShrink: 1 }]}>
               {largeFont ? (
                 <ScrollView
                   testID={`${testID}-footer-scroll`}

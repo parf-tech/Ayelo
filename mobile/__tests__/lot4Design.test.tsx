@@ -220,7 +220,8 @@ describe('Composants partagés', () => {
     await renderThemed(<Avatar testID="av" uri="https://img.example.test/x.jpg" name="Awa" size={120} />);
     expect(screen.queryByText('A')).toBeNull();
     fireEvent(screen.getByTestId('av'), 'error');
-    expect(await screen.findByText('A')).toBeOnTheScreen();
-    expect(flat(screen.getByText('A').props.style).fontSize).toBeGreaterThan(16);
+    // L'initiale de repli est masquée aux lecteurs d'écran (le nom voisin porte le sens) : on la cherche aussi masquée.
+    expect(await screen.findByText('A', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(flat(screen.getByText('A', { includeHiddenElements: true }).props.style).fontSize).toBeGreaterThan(16);
   });
 });
