@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +45,8 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
 
   return (
     <View testID={testID} style={{ flex: 1, backgroundColor: colors.brand }}>
+      {/* En-tête prune en clair comme en sombre : icônes de la barre d'état claires. */}
+      <StatusBar style="light" />
       <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
@@ -58,6 +61,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
                     testID="back-button"
                     icon="ChevronLeft"
                     variant="tonal"
+                    tone="onBrand"
                     accessibilityLabel={t('common.back')}
                     onPress={() => (router.canGoBack() ? router.back() : router.replace(backHref as never))}
                   />

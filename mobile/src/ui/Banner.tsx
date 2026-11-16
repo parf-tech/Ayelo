@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { useI18n } from '../i18n';
+import { borderWidth, iconSize, MIN_TARGET, useTheme } from '../theme';
 import type { ColorTokens } from '../theme/tokens';
+import { announce } from './a11y/announce';
+import { Icon, IconName } from './Icon';
+import { IconButton } from './IconButton';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type BannerVariant = 'success' | 'error' | 'warning' | 'info';
 
@@ -19,7 +24,20 @@ export type BannerProps = {
   style?: StyleProp<ViewStyle>;
 } & DismissProps;
 
-const GLYPHS: Record<BannerVariant, string> = { success: '✓', error: '✕', warning: '!', info: 'i' };
+const ICONS: Record<BannerVariant, IconName> = {
+  success: 'CircleCheck',
+  error: 'CircleX',
+  warning: 'TriangleAlert',
+  info: 'Info',
+};
+
+/** Types dont l'apparition est annoncée aux lecteurs d'écran (iOS n'a pas de région vivante). `info` reste silencieux. */
+const ANNOUNCED: readonly BannerVariant[] = ['error', 'warning', 'success'];
+
+/** Clé de traduction du type, lue avant le message (« Erreur. Échec de l'envoi »). */
+export function bannerTypeKey(variant: BannerVariant) {
+  return `ui.banner.${variant}` as const;
+}
 
 function accentFor(variant: BannerVariant, colors: ColorTokens): string {
   switch (variant) {
@@ -35,7 +53,31 @@ function accentFor(variant: BannerVariant, colors: ColorTokens): string {
   }
 }
 
-/** Bannière en ligne (jamais bloquante). Le variant n'est pas porté par la couleur seule : glyphe + texte. */
+/** Bouton d'action de la bannière : cible >= 44 pt, anneau de focus visible. */
+function BannerAction({ label, onPress }: { label: string; onPress: () => void }) {
+  const { space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
+      style={[{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center', paddingHorizontal: space[2] }, ringStyle]}
+    >
+      <Text variant="body" tone="primary" style={{ fontWeight: '600' }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Bannière en ligne (jamais bloquante). Le variant n'est pas porté par la couleur seule : pictogramme Lucide + texte,
+ * et le lecteur d'écran lit le type avant le message (« Erreur. … »). L'apparition d'une erreur, d'un avertissement ou
+ * d'un succès est annoncée (iOS), la région vivante couvre Android.
+ */
 export function Banner({
   message,
   variant = 'info',
@@ -47,7 +89,13 @@ export function Banner({
   style,
 }: BannerProps) {
   const { colors, radius, space } = useTheme();
+  const { t } = useI18n();
   const accent = accentFor(variant, colors);
+  const spoken = `${t(bannerTypeKey(variant))}. ${message}`;
+
+  useEffect(() => {
+    if (ANNOUNCED.includes(variant)) announce(spoken);
+  }, [variant, spoken]);
 
   return (
     <View
@@ -58,10 +106,12 @@ export function Banner({
         {
           flexDirection: 'row',
           alignItems: 'center',
+          gap: space[2],
           padding: space[3],
           borderRadius: radius.md,
-          borderWidth: 1,
-          borderLeftWidth: 5,
+          borderWidth: borderWidth.hairline,
+          // Barre d'état à gauche : 5 pt (4 + 1), jetons d'espacement et de trait.
+          borderLeftWidth: space[1] + borderWidth.hairline,
           borderColor: accent,
           backgroundColor: colors.surface,
         },
@@ -72,45 +122,27 @@ export function Banner({
         accessible={false}
         importantForAccessibility="no-hide-descendants"
         style={{
-          width: 24,
-          height: 24,
+          minWidth: iconSize.md + space[1] * 2,
+          minHeight: iconSize.md + space[1] * 2,
           borderRadius: radius.pill,
           backgroundColor: accent,
           alignItems: 'center',
           justifyContent: 'center',
-          marginRight: space[3],
         }}
       >
-        <Text variant="caption" tone="onPrimary" style={{ fontWeight: '700', lineHeight: 16 }}>
-          {GLYPHS[variant]}
-        </Text>
+        <Icon name={ICONS[variant]} size="md" tone="onPrimary" testID={testID ? `${testID}-icon` : 'banner-icon'} />
       </View>
-      <Text variant="body" style={{ flex: 1 }}>
+      <Text variant="body" accessibilityLabel={spoken} style={{ flex: 1 }}>
         {message}
       </Text>
-      {actionLabel && onAction ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={actionLabel}
-          onPress={onAction}
-          style={{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center', paddingHorizontal: space[2] }}
-        >
-          <Text variant="body" tone="primary" style={{ fontWeight: '600' }}>
-            {actionLabel}
-          </Text>
-        </Pressable>
-      ) : null}
+      {actionLabel && onAction ? <BannerAction label={actionLabel} onPress={onAction} /> : null}
       {onDismiss ? (
-        <Pressable
-          accessibilityRole="button"
+        <IconButton
+          icon="X"
           accessibilityLabel={dismissLabel}
           onPress={onDismiss}
-          style={{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Text variant="body" tone="textMuted" aria-hidden>
-            ✕
-          </Text>
-        </Pressable>
+          testID={testID ? `${testID}-dismiss` : undefined}
+        />
       ) : null}
     </View>
   );

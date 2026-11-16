@@ -11,4 +11,8 @@ export const uiFr = {
   'demo.sample.ringStory': 'Anneau story',
   'demo.sample.ringVerified': 'Vérifié',
   'demo.sample.verifiedLabel': 'Profil vérifié',
+  'ui.banner.success': 'Succès',
+  'ui.banner.error': 'Erreur',
+  'ui.banner.warning': 'Attention',
+  'ui.banner.info': 'Information',
 } as const;

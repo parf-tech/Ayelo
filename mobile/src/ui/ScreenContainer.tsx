@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleProp, StyleSheet, View, ViewStyle, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,6 +50,8 @@ export function ScreenContainer({
 
   return (
     <SafeAreaView testID={testID} style={{ flex: 1, backgroundColor: background }}>
+      {/* Le fond prune est le même en clair et en sombre : icônes de la barre d'état toujours claires (revient à l'écran suivant). */}
+      {tone === 'brand' ? <StatusBar style="light" /> : null}
       {backdrop ? (
         <View
           testID={testID ? `${testID}-backdrop` : 'screen-backdrop'}

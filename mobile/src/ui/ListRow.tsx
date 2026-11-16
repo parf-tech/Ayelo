@@ -3,6 +3,7 @@ import { I18nManager, Pressable, View } from 'react-native';
 import { borderWidth, radius, stateOpacity, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 /** Hauteur minimale d'une ligne (docs/design/03 : cible de 56 pt). */
 const ROW_MIN_HEIGHT = 56;
@@ -37,6 +38,7 @@ export function ListRow({
   testID,
 }: ListRowProps) {
   const { colors, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   const card = {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -111,7 +113,9 @@ export function ListRow({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? (description ? `${label}. ${description}` : label)}
       onPress={onPress}
-      style={({ pressed }) => [card, { opacity: pressed ? stateOpacity.pressed : 1 }]}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
+      style={({ pressed }) => [card, { opacity: pressed ? stateOpacity.pressed : 1 }, ringStyle]}
     >
       {body}
     </Pressable>

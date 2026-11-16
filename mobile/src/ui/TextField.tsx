@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleProp, TextInput, TextInputInstance, TextInputProps, View, ViewStyle } from 'react-native';
 import { borderWidth, focus, fontFamilyFor, iconSize, MIN_TARGET, useFontsReady, useTheme } from '../theme';
+import { announce } from './a11y/announce';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
@@ -59,6 +60,11 @@ export function TextField({
   const isPassword = Boolean(secureTextEntry);
   const description = error ?? helper;
   const hasError = Boolean(error) || invalid;
+
+  // iOS n'a pas de région vivante : un nouveau message d'erreur est annoncé au lecteur d'écran (Android : région vivante).
+  useEffect(() => {
+    if (error) announce(`${label}. ${error}`);
+  }, [error, label]);
 
   const borderColor = hasError ? colors.danger : focused ? colors[focus.color] : colors.borderStrong;
 

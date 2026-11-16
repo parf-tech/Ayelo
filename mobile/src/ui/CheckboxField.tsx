@@ -3,6 +3,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type CheckboxFieldProps = {
   label: string;
@@ -28,6 +29,7 @@ export function CheckboxField({
   style,
 }: CheckboxFieldProps) {
   const { colors, radius, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -36,6 +38,8 @@ export function CheckboxField({
       accessibilityState={{ checked, disabled }}
       disabled={disabled}
       onPress={() => onChange(!checked)}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
       testID={testID}
       style={({ pressed }) => [
         {
@@ -49,6 +53,7 @@ export function CheckboxField({
           backgroundColor: colors.surface,
           opacity: pressed && !disabled ? stateOpacity.pressed : 1,
         },
+        ringStyle,
         style,
       ]}
     >

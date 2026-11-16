@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type ChipProps = {
   label: string;
@@ -20,6 +21,7 @@ export type ChipProps = {
  */
 export function Chip({ label, selected, onPress, disabled = false, testID }: ChipProps) {
   const { colors, radius, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   return (
     <Pressable
       testID={testID}
@@ -28,7 +30,9 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
       accessibilityState={{ checked: selected, disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => ({
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
+      style={({ pressed }) => ([{
         minHeight: MIN_TARGET,
         maxWidth: '100%',
         justifyContent: 'center',
@@ -39,7 +43,7 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
         borderColor: selected ? colors.primary : colors.surface,
         backgroundColor: selected ? colors.bg : colors.surface,
         opacity: disabled ? 0.6 : pressed ? stateOpacity.pressed : 1,
-      })}
+      }, ringStyle])}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 1 }}>
         {selected ? <Icon name="Check" size="sm" tone="primary" testID={testID ? `${testID}-check` : undefined} /> : null}

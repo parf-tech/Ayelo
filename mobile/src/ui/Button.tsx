@@ -44,7 +44,7 @@ export function Button({
 }: ButtonProps) {
   const { colors, radius, space } = useTheme();
   const inactive = disabled || loading;
-  const { handlers, ringStyle } = useFocusRing();
+  const { handlers, ringStyle } = useFocusRing(tone === 'onBrand' ? colors.onBrand : undefined);
   const palette = paletteFor(variant, colors, tone);
 
   return (

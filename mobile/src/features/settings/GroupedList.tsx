@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
-import { Icon, Text, type IconName } from '../../ui';
+import { borderWidth, focus, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { Icon, Text, useFocusRing, type IconName } from '../../ui';
 
 /**
  * Groupe de lignes sur une carte (réglages, profil) : fond `surface`, coins arrondis, un filet fin entre deux lignes seulement.
@@ -43,6 +43,7 @@ export type NavRowProps = {
 /** Ligne cliquable d'un `RowGroup` : icône, libellé, chevron. Cible >= 44 pt, non désactivée par la seule couleur. */
 export function NavRow({ label, onPress, icon, description, value, tone = 'default', disabled = false, trailing, accessibilityLabel, testID }: NavRowProps) {
   const { space } = useTheme();
+  const { focused, handlers, ringStyle } = useFocusRing();
   const danger = tone === 'danger';
   const iconTone = disabled ? 'disabledText' : danger ? 'danger' : 'primary';
   return (
@@ -53,7 +54,10 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => ({ opacity: pressed ? stateOpacity.pressed : 1 })}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
+      // Le groupe rogne ses coins (overflow hidden) : l'anneau est tracé vers l'intérieur pour rester visible.
+      style={({ pressed }) => [{ opacity: pressed ? stateOpacity.pressed : 1 }, ringStyle, focused ? { outlineOffset: -focus.width } : null]}
     >
       <View
         style={{

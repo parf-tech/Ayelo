@@ -3,6 +3,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Icon, IconName } from './Icon';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type ChoiceCardProps = {
   label: string;
@@ -27,6 +28,7 @@ export type ChoiceCardProps = {
  */
 export function ChoiceCard({ label, description, selected, onPress, disabled = false, icon, layout = 'card', testID, style }: ChoiceCardProps) {
   const { colors, radius, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   const tile = layout === 'tile';
   return (
     <Pressable
@@ -35,6 +37,8 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
       accessibilityState={{ checked: selected, selected, disabled }}
       disabled={disabled}
       onPress={onPress}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
       testID={testID}
       style={({ pressed }) => [
         {
@@ -49,6 +53,7 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
           backgroundColor: disabled ? colors.disabledBg : selected ? colors.bg : colors.surface,
           opacity: pressed && !disabled ? stateOpacity.pressed : 1,
         },
+        ringStyle,
         style,
       ]}
     >

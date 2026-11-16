@@ -4,6 +4,7 @@ import { ColorValue, Text as RNText } from 'react-native';
 import { useConversations } from '../features/messages/ConversationsProvider';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme';
+import { TAB_BAR_MIN_HEIGHT, useToastBottomOffset } from '../ui';
 
 function Glyph({ symbol, color }: { symbol: string; color: ColorValue }) {
   return (
@@ -19,6 +20,9 @@ export function MainTabs() {
   const { colors } = useTheme();
   const { unreadTotal } = useConversations();
 
+  // Les toasts se posent au-dessus de la barre d'onglets tant qu'elle est affichée.
+  useToastBottomOffset(TAB_BAR_MIN_HEIGHT);
+
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +30,7 @@ export function MainTabs() {
         sceneStyle: { backgroundColor: colors.bg },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border, minHeight: 56 },
+        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.border, minHeight: TAB_BAR_MIN_HEIGHT },
         tabBarLabelStyle: { fontSize: 12 },
       }}
     >

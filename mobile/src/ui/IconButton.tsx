@@ -29,6 +29,8 @@ export type IconButtonProps = {
   disabled?: boolean;
   badge?: IconButtonBadge;
   accessibilityHint?: string;
+  /** `onBrand` : bouton posé sur le fond prune ; change seulement la couleur de l'anneau de focus (sinon invisible sur prune). */
+  tone?: 'default' | 'onBrand';
   testID?: string;
   style?: StyleProp<ViewStyle>;
 };
@@ -53,11 +55,12 @@ export function IconButton({
   disabled = false,
   badge,
   accessibilityHint,
+  tone: surface = 'default',
   testID,
   style,
 }: IconButtonProps) {
   const { colors, radius, space } = useTheme();
-  const { handlers, ringStyle } = useFocusRing();
+  const { handlers, ringStyle } = useFocusRing(surface === 'onBrand' ? colors.onBrand : undefined);
 
   if (!accessibilityLabel.trim() && __DEV__) {
     throw new Error('IconButton : accessibilityLabel est obligatoire et ne peut pas être vide');

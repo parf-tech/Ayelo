@@ -32,6 +32,8 @@ export function Text({ variant = 'body', tone = 'text', header, align, style, ..
   const font: TextStyle = fontsReady ? { fontFamily: fontFamilyFor(weight) } : { fontWeight: weight };
   return (
     <RNText
+      {...rest}
+      // Après `rest` : un titre reste un titre même si un rôle explicite est passé ; hors titre, le rôle explicite s'applique.
       accessibilityRole={header ? 'header' : rest.accessibilityRole}
       style={[
         {
@@ -43,7 +45,6 @@ export function Text({ variant = 'body', tone = 'text', header, align, style, ..
         font,
         flat,
       ]}
-      {...rest}
     />
   );
 }

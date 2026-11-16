@@ -11,8 +11,11 @@ export type FocusRing = {
   ringStyle: ViewStyle;
 };
 
-/** Focus visible (WCAG 2.4.7) pour clavier externe, Switch Control et Switch Access (spec R5). */
-export function useFocusRing(): FocusRing {
+/**
+ * Focus visible (WCAG 2.4.7) pour clavier externe, Switch Control et Switch Access (spec R5).
+ * `ringColor` : couleur du contour quand `focusRing` se confond avec le fond (sur le fond prune, passer `colors.onBrand`).
+ */
+export function useFocusRing(ringColor?: string): FocusRing {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   const onFocus = useCallback(() => setFocused(true), []);
@@ -23,12 +26,12 @@ export function useFocusRing(): FocusRing {
       focused
         ? {
             outlineWidth: focus.width,
-            outlineColor: colors[focus.color],
+            outlineColor: ringColor ?? colors[focus.color],
             outlineOffset: focus.offset,
             outlineStyle: 'solid',
           }
         : NO_RING,
-    [focused, colors],
+    [focused, colors, ringColor],
   );
   return { focused, handlers, ringStyle };
 }

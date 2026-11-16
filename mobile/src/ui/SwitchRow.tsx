@@ -3,6 +3,7 @@ import { Pressable, Switch, View } from 'react-native';
 import { borderWidth, MIN_TARGET, useTheme } from '../theme';
 import { Icon, IconName } from './Icon';
 import { Text } from './Text';
+import { useFocusRing } from './hooks/useFocusRing';
 
 export type SwitchRowProps = {
   label: string;
@@ -24,21 +25,27 @@ export type SwitchRowProps = {
  */
 export function SwitchRow({ label, description, value, onValueChange, disabled = false, icon, divider = true, testID }: SwitchRowProps) {
   const { colors, space } = useTheme();
+  const { handlers, ringStyle } = useFocusRing();
   return (
     <Pressable
       accessible={false}
       disabled={disabled}
       onPress={() => onValueChange(!value)}
+      onFocus={handlers.onFocus}
+      onBlur={handlers.onBlur}
       testID={testID ? `${testID}-row` : undefined}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        minHeight: MIN_TARGET + 12,
-        paddingVertical: space[2],
-        gap: space[3],
-        borderBottomWidth: divider ? borderWidth.hairline : 0,
-        borderBottomColor: colors.border,
-      }}
+      style={[
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: MIN_TARGET + 12,
+          paddingVertical: space[2],
+          gap: space[3],
+          borderBottomWidth: divider ? borderWidth.hairline : 0,
+          borderBottomColor: colors.border,
+        },
+        ringStyle,
+      ]}
     >
       {icon ? (
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -64,6 +71,8 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         value={value}
         disabled={disabled}
         onValueChange={onValueChange}
+        onFocus={handlers.onFocus}
+        onBlur={handlers.onBlur}
         trackColor={{ false: colors.borderStrong, true: colors.primary }}
         thumbColor={colors.surface}
       />

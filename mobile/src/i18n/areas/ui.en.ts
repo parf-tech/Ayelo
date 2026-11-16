@@ -11,4 +11,8 @@ export const uiEn = {
   'demo.sample.ringStory': 'Story ring',
   'demo.sample.ringVerified': 'Verified',
   'demo.sample.verifiedLabel': 'Verified profile',
+  'ui.banner.success': 'Success',
+  'ui.banner.error': 'Error',
+  'ui.banner.warning': 'Warning',
+  'ui.banner.info': 'Info',
 } as const;
