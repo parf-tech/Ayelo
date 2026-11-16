@@ -93,17 +93,22 @@ export function VerifyEmailScreen() {
       title={t('verifyEmail.title')}
       subtitle={email ? t('verifyEmail.body', { email }) : t('verifyEmail.bodyNoEmail')}
       footer={
-        <Button testID="verify-skip" variant="ghost" label={t('verifyEmail.skip')} onPress={() => goOn(Boolean(state.user?.profile))} />
+        <View style={{ gap: space[2] }}>
+          <Button testID="verify-check" label={t('verifyEmail.check')} onPress={() => void check()} loading={checking} />
+          <Button testID="verify-skip" variant="ghost" label={t('verifyEmail.skip')} onPress={() => goOn(Boolean(state.user?.profile))} />
+        </View>
       }
     >
       <View style={{ gap: space[4] }}>
         {info ? <Banner testID="verify-banner" variant={info.variant} message={info.message} /> : null}
         <View style={{ gap: space[3] }}>
-          <Button testID="verify-check" label={t('verifyEmail.check')} onPress={() => void check()} loading={checking} />
+          {/* Libellé d'accessibilité stable : le décompte change chaque seconde et ne doit pas être relu à chaque fois. */}
           <Button
             testID="verify-resend"
             variant="secondary"
             label={cooldown > 0 ? t('verifyEmail.resendWait', { seconds: cooldown }) : t('verifyEmail.resend')}
+            accessibilityLabel={t('verifyEmail.resend')}
+            accessibilityHint={cooldown > 0 ? t('verifyEmail.resendWait', { seconds: cooldown }) : undefined}
             onPress={() => void resend()}
             loading={resending}
             disabled={cooldown > 0}

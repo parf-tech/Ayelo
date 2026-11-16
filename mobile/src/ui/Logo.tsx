@@ -2,7 +2,7 @@ import React, { useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { useI18n } from '../i18n';
-import { useTheme } from '../theme';
+import { fontWeight, useTheme } from '../theme';
 import {
   ART_COLORS,
   DOTS,
@@ -130,7 +130,7 @@ export function Logo({ variant = 'color', layout = 'symbol', size = 48, accessib
           testID={testID ? `${testID}-wordmark` : undefined}
           style={{
             color: wordColor,
-            fontWeight: '700',
+            fontWeight: fontWeight.bold,
             fontSize,
             lineHeight: fontSize * 1.4,
             letterSpacing: fontSize * (WORDMARK.letterSpacing / WORDMARK.fontSize),

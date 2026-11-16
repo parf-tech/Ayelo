@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n';
 import { Button } from '../../ui';
 
 /** Bascule fr/en : la langue du téléphone est le point de départ, le choix de l'utilisateur prime ensuite. */
-export function LanguageToggle() {
+export function LanguageToggle({ tone = 'default' }: { tone?: 'default' | 'onBrand' } = {}) {
   const { locale, setLocale, t } = useI18n();
   const other = locale === 'fr' ? 'en' : 'fr';
   return (
@@ -12,6 +12,7 @@ export function LanguageToggle() {
       <Button
         testID="language-toggle"
         variant="ghost"
+        tone={tone}
         label={t(`language.name.${other}`)}
         accessibilityLabel={`${t('language.change')}: ${t(`language.name.${other}`)}`}
         onPress={() => setLocale(other)}

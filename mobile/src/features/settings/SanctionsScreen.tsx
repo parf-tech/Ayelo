@@ -67,7 +67,7 @@ export function SanctionsScreen() {
               {s.appeal_status ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
                   <Icon name={appealGlyph(s.appeal_status)} size="sm" tone="primary" />
-                  <Text variant="body" tone="primary" style={{ fontWeight: '500', flexShrink: 1 }} testID={`sanction-appeal-status-${s.id}`}>
+                  <Text variant="bodyMedium" tone="primary" style={{ flexShrink: 1 }} testID={`sanction-appeal-status-${s.id}`}>
                     {appealStatusLabel(t, s.appeal_status)}
                   </Text>
                 </View>

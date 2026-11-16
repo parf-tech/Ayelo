@@ -7,9 +7,6 @@ export const callsEn = {
   'call.decline': 'Decline',
   'call.cancel': 'Cancel the call',
   'call.hangup': 'Hang up',
-  'call.mute': 'Microphone',
-  'call.camera': 'Camera',
-  'call.speaker': 'Speaker',
   'call.report': 'Report',
   'call.media.unavailable':
     'Sound and video are not available for this call: only the ringing is transmitted.',

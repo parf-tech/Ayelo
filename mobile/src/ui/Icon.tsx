@@ -15,6 +15,7 @@ export type IconTone = keyof Pick<
   | 'onPrimary'
   | 'onAccent'
   | 'onBrand'
+  | 'accent'
   | 'danger'
   | 'success'
   | 'warning'

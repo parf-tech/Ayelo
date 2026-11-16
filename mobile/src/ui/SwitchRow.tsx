@@ -53,7 +53,7 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         </View>
       ) : null}
       <View style={{ flex: 1 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Text variant="body" tone={disabled ? 'textMuted' : 'text'} style={{ fontWeight: '500' }}>
+        <Text variant="bodyMedium" tone={disabled ? 'textMuted' : 'text'}>
           {label}
         </Text>
         {description ? (

@@ -47,7 +47,7 @@ export function ConsentsScreen() {
       footer={
         <View style={{ gap: space[2] }}>
           {!canContinue ? (
-            <Text variant="caption" tone="textMuted" testID="consents-missing">
+            <Text variant="caption" tone="textMuted" testID="consents-missing" accessibilityLiveRegion="polite">
               {t('consents.missing')}
             </Text>
           ) : null}
@@ -72,7 +72,9 @@ export function ConsentsScreen() {
           checked={consents.terms}
           onChange={set('terms')}
         />
-        <Button testID="consent-terms-read" variant="ghost" label={t('consents.terms.read')} onPress={() => read('terms')} />
+        <View style={{ alignSelf: 'flex-start' }}>
+          <Button testID="consent-terms-read" variant="ghost" label={t('consents.terms.read')} onPress={() => read('terms')} />
+        </View>
         <CheckboxField
           testID="consent-privacy"
           label={t('consents.privacy.label')}
@@ -81,7 +83,9 @@ export function ConsentsScreen() {
           checked={consents.privacy}
           onChange={set('privacy')}
         />
-        <Button testID="consent-privacy-read" variant="ghost" label={t('consents.privacy.read')} onPress={() => read('privacy')} />
+        <View style={{ alignSelf: 'flex-start' }}>
+          <Button testID="consent-privacy-read" variant="ghost" label={t('consents.privacy.read')} onPress={() => read('privacy')} />
+        </View>
         <CheckboxField
           testID="consent-sensitive"
           label={t('consents.sensitive.label')}

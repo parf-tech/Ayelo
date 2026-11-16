@@ -36,7 +36,6 @@ export const discoverEn = {
   'match.body': 'You and {name} liked each other.',
   'match.write': 'Write a message',
   'match.continue': 'Keep discovering',
-  'match.toast': 'New match with {name}.',
   'match.toastGeneric': 'You have a new match.',
   'match.toast.open': 'View',
 

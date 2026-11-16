@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
-import { borderWidth, fontWeight, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
 import { Icon, Text, type IconName } from '../../ui';
 
 /** Ligne d'un menu déroulant (fiche d'un profil, conversation) : icône + libellé, cible >= 44, ton danger pour une action destructrice. */
@@ -41,7 +41,7 @@ export function MenuItem({
       })}
     >
       {loading ? <ActivityIndicator color={danger ? colors.danger : colors.text} /> : <Icon name={icon} tone={danger ? 'danger' : 'text'} />}
-      <Text variant="body" tone={danger ? 'danger' : 'text'} style={{ flex: 1, fontWeight: fontWeight.medium }}>
+      <Text variant="bodyMedium" tone={danger ? 'danger' : 'text'} style={{ flex: 1 }}>
         {label}
       </Text>
     </Pressable>

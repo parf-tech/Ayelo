@@ -56,7 +56,7 @@ export function CreditsScreen() {
           }}
         >
           <Icon name="MessageCircle" size="lg" tone="primary" />
-          <Text variant="body" style={{ fontWeight: '600', flex: 1 }} testID="credits-balance">
+          <Text variant="bodyStrong" style={{ flex: 1 }} testID="credits-balance">
             {t('premium.balance', { count: data.data?.status.credits.conversation ?? 0 })}
           </Text>
         </View>

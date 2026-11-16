@@ -2,7 +2,6 @@ import { frAreas } from './areas';
 
 // Langue de base : français. `en.ts` doit avoir exactement les mêmes clés (test __tests__/i18n.test.ts).
 export const fr = {
-  'app.name': 'Ayelo',
 
   'common.back': 'Retour',
   'common.continue': 'Continuer',
@@ -18,16 +17,11 @@ export const fr = {
 
   'ui.password.show': 'Afficher le mot de passe',
   'ui.password.hide': 'Masquer le mot de passe',
-  'ui.password.showShort': 'Afficher',
-  'ui.password.hideShort': 'Masquer',
   'ui.toast.dismiss': 'Fermer la notification',
   'ui.banner.dismiss': 'Fermer le message',
 
-  'welcome.title': 'Rencontrez des personnes qui cherchent la même chose que vous.',
   'welcome.subtitle': 'Mariage, relation durable, flirt ou amitié : dites ce que vous cherchez.',
-  'welcome.createAccount': 'Créer un compte',
-  'welcome.signIn': 'Se connecter',
-  'welcome.safety': "Ne versez jamais d'argent à une personne rencontrée en ligne.",
+  'welcome.safety': 'Ne versez jamais d’argent à une personne rencontrée en ligne.',
   'welcome.demo': 'Voir les composants (développement)',
 
   'consents.title': 'Avant de commencer',
@@ -54,18 +48,6 @@ export const fr = {
   'birthdate.invalid': "Cette date n'existe pas.",
   'birthdate.future': 'La date doit être dans le passé.',
 
-  'month.1': 'janvier',
-  'month.2': 'février',
-  'month.3': 'mars',
-  'month.4': 'avril',
-  'month.5': 'mai',
-  'month.6': 'juin',
-  'month.7': 'juillet',
-  'month.8': 'août',
-  'month.9': 'septembre',
-  'month.10': 'octobre',
-  'month.11': 'novembre',
-  'month.12': 'décembre',
 
   'ageRefused.title': 'Inscription impossible',
   'ageRefused.body': 'Nous ne pouvons pas créer de compte.',
@@ -150,6 +132,7 @@ export const fr = {
   'profile.country': 'Pays de résidence',
   'profile.country.search': 'Rechercher un pays',
   'profile.country.none': 'Aucun pays trouvé.',
+  'profile.country.more': '{count} autres pays : utilisez la recherche.',
   'profile.city': 'Ville',
 
   'gender.man': 'Homme',
@@ -170,10 +153,6 @@ export const fr = {
   'intent.lets_find_out.label': 'On verra bien',
   'intent.lets_find_out.description': "Pas d'idée précise pour l'instant : je me laisse surprendre",
 
-  'home.title': 'Bienvenue',
-  'home.provisional': 'Écran provisoire : la découverte de profils arrive bientôt.',
-  'home.signedInAs': 'Connecté en tant que {email}',
-  'home.logout': 'Se déconnecter',
 
   'brand.logoLabel': 'Ayelo',
 

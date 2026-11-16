@@ -17,7 +17,6 @@ export const messagesEn = {
   'messages.preview.call_missed': 'Missed call',
   'messages.preview.deleted': 'Message deleted',
   'messages.preview.other': 'New message',
-  'messages.blocked': 'Blocked conversation',
 
   'conversation.title': 'Chat',
   'conversation.day.today': 'Today',
@@ -54,7 +53,6 @@ export const messagesEn = {
   'conversation.media.image': 'Picture received',
   'conversation.media.video': 'Video received',
   'conversation.media.voice': 'Voice message received',
-  'conversation.media.unsupported': 'Attachments are not supported.',
   'conversation.missedCall.audio': 'Missed audio call',
   'conversation.missedCall.video': 'Missed video call',
   'conversation.safety.title': 'Careful: request for money',

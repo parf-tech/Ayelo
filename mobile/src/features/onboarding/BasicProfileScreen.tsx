@@ -10,6 +10,9 @@ import { CountryPicker } from './CountryPicker';
 import { OnboardingFrame } from './OnboardingFrame';
 import { useOnboardingDraft } from './OnboardingProvider';
 
+/** Largeur minimale d'une tuile de genre, en pt : le libellé le plus long (« Non-binaire ») ne se coupe jamais. */
+const GENDER_TILE_MIN_WIDTH = 104;
+
 type Errors = { name?: string; gender?: string; country?: string; origin?: string; city?: string };
 
 /** S04 : profil de base (nom, genre, pays de résidence, ville). La date de naissance a déjà été saisie en S68. */
@@ -56,10 +59,12 @@ export function BasicProfileScreen() {
             maxLength={40}
             autoComplete="name"
             textContentType="givenName"
+            autoCapitalize="words"
+            returnKeyType="done"
           />
 
           <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[1] }}>
-            <Text variant="label" tone={errors.gender ? 'danger' : 'text'} style={{ fontWeight: '500' }}>
+            <Text variant="label" tone={errors.gender ? 'danger' : 'text'}>
               {t('profile.gender')}
             </Text>
             {/* Base = largeur du contenu (jamais de mot coupé) : les tuiles se partagent la ligne, ou passent à la suivante à 320 pt et en grande police. */}
@@ -72,7 +77,7 @@ export function BasicProfileScreen() {
                   label={t(`gender.${gender}`)}
                   selected={draft.gender === gender}
                   onPress={() => update({ gender })}
-                  style={{ flexGrow: 1, minWidth: 104 }}
+                  style={{ flexGrow: 1, minWidth: GENDER_TILE_MIN_WIDTH }}
                 />
               ))}
             </View>
@@ -102,6 +107,9 @@ export function BasicProfileScreen() {
             error={errors.city}
             maxLength={80}
             autoComplete="postal-address-locality"
+            autoCapitalize="words"
+            returnKeyType="done"
+            onSubmitEditing={next}
           />
         </View>
       </View>

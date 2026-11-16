@@ -3,7 +3,7 @@ import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../i18n';
-import { MAX_CONTENT_WIDTH, borderWidth, radius, useTheme } from '../../theme';
+import { MAX_CONTENT_WIDTH, MIN_TARGET, borderWidth, radius, useTheme } from '../../theme';
 import { IconButton, Logo, Stepper, Text } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { FOOTER_MAX_HEIGHT_RATIO, LARGE_FONT_SCALE } from '../../ui/ScreenContainer';
@@ -12,6 +12,9 @@ import { ONBOARDING_STEP_KEYS, ONBOARDING_STEPS, OnboardingStepKey, onboardingSt
 
 /** Variante du logo faite pour le fond de marque (mot-symbole clair). */
 const LOGO_ON_BRAND = LOGO_VARIANTS.find(isOnBrandVariant) ?? 'color';
+
+/** Hauteur du logo de l'en-tête d'onboarding, en pt (plus petit que celui de l'accueil, 72). */
+const ONBOARDING_LOGO_SIZE = 28;
 
 type Props = {
   testID: string;
@@ -27,7 +30,7 @@ type Props = {
 };
 
 /**
- * Cadre commun des écrans d'onboarding : en-tête de marque (logo, étapes, titre en Poppins SemiBold) puis panneau clair
+ * Cadre commun des écrans d'onboarding : en-tête de marque (logo, étapes, titre en Poppins Bold) puis panneau clair
  * aux coins supérieurs arrondis qui porte le formulaire ; l'action principale reste en bas, pleine largeur.
  * Le pied de page plafonne sa hauteur et défile avec un texte très agrandi (comme ScreenContainer).
  */
@@ -55,7 +58,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
             keyboardShouldPersistTaps="handled"
           >
             <View style={[inner, { paddingTop: space[3], paddingBottom: space[6], gap: space[4] }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: MIN_TARGET }}>
                 {backHref ? (
                   <IconButton
                     testID="back-button"
@@ -66,7 +69,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
                     onPress={goBack}
                   />
                 ) : null}
-                <Logo variant={LOGO_ON_BRAND} layout="horizontal" size={28} />
+                <Logo variant={LOGO_ON_BRAND} layout="horizontal" size={ONBOARDING_LOGO_SIZE} />
               </View>
               {step ? (
                 <Stepper
@@ -78,11 +81,11 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
                 />
               ) : null}
               <View style={{ gap: space[2] }}>
-                <Text variant="title" header style={{ color: colors.onBrand, fontWeight: '600' }}>
+                <Text variant="title" header tone="onBrand">
                   {title}
                 </Text>
                 {subtitle ? (
-                  <Text variant="body" style={{ color: colors.onBrand, opacity: 0.86 }}>
+                  <Text variant="body" tone="onBrand">
                     {subtitle}
                   </Text>
                 ) : null}

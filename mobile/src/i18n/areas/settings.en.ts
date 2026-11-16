@@ -98,6 +98,7 @@ export const settingsEn = {
   'delete.passwordRequired': 'Enter your password.',
   'delete.wrongPassword': 'Wrong password.',
   'delete.done': 'Request recorded. Your profile is hidden.',
+  'delete.notice': 'Request recorded. Your profile is hidden. Permanent deletion in {days} days. To cancel the deletion before that date, contact support.',
 
   'export.title': 'Export my data',
   'export.body': 'You can request a copy of your personal data, one request per day',

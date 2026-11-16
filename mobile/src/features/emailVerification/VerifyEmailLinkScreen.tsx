@@ -20,9 +20,14 @@ export function VerifyEmailLinkScreen() {
   const params = useLocalSearchParams<{ token?: string }>();
   const initial = typeof params.token === 'string' ? params.token : '';
   const [token, setToken] = useState(initial);
+  const [seenInitial, setSeenInitial] = useState(initial);
+  // Second lien ouvert pendant que l'écran est monté : la saisie suit le paramètre (ajustement pendant le rendu).
+  if (initial !== seenInitial) {
+    setSeenInitial(initial);
+    if (initial !== '') setToken(initial);
+  }
   const [status, setStatus] = useState<'idle' | 'working' | 'done' | 'error'>(initial ? 'working' : 'idle');
   const [message, setMessage] = useState<string | undefined>();
-  const started = useRef(false);
 
   const verify = async (value: string) => {
     setStatus('working');
@@ -38,13 +43,15 @@ export function VerifyEmailLinkScreen() {
     }
   };
 
+  // Premier lien, ou un second lien ouvert pendant que l'écran est monté : le code suit le paramètre de la route.
+  const lastToken = useRef<string | null>(null);
   useEffect(() => {
-    if (initial && !started.current) {
-      started.current = true;
+    if (initial && lastToken.current !== initial) {
+      lastToken.current = initial;
       void verify(initial);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initial]);
 
   return (
     <ScreenContainer testID="screen-verify-link" scroll>
@@ -53,8 +60,8 @@ export function VerifyEmailLinkScreen() {
         {t('verifyEmail.link.title')}
       </Text>
       {status === 'working' ? (
-        <View style={{ gap: space[3] }}>
-          <Text variant="body" tone="textMuted">
+        <View style={{ gap: space[3] }} accessibilityState={{ busy: true }}>
+          <Text variant="body" tone="textMuted" accessibilityLiveRegion="polite">
             {t('verifyEmail.link.working')}
           </Text>
           <Skeleton />
@@ -76,6 +83,11 @@ export function VerifyEmailLinkScreen() {
             onChangeText={setToken}
             autoCapitalize="none"
             autoCorrect={false}
+            textContentType="oneTimeCode"
+            returnKeyType="go"
+            onSubmitEditing={() => {
+              if (token.trim() !== '') void verify(token);
+            }}
           />
           <Button
             testID="verify-link-submit"

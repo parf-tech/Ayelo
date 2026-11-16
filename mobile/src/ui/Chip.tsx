@@ -47,7 +47,7 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 1 }}>
         {selected ? <Icon name="Check" size="sm" tone="primary" testID={testID ? `${testID}-check` : undefined} /> : null}
-        <Text variant="bodySmall" style={{ fontWeight: '500', flexShrink: 1 }}>
+        <Text variant="bodySmallMedium" style={{ flexShrink: 1 }}>
           {label}
         </Text>
       </View>

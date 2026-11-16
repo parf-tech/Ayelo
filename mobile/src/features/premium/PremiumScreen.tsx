@@ -57,7 +57,7 @@ export function PremiumScreen() {
       footer={
         data.status === 'ready' && !alreadySubscribed && selectedPlan ? (
           <View style={{ gap: space[2] }}>
-            <Text variant="body" style={{ fontWeight: '600' }} testID="premium-summary">
+            <Text variant="bodyStrong" testID="premium-summary">
               {selectedPrice
                 ? t('premium.summary', { plan: planLabel(selectedPlan.months), price: selectedPrice })
                 : t('premium.summary.noPrice', { plan: planLabel(selectedPlan.months) })}

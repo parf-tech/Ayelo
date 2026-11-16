@@ -3,7 +3,22 @@ import { StyleSheet, Text as RNText, TextProps as RNTextProps, TextStyle } from 
 import { fontFamilyFor, useFontsReady, useTheme } from '../theme';
 import type { ColorTokens } from '../theme/tokens';
 
-export type TextVariant = 'title' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label' | 'captionStrong';
+export type TextVariant =
+  | 'title'
+  | 'h2'
+  | 'h3'
+  | 'body'
+  | 'bodySmall'
+  | 'caption'
+  | 'label'
+  | 'captionStrong'
+  | 'captionMedium'
+  | 'bodySmallMedium'
+  | 'bodyMedium'
+  | 'bodyStrong'
+  | 'labelStrong'
+  | 'bodyBold'
+  | 'bodySmallStrong';
 export type TextTone = keyof Pick<
   ColorTokens,
   'text' | 'textMuted' | 'primary' | 'danger' | 'success' | 'warning' | 'onPrimary' | 'onAccent' | 'onBrand' | 'like' | 'dislike' | 'verified'

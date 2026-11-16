@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Image, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, useWindowDimensions, View } from 'react-native';
 import type { ProfileMedia } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
@@ -7,7 +7,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { pickImage, type PickedImage } from '../../media/picker';
 import { uploadMedia } from '../../media/upload';
-import { borderWidth, useTheme } from '../../theme';
+import { borderWidth, stateOpacity, useTheme } from '../../theme';
 import { AsyncView, Banner, Button, Icon, IconButton, Text } from '../../ui';
 
 export const MAX_PHOTOS = 6;
@@ -29,7 +29,7 @@ export function PhotosManager({ onChange }: Props) {
   const { api } = useAuth();
   const me = useResource(() => api.auth.me(), [api]);
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
-  const [banner, setBanner] = useState<string | undefined>();
+  const [banner, setBanner] = useState<{ message: string; settings?: boolean } | undefined>();
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [nextKey, setNextKey] = useState(1);
 
@@ -50,7 +50,7 @@ export function PhotosManager({ onChange }: Props) {
   const showError = useCallback(
     (error: unknown) => {
       const { key, params } = apiErrorMessage(error);
-      setBanner(t(key, params));
+      setBanner({ message: t(key, params) });
     },
     [t],
   );
@@ -75,7 +75,8 @@ export function PhotosManager({ onChange }: Props) {
     if (total >= MAX_PHOTOS) return;
     const result = await pickImage('library');
     if (result.kind === 'denied') {
-      setBanner(t('photos.permissionDenied'));
+      // L'autorisation ne se redonne que dans les réglages du téléphone : le bandeau y mène.
+      setBanner({ message: t('photos.permissionDenied'), settings: true });
       return;
     }
     if (result.kind !== 'picked') return;
@@ -144,7 +145,9 @@ export function PhotosManager({ onChange }: Props) {
         <Banner
           testID="photos-banner"
           variant="error"
-          message={banner}
+          message={banner.message}
+          actionLabel={banner.settings ? t('photos.permissionDenied.action') : undefined}
+          onAction={banner.settings ? () => void Linking.openSettings() : undefined}
           onDismiss={() => setBanner(undefined)}
           dismissLabel={t('ui.banner.dismiss')}
           style={{ marginBottom: space[3] }}
@@ -170,6 +173,9 @@ export function PhotosManager({ onChange }: Props) {
                 {photo.url ? (
                   <Image
                     source={{ uri: photo.url }}
+                    accessible
+                    accessibilityRole="image"
+                    accessibilityIgnoresInvertColors
                     accessibilityLabel={t('photos.alt', { n: index + 1 })}
                     style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }}
                   />
@@ -185,9 +191,9 @@ export function PhotosManager({ onChange }: Props) {
                     tone={photo.status === 'approved' ? 'success' : 'warning'}
                   />
                   <Text
-                    variant="caption"
+                    variant="captionMedium"
                     tone={photo.status === 'approved' ? 'success' : 'warning'}
-                    style={{ fontWeight: '500', flexShrink: 1 }}
+                    style={{ flexShrink: 1 }}
                     testID={`photo-status-${photo.id}`}
                   >
                     {t(`photos.status.${photo.status}`)}
@@ -233,8 +239,20 @@ export function PhotosManager({ onChange }: Props) {
               testID={`upload-${upload.key}`}
               style={{ width: tileWidth, borderRadius: radius.md, borderWidth: borderWidth.hairline, borderColor: upload.status === 'failed' ? colors.danger : colors.border, overflow: 'hidden', backgroundColor: colors.surface }}
             >
-              <Image source={{ uri: upload.image.uri }} accessibilityIgnoresInvertColors accessible={false} style={{ width: '100%', aspectRatio: 3 / 4, opacity: 0.6 }} />
-              <Text variant="caption" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2], fontWeight: '500' }}>
+              <View>
+                <Image
+                  source={{ uri: upload.image.uri }}
+                  accessibilityIgnoresInvertColors
+                  accessible={false}
+                  style={{ width: '100%', aspectRatio: 3 / 4, opacity: stateOpacity.skeleton }}
+                />
+                {upload.status === 'uploading' ? (
+                  <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  </View>
+                ) : null}
+              </View>
+              <Text variant="captionMedium" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2] }}>
                 {upload.status === 'failed' ? (upload.message ?? t('photos.failed')) : t('photos.uploading')}
               </Text>
               {upload.status === 'failed' ? (
@@ -251,7 +269,7 @@ export function PhotosManager({ onChange }: Props) {
         <Button
           testID="photos-add"
           variant="secondary"
-          label={total >= MAX_PHOTOS ? t('photos.full') : t('photos.add')}
+          label={total >= MAX_PHOTOS ? t('photos.full', { max: MAX_PHOTOS }) : t('photos.add')}
           disabled={total >= MAX_PHOTOS || me.status !== 'ready'}
           onPress={() => void add()}
         />

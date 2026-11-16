@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
-import { borderWidth, radius, useTheme } from '../../theme';
+import { borderWidth, iconSize, radius, useTheme } from '../../theme';
 import { Icon, Text } from '../../ui';
 
 /** Avantages réellement inclus (liste de `premium.subtitle`, ancien texte unique) : coche + texte, jamais la couleur seule. */
@@ -27,7 +27,7 @@ export function PremiumBenefits() {
         {t('premium.benefits.title')}
       </Text>
       {BENEFITS.map((key) => (
-        <View key={key} accessibilityRole="text" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], minHeight: 28 }}>
+        <View key={key} accessibilityRole="text" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], minHeight: iconSize.lg + space[1] }}>
           <Icon name="CircleCheck" size="md" tone="primary" />
           <Text variant="body" style={{ flex: 1 }}>
             {t(`premium.benefit.${key}` as 'premium.benefit.likes')}

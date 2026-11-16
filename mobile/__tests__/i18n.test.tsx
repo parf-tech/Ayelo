@@ -36,7 +36,7 @@ describe('i18n : parité fr / en', () => {
 
   it('les traductions anglaises ne sont pas de simples copies du français (hors termes identiques par nature)', () => {
     const byNature = (k: string) =>
-      ['app.name', 'intent.flirt.label', 'demo.sample.danger', 'birthdate.monthPlaceholder', 'brand.logoLabel', 'demo.logo', 'onboarding.step.photos', 'common.counter'].includes(k) || k.startsWith('language.name.') || k.startsWith('country.');
+      ['intent.flirt.label', 'demo.sample.danger', 'birthdate.monthPlaceholder', 'brand.logoLabel', 'demo.logo', 'onboarding.step.photos', 'common.counter'].includes(k) || k.startsWith('language.name.') || k.startsWith('country.');
     const identical = (Object.keys(fr) as (keyof typeof fr)[]).filter((k) => fr[k] === en[k] && !byNature(k));
     expect(identical).toEqual([]);
   });
@@ -44,8 +44,8 @@ describe('i18n : parité fr / en', () => {
 
 describe('translate / resolveLocale', () => {
   it('interpole les paramètres', () => {
-    expect(translate('fr', 'home.signedInAs', { email: 'a@b.fr' })).toBe('Connecté en tant que a@b.fr');
-    expect(translate('en', 'home.signedInAs', { email: 'a@b.fr' })).toBe('Signed in as a@b.fr');
+    expect(translate('fr', 'profileTab.age', { name: 'Awa', age: 28 })).toBe('Awa, 28 ans');
+    expect(translate('en', 'profileTab.age', { name: 'Awa', age: 28 })).toBe('Awa, 28');
   });
 
   it('résout la langue du téléphone vers fr ou en, sinon fr', () => {
@@ -64,7 +64,7 @@ describe('I18nProvider', () => {
     return (
       <>
         <Text testID="locale">{locale}</Text>
-        <Text testID="title">{t('welcome.createAccount')}</Text>
+        <Text testID="title">{t('welcome.cta.create')}</Text>
         <Button label="switch" onPress={() => setLocale(locale === 'fr' ? 'en' : 'fr')} />
       </>
     );
@@ -78,14 +78,14 @@ describe('I18nProvider', () => {
       </I18nProvider>,
     );
     expect(screen.getByTestId('locale')).toHaveTextContent('en');
-    expect(screen.getByTestId('title')).toHaveTextContent('Create an account');
+    expect(screen.getByTestId('title')).toHaveTextContent('Create my account');
   });
 
   it('permet de changer de langue et mémorise le choix (stockage sécurisé)', async () => {
     await renderThemed(<Probe />);
-    expect(screen.getByTestId('title')).toHaveTextContent('Créer un compte');
+    expect(screen.getByTestId('title')).toHaveTextContent('Créer mon compte');
     await userEvent.setup().press(screen.getByRole('button', { name: 'switch' }));
-    expect(screen.getByTestId('title')).toHaveTextContent('Create an account');
+    expect(screen.getByTestId('title')).toHaveTextContent('Create my account');
     await act(async () => undefined);
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith('ayelo.locale', 'en');
   });

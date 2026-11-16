@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 import type { Conversation, ConversationLastMessage } from '../../api/types';
 import { useI18n } from '../../i18n';
-import { borderWidth, fontWeight, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
 import { AsyncView, Avatar, ScreenContainer, Text } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { useConversations } from './ConversationsProvider';
@@ -130,11 +130,11 @@ export function MessagesListScreen() {
               >
                 <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={AVATAR_SIZE} />
                 <View style={{ flex: 1, gap: space[1] }}>
-                  <Text variant="body" numberOfLines={1} style={{ fontWeight: unread ? fontWeight.bold : fontWeight.semibold }}>
+                  <Text variant={unread ? 'bodyBold' : 'bodyStrong'} numberOfLines={1}>
                     {name}
                   </Text>
                   {/* Non lu : graisse ET pastille numérique, jamais la couleur seule. */}
-                  <Text variant="bodySmall" tone={unread ? 'text' : 'textMuted'} numberOfLines={2} style={{ fontWeight: unread ? fontWeight.semibold : undefined }}>
+                  <Text variant={unread ? 'bodySmallStrong' : 'bodySmall'} tone={unread ? 'text' : 'textMuted'} numberOfLines={2}>
                     {preview}
                   </Text>
                 </View>

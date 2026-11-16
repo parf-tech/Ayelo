@@ -80,6 +80,27 @@
   --type-caption-strong-size: 0.8125rem;
   --type-caption-strong-line: 1.125rem;
   --type-caption-strong-weight: 600;
+  --type-caption-medium-size: 0.8125rem;
+  --type-caption-medium-line: 1.125rem;
+  --type-caption-medium-weight: 500;
+  --type-body-small-medium-size: 0.875rem;
+  --type-body-small-medium-line: 1.25rem;
+  --type-body-small-medium-weight: 500;
+  --type-body-medium-size: 1rem;
+  --type-body-medium-line: 1.5rem;
+  --type-body-medium-weight: 500;
+  --type-body-strong-size: 1rem;
+  --type-body-strong-line: 1.5rem;
+  --type-body-strong-weight: 600;
+  --type-label-strong-size: 0.875rem;
+  --type-label-strong-line: 1.25rem;
+  --type-label-strong-weight: 600;
+  --type-body-bold-size: 1rem;
+  --type-body-bold-line: 1.5rem;
+  --type-body-bold-weight: 700;
+  --type-body-small-strong-size: 0.875rem;
+  --type-body-small-strong-line: 1.25rem;
+  --type-body-small-strong-weight: 600;
 
   --elevation-0: none;
   --elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.08);

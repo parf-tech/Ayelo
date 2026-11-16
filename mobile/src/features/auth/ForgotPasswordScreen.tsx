@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
@@ -43,7 +44,10 @@ export function ForgotPasswordScreen() {
       testID="screen-forgot"
       footer={
         sent ? (
-          <Button testID="forgot-have-link" label={t('forgot.haveLink')} onPress={() => router.push('/reset-password' as never)} />
+          <View style={{ gap: space[3] }}>
+            <Button testID="forgot-have-link" label={t('forgot.haveLink')} onPress={() => router.push('/reset-password' as never)} />
+            <Button testID="forgot-retry" variant="ghost" label={t('forgot.retry')} onPress={() => setSent(false)} />
+          </View>
         ) : (
           <Button testID="forgot-submit" label={t('forgot.submit')} onPress={() => void submit()} loading={loading} />
         )
@@ -71,6 +75,11 @@ export function ForgotPasswordScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="go"
+          onSubmitEditing={() => {
+            if (!loading) void submit();
+          }}
         />
       )}
     </ScreenContainer>

@@ -20,7 +20,14 @@ export function ResetPasswordScreen() {
   const passwordRef = useRef<TextInputInstance>(null);
   const confirmRef = useRef<TextInputInstance>(null);
   const params = useLocalSearchParams<{ token?: string }>();
-  const [token, setToken] = useState(typeof params.token === 'string' ? params.token : '');
+  const paramToken = typeof params.token === 'string' ? params.token : '';
+  const [token, setToken] = useState(paramToken);
+  const [seenParamToken, setSeenParamToken] = useState(paramToken);
+  // Un second lien ouvert pendant que l'écran est monté : le code suit le paramètre de la route (ajustement pendant le rendu).
+  if (paramToken !== seenParamToken) {
+    setSeenParamToken(paramToken);
+    if (paramToken !== '') setToken(paramToken);
+  }
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState<{ token?: string; password?: string; confirm?: string }>({});
@@ -44,7 +51,9 @@ export function ResetPasswordScreen() {
       setDone(true);
     } catch (e) {
       if (isApiError(e) && e.isValidation && e.fieldError('password')) {
+        // Le message du champ suffit : pas de bandeau qui répète la même chose.
         setErrors({ password: t('validation.password.weak') });
+        return;
       }
       const { key, params: p } = apiErrorMessage(e);
       setBanner(t(key, p));

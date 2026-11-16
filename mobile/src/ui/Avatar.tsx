@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, View } from 'react-native';
-import { borderWidth, space, useTheme } from '../theme';
+import { borderWidth, fontWeight, space, useTheme } from '../theme';
 import { Text } from './Text';
 
 /** `true` = anneau de story. `verified` = anneau couleur du jeton `verified`. */
@@ -47,7 +47,7 @@ export function Avatar({ uri, name, size = 48, ring, testID }: AvatarProps) {
     />
   ) : (
     <View testID={testID} accessible={false} style={[base, { alignItems: 'center', justifyContent: 'center' }]}>
-      <Text variant="body" tone="textMuted" style={{ fontWeight: '700', fontSize: initialSize, lineHeight: Math.round(initialSize * 1.25) }}>
+      <Text variant="body" tone="textMuted" style={{ fontWeight: fontWeight.bold, fontSize: initialSize, lineHeight: Math.round(initialSize * 1.25) }}>
         {name.trim().charAt(0).toUpperCase()}
       </Text>
     </View>

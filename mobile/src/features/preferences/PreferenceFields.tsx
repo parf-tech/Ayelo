@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { GENDERS, INTENTS, type Preferences } from '../../api/types';
 import { useI18n } from '../../i18n';
-import { MIN_TARGET, useTheme } from '../../theme';
+import { borderWidth, MIN_TARGET, useTheme } from '../../theme';
 import { Chip, IconButton, SwitchRow, Text } from '../../ui';
 import { FormSection } from '../onboarding/FormSection';
 import { COUNTRY_CODES, countryKey } from '../onboarding/countries';
@@ -15,6 +15,8 @@ export const AGE_MAX = 99;
 
 /** Diamètre des repères de la piste d'âge (décoratifs : les boutons − et + règlent les valeurs). */
 const TRACK_THUMB = 24;
+/** Épaisseur de la piste d'âge, en pt (décorative). */
+const TRACK_HEIGHT = 4;
 
 function toggle<T>(list: readonly T[], item: T): T[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
@@ -42,7 +44,7 @@ function AgeStepper({
 }) {
   const { space } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], minHeight: MIN_TARGET + 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], minHeight: MIN_TARGET + space[2] }}>
       <Text variant="body" testID={`${testID}-value`} accessibilityLiveRegion="polite" style={{ flex: 1 }}>
         {label}
       </Text>
@@ -83,7 +85,7 @@ function AgeTrack({ min, max }: { min: number; max: number }) {
       importantForAccessibility="no-hide-descendants"
       style={{ height: TRACK_THUMB, justifyContent: 'center', marginHorizontal: TRACK_THUMB / 2 }}
     >
-      <View style={{ height: 4, borderRadius: radius.pill, backgroundColor: colors.border }}>
+      <View style={{ height: TRACK_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.border }}>
         <View style={{ position: 'absolute', left: `${left}%`, width: `${width}%`, top: 0, bottom: 0, borderRadius: radius.pill, backgroundColor: colors.primary }} />
       </View>
       {[left, left + width].map((at, i) => (
@@ -96,7 +98,7 @@ function AgeTrack({ min, max }: { min: number; max: number }) {
             height: TRACK_THUMB,
             marginLeft: -TRACK_THUMB / 2,
             borderRadius: TRACK_THUMB / 2,
-            borderWidth: 2,
+            borderWidth: borderWidth.strong,
             borderColor: colors.primary,
             backgroundColor: colors.bg,
           }}
@@ -202,7 +204,7 @@ export function PreferenceFields({ value, onChange, showSeeking = true, idPrefix
           testID={`${idPrefix}-verified`}
           icon="BadgeCheck"
           label={t('prefs.verifiedOnly')}
-          description={`${t('common.optional')} · ${t('prefs.verifiedOnly.hint')}`}
+          description={t('prefs.verifiedOnly.hintOptional')}
           value={value.verified_only}
           onValueChange={(verified_only) => set({ verified_only })}
           divider={false}

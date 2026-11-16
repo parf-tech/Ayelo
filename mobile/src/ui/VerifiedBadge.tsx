@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { MIN_TARGET, useTheme } from '../theme';
+import { fontWeight, MIN_TARGET, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
@@ -33,7 +33,7 @@ export function VerifiedBadge({ label, explanation, hint, testID }: VerifiedBadg
         style={[{ minHeight: MIN_TARGET, flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' }, ringStyle]}
       >
         <Icon name="BadgeCheck" size="sm" tone="verified" testID={testID ? `${testID}-icon` : undefined} />
-        <Text variant="caption" tone="verified" style={{ fontWeight: '700' }}>
+        <Text variant="caption" tone="verified" style={{ fontWeight: fontWeight.bold }}>
           {label}
         </Text>
       </Pressable>

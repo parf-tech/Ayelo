@@ -6,7 +6,7 @@ import { CALLS_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useRealtime } from '../../realtime';
-import { borderWidth, fontFamilyFor, focus, fontWeight, MIN_TARGET, useFontsReady, useTheme } from '../../theme';
+import { borderWidth, fontFamilyFor, focus, MIN_TARGET, useFontsReady, useTheme } from '../../theme';
 import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast } from '../../ui';
 import { useCalls } from '../calls/CallProvider';
 import { MenuItem, MenuSheet } from '../common/MenuItem';
@@ -281,7 +281,7 @@ export function ConversationScreen() {
         <MenuSheet testID="conversation-menu-sheet">
           {confirm ? (
             <View style={{ gap: space[2], padding: space[2] }}>
-              <Text variant="body" style={{ fontWeight: fontWeight.semibold }}>
+              <Text variant="bodyStrong">
                 {confirm === 'block'
                   ? t('detail.blockConfirm.title', { name: peerName })
                   : confirm === 'unmatch'

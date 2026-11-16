@@ -66,7 +66,7 @@ function BannerAction({ label, onPress }: { label: string; onPress: () => void }
       onBlur={handlers.onBlur}
       style={[{ minHeight: MIN_TARGET, minWidth: MIN_TARGET, justifyContent: 'center', paddingHorizontal: space[2] }, ringStyle]}
     >
-      <Text variant="body" tone="primary" style={{ fontWeight: '600' }}>
+      <Text variant="bodyStrong" tone="primary">
         {label}
       </Text>
     </Pressable>

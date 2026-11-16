@@ -1,6 +1,5 @@
 export const premiumEn = {
   'premium.title': 'Premium subscription',
-  'premium.subtitle': 'Unlimited likes, super likes, undo and conversations without credits.',
   'premium.active': 'Premium active until {date}.',
   'premium.activeNoDate': 'Premium active.',
   'premium.plan.1': '1 month',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
-import { ThemeProvider, useTheme } from '../../theme';
+import { borderWidth, ThemeProvider, useTheme } from '../../theme';
 import type { Scheme } from '../../theme';
 import {
   Avatar,
@@ -290,7 +290,7 @@ function LogoPanel({ scheme, title }: { scheme: Scheme; title: string }) {
 function LogoPanelBody({ scheme, title }: { scheme: Scheme; title: string }) {
   const { colors, radius, space } = useTheme();
   return (
-    <View style={{ backgroundColor: colors.bg, borderRadius: radius.md, padding: space[4], gap: space[3], borderWidth: 1, borderColor: colors.border }}>
+    <View style={{ backgroundColor: colors.bg, borderRadius: radius.md, padding: space[4], gap: space[3], borderWidth: borderWidth.hairline, borderColor: colors.border }}>
       <Text variant="label" tone="textMuted">
         {title}
       </Text>

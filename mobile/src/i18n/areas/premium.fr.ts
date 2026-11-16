@@ -1,7 +1,5 @@
 export const premiumFr = {
   'premium.title': 'Abonnement Premium',
-  'premium.subtitle':
-    'J’aime illimités, coups de cœur, retour en arrière et conversations sans crédit.',
   'premium.active': 'Premium actif jusqu’au {date}.',
   'premium.activeNoDate': 'Premium actif.',
   'premium.plan.1': '1 mois',

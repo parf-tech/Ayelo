@@ -122,7 +122,7 @@ export function ExportScreen() {
         ) : null}
         {job?.status === 'pending' ? (
           <View style={{ gap: space[3], padding: space[4], borderRadius: radius.md, backgroundColor: colors.surface }}>
-            <Text variant="body" accessibilityLiveRegion="polite" testID="export-pending" style={{ fontWeight: '500' }}>
+            <Text variant="bodyMedium" accessibilityLiveRegion="polite" testID="export-pending">
               {t('export.pending')}
             </Text>
             <Skeleton />

@@ -18,9 +18,9 @@ export type TextFieldProps = Omit<TextInputProps, 'style' | 'accessibilityLabel'
   invalid?: boolean;
   /**
    * Pour un champ mot de passe : libellés accessibles complets (`show`, `hide`) du bouton afficher / masquer
-   * (IconButton Eye / EyeOff). `showShort` et `hideShort` sont conservés pour compatibilité : le bouton n'affiche plus de texte.
+   * (IconButton Eye / EyeOff).
    */
-  passwordToggleLabels?: { show: string; hide: string; showShort?: string; hideShort?: string };
+  passwordToggleLabels?: { show: string; hide: string };
   /** Référence du champ natif, pour enchaîner le focus d'un champ au suivant. */
   inputRef?: React.Ref<TextInputInstance>;
   testID?: string;
@@ -72,7 +72,7 @@ export function TextField({
 
   return (
     <View style={containerStyle}>
-      <Text variant="label" tone={hasError ? 'danger' : 'text'} style={{ marginBottom: space[1], fontWeight: '600' }}>
+      <Text variant="labelStrong" tone={hasError ? 'danger' : 'text'} style={{ marginBottom: space[1] }}>
         {label}
       </Text>
       <View

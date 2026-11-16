@@ -131,7 +131,7 @@ export type TypeToken = {
   line: number;
 };
 
-export type TypeVariant = 'title' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label' | 'captionStrong';
+export type TypeVariant = 'title' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label' | 'captionStrong' | 'captionMedium' | 'bodySmallMedium' | 'bodyMedium' | 'bodyStrong' | 'labelStrong' | 'bodyBold' | 'bodySmallStrong';
 
 export const fontWeight = { regular: '400', medium: '500', semibold: '600', bold: '700' } as const;
 
@@ -164,6 +164,20 @@ export const type: Record<TypeVariant, TypeToken> = {
   label: { size: 14, weight: '500', line: 20 },
   /** Légende appuyée (statut, badge). */
   captionStrong: { size: 13, weight: '600', line: 18 },
+  /** Légende de poids moyen (état d'une photo, valeur courte). */
+  captionMedium: { size: 13, weight: '500', line: 18 },
+  /** Texte de 14 pt de poids moyen (puce). */
+  bodySmallMedium: { size: 14, weight: '500', line: 20 },
+  /** Texte courant de poids moyen (libellé de ligne, de carte, de réglage). */
+  bodyMedium: { size: 16, weight: '500', line: 24 },
+  /** Texte courant appuyé (résumé, nom, libellé de case). */
+  bodyStrong: { size: 16, weight: '600', line: 24 },
+  /** Étiquette de champ appuyée. */
+  labelStrong: { size: 14, weight: '600', line: 20 },
+  /** Texte courant en gras (nom d'une conversation non lue). */
+  bodyBold: { size: 16, weight: '700', line: 24 },
+  /** Texte de 14 pt appuyé (aperçu non lu). */
+  bodySmallStrong: { size: 14, weight: '600', line: 20 },
 };
 
 /** Taille minimale d'une cible tactile (docs/06 : >= 44 pt). */

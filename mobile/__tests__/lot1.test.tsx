@@ -114,7 +114,7 @@ describe("Lot 1 - 6 : refus d'âge", () => {
 });
 
 describe('Lot 1 - 7 : afficher le mot de passe', () => {
-  const labels = { show: 'Afficher le mot de passe', hide: 'Masquer le mot de passe', showShort: 'Afficher', hideShort: 'Masquer' };
+  const labels = { show: 'Afficher le mot de passe', hide: 'Masquer le mot de passe' };
 
   it('IconButton Eye / EyeOff : libellé accessible complet qui change avec l’état, aucun texte visible', async () => {
     await renderThemed(
@@ -135,7 +135,7 @@ describe('Lot 1 - 7 : afficher le mot de passe', () => {
   });
 
   it('parité fr/en des nouvelles clés', () => {
-    for (const k of ['ui.password.showShort', 'ui.password.hideShort', 'verified.explain', 'verified.hint'] as const) {
+    for (const k of ['verified.explain', 'verified.hint'] as const) {
       expect(dictionaries.fr[k]).toBeTruthy();
       expect(dictionaries.en[k]).toBeTruthy();
     }

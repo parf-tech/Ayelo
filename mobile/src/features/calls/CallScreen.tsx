@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
-import { useTheme } from '../../theme';
+import { borderWidth, useTheme } from '../../theme';
 import { Avatar, Banner, Button, Icon, ScreenContainer, Text, type IconName } from '../../ui';
 import type { CallEndReason } from './callMachine';
 import { useCalls } from './CallProvider';
@@ -137,10 +137,10 @@ export function CallScreen() {
           <Icon name={stateIcon} size="sm" tone="primary" />
           <Text variant="captionStrong">{kindLabel}</Text>
         </View>
-        <View accessible={false} style={{ borderRadius: 84, borderWidth: 3, borderColor: colors.onBrand }}>
+        <View accessible={false} style={{ borderRadius: radius.pill, borderWidth: borderWidth.strong, borderColor: colors.onBrand }}>
           <Avatar uri={call.peerPhoto} name={call.peerName || '?'} size={144} />
         </View>
-        <Text variant="title" header align="center" style={{ color: colors.onBrand }}>
+        <Text variant="title" header align="center" tone="onBrand">
           {title}
         </Text>
         {/* Région vivante pour les changements d'état (sonnerie, connecté, terminé) ; pas pour le chronomètre, qui changerait chaque seconde. */}
@@ -149,7 +149,8 @@ export function CallScreen() {
           align="center"
           accessibilityLiveRegion={active ? 'none' : 'polite'}
           testID="call-status"
-          style={{ color: colors.onBrand, opacity: active ? 1 : 0.86, ...(active ? { fontVariant: ['tabular-nums'] as const } : null) }}
+          tone="onBrand"
+          style={active ? { fontVariant: ['tabular-nums'] as const } : undefined}
         >
           {subtitle}
         </Text>

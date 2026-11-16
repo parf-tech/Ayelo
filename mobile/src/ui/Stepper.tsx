@@ -70,10 +70,10 @@ export function Stepper({ steps, current, label, onBrand = false, testID }: Step
         ))}
       </View>
       <Text
-        variant="caption"
+        variant="captionMedium"
+        tone={onBrand ? 'onBrand' : 'textMuted'}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={{ color: onBrand ? colors.onBrand : colors.textMuted, fontWeight: '500', opacity: onBrand ? 0.86 : 1 }}
       >
         {currentStep ? `${label} · ${currentStep.label}` : label}
       </Text>

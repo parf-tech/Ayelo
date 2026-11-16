@@ -92,7 +92,7 @@ export function MessageBubble({
               style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}
             >
               <Icon name={look.icon} size="sm" tone={look.tone} />
-              <Text variant="caption" tone={look.tone === 'danger' ? 'danger' : 'textMuted'} style={{ fontWeight: state === 'failed' ? '600' : undefined }}>
+              <Text variant={state === 'failed' ? 'captionStrong' : 'caption'} tone={look.tone === 'danger' ? 'danger' : 'textMuted'}>
                 {stateLabel}
               </Text>
             </View>

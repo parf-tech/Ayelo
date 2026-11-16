@@ -35,6 +35,8 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [banner, setBanner] = useState<string | undefined>();
+  /** Erreur réseau : le bandeau propose « Réessayer » (comme l'écran de date de naissance). */
+  const [canRetry, setCanRetry] = useState(false);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInputInstance>(null);
 
@@ -42,6 +44,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
 
   const submit = async () => {
     setBanner(undefined);
+    setCanRetry(false);
     const emailKey = validateEmail(email);
     const passwordKey = validatePassword(password, mode);
     const local: FieldErrors = {
@@ -104,6 +107,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
     }
     const { key, params } = apiErrorMessage(error);
     setBanner(t(key, params));
+    setCanRetry(isApiError(error) && error.isNetwork);
   };
 
   const switchMode = () => {
@@ -164,6 +168,8 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           testID="auth-banner"
           variant="error"
           message={banner}
+          actionLabel={canRetry ? t('common.retry') : undefined}
+          onAction={canRetry ? () => void submit() : undefined}
           onDismiss={() => setBanner(undefined)}
           dismissLabel={t('ui.banner.dismiss')}
           style={{ marginBottom: space[3] }}

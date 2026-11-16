@@ -1,12 +1,12 @@
 import React from 'react';
 import { I18nManager, Pressable, View } from 'react-native';
-import { borderWidth, radius, stateOpacity, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, radius, stateOpacity, useTheme } from '../theme';
 import { Icon } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
 
 /** Hauteur minimale d'une ligne (docs/design/03 : cible de 56 pt). */
-const ROW_MIN_HEIGHT = 56;
+const ROW_MIN_HEIGHT = MIN_TARGET + 12;
 
 export type ListRowProps = {
   label: string;
@@ -60,7 +60,7 @@ export function ListRow({
     >
       {leading}
       <View style={{ flex: 1 }}>
-        <Text variant="body" tone={tone === 'danger' ? 'danger' : 'text'} style={{ fontWeight: '600' }}>
+        <Text variant="bodyStrong" tone={tone === 'danger' ? 'danger' : 'text'}>
           {label}
         </Text>
         {description ? (

@@ -75,7 +75,7 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
         </View>
       ) : null}
       <View style={tile ? { flexShrink: 1 } : { flex: 1 }}>
-        <Text variant="body" style={{ fontWeight: '500' }} tone={disabled ? 'textMuted' : 'text'}>
+        <Text variant="bodyMedium" tone={disabled ? 'textMuted' : 'text'}>
           {label}
         </Text>
         {description && !tile ? (

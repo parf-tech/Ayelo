@@ -135,7 +135,12 @@ export function BirthdateScreen() {
         />
       ) : null}
 
-      <View testID="birthdate-fields" style={{ flexDirection: 'row', gap: space[2], alignItems: 'flex-start' }}>
+      <View
+        testID="birthdate-fields"
+        accessibilityRole="group"
+        accessibilityLabel={t('birthdate.title')}
+        style={{ flexDirection: 'row', gap: space[2], alignItems: 'flex-start' }}
+      >
         <TextField
           testID="birthdate-day"
           label={t('birthdate.day')}
@@ -143,6 +148,7 @@ export function BirthdateScreen() {
           value={fields.day}
           onChangeText={(text) => change('day', text, 2, monthRef)}
           invalid={invalidDay}
+          disabled={loading}
           keyboardType="number-pad"
           maxLength={2}
           returnKeyType="next"
@@ -156,6 +162,7 @@ export function BirthdateScreen() {
           value={fields.month}
           onChangeText={(text) => change('month', text, 2, yearRef)}
           invalid={invalidMonth}
+          disabled={loading}
           keyboardType="number-pad"
           maxLength={2}
           returnKeyType="next"
@@ -170,6 +177,7 @@ export function BirthdateScreen() {
           value={fields.year}
           onChangeText={(text) => change('year', text, 4)}
           invalid={invalidYear}
+          disabled={loading}
           keyboardType="number-pad"
           maxLength={4}
           returnKeyType="done"

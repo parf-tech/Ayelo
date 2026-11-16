@@ -10,7 +10,6 @@ import {
   ChoiceCard,
   ListRow,
   EmptyState,
-  ProgressBar,
   ScreenContainer,
   Skeleton,
   TextField,
@@ -141,7 +140,7 @@ describe('ChoiceCard et CheckboxField', () => {
   });
 });
 
-describe('Banner, Toast, Skeleton, EmptyState, ProgressBar, ScreenContainer', () => {
+describe('Banner, Toast, Skeleton, EmptyState, ScreenContainer', () => {
   it('Banner : message, action et fermeture', async () => {
     const onAction = jest.fn();
     const onDismiss = jest.fn();
@@ -207,15 +206,6 @@ describe('Banner, Toast, Skeleton, EmptyState, ProgressBar, ScreenContainer', ()
     expect(screen.getByText('Rien ici')).toBeOnTheScreen();
     await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
     expect(onAction).toHaveBeenCalled();
-  });
-
-  it('ProgressBar : valeur accessible', async () => {
-    await renderThemed(<ProgressBar current={1} total={2} label="Étape 1 sur 2" />);
-    expect(screen.getByRole('progressbar', { name: 'Étape 1 sur 2' })).toHaveAccessibilityValue({
-      min: 0,
-      max: 2,
-      now: 1,
-    });
   });
 
   it('ScreenContainer : rend ses enfants et le pied de page fixe', async () => {

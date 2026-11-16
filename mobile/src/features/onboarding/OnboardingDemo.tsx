@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
-import { radius, useTheme } from '../../theme';
+import { borderWidth, radius, useTheme } from '../../theme';
 import { Chip, ChoiceCard, Logo, Stepper, Text } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { PreferenceFields, type PreferenceValues } from '../preferences/PreferenceFields';
@@ -43,7 +43,7 @@ export function OnboardingDemo() {
         </Text>
         <Stepper testID="demo-stepper" steps={steps} current={2} label={t('onboarding.progress', { current: 2, total: steps.length })} />
         <View style={{ backgroundColor: colors.brand, borderRadius: radius.lg, padding: space[4], gap: space[3] }}>
-          <Text variant="label" style={{ color: colors.onBrand }}>
+          <Text variant="label" tone="onBrand">
             {t('demo.stepperOnBrand')}
           </Text>
           <Logo variant={LOGO_ON_BRAND} layout="horizontal" size={32} />
@@ -94,7 +94,7 @@ export function OnboardingDemo() {
         <Text variant="h3" header>
           {t('demo.prefsBlock')}
         </Text>
-        <View style={{ backgroundColor: colors.bg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space[4] }}>
+        <View style={{ backgroundColor: colors.bg, borderRadius: radius.lg, borderWidth: borderWidth.hairline, borderColor: colors.border, padding: space[4] }}>
           <PreferenceFields idPrefix="demo-pref" value={prefs} onChange={setPrefs} />
         </View>
       </View>

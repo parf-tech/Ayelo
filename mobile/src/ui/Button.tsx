@@ -86,10 +86,9 @@ export function Button({
           />
         ) : null}
         <Text
-          variant="body"
+          variant="bodyStrong"
           style={{
             color: disabled ? colors.disabledText : palette.fg,
-            fontWeight: '600',
             flexShrink: 1,
             textAlign: 'center',
           }}

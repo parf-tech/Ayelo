@@ -80,7 +80,7 @@ export function CheckboxField({
         {checked ? <Icon name="Check" size="md" tone="onPrimary" testID={testID ? `${testID}-check` : undefined} /> : null}
       </View>
       <View style={{ flex: 1 }}>
-        <Text variant="body" tone={disabled ? 'textMuted' : 'text'} style={{ fontWeight: '600' }}>
+        <Text variant="bodyStrong" tone={disabled ? 'textMuted' : 'text'}>
           {label}
         </Text>
         {badge ? (

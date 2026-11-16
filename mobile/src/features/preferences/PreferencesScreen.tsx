@@ -33,10 +33,7 @@ export function PreferencesScreen({ mode }: { mode: 'onboarding' | 'edit' }) {
   const save = async () => {
     if (!draft) return;
     setBanner(undefined);
-    if (draft.age_max < draft.age_min) {
-      setBanner(t('prefs.ageRange'));
-      return;
-    }
+    // Les boutons d'âge bornent déjà le minimum et le maximum l'un par rapport à l'autre : aucun contrôle ici.
     setSaving(true);
     try {
       await api.profile.updatePreferences(draft);

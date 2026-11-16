@@ -18,8 +18,6 @@ export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 export { ScreenContainer } from './ScreenContainer';
 export type { ScreenContainerProps } from './ScreenContainer';
-export { ProgressBar } from './ProgressBar';
-export type { ProgressBarProps } from './ProgressBar';
 export { AsyncView } from './AsyncView';
 export type { AsyncViewProps } from './AsyncView';
 export { ListRow } from './ListRow';

@@ -7,9 +7,6 @@ export const callsFr = {
   'call.decline': 'Refuser',
   'call.cancel': 'Annuler l’appel',
   'call.hangup': 'Raccrocher',
-  'call.mute': 'Micro',
-  'call.camera': 'Caméra',
-  'call.speaker': 'Haut-parleur',
   'call.report': 'Signaler',
   'call.media.unavailable':
     'Le son et l’image ne sont pas disponibles pour cet appel : seule la sonnerie est transmise.',

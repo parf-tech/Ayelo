@@ -36,7 +36,6 @@ export const discoverFr = {
   'match.body': 'Vous et {name} vous êtes plu mutuellement.',
   'match.write': 'Écrire un message',
   'match.continue': 'Continuer à découvrir',
-  'match.toast': 'Nouveau match avec {name}.',
   'match.toastGeneric': 'Vous avez un nouveau match.',
   'match.toast.open': 'Voir',
 

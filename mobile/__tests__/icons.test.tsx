@@ -100,7 +100,7 @@ describe('Icon', () => {
 
   it('une couleur hors jeton ne compile pas', () => {
     // @ts-expect-error tone doit être un rôle de couleur autorisé
-    const element = <Icon name="Heart" tone="accent" />;
+    const element = <Icon name="Heart" tone="brand" />;
     expect(element).toBeTruthy();
   });
 });

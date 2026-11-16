@@ -3,7 +3,6 @@ import type { TranslationKey } from './fr';
 
 // Doit contenir exactement les mêmes clés que `fr.ts` (vérifié par le compilateur et par __tests__/i18n.test.ts).
 export const en: Record<TranslationKey, string> = {
-  'app.name': 'Ayelo',
 
   'common.back': 'Back',
   'common.continue': 'Continue',
@@ -19,15 +18,10 @@ export const en: Record<TranslationKey, string> = {
 
   'ui.password.show': 'Show password',
   'ui.password.hide': 'Hide password',
-  'ui.password.showShort': 'Show',
-  'ui.password.hideShort': 'Hide',
   'ui.toast.dismiss': 'Dismiss notification',
   'ui.banner.dismiss': 'Dismiss message',
 
-  'welcome.title': 'Meet people who are looking for the same thing as you.',
   'welcome.subtitle': 'Marriage, lasting love, flirting or friendship: say what you are looking for.',
-  'welcome.createAccount': 'Create an account',
-  'welcome.signIn': 'Sign in',
   'welcome.safety': 'Never send money to someone you met online.',
   'welcome.demo': 'View components (development)',
 
@@ -55,18 +49,6 @@ export const en: Record<TranslationKey, string> = {
   'birthdate.invalid': 'This date does not exist.',
   'birthdate.future': 'The date must be in the past.',
 
-  'month.1': 'January',
-  'month.2': 'February',
-  'month.3': 'March',
-  'month.4': 'April',
-  'month.5': 'May',
-  'month.6': 'June',
-  'month.7': 'July',
-  'month.8': 'August',
-  'month.9': 'September',
-  'month.10': 'October',
-  'month.11': 'November',
-  'month.12': 'December',
 
   'ageRefused.title': 'Sign-up unavailable',
   'ageRefused.body': 'We are unable to create an account.',
@@ -149,6 +131,7 @@ export const en: Record<TranslationKey, string> = {
   'profile.gender': 'Gender',
   'profile.country': 'Country of residence',
   'profile.country.search': 'Search for a country',
+  'profile.country.more': '{count} more countries: use the search.',
   'profile.country.none': 'No country found.',
   'profile.city': 'City',
 
@@ -170,10 +153,6 @@ export const en: Record<TranslationKey, string> = {
   'intent.lets_find_out.label': "Let's find out",
   'intent.lets_find_out.description': 'No precise idea for now, I am happy to be surprised',
 
-  'home.title': 'Welcome',
-  'home.provisional': 'Temporary screen: profile discovery is coming soon.',
-  'home.signedInAs': 'Signed in as {email}',
-  'home.logout': 'Sign out',
 
   'brand.logoLabel': 'Ayelo',
 

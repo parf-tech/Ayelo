@@ -1,9 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ScreenContainer, Text } from '../../ui';
+import { Banner, Button, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { getLegalLinks, openExternal } from './links';
 import type { LegalDoc } from './useLegalOpener';
@@ -21,6 +21,7 @@ export function LegalFallbackScreen() {
   const params = useLocalSearchParams<{ doc?: string }>();
   const doc: LegalDoc = DOCS.includes(params.doc as LegalDoc) ? (params.doc as LegalDoc) : 'terms';
   const { supportEmail } = getLegalLinks();
+  const [openFailed, setOpenFailed] = useState(false);
   const title = t(`legal.${doc}` as 'legal.terms');
   return (
     <ScreenContainer scroll testID="screen-legal-fallback">
@@ -29,12 +30,16 @@ export function LegalFallbackScreen() {
         <Text variant="body" tone="textMuted" testID="legal-fallback-body">
           {t('legal.fallback.body')}
         </Text>
+        {openFailed ? <Banner testID="legal-fallback-error" variant="error" message={t('legal.openError')} /> : null}
         {supportEmail ? (
           <Button
             testID="legal-fallback-contact"
             variant="secondary"
             label={t('legal.fallback.contact', { email: supportEmail })}
-            onPress={() => void openExternal(`mailto:${supportEmail}?subject=${encodeURIComponent(title)}`)}
+            onPress={() => {
+              setOpenFailed(false);
+              void openExternal(`mailto:${supportEmail}?subject=${encodeURIComponent(title)}`).then((ok) => setOpenFailed(!ok));
+            }}
           />
         ) : null}
       </View>

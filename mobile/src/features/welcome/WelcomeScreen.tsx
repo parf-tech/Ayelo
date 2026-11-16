@@ -5,6 +5,7 @@ import { SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
+import { LanguageToggle } from '../common/LanguageToggle';
 import { Banner, Button, Logo, ScreenContainer, Text } from '../../ui';
 import { setDeletionNotice, useDeletionNotice } from '../settings/deletionNotice';
 import { WelcomeBackdrop } from '../../ui/illustrations/WelcomeBackdrop';
@@ -34,7 +35,7 @@ export type WelcomeScreenProps = {
 export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps = {}) {
   const router = useRouter();
   const { t } = useI18n();
-  const { colors, space } = useTheme();
+  const { space } = useTheme();
   const { dispatch } = useSignupFlow();
   const deletion = useDeletionNotice();
 
@@ -71,12 +72,12 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
         </View>
       }
     >
-      <WelcomeLanguageToggle />
+      <LanguageToggle tone="onBrand" />
       {deletion ? (
         <Banner
           testID="welcome-deletion-notice"
           variant="info"
-          message={`${t('delete.done')} ${t('delete.grace', { days: deletion.days })} ${t('delete.cancelHint')}`}
+          message={t('delete.notice', { days: deletion.days })}
           onDismiss={() => setDeletionNotice(null)}
           dismissLabel={t('ui.banner.dismiss')}
           style={{ marginTop: space[3] }}
@@ -87,42 +88,23 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
         <Text
           variant="title"
           header
-          style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[5] }}
+          tone="onBrand"
+          align="center"
+          style={{ marginTop: space[5] }}
           testID="welcome-tagline"
         >
           {t('welcome.tagline')}
         </Text>
-        <Text variant="body" style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[3] }}>
+        <Text variant="body" tone="onBrand" align="center" style={{ marginTop: space[3] }}>
           {t('welcome.subtitle')}
         </Text>
         <View style={{ alignSelf: 'stretch', marginTop: space[6] }}>
           <WelcomeBenefits />
         </View>
-        <Text variant="caption" style={{ color: colors.onBrand, textAlign: 'center', marginTop: space[5] }}>
+        <Text variant="caption" tone="onBrand" align="center" style={{ marginTop: space[5] }}>
           {t('welcome.safety')}
         </Text>
       </View>
     </ScreenContainer>
-  );
-}
-
-/**
- * Bascule fr/en (réelle : même logique que `LanguageToggle`), habillée pour le fond prune.
- * La langue du téléphone est le point de départ, le choix de l'utilisateur prime ensuite.
- */
-function WelcomeLanguageToggle() {
-  const { locale, setLocale, t } = useI18n();
-  const other = locale === 'fr' ? 'en' : 'fr';
-  return (
-    <View style={{ alignSelf: 'flex-end' }}>
-      <Button
-        testID="language-toggle"
-        variant="ghost"
-        tone="onBrand"
-        label={t(`language.name.${other}`)}
-        accessibilityLabel={`${t('language.change')}: ${t(`language.name.${other}`)}`}
-        onPress={() => setLocale(other)}
-      />
-    </View>
   );
 }

@@ -73,7 +73,7 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
       >
         {icon ? <Icon name={icon} tone={iconTone} /> : null}
         <View style={{ flex: 1 }}>
-          <Text variant="body" tone={disabled ? 'textMuted' : danger ? 'danger' : 'text'} style={{ fontWeight: '500' }}>
+          <Text variant="bodyMedium" tone={disabled ? 'textMuted' : danger ? 'danger' : 'text'}>
             {label}
           </Text>
           {description ? (

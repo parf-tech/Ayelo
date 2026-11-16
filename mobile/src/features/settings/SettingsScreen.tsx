@@ -13,7 +13,7 @@ import { ManageSubscription } from '../premium/ManageSubscription';
 function Section({ title }: { title: string }) {
   const { space } = useTheme();
   return (
-    <Text variant="caption" tone="textMuted" header style={{ marginTop: space[6], marginBottom: space[2], marginLeft: space[1], fontWeight: '600' }}>
+    <Text variant="captionStrong" tone="textMuted" header style={{ marginTop: space[6], marginBottom: space[2], marginLeft: space[1] }}>
       {title}
     </Text>
   );

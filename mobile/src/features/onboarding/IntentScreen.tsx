@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ChoiceCard, Text } from '../../ui';
+import { Banner, Button, ChoiceCard } from '../../ui';
 import { INTENT_ICONS } from './intentIcons';
 import { OnboardingFrame } from './OnboardingFrame';
 import { useOnboardingDraft } from './OnboardingProvider';
@@ -81,6 +81,9 @@ export function IntentScreen() {
           style={{ marginBottom: space[3] }}
         />
       ) : null}
+      {error ? (
+        <Banner testID="intent-error" variant="error" message={error} style={{ marginBottom: space[3] }} />
+      ) : null}
       <View accessibilityRole="radiogroup" accessibilityLabel={t('intent.title')} style={{ gap: space[3] }}>
         {INTENTS.map((intent) => (
           <ChoiceCard
@@ -90,6 +93,7 @@ export function IntentScreen() {
             label={t(`intent.${intent}.label`)}
             description={t(`intent.${intent}.description`)}
             selected={draft.intent === intent}
+            disabled={loading}
             onPress={() => {
               setError(undefined);
               update({ intent });
@@ -97,11 +101,6 @@ export function IntentScreen() {
           />
         ))}
       </View>
-      {error ? (
-        <Text variant="caption" tone="danger" accessibilityRole="alert" style={{ marginTop: space[2] }}>
-          {error}
-        </Text>
-      ) : null}
     </OnboardingFrame>
   );
 }

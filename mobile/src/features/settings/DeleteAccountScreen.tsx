@@ -83,7 +83,7 @@ export function DeleteAccountScreen() {
         <View style={{ gap: space[6] }}>
           <Banner testID="delete-banner" variant="success" message={t('delete.done')} />
           <View style={{ gap: space[2] }}>
-            <Text variant="body" testID="delete-grace" style={{ fontWeight: '600' }}>
+            <Text variant="bodyStrong" testID="delete-grace">
               {t('delete.grace', { days: graceDays })}
             </Text>
             <Text variant="body" tone="textMuted" testID="delete-cancel-hint">
