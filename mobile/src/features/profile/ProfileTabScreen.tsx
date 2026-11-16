@@ -5,11 +5,14 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
-import { useTheme } from '../../theme';
+import { borderWidth, useTheme } from '../../theme';
 import { AsyncView, Avatar, Banner, Button, Icon, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { countryLabel } from '../onboarding/countries';
 import { NavRow, RowGroup } from '../settings/GroupedList';
+
+/** Photo du profil : taille de l'avatar dans l'anneau. */
+const AVATAR_SIZE = 104;
 
 /** S59 : mon profil (aperçu, accès à l'édition, vérification, Premium, paramètres). */
 export function ProfileTabScreen() {
@@ -69,12 +72,12 @@ export function ProfileTabScreen() {
               padding: space[5],
               borderRadius: radius.lg,
               backgroundColor: colors.surface,
-              borderWidth: 1,
+              borderWidth: borderWidth.hairline,
               borderColor: colors.border,
             }}
           >
-            <View style={{ padding: space[1], borderRadius: 999, borderWidth: 2, borderColor: colors.primary }}>
-              <Avatar uri={primaryPhotoUrl(profile)} name={profile.display_name} size={104} testID="profile-avatar" />
+            <View style={{ padding: space[1], borderRadius: radius.pill, borderWidth: borderWidth.strong, borderColor: colors.primary }}>
+              <Avatar uri={primaryPhotoUrl(profile)} name={profile.display_name} size={AVATAR_SIZE} testID="profile-avatar" />
             </View>
             <Text variant="h2" header testID="profile-name" align="center">
               {t('profileTab.age', { name: profile.display_name, age: profile.age })}
@@ -88,7 +91,7 @@ export function ProfileTabScreen() {
             {data?.premium ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
                 <Icon name="Sparkles" size="sm" tone="success" />
-                <Text variant="caption" tone="success" style={{ fontWeight: '700' }} testID="profile-premium-badge">
+                <Text variant="captionStrong" tone="success" testID="profile-premium-badge">
                   {t('profileTab.premiumActive')}
                 </Text>
               </View>

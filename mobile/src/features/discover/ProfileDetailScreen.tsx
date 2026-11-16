@@ -7,10 +7,12 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
-import { MAX_CONTENT_WIDTH, useTheme } from '../../theme';
+import { borderWidth, MAX_CONTENT_WIDTH, useTheme } from '../../theme';
 import { AsyncView, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
+import { MenuItem, MenuSheet } from '../common/MenuItem';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { countryLabel } from '../onboarding/countries';
+import { SwipeActions } from './SwipeActions';
 import { performSwipe, primaryPhotoUrl, readablePhotos } from './swipe';
 
 type Notice = { variant: 'error' | 'warning' | 'info'; message: string; action?: { label: string; href: string } };
@@ -32,6 +34,9 @@ export function ProfileDetailScreen() {
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [notice, setNotice] = useState<Notice | undefined>();
   const [busy, setBusy] = useState(false);
+  // Décision en cours d'envoi (son bouton rond affiche l'attente) ; menu : action « Écrire » en cours.
+  const [pendingSwipe, setPendingSwipe] = useState<SwipeAction | null>(null);
+  const [writing, setWriting] = useState(false);
 
   const data = profile.data;
   const photos = data ? readablePhotos(data) : [];
@@ -39,9 +44,11 @@ export function ProfileDetailScreen() {
   const swipe = async (action: SwipeAction) => {
     if (!data || busy) return;
     setBusy(true);
+    setPendingSwipe(action);
     setNotice(undefined);
     const outcome = await performSwipe(api, data.user_id, action);
     setBusy(false);
+    setPendingSwipe(null);
     switch (outcome.kind) {
       case 'ok':
         router.back();
@@ -68,8 +75,8 @@ export function ProfileDetailScreen() {
   const writeTo = async () => {
     if (!data || busy) return;
     setBusy(true);
+    setWriting(true);
     setNotice(undefined);
-    setMenuOpen(false);
     try {
       const conversation = await api.messaging.openConversation(data.user_id);
       router.push({
@@ -86,6 +93,8 @@ export function ProfileDetailScreen() {
       });
     } finally {
       setBusy(false);
+      setWriting(false);
+      setMenuOpen(false);
     }
   };
 
@@ -126,38 +135,7 @@ export function ProfileDetailScreen() {
       testID="screen-profile-detail"
       footer={
         data ? (
-          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space[5] }}>
-            <IconButton
-              testID="detail-dislike"
-              icon="X"
-              variant="tonal"
-              size="lg"
-              accessibilityLabel={t('discover.dislike')}
-              disabled={busy}
-              onPress={() => void swipe('dislike')}
-              style={{ width: 56, height: 56, borderRadius: 28 }}
-            />
-            <IconButton
-              testID="detail-super"
-              icon="Star"
-              variant="tonal"
-              size="lg"
-              accessibilityLabel={t('discover.superLike')}
-              disabled={busy}
-              onPress={() => void swipe('super_like')}
-              style={{ width: 56, height: 56, borderRadius: 28 }}
-            />
-            <IconButton
-              testID="detail-like"
-              icon="Heart"
-              variant="filled"
-              size="lg"
-              accessibilityLabel={t('discover.like')}
-              disabled={busy}
-              onPress={() => void swipe('like')}
-              style={{ width: 68, height: 68, borderRadius: 34 }}
-            />
-          </View>
+          <SwipeActions idPrefix="detail" disabled={busy && pendingSwipe === null} pending={pendingSwipe} onAction={(a) => void swipe(a)} />
         ) : undefined
       }
     >
@@ -190,11 +168,8 @@ export function ProfileDetailScreen() {
         />
       ) : null}
       {menuOpen ? (
-        <View
-          testID="detail-menu-sheet"
-          accessibilityViewIsModal
-          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surface, padding: space[2], marginBottom: space[3] }}
-        >
+        // Menu en ligne, pas une fenêtre modale : sans accessibilityViewIsModal, VoiceOver garde le retour et le bouton « … » (qui le referme).
+        <MenuSheet testID="detail-menu-sheet">
           {confirmBlock && data ? (
             <View style={{ gap: space[2], padding: space[2] }}>
               <Text variant="h2">{t('detail.blockConfirm.title', { name: data.display_name })}</Text>
@@ -206,12 +181,12 @@ export function ProfileDetailScreen() {
             </View>
           ) : (
             <>
-              <Button testID="detail-write" variant="ghost" label={t('detail.message')} onPress={() => void writeTo()} />
-              <Button testID="detail-report" variant="ghost" label={t('detail.report')} onPress={openReport} />
-              <Button testID="detail-block" variant="ghost" label={t('detail.block')} onPress={() => setConfirmBlock(true)} />
+              <MenuItem testID="detail-write" icon="MessageCircle" label={t('detail.message')} onPress={() => void writeTo()} loading={writing} disabled={busy && !writing} />
+              <MenuItem testID="detail-report" icon="Flag" label={t('detail.report')} onPress={openReport} disabled={busy} />
+              <MenuItem testID="detail-block" icon="Ban" danger label={t('detail.block')} onPress={() => setConfirmBlock(true)} disabled={busy} />
             </>
           )}
-        </View>
+        </MenuSheet>
       ) : null}
       <AsyncView status={profile.status} error={profile.error} onRetry={() => void profile.reload()} testID="profile-detail" skeletonRows={3}>
         {data ? (
@@ -230,6 +205,9 @@ export function ProfileDetailScreen() {
                     <Image
                       key={photo.id}
                       source={{ uri: photo.url ?? undefined }}
+                      accessible
+                      accessibilityRole="image"
+                      accessibilityIgnoresInvertColors
                       accessibilityLabel={t('photos.alt', { n: index + 1 })}
                       style={{ width: galleryWidth, aspectRatio: 3 / 4, backgroundColor: colors.skeleton }}
                     />
@@ -281,7 +259,7 @@ export function ProfileDetailScreen() {
                 paddingHorizontal: space[3],
                 paddingVertical: space[1],
                 borderRadius: radius.pill,
-                borderWidth: 1,
+                borderWidth: borderWidth.hairline,
                 borderColor: colors.primary,
               }}
             >

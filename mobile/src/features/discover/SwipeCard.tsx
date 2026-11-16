@@ -3,11 +3,17 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Image, PanResponder, View } from 'react-native';
 import type { PublicProfile, SwipeAction } from '../../api/types';
 import { useI18n } from '../../i18n';
-import { useTheme } from '../../theme';
-import { Text } from '../../ui';
+import { borderWidth, useTheme } from '../../theme';
+import { Icon, Text, useMotion } from '../../ui';
 import { countryLabel } from '../onboarding/countries';
 import { Scrim } from './Scrim';
 import { decideSwipe, primaryPhotoUrl } from './swipe';
+
+/** Distance de sortie de la carte (hors écran) et échelle de la carte du dessous. */
+const FLY_OUT_DISTANCE = 700;
+const NEXT_CARD_SCALE = 0.96;
+/** Hauteur du fondu prune sur la carte : le texte (nom, lieu, intention) reste dans la zone où il dépasse 0,65 d'opacité. */
+const SCRIM_HEIGHT = '75%';
 
 type Props = {
   profile: PublicProfile;
@@ -26,10 +32,14 @@ type Props = {
 export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: Props) {
   const { t } = useI18n();
   const { colors, radius, space } = useTheme();
+  const { reduced, duration } = useMotion();
   const position = useRef(new Animated.ValueXY()).current;
   const callbacks = useRef({ onSwipe, onOpen });
+  // « Réduire les animations » : pas de ressort ni de sortie animée, la carte part ou revient d'un coup.
+  const motion = useRef({ reduced, flyOut: duration('base') });
   useEffect(() => {
     callbacks.current = { onSwipe, onOpen };
+    motion.current = { reduced, flyOut: duration('base') };
   });
 
   const panResponder = useMemo(
@@ -45,14 +55,21 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
           }
           const action = decideSwipe(g.dx, g.dy);
           if (!action) {
-            Animated.spring(position, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
+            if (motion.current.reduced) position.setValue({ x: 0, y: 0 });
+            else Animated.spring(position, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
             return;
           }
-          const target = action === 'super_like' ? { x: 0, y: -700 } : { x: action === 'like' ? 700 : -700, y: g.dy };
-          Animated.timing(position, { toValue: target, duration: 180, useNativeDriver: false }).start(() => {
+          const done = () => {
             callbacks.current.onSwipe(action);
             position.setValue({ x: 0, y: 0 });
-          });
+          };
+          if (motion.current.reduced) {
+            done();
+            return;
+          }
+          const target =
+            action === 'super_like' ? { x: 0, y: -FLY_OUT_DISTANCE } : { x: action === 'like' ? FLY_OUT_DISTANCE : -FLY_OUT_DISTANCE, y: g.dy };
+          Animated.timing(position, { toValue: target, duration: motion.current.flyOut, useNativeDriver: false }).start(done);
         },
       }),
     [interactive, position],
@@ -60,9 +77,11 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
 
   const rotate = position.x.interpolate({ inputRange: [-200, 0, 200], outputRange: ['-8deg', '0deg', '8deg'] });
   const photo = primaryPhotoUrl(profile);
-  const label = profile.city
+  const base = profile.city
     ? t('discover.card', { name: profile.display_name, age: profile.age, city: profile.city })
     : t('discover.cardNoCity', { name: profile.display_name, age: profile.age });
+  // Le nom, le profil vérifié et l'intention se lisent ensemble ; la consigne de geste est dans accessibilityHint.
+  const label = [base, profile.verified ? t('discover.verified') : null, t(`intent.${profile.intent}.label`)].filter(Boolean).join('. ');
 
   return (
     <Animated.View
@@ -97,10 +116,10 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
         bottom: 0,
         borderRadius: radius.lg,
         overflow: 'hidden',
-        borderWidth: 1,
+        borderWidth: borderWidth.hairline,
         borderColor: colors.border,
         backgroundColor: colors.brand,
-        transform: interactive ? [{ translateX: position.x }, { translateY: position.y }, { rotate }] : [{ scale: 0.96 }],
+        transform: interactive ? [{ translateX: position.x }, { translateY: position.y }, { rotate }] : [{ scale: NEXT_CARD_SCALE }],
       }}
     >
       {photo ? (
@@ -117,19 +136,22 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
           </Text>
         </View>
       )}
-      <Scrim height="62%" testID={interactive ? 'swipe-card-scrim' : undefined} />
+      <Scrim height={SCRIM_HEIGHT} testID={interactive ? 'swipe-card-scrim' : undefined} />
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: space[5], gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
-          <Text variant="title" numberOfLines={1} style={{ flexShrink: 1, color: colors.onBrand }}>
+          <Text variant="title" numberOfLines={1} tone="onBrand" style={{ flexShrink: 1 }}>
             {profile.display_name}, {profile.age}
           </Text>
           {profile.verified ? (
-            <Text variant="captionStrong" style={{ color: colors.onBrand }}>
-              ✓ {t('discover.verified')}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+              <Icon name="BadgeCheck" size="sm" tone="onBrand" />
+              <Text variant="captionStrong" tone="onBrand">
+                {t('discover.verified')}
+              </Text>
+            </View>
           ) : null}
         </View>
-        <Text variant="body" numberOfLines={1} style={{ color: colors.onBrand }}>
+        <Text variant="body" numberOfLines={1} tone="onBrand">
           {[profile.city, countryLabel(t, profile.residence_country)].filter(Boolean).join(', ')}
         </Text>
         <View
@@ -139,11 +161,11 @@ export function SwipeCard({ profile, interactive, onSwipe, onOpen, onReport }: P
             paddingHorizontal: space[3],
             paddingVertical: space[1],
             borderRadius: radius.pill,
-            borderWidth: 1,
+            borderWidth: borderWidth.hairline,
             borderColor: colors.onBrand,
           }}
         >
-          <Text variant="captionStrong" style={{ color: colors.onBrand }}>
+          <Text variant="captionStrong" tone="onBrand">
             {t(`intent.${profile.intent}.label`)}
           </Text>
         </View>

@@ -5,7 +5,7 @@ import { REPORT_REASONS, type ReportContextType, type ReportReason } from '../..
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
-import { useTheme } from '../../theme';
+import { borderWidth, useTheme } from '../../theme';
 import { Banner, Button, ChoiceCard, Icon, ScreenContainer, Text, TextField, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
@@ -43,7 +43,9 @@ export function ReportScreen() {
         context_id: contextType ? contextId : undefined,
       });
       toast.show({ message: result.status === 'already_reported' ? t('report.already') : t('report.sent'), variant: 'success' });
+      // Sans écran précédent (ouverture par lien), on revient à la découverte plutôt que de laisser le formulaire ouvert.
       if (router.canGoBack()) router.back();
+      else router.replace('/discover' as never);
     } catch (e) {
       const { key, params: p } = apiErrorMessage(e);
       setError(t(key, p));
@@ -64,7 +66,7 @@ export function ReportScreen() {
           marginBottom: space[4],
           borderRadius: radius.lg,
           backgroundColor: colors.surface,
-          borderWidth: 1,
+          borderWidth: borderWidth.hairline,
           borderColor: colors.border,
         }}
       >

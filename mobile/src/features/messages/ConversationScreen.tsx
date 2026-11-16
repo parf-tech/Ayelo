@@ -1,15 +1,17 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, Pressable, TextInput, View } from 'react-native';
+import { FlatList, TextInput, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { CALLS_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useRealtime } from '../../realtime';
-import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, type IconName } from '../../ui';
+import { borderWidth, fontFamilyFor, focus, fontWeight, MIN_TARGET, useFontsReady, useTheme } from '../../theme';
+import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast } from '../../ui';
 import { useCalls } from '../calls/CallProvider';
+import { MenuItem, MenuSheet } from '../common/MenuItem';
 import { useGoBack } from '../common/useGoBack';
+import { primaryPhotoUrl } from '../discover/swipe';
 import { useConversations } from './ConversationsProvider';
 import { DateSeparator } from './DateSeparator';
 import { MessageBubble } from './MessageBubble';
@@ -17,50 +19,11 @@ import { dayKey } from './messageTime';
 import type { LocalMessage } from './thread';
 import { useThread } from './useThread';
 
+/** Hauteur maximale de la zone de saisie (au-delà, elle défile). */
+const COMPOSER_MAX_HEIGHT = 120;
+
 function param(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
-}
-
-/** Ligne du menu de conversation : icône + libellé, cible >= 44, même testID qu'avant. */
-function MenuItem({
-  testID,
-  icon,
-  label,
-  onPress,
-  disabled,
-  danger,
-}: {
-  testID: string;
-  icon: IconName;
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  const { space } = useTheme();
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled) }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[3],
-        minHeight: MIN_TARGET,
-        paddingHorizontal: space[3],
-        opacity: disabled ? stateOpacity.disabled : pressed ? stateOpacity.pressed : 1,
-      })}
-    >
-      <Icon name={icon} tone={danger ? 'danger' : 'text'} />
-      <Text variant="body" tone={danger ? 'danger' : 'text'} style={{ flex: 1, fontWeight: '500' }}>
-        {label}
-      </Text>
-    </Pressable>
-  );
 }
 
 /** S14 : conversation (bulles, envoi optimiste, renvoi, accusés, pagination, « écrit… », avis de sécurité). */
@@ -68,7 +31,8 @@ export function ConversationScreen() {
   const router = useRouter();
   const goBack = useGoBack('/messages');
   const { t } = useI18n();
-  const { colors, radius, space } = useTheme();
+  const { colors, radius, space, type } = useTheme();
+  const fontsReady = useFontsReady();
   const toast = useToast();
   const { api } = useAuth();
   const calls = useCalls();
@@ -79,14 +43,16 @@ export function ConversationScreen() {
   const known = conversations.find(conversationId);
   const peerName = known?.profile?.display_name ?? param(params.name);
   const peerId = known?.profile?.user_id ?? param(params.peerId);
-  const peerPhoto = param(params.photo) || null;
+  // Photo : paramètre de navigation, sinon celle du profil dans la liste des conversations (ouverture par notification ou lien).
+  const peerPhoto = param(params.photo) || (known?.profile ? primaryPhotoUrl(known.profile) : null) || null;
   const isMatch = known?.unlocked_by === 'match';
   const canCall = CALLS_ENABLED && isMatch;
 
   const thread = useThread(conversationId);
   const [draft, setDraft] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [confirm, setConfirm] = useState<'block' | 'unmatch' | null>(null);
+  const [confirm, setConfirm] = useState<'block' | 'unmatch' | 'hide' | null>(null);
+  const [composerFocused, setComposerFocused] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | undefined>();
 
@@ -234,16 +200,22 @@ export function ConversationScreen() {
               placeholderTextColor={colors.textMuted}
               multiline
               maxLength={2000}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
+              selectionColor={colors.primary}
               style={{
                 flex: 1,
-                minHeight: MIN_TARGET + 4,
-                maxHeight: 120,
+                minHeight: MIN_TARGET + space[1],
+                maxHeight: COMPOSER_MAX_HEIGHT,
                 paddingHorizontal: space[4],
                 paddingVertical: space[3],
                 color: colors.text,
-                fontSize: 16,
-                borderWidth: 1,
-                borderColor: colors.borderStrong,
+                fontSize: type.body.size,
+                lineHeight: type.body.line,
+                ...(fontsReady ? { fontFamily: fontFamilyFor(type.body.weight) } : null),
+                // Focus visible : contour plus épais et couleur de focus (comme TextField).
+                borderWidth: composerFocused ? borderWidth.strong : borderWidth.hairline,
+                borderColor: composerFocused ? colors[focus.color] : colors.borderStrong,
                 borderRadius: radius.lg,
                 backgroundColor: colors.surface,
               }}
@@ -298,7 +270,7 @@ export function ConversationScreen() {
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] }}>
-          <Avatar uri={peerPhoto} name={peerName || '?'} size={44} />
+          <Avatar uri={peerPhoto} name={peerName || '?'} size={44} testID="conversation-peer-avatar" />
           <Text variant="h2" header numberOfLines={2} style={{ flex: 1, flexShrink: 1 }}>
             {peerName || t('conversation.title')}
           </Text>
@@ -306,10 +278,23 @@ export function ConversationScreen() {
       </View>
 
       {menuOpen ? (
-        <View testID="conversation-menu-sheet" style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surface, padding: space[2], marginBottom: space[2] }}>
+        <MenuSheet testID="conversation-menu-sheet">
           {confirm ? (
             <View style={{ gap: space[2], padding: space[2] }}>
-              <Text variant="body">{confirm === 'block' ? t('detail.blockConfirm.title', { name: peerName }) : t('conversation.unmatch')}</Text>
+              <Text variant="body" style={{ fontWeight: fontWeight.semibold }}>
+                {confirm === 'block'
+                  ? t('detail.blockConfirm.title', { name: peerName })
+                  : confirm === 'unmatch'
+                    ? t('conversation.unmatchConfirm.title')
+                    : t('conversation.hideConfirm.title')}
+              </Text>
+              <Text variant="bodySmall" tone="textMuted" testID="conversation-confirm-body">
+                {confirm === 'block'
+                  ? t('detail.blockConfirm.body')
+                  : confirm === 'unmatch'
+                    ? t('conversation.unmatchConfirm.body')
+                    : t('conversation.hideConfirm.body')}
+              </Text>
               <Button
                 testID="conversation-confirm"
                 variant="danger"
@@ -317,7 +302,9 @@ export function ConversationScreen() {
                 onPress={() =>
                   void (confirm === 'block'
                     ? leave(() => api.safety.block(peerId), t('detail.blocked'))
-                    : unmatch())
+                    : confirm === 'unmatch'
+                      ? unmatch()
+                      : leave(() => api.messaging.hideConversation(conversationId), t('conversation.hidden')))
                 }
               />
               <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirm(null)} />
@@ -327,16 +314,10 @@ export function ConversationScreen() {
               <MenuItem testID="conversation-report" icon="Flag" label={t('conversation.report')} onPress={report} disabled={!peerId} />
               <MenuItem testID="conversation-block" icon="Ban" label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
               {isMatch ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
-              <MenuItem
-                testID="conversation-hide"
-                icon="Trash2"
-                danger
-                label={t('conversation.hide')}
-                onPress={() => void leave(() => api.messaging.hideConversation(conversationId), t('conversation.hidden'))}
-              />
+              <MenuItem testID="conversation-hide" icon="Trash2" danger label={t('conversation.hide')} onPress={() => setConfirm('hide')} />
             </>
           )}
-        </View>
+        </MenuSheet>
       ) : null}
 
       {thread.safetyHint ? (
@@ -377,6 +358,8 @@ export function ConversationScreen() {
           renderItem={renderMessage}
           onEndReached={() => void thread.loadOlder()}
           onEndReachedThreshold={0.4}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           ListHeaderComponent={
             thread.peerTyping ? (
               <View style={{ alignSelf: 'flex-start', backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: space[3], paddingVertical: space[1], marginVertical: space[1] }}>

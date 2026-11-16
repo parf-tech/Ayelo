@@ -8,6 +8,12 @@ export const verificationEn = {
   'verify.subtitle': 'This badge confirms that your selfie matches your photos. It is not a guarantee of identity. It appears after the team reviews it.',
   'verify.pose': 'Requested pose',
   'verify.pose.hint': 'Take a selfie copying exactly this pose: {pose}.',
+  'verify.pose.thumbsUp': 'thumbs up',
+  'verify.pose.openHand': 'open hand next to your face',
+  'verify.pose.twoFingers': 'two fingers up',
+  'verify.pose.lookLeft': 'looking left, smiling',
+  'verify.needSelfie': 'Take a selfie first so you can send it.',
+  'verify.cameraDenied.action': 'Open settings',
   'verify.consent.label': 'I agree to my selfie being processed to verify my profile',
   'verify.consent.description':
     'The selfie may be biometric data. It is used only for verification, and you can withdraw this consent in settings.',

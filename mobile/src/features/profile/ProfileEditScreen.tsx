@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { GENDERS, INTENTS, isApiError, type Gender, type Intent, type ProfileInput } from '../../api';
+import { GENDERS, INTENTS, isApiError, type Gender, type Intent, type ProfileInput, type SelfProfile } from '../../api';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
@@ -24,9 +24,35 @@ type Form = {
   intent: Intent;
 };
 
+/** Événement `beforeRemove` du navigateur (react-navigation) : on peut annuler la sortie puis la rejouer avec `dispatch`. */
+type LeaveEvent = { preventDefault: () => void; data: { action: unknown } };
+type GuardedNavigation = {
+  addListener: (name: 'beforeRemove', listener: (event: LeaveEvent) => void) => () => void;
+  dispatch: (action: never) => void;
+};
+
+/** Longueur maximale de la présentation (même limite que le serveur) : champ, message d'erreur et validation. */
+const BIO_MAX_LENGTH = 500;
+/** Largeur minimale d'une carte de genre : trois cartes tiennent sur une ligne à 390 pt, passent à la ligne au-delà du texte agrandi. */
+const GENDER_TILE_MIN_WIDTH = 104;
+
+/** Champs modifiés par rapport au profil enregistré : seuls ceux-ci sont envoyés (PUT /me/profile), et leur absence = rien à perdre. */
+function changedFields(form: Form, profile: SelfProfile): ProfileInput {
+  const body: ProfileInput = {};
+  if (form.displayName.trim() !== profile.display_name) body.display_name = form.displayName.trim();
+  if (form.gender !== profile.gender) body.gender = form.gender;
+  if (form.residence !== profile.residence_country) body.residence_country = form.residence;
+  if (form.origin !== profile.origin_country) body.origin_country = form.origin;
+  if ((form.city.trim() || null) !== profile.city) body.city = form.city.trim() || null;
+  if ((form.bio.trim() || null) !== profile.bio) body.bio = form.bio.trim() || null;
+  if (form.intent !== profile.intent) body.intent = form.intent;
+  return body;
+}
+
 /** S60 : édition du profil (PUT /me/profile : seuls les champs modifiés sont envoyés) et gestion des photos. */
 export function ProfileEditScreen() {
   const router = useRouter();
+  const navigation = useNavigation() as unknown as GuardedNavigation;
   const { t } = useI18n();
   const { space } = useTheme();
   const toast = useToast();
@@ -37,6 +63,23 @@ export function ProfileEditScreen() {
   const [banner, setBanner] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
   const profile = me.data?.profile ?? null;
+  // Sortie interceptée tant que des modifications ne sont pas enregistrées (bouton retour, retour matériel, geste de retour).
+  const dirty = form !== null && profile !== null && Object.keys(changedFields(form, profile)).length > 0;
+  const leaving = useRef(false);
+  const [pendingLeave, setPendingLeave] = useState<unknown>(null);
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', (event) => {
+        if (!dirty || leaving.current) return;
+        event.preventDefault();
+        setPendingLeave(event.data.action);
+      }),
+    [navigation, dirty],
+  );
+  const leaveWithoutSaving = () => {
+    leaving.current = true;
+    navigation.dispatch(pendingLeave as never);
+  };
 
   useEffect(() => {
     if (form || !profile) return;
@@ -59,7 +102,7 @@ export function ProfileEditScreen() {
     setBanner(undefined);
     const nameKey = validateDisplayName(form.displayName);
     const cityKey = form.city.trim() === '' ? null : validateCity(form.city);
-    const bioTooLong = form.bio.length > 500;
+    const bioTooLong = form.bio.length > BIO_MAX_LENGTH;
     const found = {
       name: nameKey ? t(nameKey) : undefined,
       city: cityKey ? t(cityKey) : undefined,
@@ -68,14 +111,7 @@ export function ProfileEditScreen() {
     setErrors(found);
     if (found.name || found.city || found.bio) return;
 
-    const body: ProfileInput = {};
-    if (form.displayName.trim() !== profile.display_name) body.display_name = form.displayName.trim();
-    if (form.gender !== profile.gender) body.gender = form.gender;
-    if (form.residence !== profile.residence_country) body.residence_country = form.residence;
-    if (form.origin !== profile.origin_country) body.origin_country = form.origin;
-    if ((form.city.trim() || null) !== profile.city) body.city = form.city.trim() || null;
-    if ((form.bio.trim() || null) !== profile.bio) body.bio = form.bio.trim() || null;
-    if (form.intent !== profile.intent) body.intent = form.intent;
+    const body = changedFields(form, profile);
 
     if (Object.keys(body).length === 0) {
       router.back();
@@ -86,6 +122,7 @@ export function ProfileEditScreen() {
       await api.profile.update(body);
       await refreshMe();
       toast.show({ message: t('edit.saved'), variant: 'success' });
+      leaving.current = true;
       router.back();
     } catch (error) {
       if (isApiError(error) && error.isValidation && error.fieldError('residence_country')) {
@@ -107,6 +144,18 @@ export function ProfileEditScreen() {
     >
       <ScreenHeader title={t('edit.title')} fallbackHref="/profile" />
       <View style={{ paddingTop: space[3] }}>
+        {pendingLeave !== null ? (
+          <Banner
+            testID="edit-unsaved"
+            variant="warning"
+            message={t('edit.unsaved')}
+            actionLabel={t('edit.unsaved.leave')}
+            onAction={leaveWithoutSaving}
+            onDismiss={() => setPendingLeave(null)}
+            dismissLabel={t('edit.unsaved.stay')}
+            style={{ marginBottom: space[4] }}
+          />
+        ) : null}
         {banner ? (
           <Banner
             testID="edit-banner"
@@ -124,7 +173,7 @@ export function ProfileEditScreen() {
               <View style={{ gap: space[4] }}>
                 <TextField testID="edit-name" label={t('profile.name')} value={form.displayName} onChangeText={(displayName) => patch({ displayName })} error={errors.name} maxLength={40} />
                 <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[1] }}>
-                  <Text variant="label" style={{ fontWeight: '500' }}>
+                  <Text variant="label">
                     {t('profile.gender')}
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
@@ -136,7 +185,7 @@ export function ProfileEditScreen() {
                         label={t(`gender.${gender}`)}
                         selected={form.gender === gender}
                         onPress={() => patch({ gender })}
-                        style={{ flexGrow: 1, minWidth: 104 }}
+                        style={{ flexGrow: 1, minWidth: GENDER_TILE_MIN_WIDTH }}
                       />
                     ))}
                   </View>
@@ -149,7 +198,7 @@ export function ProfileEditScreen() {
                   onChangeText={(bio) => patch({ bio })}
                   error={errors.bio}
                   multiline
-                  maxLength={500}
+                  maxLength={BIO_MAX_LENGTH}
                 />
               </View>
 

@@ -19,6 +19,9 @@ export const settingsFr = {
   'edit.preferences': 'Préférences de rencontre',
   'edit.residenceLimit': 'Le pays de résidence ne peut être modifié qu’une fois par semaine.',
   'edit.saved': 'Profil mis à jour.',
+  'edit.unsaved': 'Vous avez des modifications non enregistrées. Si vous quittez maintenant, elles seront perdues.',
+  'edit.unsaved.leave': 'Quitter sans enregistrer',
+  'edit.unsaved.stay': 'Continuer la modification',
 
   'settings.title': 'Paramètres',
   'settings.section.account': 'Compte',

@@ -19,6 +19,9 @@ export const settingsEn = {
   'edit.preferences': 'Dating preferences',
   'edit.residenceLimit': 'The country of residence can only be changed once a week.',
   'edit.saved': 'Profile updated.',
+  'edit.unsaved': 'You have unsaved changes. If you leave now, they will be lost.',
+  'edit.unsaved.leave': 'Leave without saving',
+  'edit.unsaved.stay': 'Keep editing',
 
   'settings.title': 'Settings',
   'settings.section.account': 'Account',

@@ -9,11 +9,14 @@ import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, Icon, ScreenContainer, Text, type IconName } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 
+/** Médaillon du statut : un cercle de cette taille. */
+const MEDAL_SIZE = 88;
+
 /** S41 : suivi de la vérification (en attente, vérifié, refusé avec motif). Actualisation périodique tant que c'est en attente. */
 export function VerificationStatusScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space, colors } = useTheme();
+  const { space, colors, radius } = useTheme();
   const { api, refreshMe } = useAuth();
   const data = useResource(() => api.profile.verification(), [api]);
   const status = data.data?.verification_status;
@@ -48,7 +51,7 @@ export function VerificationStatusScreen() {
           {/* Médaillon décoratif : le texte de la bannière porte le statut (jamais l'icône ou la couleur seules). */}
           <View style={{ alignItems: 'center' }}>
             <View
-              style={{ width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }}
+              style={{ width: MEDAL_SIZE, height: MEDAL_SIZE, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }}
             >
               <Icon name={glyph} size="xl" tone={glyphTone} />
             </View>

@@ -1,15 +1,16 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, View } from 'react-native';
+import { Image, Linking, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { pickImage, type PickedImage } from '../../media/picker';
 import { uploadMedia } from '../../media/upload';
-import { useTheme } from '../../theme';
+import { borderWidth, useTheme } from '../../theme';
 import { AsyncView, Banner, Button, CheckboxField, Icon, ScreenContainer, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { poseLabel } from './poses';
 
 /**
  * S40 : vérification du profil. Consigne de pose (GET /me/verification/pose), consentement biométrique distinct
@@ -28,7 +29,7 @@ export function VerificationScreen() {
   const [consentError, setConsentError] = useState(false);
   const [selfie, setSelfie] = useState<PickedImage | null>(null);
   const [sending, setSending] = useState(false);
-  const [banner, setBanner] = useState<{ variant: 'error' | 'warning'; message: string } | undefined>();
+  const [banner, setBanner] = useState<{ variant: 'error' | 'warning'; message: string; settings?: boolean } | undefined>();
 
   const alreadyConsented = data.data?.consentGranted === true;
   const verified = data.data?.overview.verification_status === 'verified';
@@ -37,7 +38,7 @@ export function VerificationScreen() {
   const takeSelfie = async () => {
     setBanner(undefined);
     const result = await pickImage('camera');
-    if (result.kind === 'denied') setBanner({ variant: 'warning', message: t('verify.cameraDenied') });
+    if (result.kind === 'denied') setBanner({ variant: 'warning', message: t('verify.cameraDenied'), settings: true });
     else if (result.kind === 'picked') setSelfie(result.image);
   };
 
@@ -69,7 +70,14 @@ export function VerificationScreen() {
       testID="screen-verification"
       footer={
         !verified && !pending && data.status === 'ready' ? (
-          <Button testID="verify-submit" label={t('verify.submit')} onPress={() => void submit()} loading={sending} loadingLabel={t('verify.sending')} disabled={!selfie} />
+          <View style={{ gap: space[2] }}>
+            <Button testID="verify-submit" label={t('verify.submit')} onPress={() => void submit()} loading={sending} loadingLabel={t('verify.sending')} disabled={!selfie} />
+            {!selfie ? (
+              <Text variant="bodySmall" tone="textMuted" align="center" testID="verify-need-selfie">
+                {t('verify.needSelfie')}
+              </Text>
+            ) : null}
+          </View>
         ) : undefined
       }
     >
@@ -77,7 +85,16 @@ export function VerificationScreen() {
       <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
         {t('verify.subtitle')}
       </Text>
-      {banner ? <Banner testID="verify-banner" variant={banner.variant} message={banner.message} style={{ marginBottom: space[3] }} /> : null}
+      {banner ? (
+        <Banner
+          testID="verify-banner"
+          variant={banner.variant}
+          message={banner.message}
+          actionLabel={banner.settings ? t('verify.cameraDenied.action') : undefined}
+          onAction={banner.settings ? () => void Linking.openSettings() : undefined}
+          style={{ marginBottom: space[3] }}
+        />
+      ) : null}
       <AsyncView status={data.status} error={data.error} onRetry={() => void data.reload()} testID="verification">
         {verified || pending ? (
           <View style={{ gap: space[3] }}>
@@ -92,9 +109,9 @@ export function VerificationScreen() {
                 gap: space[3],
                 padding: space[4],
                 borderRadius: radius.lg,
-                borderWidth: 1,
+                borderWidth: borderWidth.hairline,
                 borderColor: colors.border,
-                borderLeftWidth: 4,
+                borderLeftWidth: borderWidth.strong * 2,
                 borderLeftColor: colors.primary,
                 backgroundColor: colors.surface,
               }}
@@ -105,10 +122,10 @@ export function VerificationScreen() {
                   {t('verify.pose')}
                 </Text>
                 <Text variant="h2" testID="verify-pose">
-                  {data.data?.pose}
+                  {poseLabel(t, data.data?.pose)}
                 </Text>
                 <Text variant="body" tone="textMuted" style={{ marginTop: space[1] }}>
-                  {t('verify.pose.hint', { pose: data.data?.pose ?? '' })}
+                  {t('verify.pose.hint', { pose: poseLabel(t, data.data?.pose) })}
                 </Text>
               </View>
             </View>

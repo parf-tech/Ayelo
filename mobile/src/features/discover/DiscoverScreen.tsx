@@ -9,14 +9,24 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, EmptyState, IconButton, ScreenContainer, Skeleton, Text, useToast } from '../../ui';
+import { SwipeActions } from './SwipeActions';
 import { useDiscoverFilters } from './DiscoverFiltersProvider';
 import { SwipeCard } from './SwipeCard';
 import { performSwipe, primaryPhotoUrl } from './swipe';
 
 const PAGE_SIZE = 10;
 const PREFETCH_THRESHOLD = 3;
+/** Hauteur minimale du squelette de carte (il occupe sinon tout l'espace libre au-dessus des boutons). */
+const CARD_SKELETON_MIN_HEIGHT = 240;
+
+type Pending = SwipeAction | 'undo' | null;
 
 type Gate = 'quota' | 'premium' | null;
+
+/** Squelette en forme de carte : il prend la place de la pile (même rayon) au lieu de quatre barres de liste. */
+function CardSkeleton() {
+  return <Skeleton variant="card" style={{ flex: 1, height: undefined, minHeight: CARD_SKELETON_MIN_HEIGHT }} />;
+}
 
 /** S10 : pile de cartes (geste + boutons), avec états chargement, erreur, vide, quota et Premium requis. */
 export function DiscoverScreen() {
@@ -29,6 +39,8 @@ export function DiscoverScreen() {
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
   const [gate, setGate] = useState<Gate>(null);
   const busy = useRef(false);
+  // Envoi en cours (visible : le bouton concerné montre l'attente) et dernière carte notée pendant cette séance (Annuler).
+  const [pending, setPending] = useState<Pending>(null);
 
   const filtersKey = JSON.stringify(filters);
   const paged = usePaginated<PublicProfile>(
@@ -68,10 +80,12 @@ export function DiscoverScreen() {
       const card = top;
       if (!card || busy.current) return;
       busy.current = true;
+      setPending(action);
       setGate(null);
       remove(card.user_id, true);
       const outcome = await performSwipe(api, card.user_id, action);
       busy.current = false;
+      setPending(null);
       switch (outcome.kind) {
         case 'ok':
           return;
@@ -104,6 +118,7 @@ export function DiscoverScreen() {
   const undo = async () => {
     if (busy.current) return;
     busy.current = true;
+    setPending('undo');
     try {
       const { target_id } = await api.discovery.undoSwipe();
       const profile = await api.profile.publicProfile(target_id);
@@ -118,6 +133,7 @@ export function DiscoverScreen() {
       }
     } finally {
       busy.current = false;
+      setPending(null);
     }
   };
 
@@ -179,6 +195,8 @@ export function DiscoverScreen() {
           emptyDescription={t('discover.empty.body')}
           emptyActionLabel={t('discover.empty.widen')}
           onEmptyAction={() => router.push('/filters' as never)}
+          emptyIcon="Search"
+          loadingSkeleton={<CardSkeleton />}
         >
           <View style={{ flex: 1 }}>
             <View style={{ flex: 1, marginBottom: space[3] }} testID="discover-deck">
@@ -187,44 +205,22 @@ export function DiscoverScreen() {
                 <SwipeCard key={top.user_id} profile={top} interactive onSwipe={(a) => void act(a)} onOpen={() => openProfile(top.user_id)} onReport={() => reportProfile(top)} />
               ) : (
                 <View accessible accessibilityLabel={t('common.loading')} style={{ flex: 1 }}>
-                  <Skeleton variant="card" height={400} />
+                  <CardSkeleton />
                 </View>
               )}
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space[5], paddingBottom: space[2] }}>
-              <IconButton
-                testID="swipe-dislike"
-                icon="X"
-                variant="tonal"
-                size="lg"
-                accessibilityLabel={t('discover.dislike')}
-                disabled={!top}
-                onPress={() => void act('dislike')}
-                style={{ width: 56, height: 56, borderRadius: 28 }}
-              />
-              <IconButton
-                testID="swipe-super"
-                icon="Star"
-                variant="tonal"
-                size="lg"
-                accessibilityLabel={t('discover.superLike')}
-                disabled={!top}
-                onPress={() => void act('super_like')}
-                style={{ width: 56, height: 56, borderRadius: 28 }}
-              />
-              <IconButton
-                testID="swipe-like"
-                icon="Heart"
-                variant="filled"
-                size="lg"
-                accessibilityLabel={t('discover.like')}
-                disabled={!top}
-                onPress={() => void act('like')}
-                style={{ width: 68, height: 68, borderRadius: 34 }}
-              />
+            <View style={{ paddingBottom: space[2] }}>
+              <SwipeActions idPrefix="swipe" disabled={!top} pending={pending === 'undo' ? null : pending} onAction={(a) => void act(a)} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Button testID="swipe-undo" variant="ghost" label={t('discover.undo')} onPress={() => void undo()} />
+              <Button
+                testID="swipe-undo"
+                variant="ghost"
+                label={t('discover.undo')}
+                onPress={() => void undo()}
+                disabled={pending !== null}
+                loading={pending === 'undo'}
+              />
               <Button
                 testID="swipe-report"
                 variant="ghost"

@@ -1,12 +1,16 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 import type { Conversation, ConversationLastMessage } from '../../api/types';
 import { useI18n } from '../../i18n';
-import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { borderWidth, fontWeight, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
 import { AsyncView, Avatar, ScreenContainer, Text } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { useConversations } from './ConversationsProvider';
+
+/** Photo de la rangée, et hauteur minimale d'une rangée (photo + marges) ; le filet commence après la photo. */
+const AVATAR_SIZE = 56;
+const ROW_MIN_HEIGHT = MIN_TARGET + 28;
 
 type Translate = ReturnType<typeof useI18n>['t'];
 
@@ -84,6 +88,7 @@ export function MessagesListScreen() {
         emptyDescription={t('messages.empty.body')}
         emptyActionLabel={t('messages.empty.action')}
         onEmptyAction={() => router.push('/discover' as never)}
+        emptyIcon="MessageCircle"
       >
         <FlatList
           testID="messages-list"
@@ -92,12 +97,18 @@ export function MessagesListScreen() {
           onEndReached={() => void loadMore()}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loadingMore ? <ActivityIndicator testID="messages-loading-more" color={colors.primary} style={{ paddingVertical: space[3] }} /> : undefined}
-          refreshing={refreshing}
-          onRefresh={async () => {
-            setRefreshing(true);
-            await refresh({ silent: true });
-            setRefreshing(false);
-          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await refresh({ silent: true });
+                setRefreshing(false);
+              }}
+            />
+          }
           renderItem={({ item }) => {
             const name = item.profile?.display_name ?? '';
             const preview = previewText(t, item.last_message);
@@ -112,22 +123,22 @@ export function MessagesListScreen() {
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: space[3],
-                  minHeight: MIN_TARGET + 28,
+                  minHeight: ROW_MIN_HEIGHT,
                   paddingVertical: space[2],
                   opacity: pressed ? stateOpacity.pressed : 1,
                 })}
               >
-                <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={56} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="body" numberOfLines={1} style={{ fontWeight: unread ? '700' : '600' }}>
+                <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={AVATAR_SIZE} />
+                <View style={{ flex: 1, gap: space[1] }}>
+                  <Text variant="body" numberOfLines={1} style={{ fontWeight: unread ? fontWeight.bold : fontWeight.semibold }}>
                     {name}
                   </Text>
                   {/* Non lu : graisse ET pastille numérique, jamais la couleur seule. */}
-                  <Text variant="bodySmall" tone={unread ? 'text' : 'textMuted'} numberOfLines={2} style={{ fontWeight: unread ? '600' : undefined }}>
+                  <Text variant="bodySmall" tone={unread ? 'text' : 'textMuted'} numberOfLines={2} style={{ fontWeight: unread ? fontWeight.semibold : undefined }}>
                     {preview}
                   </Text>
                 </View>
-                <View style={{ alignItems: 'flex-end', gap: space[1], minWidth: 44 }}>
+                <View style={{ alignItems: 'flex-end', gap: space[1], minWidth: MIN_TARGET }}>
                   <Text variant="caption" tone="textMuted">
                     {shortTime(item.last_message?.created_at, locale)}
                   </Text>
@@ -135,9 +146,9 @@ export function MessagesListScreen() {
                     <View
                       testID={`unread-${item.id}`}
                       accessible={false}
-                      style={{ minWidth: 24, height: 24, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}
+                      style={{ minWidth: space[5], height: space[5], borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[1] }}
                     >
-                      <Text variant="caption" tone="onPrimary" style={{ fontWeight: '700' }}>
+                      <Text variant="captionStrong" tone="onPrimary">
                         {item.unread > 99 ? '99+' : item.unread}
                       </Text>
                     </View>
@@ -146,7 +157,7 @@ export function MessagesListScreen() {
               </Pressable>
             );
           }}
-          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border, marginLeft: 56 + space[3] }} />}
+          ItemSeparatorComponent={() => <View style={{ height: borderWidth.hairline, backgroundColor: colors.border, marginLeft: AVATAR_SIZE + space[3] }} />}
         />
       </AsyncView>
     </ScreenContainer>

@@ -3,9 +3,24 @@ import { View } from 'react-native';
 import { useTheme } from '../../theme';
 
 /** Nombre de bandes : plus il est grand, plus le fondu est lisse (chaque bande n'est qu'une vue unie semi-transparente). */
-const BANDS = 8;
-/** Opacité d'une bande ; l'empilement atteint environ 0,9 en bas, où se pose le texte (blanc sur prune). */
-const BAND_OPACITY = 0.26;
+export const SCRIM_BANDS = 10;
+/** Opacité d'une bande ; l'empilement atteint environ 0,97 en bas, où se pose le texte (blanc sur prune). */
+export const SCRIM_BAND_OPACITY = 0.3;
+/**
+ * Opacité minimale du fondu sous le texte pour garder 4,5:1 (blanc sur prune mélangé à une photo blanche, pire cas) :
+ * 0,63 suffit ; 0,65 laisse une marge.
+ */
+export const SCRIM_TEXT_MIN_ALPHA = 0.65;
+
+/**
+ * Opacité cumulée du fondu à une fraction de sa hauteur (0 = bas, 1 = haut) : nombre de bandes qui la couvrent.
+ * Exportée pour le test de lisibilité : le texte doit rester dans la zone où l'opacité dépasse SCRIM_TEXT_MIN_ALPHA.
+ */
+export function scrimAlphaAt(fraction: number): number {
+  if (fraction > 1) return 0;
+  const covering = Math.min(SCRIM_BANDS, Math.floor(SCRIM_BANDS - SCRIM_BANDS * Math.max(fraction, 0) + 1e-9) + 1);
+  return 1 - (1 - SCRIM_BAND_OPACITY) ** covering;
+}
 
 /**
  * Fondu prune du bas vers le haut, posé sur une photo pour garantir la lisibilité du texte.
@@ -23,7 +38,7 @@ export function Scrim({ height = '60%', testID }: { height?: `${number}%`; testI
       importantForAccessibility="no-hide-descendants"
       style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height }}
     >
-      {Array.from({ length: BANDS }, (_unused, index) => (
+      {Array.from({ length: SCRIM_BANDS }, (_unused, index) => (
         <View
           key={index}
           style={{
@@ -31,9 +46,9 @@ export function Scrim({ height = '60%', testID }: { height?: `${number}%`; testI
             left: 0,
             right: 0,
             bottom: 0,
-            height: `${(total * (BANDS - index)) / BANDS}%` as `${number}%`,
+            height: `${(total * (SCRIM_BANDS - index)) / SCRIM_BANDS}%` as `${number}%`,
             backgroundColor: colors.brand,
-            opacity: BAND_OPACITY,
+            opacity: SCRIM_BAND_OPACITY,
           }}
         />
       ))}
