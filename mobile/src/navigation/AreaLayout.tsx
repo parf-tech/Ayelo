@@ -5,13 +5,14 @@ import { useAuth } from '../auth/AuthProvider';
 import { Area, guardArea } from '../flow/authGuard';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme';
-import { ScreenContainer, Skeleton } from '../ui';
+import { ScreenContainer, Skeleton, useReduceMotion } from '../ui';
 
 function LoadingScreen() {
   const { t } = useI18n();
+  const { space } = useTheme();
   return (
     <ScreenContainer testID="screen-loading">
-      <View accessible accessibilityLabel={t('common.loading')} style={{ gap: 16, marginTop: 48 }}>
+      <View accessible accessibilityLabel={t('common.loading')} style={{ gap: space[4], marginTop: space[7] }}>
         <Skeleton variant="circle" />
         <Skeleton width="60%" />
         <Skeleton width="80%" />
@@ -24,6 +25,7 @@ function LoadingScreen() {
 export function AreaLayout({ area, shell: Shell }: { area: Area; shell?: React.ComponentType<{ children: React.ReactNode }> }) {
   const { state } = useAuth();
   const { colors } = useTheme();
+  const reduced = useReduceMotion();
   const decision = guardArea(state, area);
 
   if (decision.kind === 'wait') return <LoadingScreen />;
@@ -31,7 +33,7 @@ export function AreaLayout({ area, shell: Shell }: { area: Area; shell?: React.C
 
   const stack = (
     // Fond du thème pour les scènes : pas de flash blanc entre deux écrans en mode sombre.
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', contentStyle: { backgroundColor: colors.bg } }}>
+    <Stack screenOptions={{ headerShown: false, animation: reduced === false ? 'slide_from_right' : 'fade', contentStyle: { backgroundColor: colors.bg } }}>
       {/* S64 : pas de geste retour vers la saisie de la date. */}
       {area === 'public' ? <Stack.Screen name="signup/age-refused" options={{ gestureEnabled: false }} /> : null}
     </Stack>

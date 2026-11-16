@@ -9,6 +9,7 @@ import { useRealtime } from '../../realtime';
 import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
 import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast, type IconName } from '../../ui';
 import { useCalls } from '../calls/CallProvider';
+import { useGoBack } from '../common/useGoBack';
 import { useConversations } from './ConversationsProvider';
 import { DateSeparator } from './DateSeparator';
 import { MessageBubble } from './MessageBubble';
@@ -65,6 +66,7 @@ function MenuItem({
 /** S14 : conversation (bulles, envoi optimiste, renvoi, accusés, pagination, « écrit… », avis de sécurité). */
 export function ConversationScreen() {
   const router = useRouter();
+  const goBack = useGoBack('/messages');
   const { t } = useI18n();
   const { colors, radius, space } = useTheme();
   const toast = useToast();
@@ -267,7 +269,7 @@ export function ConversationScreen() {
             testID="back-button"
             icon="ChevronLeft"
             accessibilityLabel={t('common.back')}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/messages' as never))}
+            onPress={goBack}
           />
           <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
             {canCall ? (

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { CallKind } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
+import { CALLS_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { conversationChannel, REALTIME_EVENTS, useChannel, userChannel } from '../../realtime';
@@ -100,6 +101,8 @@ export function CallProvider({ children, mediaEngine }: Props) {
 
   const startCall = useCallback(
     async ({ conversationId, kind, peerId, peerName, peerPhoto }: StartCallInput) => {
+      // Appels masqués (CALLS_ENABLED) : aucun appel ne démarre, aucun écran d'appel ne s'ouvre.
+      if (!CALLS_ENABLED) return;
       if (stateRef.current.phase !== 'idle' && stateRef.current.phase !== 'ended') return;
       try {
         const result = await api.calls.start(conversationId, kind);
@@ -166,6 +169,8 @@ export function CallProvider({ children, mediaEngine }: Props) {
   useChannel(me ? userChannel(me) : null, (event, data) => {
     const payload = asRecord(data);
     if (event === REALTIME_EVENTS.callIncoming) {
+      // Appels masqués : un événement du serveur n'ouvre jamais l'écran d'appel.
+      if (!CALLS_ENABLED) return;
       const callId = payload.call_id;
       const conversationId = payload.conversation_id;
       if (typeof callId !== 'string' || typeof conversationId !== 'string') return;

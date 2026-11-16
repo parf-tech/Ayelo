@@ -65,7 +65,7 @@ export function ResetPasswordScreen() {
         )
       }
     >
-      <AuthHeader back={false} />
+      <AuthHeader fallbackHref="/login" />
       <Text variant="title" header style={{ marginTop: space[4] }}>
         {t('reset.title')}
       </Text>

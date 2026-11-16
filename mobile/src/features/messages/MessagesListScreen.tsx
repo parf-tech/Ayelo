@@ -106,7 +106,7 @@ export function MessagesListScreen() {
               <Pressable
                 testID={`conversation-${item.id}`}
                 accessibilityRole="button"
-                accessibilityLabel={unread ? t('messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview })}
+                accessibilityLabel={unread ? t(item.unread === 1 ? 'messages.row.unread.one' : 'messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview })}
                 onPress={() => open(item)}
                 style={({ pressed }) => ({
                   flexDirection: 'row',

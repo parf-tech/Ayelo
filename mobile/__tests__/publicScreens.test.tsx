@@ -301,10 +301,12 @@ describe('Connexion, inscription : logo et comportement conservés', () => {
     expect(screen.getByTestId('back-button')).toBeOnTheScreen();
   });
 
-  it('nouveau mot de passe : deux champs avec bascule et logo, sans retour', async () => {
+  it('nouveau mot de passe : deux champs avec bascule et logo, retour vers la connexion quand la pile est vide', async () => {
     await renderApp(<ResetPasswordScreen />);
     expect(screen.getByTestId('auth-logo')).toBeOnTheScreen();
-    expect(screen.queryByTestId('back-button')).toBeNull();
+    router.canGoBack.mockReturnValueOnce(false);
+    await user().press(screen.getByTestId('back-button'));
+    expect(router.replace).toHaveBeenCalledWith('/login');
     expect(screen.getAllByRole('button', { name: 'Afficher le mot de passe' })).toHaveLength(2);
   });
 

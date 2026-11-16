@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
@@ -8,6 +7,7 @@ import { MAX_CONTENT_WIDTH, borderWidth, radius, useTheme } from '../../theme';
 import { IconButton, Logo, Stepper, Text } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
 import { FOOTER_MAX_HEIGHT_RATIO, LARGE_FONT_SCALE } from '../../ui/ScreenContainer';
+import { useGoBack } from '../common/useGoBack';
 import { ONBOARDING_STEP_KEYS, ONBOARDING_STEPS, OnboardingStepKey, onboardingStepNumber } from './steps';
 
 /** Variante du logo faite pour le fond de marque (mot-symbole clair). */
@@ -32,8 +32,8 @@ type Props = {
  * Le pied de page plafonne sa hauteur et défile avec un texte très agrandi (comme ScreenContainer).
  */
 export function OnboardingFrame({ testID, step, title, subtitle, backHref, footer, children }: Props) {
-  const router = useRouter();
   const { t } = useI18n();
+  const goBack = useGoBack(backHref ?? '/');
   const { colors, space } = useTheme();
   const insets = useSafeAreaInsets();
   const { height, fontScale } = useWindowDimensions();
@@ -63,7 +63,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
                     variant="tonal"
                     tone="onBrand"
                     accessibilityLabel={t('common.back')}
-                    onPress={() => (router.canGoBack() ? router.back() : router.replace(backHref as never))}
+                    onPress={goBack}
                   />
                 ) : null}
                 <Logo variant={LOGO_ON_BRAND} layout="horizontal" size={28} />

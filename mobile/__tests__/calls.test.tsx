@@ -19,12 +19,21 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
+// Drapeau des appels pilotable par test (le code de production le lit à chaque événement).
+let mockCallsEnabled = true;
+jest.mock('../src/config/features', () => ({
+  get CALLS_ENABLED() {
+    return mockCallsEnabled;
+  },
+}));
+
 const ME = meFixture();
 const user = () => userEvent.setup();
 const LIVEKIT = { url: 'wss://livekit.example.test', room: 'call-1', token: 'jwt' };
 const CALL: CallInfo = { id: 'k1', conversationId: 'c1', kind: 'audio', direction: 'out', peerId: 'u2', peerName: 'Awa', peerPhoto: null };
 
 beforeEach(() => {
+  mockCallsEnabled = true;
   process.env.EXPO_PUBLIC_API_URL = 'https://api.example.test';
   tokenStore.resetCacheForTests();
   resetDeviceIdCacheForTests();
@@ -238,6 +247,30 @@ describe('S15 à S18 : signalisation d\'appel', () => {
     installFakeApi(baseRoutes());
     await renderShell(<Harness />, { calls: true });
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/messages'));
+  });
+});
+
+describe('appels masqués (CALLS_ENABLED = false)', () => {
+  it('un événement call.incoming du serveur n’ouvre aucun écran d’appel', async () => {
+    mockCallsEnabled = false;
+    installFakeApi(baseRoutes());
+    const { transport } = await renderShell(<Harness />, { calls: true });
+    await waitFor(() => expect(transport.channels()).toContain('private-user.u1'));
+    await act(async () => {
+      transport.emit('private-user.u1', 'call.incoming', { call_id: 'k9', conversation_id: 'c1', kind: 'video', caller_id: 'u2', caller_name: 'Awa' });
+    });
+    expect(screen.queryByTestId('screen-call-incoming')).not.toBeOnTheScreen();
+    expect(router.push).not.toHaveBeenCalledWith('/call');
+  });
+
+  it('startCall ne fait aucun appel réseau et n’ouvre aucun écran', async () => {
+    mockCallsEnabled = false;
+    const fake = installFakeApi({ ...baseRoutes(), 'POST /calls': [201, { id: 'k1', status: 'ringing', ring_seconds: 30, livekit: LIVEKIT }] });
+    await renderShell(<Harness />, { calls: true });
+    await user().press(screen.getByTestId('start-audio'));
+    expect(fake.called('POST /calls')).toHaveLength(0);
+    expect(screen.queryByTestId('screen-call-outgoing')).not.toBeOnTheScreen();
+    expect(router.push).not.toHaveBeenCalledWith('/call');
   });
 });
 

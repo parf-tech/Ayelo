@@ -10,7 +10,7 @@ import { colors } from '../src/theme';
 import { installFakeApi } from './helpers/fakeApi';
 import { meFixture } from './helpers/fixtures';
 import { flatStyle as flat } from './helpers/render';
-import { resetRouterMocks } from './helpers/routerMock';
+import { resetRouterMocks, router } from './helpers/routerMock';
 import { renderShell } from './helpers/shell';
 
 jest.mock('expo-router', () => ({
@@ -101,11 +101,13 @@ describe('Sanctions', () => {
 });
 
 describe('Confirmation de l’e-mail par lien', () => {
-  it('reprend l’en-tête de marque des écrans publics, sans bouton retour', async () => {
+  it('reprend l’en-tête de marque des écrans publics, avec un retour vers l’accueil quand la pile est vide', async () => {
     installFakeApi({});
+    router.canGoBack.mockReturnValueOnce(false);
     await renderShell(<VerifyEmailLinkScreen />);
     expect(screen.getByTestId('auth-header')).toBeOnTheScreen();
-    expect(screen.queryByTestId('back-button')).not.toBeOnTheScreen();
+    await user().press(screen.getByTestId('back-button'));
+    expect(router.replace).toHaveBeenCalledWith('/');
     await user().type(screen.getByTestId('verify-link-token'), 'abc');
     expect(screen.getByTestId('verify-link-submit')).toBeEnabled();
   });

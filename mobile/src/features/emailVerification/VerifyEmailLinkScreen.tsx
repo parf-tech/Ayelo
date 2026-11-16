@@ -48,7 +48,7 @@ export function VerifyEmailLinkScreen() {
 
   return (
     <ScreenContainer testID="screen-verify-link" scroll>
-      <AuthHeader back={false} />
+      <AuthHeader fallbackHref="/" />
       <Text variant="title" header style={{ marginTop: space[4], marginBottom: space[4] }}>
         {t('verifyEmail.link.title')}
       </Text>
