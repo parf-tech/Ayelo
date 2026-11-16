@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { DiscoverFiltersProvider, useDiscoverFilters } from '../src/features/discover/DiscoverFiltersProvider';
 import { DiscoverScreen } from '../src/features/discover/DiscoverScreen';
 import { FiltersScreen } from '../src/features/discover/FiltersScreen';
@@ -11,6 +11,7 @@ import { ReportScreen } from '../src/features/safety/ReportScreen';
 import { createApiClient, createEndpoints } from '../src/api';
 import { resetDeviceIdCacheForTests } from '../src/storage/deviceId';
 import { tokenStore } from '../src/storage/tokenStore';
+import { mockWindow } from './helpers/a11y';
 import { emptyBody, installFakeApi } from './helpers/fakeApi';
 import { media, meFixture, publicProfile, selfProfile } from './helpers/fixtures';
 import { resetRouterMocks, router } from './helpers/routerMock';
@@ -34,10 +35,13 @@ beforeEach(() => {
   resetDeviceIdCacheForTests();
   resetRouterMocks();
   mockParams.current = {};
+  // Écran de référence (390 x 844, texte normal) : la fenêtre simulée par défaut de Jest est agrandie à 200 %.
+  mockWindow(390, 844, 1);
 });
 
 afterEach(async () => {
   await act(async () => undefined);
+  jest.restoreAllMocks();
 });
 
 function deck(profiles = [AWA, BINTA], next_cursor: string | null = null): Record<string, [number, unknown]> {
@@ -130,6 +134,33 @@ describe('S10 Découverte', () => {
     await screen.findByLabelText(/Awa, 28 ans/);
     await user().press(screen.getByTestId('swipe-super'));
     expect(await screen.findByTestId('discover-gate-premium')).toBeOnTheScreen();
+  });
+
+  it('Premium requis : bannière d\'information sans phrase répétée, pile à hauteur minimale garantie', async () => {
+    installFakeApi({ ...deck(), 'POST /swipes': [402, { error: { code: 'premium_required', message: 'x' } }] } as never);
+    await renderShell(<DiscoverScreen />);
+    await screen.findByLabelText(/Awa, 28 ans/);
+    await user().press(screen.getByTestId('swipe-super'));
+    const gate = await screen.findByTestId('discover-gate-premium');
+    expect(gate).toHaveTextContent(/Réservé aux abonnés Premium/);
+    expect(gate).not.toHaveTextContent(/fait partie de l.abonnement/);
+    expect(StyleSheet.flatten(screen.getByTestId('discover-deck').props.style).minHeight).toBeGreaterThanOrEqual(200);
+    // Écran normal : « Annuler » et « Signaler » restent à portée pendant la bannière.
+    expect(screen.getByTestId('swipe-undo')).toBeOnTheScreen();
+  });
+
+  it('écran court (320 x 568) avec bannière : la rangée Annuler / Signaler s\'efface, la pile garde sa place, elle revient à la fermeture', async () => {
+    mockWindow(320, 568, 1);
+    installFakeApi({ ...deck(), 'POST /swipes': [402, { error: { code: 'premium_required', message: 'x' } }] } as never);
+    await renderShell(<DiscoverScreen />);
+    await screen.findByLabelText(/Awa, 28 ans/);
+    expect(screen.getByTestId('swipe-undo')).toBeOnTheScreen();
+    await user().press(screen.getByTestId('swipe-super'));
+    await screen.findByTestId('discover-gate-premium');
+    expect(screen.queryByTestId('swipe-undo')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('swipe-like')).toBeOnTheScreen();
+    await user().press(screen.getByRole('button', { name: 'Fermer' }));
+    expect(await screen.findByTestId('swipe-undo')).toBeOnTheScreen();
   });
 
   it('annuler : 402 sans Premium -> avis ; avec Premium -> la carte réapparaît', async () => {

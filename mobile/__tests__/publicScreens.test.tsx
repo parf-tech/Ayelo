@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { act, screen, userEvent, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, userEvent, within } from '@testing-library/react-native';
 import React from 'react';
 import { AuthFormScreen } from '../src/features/auth/AuthFormScreen';
 import { ForgotPasswordScreen } from '../src/features/auth/ForgotPasswordScreen';
@@ -180,6 +180,21 @@ describe('Accueil : nouvelle identité sur fond prune', () => {
     expect(screen.getByTestId('screen-welcome-footer-scroll')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Créer mon compte' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'J’ai déjà un compte' })).toBeOnTheScreen();
+  });
+
+  it('focus clavier : l\'anneau des deux boutons est blanc (celui du bouton principal se confondait avec le fond prune)', async () => {
+    mockWindow(390, 844, 1);
+    await renderApp(<WelcomeScreen />);
+    for (const id of ['welcome-create-account', 'welcome-sign-in']) {
+      await fireEvent(screen.getByTestId(id), 'focus');
+      expect(flat(screen.getByTestId(id).props.style).outlineColor).toBe(colors.light.onBrand);
+    }
+  });
+
+  it('écran court 320 x 568, texte normal : le pied de page défile au lieu d\'être coupé à 45 %', async () => {
+    mockWindow(320, 568, 1);
+    await renderApp(<WelcomeScreen />);
+    expect(screen.getByTestId('screen-welcome-footer-scroll')).toBeOnTheScreen();
   });
 
   it('thème sombre : le fond reste prune (jeton brand)', () => {

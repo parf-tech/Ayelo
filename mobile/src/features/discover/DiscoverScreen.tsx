@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { isApiError } from '../../api/errors';
 import type { PublicProfile, SwipeAction } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
@@ -9,6 +9,7 @@ import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, EmptyState, IconButton, ScreenContainer, Skeleton, Text, useToast } from '../../ui';
+import { footerScrolls } from '../../ui/ScreenContainer';
 import { SwipeActions } from './SwipeActions';
 import { useDiscoverFilters } from './DiscoverFiltersProvider';
 import { SwipeCard } from './SwipeCard';
@@ -18,6 +19,11 @@ const PAGE_SIZE = 10;
 const PREFETCH_THRESHOLD = 3;
 /** Hauteur minimale du squelette de carte (il occupe sinon tout l'espace libre au-dessus des boutons). */
 const CARD_SKELETON_MIN_HEIGHT = 240;
+/**
+ * Hauteur minimale de la pile : avec une bannière (quota, Premium requis) sur un écran court, la pile n'est plus écrasée
+ * à quelques points (nom et pastille masqués). Le geste (PanResponder) interdit d'envelopper l'écran dans un défilement.
+ */
+const DECK_MIN_HEIGHT = 200;
 
 type Pending = SwipeAction | 'undo' | null;
 
@@ -33,6 +39,7 @@ export function DiscoverScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { space } = useTheme();
+  const { height, fontScale } = useWindowDimensions();
   const toast = useToast();
   const { api } = useAuth();
   const { filters } = useDiscoverFilters();
@@ -167,8 +174,8 @@ export function DiscoverScreen() {
       {gate ? (
         <Banner
           testID={`discover-gate-${gate}`}
-          variant="warning"
-          message={gate === 'quota' ? `${t('discover.quota.title')}. ${t('discover.quota.body')}` : `${t('discover.premiumGate.title')}. ${t('discover.premiumGate.body')}`}
+          variant={gate === 'quota' ? 'warning' : 'info'}
+          message={gate === 'quota' ? `${t('discover.quota.title')}. ${t('discover.quota.body')}` : t('discover.premiumGate.title')}
           actionLabel={t('discover.premium.cta')}
           onAction={() => router.push('/premium' as never)}
           onDismiss={() => setGate(null)}
@@ -199,7 +206,7 @@ export function DiscoverScreen() {
           loadingSkeleton={<CardSkeleton />}
         >
           <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, marginBottom: space[3] }} testID="discover-deck">
+            <View style={{ flex: 1, minHeight: DECK_MIN_HEIGHT, marginBottom: space[3] }} testID="discover-deck">
               {next ? <SwipeCard key={next.user_id} profile={next} interactive={false} onSwipe={() => undefined} onOpen={() => undefined} /> : null}
               {top ? (
                 <SwipeCard key={top.user_id} profile={top} interactive onSwipe={(a) => void act(a)} onOpen={() => openProfile(top.user_id)} onReport={() => reportProfile(top)} />
@@ -212,7 +219,9 @@ export function DiscoverScreen() {
             <View style={{ paddingBottom: space[2] }}>
               <SwipeActions idPrefix="swipe" disabled={!top} pending={pending === 'undo' ? null : pending} onAction={(a) => void act(a)} />
             </View>
-            {/* Les deux boutons rétrécissent et passent à la ligne : aucun n'est poussé hors de l'écran (320 pt, texte agrandi). */}
+            {/* Les deux boutons rétrécissent et passent à la ligne : aucun n'est poussé hors de l'écran (320 pt, texte agrandi).
+                Écran court ou texte agrandi avec une bannière : la rangée s'efface pour laisser sa place à la pile (retour dès que la bannière est fermée). */}
+            {gate && footerScrolls(height, fontScale) ? null : (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <Button
                 testID="swipe-undo"
@@ -233,6 +242,7 @@ export function DiscoverScreen() {
                 onPress={() => top && reportProfile(top)}
               />
             </View>
+            )}
           </View>
         </AsyncView>
       )}

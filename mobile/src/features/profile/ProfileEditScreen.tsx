@@ -165,7 +165,7 @@ export function ProfileEditScreen() {
               <View style={{ gap: space[4] }}>
                 <TextField testID="edit-name" label={t('profile.name')} value={form.displayName} onChangeText={(displayName) => patch({ displayName })} error={errors.name} maxLength={40} />
                 <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[1] }}>
-                  <Text variant="label">
+                  <Text variant="labelStrong">
                     {t('profile.gender')}
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>

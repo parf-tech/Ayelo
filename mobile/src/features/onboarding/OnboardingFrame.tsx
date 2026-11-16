@@ -5,7 +5,7 @@ import { useI18n } from '../../i18n';
 import { MAX_CONTENT_WIDTH, MIN_TARGET, borderWidth, radius, useTheme } from '../../theme';
 import { IconButton, Logo, Stepper, Text } from '../../ui';
 import { LOGO_VARIANTS, isOnBrandVariant } from '../../ui/brandArt';
-import { BrandStatusBar, FOOTER_MAX_HEIGHT_RATIO, LARGE_FONT_SCALE } from '../../ui/ScreenContainer';
+import { BrandStatusBar, FOOTER_MAX_HEIGHT_RATIO, footerScrolls } from '../../ui/ScreenContainer';
 import { useGoBack } from '../common/useGoBack';
 import { ONBOARDING_STEP_KEYS, ONBOARDING_STEPS, OnboardingStepKey, onboardingStepNumber } from './steps';
 
@@ -39,7 +39,7 @@ export function OnboardingFrame({ testID, step, title, subtitle, backHref, foote
   const { colors, space } = useTheme();
   const insets = useSafeAreaInsets();
   const { height, fontScale } = useWindowDimensions();
-  const largeFont = fontScale >= LARGE_FONT_SCALE;
+  const largeFont = footerScrolls(height, fontScale);
 
   const steps = ONBOARDING_STEP_KEYS.map((key) => ({ key, label: t(`onboarding.step.${key}`) }));
   const current = step ? onboardingStepNumber(step) : 0;

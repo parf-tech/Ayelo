@@ -263,6 +263,7 @@ export function ConversationScreen() {
             <IconButton
               testID="conversation-menu"
               icon="Ellipsis"
+              variant="tonal"
               expanded={menuOpen}
               accessibilityLabel={t('conversation.menu')}
               // Rouvrir le menu ne ressuscite pas une confirmation laissée en plan.

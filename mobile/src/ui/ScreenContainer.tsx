@@ -23,6 +23,13 @@ export type ScreenContainerProps = {
 export const LARGE_FONT_SCALE = 1.3;
 /** Part maximale de la hauteur de l'écran occupée par le pied de page : le contenu garde toujours de la place. */
 export const FOOTER_MAX_HEIGHT_RATIO = 0.45;
+/** Sous cette hauteur (iPhone SE, petits Android : 568 pt), un pied de page chargé dépasse son plafond même en police normale. */
+export const SHORT_SCREEN_HEIGHT = 640;
+
+/** Le pied de page se compacte et défile : texte très agrandi, ou écran court (le plafond de 45 % coupait le bas sans défilement). */
+export function footerScrolls(height: number, fontScale: number): boolean {
+  return fontScale >= LARGE_FONT_SCALE || height < SHORT_SCREEN_HEIGHT;
+}
 
 /**
  * Icônes claires de la barre d'état sur un fond prune. Les entrées de `StatusBar` se fusionnent dans l'ordre de montage
@@ -49,7 +56,7 @@ export function ScreenContainer({
 }: ScreenContainerProps) {
   const { colors, space } = useTheme();
   const { height, fontScale } = useWindowDimensions();
-  const largeFont = fontScale >= LARGE_FONT_SCALE;
+  const largeFont = footerScrolls(height, fontScale);
   const background = tone === 'brand' ? colors.brand : colors.bg;
 
   const inner: ViewStyle = {

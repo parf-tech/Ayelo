@@ -53,7 +53,7 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
       contentStyle={{ justifyContent: 'center' }}
       footer={
         <View style={{ gap: space[3] }}>
-          <Button testID="welcome-create-account" label={t('welcome.cta.create')} onPress={startSignup} />
+          <Button testID="welcome-create-account" tone="onBrand" label={t('welcome.cta.create')} onPress={startSignup} />
           <Button
             testID="welcome-sign-in"
             variant="secondary"

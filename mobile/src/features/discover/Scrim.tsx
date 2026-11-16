@@ -3,9 +3,9 @@ import { View } from 'react-native';
 import { useTheme } from '../../theme';
 
 /** Nombre de bandes : plus il est grand, plus le fondu est lisse (chaque bande n'est qu'une vue unie semi-transparente). */
-export const SCRIM_BANDS = 10;
-/** Opacité d'une bande ; l'empilement atteint environ 0,97 en bas, où se pose le texte (blanc sur prune). */
-export const SCRIM_BAND_OPACITY = 0.3;
+export const SCRIM_BANDS = 20;
+/** Opacité d'une bande ; l'empilement atteint environ 0,99 en bas, où se pose le texte (blanc sur prune). */
+export const SCRIM_BAND_OPACITY = 0.2;
 /**
  * Opacité minimale du fondu sous le texte pour garder 4,5:1 (blanc sur prune mélangé à une photo blanche, pire cas) :
  * 0,63 suffit ; 0,65 laisse une marge.
