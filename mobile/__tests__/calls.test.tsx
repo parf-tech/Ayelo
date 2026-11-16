@@ -1,5 +1,7 @@
 import { act, screen, userEvent, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
+import { colors } from '../src/theme/tokens';
 import { Button } from '../src/ui';
 import { callReducer, CallInfo, CallState, initialCallState } from '../src/features/calls/callMachine';
 import { useCalls } from '../src/features/calls/CallProvider';
@@ -236,5 +238,42 @@ describe('S15 à S18 : signalisation d\'appel', () => {
     installFakeApi(baseRoutes());
     await renderShell(<Harness />, { calls: true });
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/messages'));
+  });
+});
+
+describe('refonte visuelle (direction Prune) : présentation seule', () => {
+  const incomingRoutes = () =>
+    ({
+      ...baseRoutes(),
+      'POST /calls/k9/accept': [200, { id: 'k9', status: 'accepted', livekit: LIVEKIT }],
+      'POST /calls/k9/end': emptyBody(),
+    }) as Record<string, [number, unknown]>;
+  const ring = async () => {
+    const view = await renderShell(<Harness />, { calls: true });
+    await waitFor(() => expect(view.transport.channels()).toContain('private-user.u1'));
+    await act(async () => {
+      view.transport.emit('private-user.u1', 'call.incoming', { call_id: 'k9', conversation_id: 'c1', kind: 'video', caller_id: 'u2', caller_name: 'Awa' });
+    });
+    await screen.findByTestId('screen-call-incoming');
+  };
+
+  it('fond prune pleine page, texte d’état en couleur onBrand, actions Refuser et Répondre présentes', async () => {
+    installFakeApi(incomingRoutes());
+    await ring();
+    expect(StyleSheet.flatten(screen.getByTestId('screen-call-incoming').props.style).backgroundColor).toBe(colors.light.brand);
+    expect(StyleSheet.flatten(screen.getByTestId('call-status').props.style).color).toBe(colors.light.onBrand);
+    expect(screen.getByTestId('call-accept')).toHaveProp('accessibilityLabel', 'Répondre');
+    expect(screen.getByTestId('call-decline')).toHaveProp('accessibilityLabel', 'Refuser');
+  });
+
+  it('en cours : chronomètre à chiffres de largeur fixe, signaler et raccrocher, aucune commande sans effet', async () => {
+    installFakeApi(incomingRoutes());
+    await ring();
+    await user().press(screen.getByTestId('call-accept'));
+    await screen.findByTestId('screen-call-active');
+    expect(StyleSheet.flatten(screen.getByTestId('call-status').props.style).fontVariant).toEqual(['tabular-nums']);
+    expect(screen.getByTestId('call-report')).toBeOnTheScreen();
+    expect(screen.getByTestId('call-hangup')).toBeOnTheScreen();
+    expect(screen.queryByTestId('call-mute')).not.toBeOnTheScreen();
   });
 });

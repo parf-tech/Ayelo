@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Avatar, Banner, Button, ScreenContainer, Text } from '../../ui';
+import { Avatar, Banner, Button, Icon, ScreenContainer, Text, type IconName } from '../../ui';
 import type { CallEndReason } from './callMachine';
 import { useCalls } from './CallProvider';
 
@@ -29,7 +29,7 @@ const END_KEYS: Record<CallEndReason, 'call.end.ended' | 'call.end.declined' | '
 export function CallScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, colors, radius } = useTheme();
   const calls = useCalls();
   const { state } = calls;
   const [elapsed, setElapsed] = useState(0);
@@ -52,7 +52,7 @@ export function CallScreen() {
   const { call } = state;
   const kindLabel = call.kind === 'video' ? t('call.kind.video') : t('call.kind.audio');
   const mediaBanner = !calls.mediaAvailable || calls.mediaFailed ? (
-    <Banner testID="call-media-unavailable" variant="warning" message={t('call.media.unavailable')} style={{ marginBottom: space[3] }} />
+    <Banner testID="call-media-unavailable" variant="warning" message={t('call.media.unavailable')} style={{ alignSelf: 'stretch' }} />
   ) : null;
 
   let title = '';
@@ -71,10 +71,17 @@ export function CallScreen() {
       testID = 'screen-call-incoming';
       title = call.peerName;
       subtitle = t('call.incoming', { kind: kindLabel });
+      // Deux grands boutons côte à côte (pouce) ; ils passent l'un sous l'autre quand l'écran est étroit ou le texte agrandi.
       actions = (
-        <View style={{ gap: space[2] }}>
-          <Button testID="call-accept" label={t('call.accept')} onPress={() => void calls.accept()} />
-          <Button testID="call-decline" variant="danger" label={t('call.decline')} onPress={() => void calls.decline()} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
+          <Button
+            testID="call-decline"
+            variant="danger"
+            label={t('call.decline')}
+            onPress={() => void calls.decline()}
+            style={{ flexGrow: 1, flexBasis: 140 }}
+          />
+          <Button testID="call-accept" label={t('call.accept')} onPress={() => void calls.accept()} style={{ flexGrow: 1, flexBasis: 140 }} />
         </View>
       );
       break;
@@ -83,11 +90,12 @@ export function CallScreen() {
       title = call.peerName;
       subtitle = formatDuration(elapsed);
       actions = (
-        <View style={{ gap: space[2] }}>
+        <View style={{ gap: space[3] }}>
           {/* Micro, caméra et haut-parleur : masqués tant que le média n'est pas branché (un bouton sans effet trompe l'utilisateur). */}
           <Button
             testID="call-report"
             variant="ghost"
+            tone="onBrand"
             label={t('call.report')}
             disabled={!call.peerId}
             onPress={() =>
@@ -106,20 +114,42 @@ export function CallScreen() {
       break;
   }
 
+  // Pictogramme de l'état (décoratif : le texte d'état porte le sens). Terminé : combiné barré ; sinon audio ou vidéo.
+  const stateIcon: IconName = state.phase === 'ended' ? 'PhoneOff' : call.kind === 'video' ? 'Video' : 'Phone';
+  const active = state.phase === 'active';
+
   return (
-    <ScreenContainer testID={testID} footer={actions}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3] }}>
-        <Avatar uri={call.peerPhoto} name={call.peerName || '?'} size={120} />
-        <Text variant="title" header align="center">
+    <ScreenContainer tone="brand" testID={testID} footer={actions}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[4] }}>
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: space[2],
+            paddingVertical: space[1],
+            paddingHorizontal: space[3],
+            borderRadius: radius.pill,
+            backgroundColor: colors.surface,
+          }}
+        >
+          <Icon name={stateIcon} size="sm" tone="primary" />
+          <Text variant="captionStrong">{kindLabel}</Text>
+        </View>
+        <View accessible={false} style={{ borderRadius: 84, borderWidth: 3, borderColor: colors.onBrand }}>
+          <Avatar uri={call.peerPhoto} name={call.peerName || '?'} size={144} />
+        </View>
+        <Text variant="title" header align="center" style={{ color: colors.onBrand }}>
           {title}
         </Text>
         {/* Région vivante pour les changements d'état (sonnerie, connecté, terminé) ; pas pour le chronomètre, qui changerait chaque seconde. */}
         <Text
-          variant="body"
-          tone="textMuted"
+          variant={active ? 'title' : 'body'}
           align="center"
-          accessibilityLiveRegion={state.phase === 'active' ? 'none' : 'polite'}
+          accessibilityLiveRegion={active ? 'none' : 'polite'}
           testID="call-status"
+          style={{ color: colors.onBrand, opacity: active ? 1 : 0.86, ...(active ? { fontVariant: ['tabular-nums'] as const } : null) }}
         >
           {subtitle}
         </Text>

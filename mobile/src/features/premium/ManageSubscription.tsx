@@ -2,8 +2,9 @@ import React from 'react';
 import { Platform, View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, ListRow, Text, useToast } from '../../ui';
+import { Button, Icon, Text, useToast } from '../../ui';
 import { openExternal } from '../legal/links';
+import { NavRow, RowGroup } from '../settings/GroupedList';
 
 export const APP_STORE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 export const PLAY_STORE_SUBSCRIPTIONS_URL = 'https://play.google.com/store/account/subscriptions';
@@ -33,19 +34,42 @@ type Props = {
   testID?: string;
 };
 
+/** Note d'explication : pictogramme décoratif + texte (le texte porte le sens), sur le fond de l'écran. */
+function Note({ children, testID, onSurface = false }: { children: string; testID?: string; onSurface?: boolean }) {
+  const { colors, radius, space } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: space[2],
+        marginTop: space[2],
+        marginBottom: space[2],
+        ...(onSurface ? { padding: space[4], borderRadius: radius.md, backgroundColor: colors.surface } : { paddingHorizontal: space[1] }),
+      }}
+    >
+      <View style={{ paddingTop: space[1] }}>
+        <Icon name={onSurface ? 'Sparkles' : 'Info'} size="sm" tone={onSurface ? 'primary' : 'textMuted'} />
+      </View>
+      <Text variant="bodySmall" tone="textMuted" style={{ flex: 1 }} testID={testID}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
 /** Accès direct, sans détour ni offre de rétention, à la gestion/résiliation de l'abonnement dans la boutique. */
 export function ManageSubscription({ store, periodEnd, variant, testID }: Props) {
   const { t, locale } = useI18n();
-  const { space } = useTheme();
   const toast = useToast();
   if (isPromotionalStore(store)) {
     // Pas de boutique derrière cet abonnement : on explique au lieu d'ouvrir une page d'abonnements vide.
     const date = periodEnd ? new Date(periodEnd).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : null;
     return (
       <View testID={testID}>
-        <Text variant="bodySmall" tone="textMuted" style={{ marginVertical: space[2] }} testID={testID ? `${testID}-info` : undefined}>
+        <Note onSurface testID={testID ? `${testID}-info` : undefined}>
           {date ? t('premium.manage.promo', { date }) : t('premium.manage.promoNoDate')}
-        </Text>
+        </Note>
       </View>
     );
   }
@@ -54,19 +78,16 @@ export function ManageSubscription({ store, periodEnd, variant, testID }: Props)
     const ok = await openExternal(subscriptionsUrl(store));
     if (!ok) toast.show({ message: t('premium.manage.openError'), variant: 'error' });
   };
-  const info = (
-    <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[2] }} testID={testID ? `${testID}-info` : undefined}>
-      {t('premium.manage.info')}
-    </Text>
-  );
   return (
     <View>
       {variant === 'row' ? (
-        <ListRow testID={testID} label={label} onPress={() => void open()} />
+        <RowGroup>
+          <NavRow testID={testID} icon="Sparkles" label={label} onPress={() => void open()} />
+        </RowGroup>
       ) : (
         <Button testID={testID} variant="secondary" label={label} accessibilityHint={t('premium.manage.info')} onPress={() => void open()} />
       )}
-      {info}
+      <Note testID={testID ? `${testID}-info` : undefined}>{t('premium.manage.info')}</Note>
     </View>
   );
 }
