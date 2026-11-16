@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { isApiError } from '../../api/errors';
 import type { DataExport } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
@@ -17,7 +18,7 @@ export const EXPORT_POLL_MS = 5000;
 /** S67 : export des données (POST /me/export puis GET /me/export/{id} jusqu'à « ready »). Une demande par jour. */
 export function ExportScreen() {
   const { t, locale } = useI18n();
-  const { space } = useTheme();
+  const { space, colors, radius } = useTheme();
   const { api } = useAuth();
   const [job, setJob] = useState<DataExport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,56 +94,59 @@ export function ExportScreen() {
   return (
     <ScreenContainer scroll testID="screen-export">
       <ScreenHeader title={t('export.title')} fallbackHref="/settings" />
-      <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
-        {t('export.body')}
-      </Text>
-      {banner ? <Banner testID="export-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
-      {!job ? (
-        <>
-          {social ? <SocialReauth testID="export-reauth" disabled={loading} onProof={(proof) => request(proof)} /> : null}
-          <TextField
-            testID="export-password"
-            label={t('export.password')}
-            helper={t('export.passwordHelp')}
-            value={password}
-            onChangeText={setPassword}
-            error={passwordError}
-            disabled={loading}
-            secureTextEntry
-            passwordToggleLabels={passwordToggleLabels(t)}
-            autoCapitalize="none"
-            autoComplete="current-password"
-            containerStyle={{ marginBottom: space[3] }}
-          />
-          <Button testID="export-request" label={t('export.request')} onPress={() => void request()} loading={loading} />
-        </>
-      ) : null}
-      {job?.status === 'pending' ? (
-        <>
-          <Text variant="body" accessibilityLiveRegion="polite" testID="export-pending" style={{ marginBottom: space[2] }}>
-            {t('export.pending')}
+      <View style={{ gap: space[6] }}>
+        <View style={{ gap: space[3] }}>
+          <Text variant="body" tone="textMuted">
+            {t('export.body')}
           </Text>
-          <Skeleton />
-          <Button testID="export-check" variant="ghost" label={t('export.check')} onPress={() => job && void poll(job.id)} />
-        </>
-      ) : null}
-      {job?.status === 'ready' ? (
-        <>
-          <Banner testID="export-ready" variant="success" message={`${t('export.ready')}${expires ? ` ${t('export.expires', { date: expires })}` : ''}`} style={{ marginBottom: space[3] }} />
-          <Button
-            testID="export-download"
-            label={t('export.download')}
-            disabled={!job.url}
-            onPress={() => job.url && void openExternal(job.url)}
-          />
-        </>
-      ) : null}
-      {job?.status === 'expired' || job?.status === 'failed' ? (
-        <>
-          <Banner testID="export-failed" variant="error" message={job.status === 'expired' ? t('export.expired') : t('export.failed')} style={{ marginBottom: space[3] }} />
-          <Button variant="secondary" label={t('export.request')} onPress={() => { setJob(null); }} />
-        </>
-      ) : null}
+          {banner ? <Banner testID="export-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} /> : null}
+        </View>
+        {!job ? (
+          <View style={{ gap: space[4] }}>
+            {social ? <SocialReauth testID="export-reauth" disabled={loading} onProof={(proof) => request(proof)} /> : null}
+            <TextField
+              testID="export-password"
+              label={t('export.password')}
+              helper={t('export.passwordHelp')}
+              value={password}
+              onChangeText={setPassword}
+              error={passwordError}
+              disabled={loading}
+              secureTextEntry
+              passwordToggleLabels={passwordToggleLabels(t)}
+              autoCapitalize="none"
+              autoComplete="current-password"
+            />
+            <Button testID="export-request" label={t('export.request')} onPress={() => void request()} loading={loading} />
+          </View>
+        ) : null}
+        {job?.status === 'pending' ? (
+          <View style={{ gap: space[3], padding: space[4], borderRadius: radius.md, backgroundColor: colors.surface }}>
+            <Text variant="body" accessibilityLiveRegion="polite" testID="export-pending" style={{ fontWeight: '500' }}>
+              {t('export.pending')}
+            </Text>
+            <Skeleton />
+            <Button testID="export-check" variant="ghost" label={t('export.check')} onPress={() => job && void poll(job.id)} />
+          </View>
+        ) : null}
+        {job?.status === 'ready' ? (
+          <View style={{ gap: space[4] }}>
+            <Banner testID="export-ready" variant="success" message={`${t('export.ready')}${expires ? ` ${t('export.expires', { date: expires })}` : ''}`} />
+            <Button
+              testID="export-download"
+              label={t('export.download')}
+              disabled={!job.url}
+              onPress={() => job.url && void openExternal(job.url)}
+            />
+          </View>
+        ) : null}
+        {job?.status === 'expired' || job?.status === 'failed' ? (
+          <View style={{ gap: space[4] }}>
+            <Banner testID="export-failed" variant="error" message={job.status === 'expired' ? t('export.expired') : t('export.failed')} />
+            <Button variant="secondary" label={t('export.request')} onPress={() => { setJob(null); }} />
+          </View>
+        ) : null}
+      </View>
     </ScreenContainer>
   );
 }

@@ -95,7 +95,7 @@ export function PreferencesScreen({ mode }: { mode: 'onboarding' | 'edit' }) {
   return (
     <ScreenContainer scroll testID="screen-preferences-edit" footer={saveButton}>
       <ScreenHeader title={t('prefs.title')} fallbackHref="/profile" />
-      <Text variant="body" tone="textMuted" style={{ marginBottom: space[4] }}>
+      <Text variant="body" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[5] }}>
         {t('prefs.subtitle')}
       </Text>
       {body}

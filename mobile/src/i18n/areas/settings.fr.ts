@@ -13,7 +13,7 @@ export const settingsFr = {
 
   'edit.title': 'Modifier mon profil',
   'edit.bio': 'Présentation',
-  'edit.bio.hint': '500 caractères au maximum.',
+  'edit.bio.hint': '500 caractères au maximum',
   'edit.bio.tooLong': '500 caractères au maximum.',
   'edit.photos': 'Photos',
   'edit.preferences': 'Préférences de rencontre',
@@ -41,7 +41,7 @@ export const settingsFr = {
 
   'privacy.title': 'Confidentialité',
   'privacy.visible': 'Profil visible dans Découvrir',
-  'privacy.visible.hint': 'Désactivé, personne ne peut vous voir (vos conversations restent actives).',
+  'privacy.visible.hint': 'Désactivé, personne ne peut vous voir (vos conversations restent actives)',
   'privacy.hideDistance': 'Masquer ma distance',
   'privacy.hideLastSeen': 'Masquer ma dernière connexion',
   'privacy.noProfile': 'Créez d’abord votre profil pour régler la confidentialité.',
@@ -52,7 +52,7 @@ export const settingsFr = {
   'notif.push_calls': 'Appels',
   'notif.push_marketing': 'Nouveautés et offres (notifications)',
   'notif.email_marketing': 'Nouveautés et offres (e-mails)',
-  'notif.note': 'Les notifications poussées nécessitent une autorisation du téléphone, demandée plus tard.',
+  'notif.note': 'Les notifications poussées nécessitent une autorisation du téléphone, demandée plus tard',
 
   'sessions.title': 'Sessions et appareils',
   'sessions.current': 'Cet appareil',
@@ -72,7 +72,7 @@ export const settingsFr = {
 
   'blocked.title': 'Personnes bloquées',
   'blocked.empty': 'Vous n’avez bloqué personne.',
-  'blocked.empty.body': 'Les personnes que vous bloquez apparaissent ici.',
+  'blocked.empty.body': 'Les personnes que vous bloquez apparaissent ici',
   'blocked.unblock': 'Débloquer',
   'blocked.unblockAria': 'Débloquer {name}',
   'blocked.unblocked': 'Personne débloquée.',
@@ -82,7 +82,7 @@ export const settingsFr = {
     'Votre profil, vos photos et vos conversations sont masqués dès maintenant, puis supprimés définitivement au bout de 30 jours.',
   'delete.grace': 'Suppression définitive dans {days} jours.',
   'delete.password': 'Mot de passe actuel',
-  'delete.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe.',
+  'delete.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe',
   'delete.social':
     'Votre compte utilise une connexion Google ou Apple : la ré-authentification par ces fournisseurs n’est pas encore disponible dans cette version. Contactez le support pour supprimer votre compte.',
   'reauth.google': 'Confirmer avec Google',
@@ -94,7 +94,7 @@ export const settingsFr = {
   'delete.done': 'Demande enregistrée. Votre profil est masqué.',
 
   'export.title': 'Exporter mes données',
-  'export.body': 'Vous pouvez demander une copie de vos données personnelles. Une demande par jour.',
+  'export.body': 'Vous pouvez demander une copie de vos données personnelles, une demande par jour',
   'export.request': 'Demander mon export',
   'export.pending': 'Préparation de votre export en cours…',
   'export.ready': 'Votre export est prêt.',
@@ -104,7 +104,7 @@ export const settingsFr = {
   'export.expired': 'Ce lien a expiré. Faites une nouvelle demande.',
   'export.check': 'Vérifier l’état',
   'export.password': 'Mot de passe actuel',
-  'export.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe avant de demander l’export.',
+  'export.passwordHelp': 'Pour votre sécurité, confirmez votre mot de passe avant de demander l’export',
   'export.passwordRequired': 'Saisissez votre mot de passe.',
   'export.wrongPassword': 'Mot de passe incorrect.',
   'export.social':
@@ -128,17 +128,17 @@ export const settingsFr = {
   'legal.terms': 'Conditions d’utilisation',
   'legal.privacy': 'Politique de confidentialité',
   'legal.community': 'Règles de la communauté',
-  'legal.notConfigured': 'Lien non configuré dans cette version.',
+  'legal.notConfigured': 'Lien non configuré dans cette version',
   'legal.draftNote': 'Les textes juridiques sont fournis par l’éditeur et validés par un juriste.',
   'legal.openError': 'Impossible d’ouvrir ce lien.',
 
   'consentSettings.title': 'Consentements',
-  'consentSettings.intro': 'Vous pouvez retirer ou accorder certains consentements à tout moment.',
+  'consentSettings.intro': 'Vous pouvez retirer ou accorder certains consentements à tout moment',
   'consentSettings.marketing': 'Nouveautés et offres',
   'consentSettings.location': 'Localisation',
   'consentSettings.sensitive_data': 'Traitement des données sensibles',
   'consentSettings.sensitive_data.hint':
-    'Si vous retirez ce consentement, votre profil est masqué et n’est plus visible des autres.',
+    'Si vous retirez ce consentement, votre profil est masqué et n’est plus visible des autres',
   'consentSettings.verification_biometric': 'Vérification de profil par selfie',
   'consentSettings.terms': 'Conditions d’utilisation (acceptées à l’inscription)',
   'consentSettings.privacy': 'Politique de confidentialité (lue à l’inscription)',
@@ -165,7 +165,7 @@ export const settingsFr = {
   'sanctions.banner.action': 'Voir',
 
   'appeal.title': 'Contester la sanction',
-  'appeal.subtitle': 'Expliquez à l’équipe pourquoi vous pensez que cette décision est erronée.',
+  'appeal.subtitle': 'Expliquez à l’équipe pourquoi vous pensez que cette décision est erronée',
   'appeal.message': 'Votre message',
   'appeal.invalid': 'Entre 10 et 2 000 caractères.',
   'appeal.send': 'Envoyer la contestation',

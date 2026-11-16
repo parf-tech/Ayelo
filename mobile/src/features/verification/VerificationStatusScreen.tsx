@@ -13,7 +13,7 @@ import { ScreenHeader } from '../common/ScreenHeader';
 export function VerificationStatusScreen() {
   const router = useRouter();
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, colors } = useTheme();
   const { api, refreshMe } = useAuth();
   const data = useResource(() => api.profile.verification(), [api]);
   const status = data.data?.verification_status;
@@ -44,24 +44,33 @@ export function VerificationStatusScreen() {
     <ScreenContainer scroll testID="screen-verification-status">
       <ScreenHeader title={t('verifyStatus.title')} fallbackHref="/profile" />
       <AsyncView status={data.status} error={data.error} onRetry={() => void data.reload()} testID="verification-status">
-        <View style={{ alignItems: 'center', marginBottom: space[4] }}>
-          <Icon name={glyph} size="xl" tone={glyphTone} />
+        <View style={{ gap: space[6] }}>
+          {/* Médaillon décoratif : le texte de la bannière porte le statut (jamais l'icône ou la couleur seules). */}
+          <View style={{ alignItems: 'center' }}>
+            <View
+              style={{ width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface }}
+            >
+              <Icon name={glyph} size="xl" tone={glyphTone} />
+            </View>
+          </View>
+          <View style={{ gap: space[3] }}>
+            <Banner testID="verification-status-banner" variant={variant} message={message} />
+            {status === 'rejected' && reason ? (
+              <Text variant="body" tone="textMuted" testID="verification-reason">
+                {t('verifyStatus.reason', { reason })}
+              </Text>
+            ) : null}
+          </View>
+          {status === 'rejected' || status === 'none' ? (
+            <Button
+              testID="verification-retry"
+              label={status === 'rejected' ? t('verifyStatus.retry') : t('verifyStatus.start')}
+              onPress={() => router.replace('/verification' as never)}
+            />
+          ) : (
+            <Button testID="verification-refresh" variant="secondary" label={t('verifyStatus.refresh')} onPress={() => void data.reload({ silent: true })} />
+          )}
         </View>
-        <Banner testID="verification-status-banner" variant={variant} message={message} style={{ marginBottom: space[3] }} />
-        {status === 'rejected' && reason ? (
-          <Text variant="body" tone="textMuted" testID="verification-reason" style={{ marginBottom: space[3] }}>
-            {t('verifyStatus.reason', { reason })}
-          </Text>
-        ) : null}
-        {status === 'rejected' || status === 'none' ? (
-          <Button
-            testID="verification-retry"
-            label={status === 'rejected' ? t('verifyStatus.retry') : t('verifyStatus.start')}
-            onPress={() => router.replace('/verification' as never)}
-          />
-        ) : (
-          <Button testID="verification-refresh" variant="secondary" label={t('verifyStatus.refresh')} onPress={() => void data.reload({ silent: true })} />
-        )}
       </AsyncView>
     </ScreenContainer>
   );

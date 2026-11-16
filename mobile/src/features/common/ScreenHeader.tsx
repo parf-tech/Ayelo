@@ -22,6 +22,7 @@ export function ScreenHeader({ title, fallbackHref = '/discover', right, hideBac
             testID="back-button"
             variant="ghost"
             label={t('common.back')}
+            style={{ marginLeft: -space[5] }}
             onPress={() => (router.canGoBack() ? router.back() : router.replace(fallbackHref as never))}
           />
         )}

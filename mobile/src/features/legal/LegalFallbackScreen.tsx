@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Button, ScreenContainer, Text } from '../../ui';
@@ -24,18 +25,19 @@ export function LegalFallbackScreen() {
   return (
     <ScreenContainer scroll testID="screen-legal-fallback">
       <ScreenHeader title={title} fallbackHref="/" />
-      <Text variant="body" testID="legal-fallback-body">
-        {t('legal.fallback.body')}
-      </Text>
-      {supportEmail ? (
-        <Button
-          testID="legal-fallback-contact"
-          variant="secondary"
-          label={t('legal.fallback.contact', { email: supportEmail })}
-          onPress={() => void openExternal(`mailto:${supportEmail}?subject=${encodeURIComponent(title)}`)}
-          style={{ marginTop: space[4] }}
-        />
-      ) : null}
+      <View style={{ gap: space[6] }}>
+        <Text variant="body" tone="textMuted" testID="legal-fallback-body">
+          {t('legal.fallback.body')}
+        </Text>
+        {supportEmail ? (
+          <Button
+            testID="legal-fallback-contact"
+            variant="secondary"
+            label={t('legal.fallback.contact', { email: supportEmail })}
+            onPress={() => void openExternal(`mailto:${supportEmail}?subject=${encodeURIComponent(title)}`)}
+          />
+        ) : null}
+      </View>
     </ScreenContainer>
   );
 }

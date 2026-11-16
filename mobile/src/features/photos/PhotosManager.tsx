@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Image, View } from 'react-native';
+import { Image, useWindowDimensions, View } from 'react-native';
 import type { ProfileMedia } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
@@ -25,6 +25,7 @@ type Props = {
 export function PhotosManager({ onChange }: Props) {
   const { t } = useI18n();
   const { space, colors, radius } = useTheme();
+  const { width } = useWindowDimensions();
   const { api } = useAuth();
   const me = useResource(() => api.auth.me(), [api]);
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
@@ -128,7 +129,8 @@ export function PhotosManager({ onChange }: Props) {
     }
   };
 
-  const tileWidth = '48%';
+  // Trois boutons de 44 pt ne tiennent pas dans une demi-largeur à 320 pt : une tuile par ligne en dessous de 360 pt.
+  const tileWidth = width < 360 ? '100%' : '48%';
 
   return (
     <View testID="photos-manager">
@@ -174,37 +176,24 @@ export function PhotosManager({ onChange }: Props) {
                 ) : (
                   <View style={{ width: '100%', aspectRatio: 3 / 4, backgroundColor: colors.skeleton }} />
                 )}
-                {photo.status ? (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      left: space[2],
-                      bottom: space[2],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: space[1],
-                      paddingVertical: space[1],
-                      paddingHorizontal: space[2],
-                      borderRadius: radius.pill,
-                      backgroundColor: colors.bg,
-                    }}
-                  >
-                    <Icon
-                      name={photo.status === 'approved' ? 'Check' : 'Clock'}
-                      size="sm"
-                      tone={photo.status === 'approved' ? 'success' : 'warning'}
-                    />
-                    <Text
-                      variant="caption"
-                      tone={photo.status === 'approved' ? 'success' : 'warning'}
-                      style={{ fontWeight: '500' }}
-                      testID={`photo-status-${photo.id}`}
-                    >
-                      {t(`photos.status.${photo.status}`)}
-                    </Text>
-                  </View>
-                ) : null}
               </View>
+              {photo.status ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], paddingHorizontal: space[1] }}>
+                  <Icon
+                    name={photo.status === 'approved' ? 'Check' : 'Clock'}
+                    size="sm"
+                    tone={photo.status === 'approved' ? 'success' : 'warning'}
+                  />
+                  <Text
+                    variant="caption"
+                    tone={photo.status === 'approved' ? 'success' : 'warning'}
+                    style={{ fontWeight: '500', flexShrink: 1 }}
+                    testID={`photo-status-${photo.id}`}
+                  >
+                    {t(`photos.status.${photo.status}`)}
+                  </Text>
+                </View>
+              ) : null}
               {confirmId === photo.id ? (
                 <View style={{ padding: space[2], gap: space[1] }}>
                   <Text variant="caption">{t('photos.deleteConfirm')}</Text>

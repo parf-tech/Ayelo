@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
@@ -95,19 +96,20 @@ export function VerifyEmailScreen() {
         <Button testID="verify-skip" variant="ghost" label={t('verifyEmail.skip')} onPress={() => goOn(Boolean(state.user?.profile))} />
       }
     >
-      {info ? (
-        <Banner testID="verify-banner" variant={info.variant} message={info.message} style={{ marginBottom: space[3] }} />
-      ) : null}
-      <Button testID="verify-check" label={t('verifyEmail.check')} onPress={() => void check()} loading={checking} />
-      <Button
-        testID="verify-resend"
-        variant="secondary"
-        label={cooldown > 0 ? t('verifyEmail.resendWait', { seconds: cooldown }) : t('verifyEmail.resend')}
-        onPress={() => void resend()}
-        loading={resending}
-        disabled={cooldown > 0}
-        style={{ marginTop: space[3] }}
-      />
+      <View style={{ gap: space[4] }}>
+        {info ? <Banner testID="verify-banner" variant={info.variant} message={info.message} /> : null}
+        <View style={{ gap: space[3] }}>
+          <Button testID="verify-check" label={t('verifyEmail.check')} onPress={() => void check()} loading={checking} />
+          <Button
+            testID="verify-resend"
+            variant="secondary"
+            label={cooldown > 0 ? t('verifyEmail.resendWait', { seconds: cooldown }) : t('verifyEmail.resend')}
+            onPress={() => void resend()}
+            loading={resending}
+            disabled={cooldown > 0}
+          />
+        </View>
+      </View>
     </OnboardingFrame>
   );
 }

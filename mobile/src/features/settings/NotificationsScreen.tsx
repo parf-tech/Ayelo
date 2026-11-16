@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import type { NotificationPrefs } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
@@ -7,8 +8,13 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, ScreenContainer, SwitchRow, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { SwitchGroup } from './SwitchGroup';
 
-const KEYS: (keyof NotificationPrefs)[] = ['push_messages', 'push_matches', 'push_calls', 'push_marketing', 'email_marketing'];
+/** Deux groupes : l'activité du compte, puis les nouveautés et offres (séparés par l'espace, sans titre ni trait). */
+const GROUPS: (keyof NotificationPrefs)[][] = [
+  ['push_messages', 'push_matches', 'push_calls'],
+  ['push_marketing', 'email_marketing'],
+];
 
 /** S52 : notifications par type (GET/PUT /me/notifications). */
 export function NotificationsScreen() {
@@ -35,21 +41,39 @@ export function NotificationsScreen() {
   return (
     <ScreenContainer scroll testID="screen-notifications">
       <ScreenHeader title={t('notif.title')} fallbackHref="/settings" />
-      {banner ? <Banner testID="notif-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
-      <AsyncView testID="notif" status={prefs.status} error={prefs.error} onRetry={() => void prefs.reload()}>
-        {KEYS.map((key) => (
-          <SwitchRow
-            key={key}
-            testID={`notif-${key}`}
-            label={t(`notif.${key}`)}
-            value={Boolean(prefs.data?.[key])}
-            onValueChange={(value) => void change(key, value)}
+      <View style={{ paddingTop: space[3] }}>
+        {banner ? (
+          <Banner
+            testID="notif-banner"
+            variant="error"
+            message={banner}
+            onDismiss={() => setBanner(undefined)}
+            dismissLabel={t('ui.banner.dismiss')}
+            style={{ marginBottom: space[4] }}
           />
-        ))}
-        <Text variant="caption" tone="textMuted" style={{ marginTop: space[3] }}>
-          {t('notif.note')}
-        </Text>
-      </AsyncView>
+        ) : null}
+        <AsyncView testID="notif" status={prefs.status} error={prefs.error} onRetry={() => void prefs.reload()}>
+          <View style={{ gap: space[6] }}>
+            {GROUPS.map((keys) => (
+              <SwitchGroup key={keys[0]}>
+                {keys.map((key) => (
+                  <SwitchRow
+                    key={key}
+                    testID={`notif-${key}`}
+                    label={t(`notif.${key}`)}
+                    value={Boolean(prefs.data?.[key])}
+                    onValueChange={(value) => void change(key, value)}
+                    divider={false}
+                  />
+                ))}
+              </SwitchGroup>
+            ))}
+          </View>
+          <Text variant="caption" tone="textMuted" style={{ marginTop: space[3] }}>
+            {t('notif.note')}
+          </Text>
+        </AsyncView>
+      </View>
     </ScreenContainer>
   );
 }

@@ -62,7 +62,8 @@ export function BasicProfileScreen() {
             <Text variant="label" tone={errors.gender ? 'danger' : 'text'} style={{ fontWeight: '500' }}>
               {t('profile.gender')}
             </Text>
-            <View style={{ flexDirection: 'row', gap: space[2] }}>
+            {/* Base = largeur du contenu (jamais de mot coupé) : les tuiles se partagent la ligne, ou passent à la suivante à 320 pt et en grande police. */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
               {GENDERS.map((gender) => (
                 <ChoiceCard
                   key={gender}
@@ -71,7 +72,7 @@ export function BasicProfileScreen() {
                   label={t(`gender.${gender}`)}
                   selected={draft.gender === gender}
                   onPress={() => update({ gender })}
-                  style={{ flex: 1 }}
+                  style={{ flexGrow: 1, minWidth: 104 }}
                 />
               ))}
             </View>

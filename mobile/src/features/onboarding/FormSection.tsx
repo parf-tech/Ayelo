@@ -23,7 +23,7 @@ export function FormSection({ title, hint, optional = false, testID, children }:
   const optionalLabel = t('common.optional');
   return (
     <View testID={testID} style={{ gap: space[3] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[3] }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', columnGap: space[3] }}>
         <Text
           variant="h3"
           header

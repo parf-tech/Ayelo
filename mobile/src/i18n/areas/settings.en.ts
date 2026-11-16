@@ -13,7 +13,7 @@ export const settingsEn = {
 
   'edit.title': 'Edit my profile',
   'edit.bio': 'About you',
-  'edit.bio.hint': '500 characters maximum.',
+  'edit.bio.hint': '500 characters maximum',
   'edit.bio.tooLong': '500 characters maximum.',
   'edit.photos': 'Your pictures',
   'edit.preferences': 'Dating preferences',
@@ -41,7 +41,7 @@ export const settingsEn = {
 
   'privacy.title': 'Privacy',
   'privacy.visible': 'Profile visible in Discover',
-  'privacy.visible.hint': 'When off, nobody can see you (your conversations stay active).',
+  'privacy.visible.hint': 'When off, nobody can see you (your conversations stay active)',
   'privacy.hideDistance': 'Hide my distance',
   'privacy.hideLastSeen': 'Hide my last seen',
   'privacy.noProfile': 'Create your profile first to set your privacy.',
@@ -52,7 +52,7 @@ export const settingsEn = {
   'notif.push_calls': 'Calls',
   'notif.push_marketing': 'News and offers (notifications)',
   'notif.email_marketing': 'News and offers (emails)',
-  'notif.note': 'Push notifications need your phone’s permission, requested later.',
+  'notif.note': 'Push notifications need your phone’s permission, requested later',
 
   'sessions.title': 'Sessions and devices',
   'sessions.current': 'This device',
@@ -72,7 +72,7 @@ export const settingsEn = {
 
   'blocked.title': 'Blocked people',
   'blocked.empty': 'You have not blocked anyone.',
-  'blocked.empty.body': 'People you block appear here.',
+  'blocked.empty.body': 'People you block appear here',
   'blocked.unblock': 'Unblock',
   'blocked.unblockAria': 'Unblock {name}',
   'blocked.unblocked': 'Person unblocked.',
@@ -82,7 +82,7 @@ export const settingsEn = {
     'Your profile, photos and conversations are hidden right away, then permanently deleted after 30 days.',
   'delete.grace': 'Permanent deletion in {days} days.',
   'delete.password': 'Current password',
-  'delete.passwordHelp': 'For your security, confirm your password.',
+  'delete.passwordHelp': 'For your security, confirm your password',
   'delete.social':
     'Your account uses Google or Apple sign-in: re-authentication with these providers is not available in this version yet. Contact support to delete your account.',
   'reauth.google': 'Confirm with Google',
@@ -94,7 +94,7 @@ export const settingsEn = {
   'delete.done': 'Request recorded. Your profile is hidden.',
 
   'export.title': 'Export my data',
-  'export.body': 'You can request a copy of your personal data. One request per day.',
+  'export.body': 'You can request a copy of your personal data, one request per day',
   'export.request': 'Request my export',
   'export.pending': 'Preparing your export…',
   'export.ready': 'Your export is ready.',
@@ -104,7 +104,7 @@ export const settingsEn = {
   'export.expired': 'This link has expired. Make a new request.',
   'export.check': 'Check status',
   'export.password': 'Current password',
-  'export.passwordHelp': 'For your security, confirm your password before requesting the export.',
+  'export.passwordHelp': 'For your security, confirm your password before requesting the export',
   'export.passwordRequired': 'Enter your password.',
   'export.wrongPassword': 'Wrong password.',
   'export.social':
@@ -128,17 +128,17 @@ export const settingsEn = {
   'legal.terms': 'Terms of use',
   'legal.privacy': 'Privacy policy',
   'legal.community': 'Community rules',
-  'legal.notConfigured': 'Link not configured in this version.',
+  'legal.notConfigured': 'Link not configured in this version',
   'legal.draftNote': 'Legal texts are provided by the publisher and validated by a lawyer.',
   'legal.openError': 'Unable to open this link.',
 
   'consentSettings.title': 'Consents',
-  'consentSettings.intro': 'You can withdraw or grant some consents at any time.',
+  'consentSettings.intro': 'You can withdraw or grant some consents at any time',
   'consentSettings.marketing': 'News and offers',
   'consentSettings.location': 'Location',
   'consentSettings.sensitive_data': 'Processing of sensitive data',
   'consentSettings.sensitive_data.hint':
-    'If you withdraw this consent, your profile is hidden and no longer visible to others.',
+    'If you withdraw this consent, your profile is hidden and no longer visible to others',
   'consentSettings.verification_biometric': 'Profile verification by selfie',
   'consentSettings.terms': 'Terms of use (accepted at sign-up)',
   'consentSettings.privacy': 'Privacy policy (read at sign-up)',
@@ -165,7 +165,7 @@ export const settingsEn = {
   'sanctions.banner.action': 'View',
 
   'appeal.title': 'Appeal the sanction',
-  'appeal.subtitle': 'Explain to the team why you think this decision is wrong.',
+  'appeal.subtitle': 'Explain to the team why you think this decision is wrong',
   'appeal.message': 'Your message',
   'appeal.invalid': 'Between 10 and 2,000 characters.',
   'appeal.send': 'Send the appeal',

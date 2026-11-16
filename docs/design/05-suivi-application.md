@@ -23,15 +23,17 @@ Liste de contrôle vivante : une case cochée veut dire « fait, testé, vérifi
 
 Pour chaque écran : maquette du kit comparée au produit réel (`04-handoff-analyse.md`), jetons et composants uniquement, clair et sombre, 320 pt et 390 pt, police agrandie à 200 %, captures dans `docs/design/captures/`, tests.
 
-- [ ] **Accueil** (`app/(public)`, S01) : logo horizontal, signature, boutons ; pas de connexion sociale.
-- [ ] **Connexion** : champs, erreurs, lien de réinitialisation.
-- [ ] **Inscription** : e-mail et mot de passe, date de naissance en trois champs, consentements, vérification de l'e-mail.
-- [ ] **Préférences et profil de base** : seulement les champs pris en charge par l'API (genres, âge, pays, intentions, profils vérifiés), photos.
-- [ ] **Découverte** : carte de profil, actions, fiche détaillée, blocage et signalement.
-- [ ] **Match** : écran de correspondance.
-- [ ] **Messagerie** : liste, conversation, appels masqués tant que non livrés.
-- [ ] **Profil et sécurité** : onglet profil, réglages, vérification du profil, signalement, suppression du compte.
-- [ ] **Paywall** : offres, crédits, mentions de renouvellement lisibles.
+- [x] **Accueil** (`app/(public)`, S01) : logo horizontal, signature, boutons ; pas de connexion sociale.
+- [x] **Connexion** : champs, erreurs, lien de réinitialisation.
+- [x] **Inscription** : e-mail et mot de passe, date de naissance en trois champs, consentements, vérification de l'e-mail.
+- [x] **Préférences et profil de base** : seulement les champs pris en charge par l'API (genres, âge, pays, intentions, profils vérifiés), photos.
+- [x] **Découverte** : carte de profil, actions, fiche détaillée, blocage et signalement.
+- [x] **Match** : écran de correspondance.
+- [x] **Messagerie** : liste, conversation, appels masqués tant que non livrés.
+- [x] **Profil et sécurité** : onglet profil, réglages, vérification du profil, signalement, suppression du compte.
+- [x] **Paywall** : offres, crédits, mentions de renouvellement lisibles.
+- [x] **Écrans secondaires** (2026-11-14) : édition du profil, filtres, réglages (notifications, confidentialité, consentements, bloqués, sessions), compte et sécurité (suppression, export, aide, sanctions, contestation, mentions légales, mot de passe oublié et nouveau, confirmation d'e-mail, suivi de vérification). Captures `etape-reglages-*` et `onboarding-reel-*` dans `docs/design/captures/` (390 pt clair et sombre, 320 pt, texte à 200 % simulé sur le web).
+  - Limites connues : titres très longs coupés en milieu de mot à 320 pt avec le texte à 200 % (« Consentements », « Vos préférences ») ; message vide de « Aide et assistance » plus grand que le titre de section (`EmptyState` en `h2`) ; 200 % non vérifié en natif.
 
 ## 3. Transversal
 

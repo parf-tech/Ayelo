@@ -77,7 +77,8 @@ export function ResetPasswordScreen() {
       ) : (
         <>
           {banner ? <Banner testID="reset-banner" variant="error" message={banner} style={{ marginBottom: space[3] }} /> : null}
-          <View style={{ gap: space[4] }}>
+          {/* Deux groupes : le code reçu par e-mail, puis le nouveau mot de passe et sa confirmation. */}
+          <View style={{ gap: space[6] }}>
             <TextField
               testID="reset-token"
               label={t('reset.token')}
@@ -91,40 +92,42 @@ export function ResetPasswordScreen() {
               submitBehavior="submit"
               onSubmitEditing={() => passwordRef.current?.focus()}
             />
-            <TextField
-              testID="reset-password"
-              inputRef={passwordRef}
-              label={t('reset.password')}
-              value={password}
-              onChangeText={setPassword}
-              error={errors.password}
-              helper={t('auth.password.hint')}
-              disabled={loading}
-              secureTextEntry
-              passwordToggleLabels={passwordToggleLabels(t)}
-              autoCapitalize="none"
-              autoComplete="new-password"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => confirmRef.current?.focus()}
-            />
-            <TextField
-              testID="reset-confirm"
-              inputRef={confirmRef}
-              label={t('reset.confirm')}
-              value={confirm}
-              onChangeText={setConfirm}
-              error={errors.confirm}
-              disabled={loading}
-              secureTextEntry
-              passwordToggleLabels={passwordToggleLabels(t)}
-              autoCapitalize="none"
-              autoComplete="new-password"
-              returnKeyType="go"
-              onSubmitEditing={() => {
-                if (!loading) void submit();
-              }}
-            />
+            <View style={{ gap: space[4] }}>
+              <TextField
+                testID="reset-password"
+                inputRef={passwordRef}
+                label={t('reset.password')}
+                value={password}
+                onChangeText={setPassword}
+                error={errors.password}
+                helper={t('auth.password.hint')}
+                disabled={loading}
+                secureTextEntry
+                passwordToggleLabels={passwordToggleLabels(t)}
+                autoCapitalize="none"
+                autoComplete="new-password"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => confirmRef.current?.focus()}
+              />
+              <TextField
+                testID="reset-confirm"
+                inputRef={confirmRef}
+                label={t('reset.confirm')}
+                value={confirm}
+                onChangeText={setConfirm}
+                error={errors.confirm}
+                disabled={loading}
+                secureTextEntry
+                passwordToggleLabels={passwordToggleLabels(t)}
+                autoCapitalize="none"
+                autoComplete="new-password"
+                returnKeyType="go"
+                onSubmitEditing={() => {
+                  if (!loading) void submit();
+                }}
+              />
+            </View>
           </View>
         </>
       )}

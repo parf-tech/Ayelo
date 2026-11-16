@@ -1,10 +1,10 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { MIN_TARGET, stateOpacity, useTheme } from '../../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
 import { Icon, Text, type IconName } from '../../ui';
 
 /**
- * Groupe de lignes sur une carte (réglages, profil) : fond `surface`, coins arrondis, séparateurs fins entre les lignes.
+ * Groupe de lignes sur une carte (réglages, profil) : fond `surface`, coins arrondis, un filet fin entre deux lignes seulement.
  * Présentation seule : chaque ligne garde son identifiant de test, son rôle et son libellé d'accessibilité.
  */
 export function RowGroup({ children, testID }: { children: React.ReactNode; testID?: string }) {
@@ -13,10 +13,10 @@ export function RowGroup({ children, testID }: { children: React.ReactNode; test
   return (
     <View
       testID={testID}
-      style={{ backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}
+      style={{ backgroundColor: colors.surface, borderRadius: radius.md, overflow: 'hidden' }}
     >
       {rows.map((row, index) => (
-        <View key={index} style={index > 0 ? { borderTopWidth: 1, borderTopColor: colors.border } : undefined}>
+        <View key={index} style={index > 0 ? { borderTopWidth: borderWidth.hairline, borderTopColor: colors.border } : undefined}>
           {row}
         </View>
       ))}
@@ -67,11 +67,11 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
       >
         {icon ? <Icon name={icon} tone={iconTone} /> : null}
         <View style={{ flex: 1 }}>
-          <Text variant="body" tone={disabled ? 'textMuted' : danger ? 'danger' : 'text'} style={{ fontWeight: '600' }} numberOfLines={2}>
+          <Text variant="body" tone={disabled ? 'textMuted' : danger ? 'danger' : 'text'} style={{ fontWeight: '500' }}>
             {label}
           </Text>
           {description ? (
-            <Text variant="caption" tone="textMuted" numberOfLines={2}>
+            <Text variant="caption" tone="textMuted">
               {description}
             </Text>
           ) : null}

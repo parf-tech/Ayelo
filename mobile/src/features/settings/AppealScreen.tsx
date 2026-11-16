@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
@@ -49,11 +50,15 @@ export function AppealScreen() {
       footer={<Button testID="appeal-send" label={t('appeal.send')} onPress={() => void submit()} loading={loading} disabled={!sanctionId} />}
     >
       <ScreenHeader title={t('appeal.title')} fallbackHref="/settings/sanctions" />
-      <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
-        {t('appeal.subtitle')}
-      </Text>
-      {banner ? <Banner testID="appeal-banner" variant="error" message={banner} style={{ marginBottom: space[3] }} /> : null}
-      <TextField testID="appeal-message" label={t('appeal.message')} value={message} onChangeText={setMessage} error={error} multiline maxLength={2000} disabled={loading} />
+      <View style={{ gap: space[6] }}>
+        <Text variant="body" tone="textMuted">
+          {t('appeal.subtitle')}
+        </Text>
+        <View style={{ gap: space[4] }}>
+          {banner ? <Banner testID="appeal-banner" variant="error" message={banner} /> : null}
+          <TextField testID="appeal-message" label={t('appeal.message')} value={message} onChangeText={setMessage} error={error} multiline maxLength={2000} disabled={loading} />
+        </View>
+      </View>
     </ScreenContainer>
   );
 }

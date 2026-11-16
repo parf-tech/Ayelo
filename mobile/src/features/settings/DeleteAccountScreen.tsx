@@ -20,7 +20,7 @@ import { SocialReauth } from './SocialReauth';
  */
 export function DeleteAccountScreen() {
   const { t } = useI18n();
-  const { space } = useTheme();
+  const { space, colors, radius } = useTheme();
   const { api, signOut } = useAuth();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | undefined>();
@@ -59,8 +59,12 @@ export function DeleteAccountScreen() {
     }
   };
 
+  // Rappel de l'abonnement sur une carte calme : supprimer le compte ne le résilie pas.
   const subscription = (
-    <View style={{ marginBottom: space[3] }} testID="delete-subscription">
+    <View
+      testID="delete-subscription"
+      style={{ gap: space[2], padding: space[4], borderRadius: radius.md, backgroundColor: colors.surface }}
+    >
       <Text variant="bodySmall" tone="textMuted">
         {t('delete.subscription')}
       </Text>
@@ -76,14 +80,18 @@ export function DeleteAccountScreen() {
         footer={<Button testID="delete-signout" label={t('delete.signOut')} onPress={() => void signOut()} />}
       >
         <ScreenHeader title={t('delete.title')} hideBack />
-        <Banner testID="delete-banner" variant="success" message={t('delete.done')} style={{ marginBottom: space[3] }} />
-        <Text variant="body" testID="delete-grace" style={{ marginBottom: space[2] }}>
-          {t('delete.grace', { days: graceDays })}
-        </Text>
-        <Text variant="body" tone="textMuted" testID="delete-cancel-hint" style={{ marginBottom: space[4] }}>
-          {t('delete.cancelHint')}
-        </Text>
-        {subscription}
+        <View style={{ gap: space[6] }}>
+          <Banner testID="delete-banner" variant="success" message={t('delete.done')} />
+          <View style={{ gap: space[2] }}>
+            <Text variant="body" testID="delete-grace" style={{ fontWeight: '600' }}>
+              {t('delete.grace', { days: graceDays })}
+            </Text>
+            <Text variant="body" tone="textMuted" testID="delete-cancel-hint">
+              {t('delete.cancelHint')}
+            </Text>
+          </View>
+          {subscription}
+        </View>
       </ScreenContainer>
     );
   }
@@ -95,23 +103,30 @@ export function DeleteAccountScreen() {
       footer={<Button testID="delete-confirm" variant="danger" label={t('delete.confirm')} onPress={() => void submit()} loading={loading} />}
     >
       <ScreenHeader title={t('delete.title')} fallbackHref="/settings" />
-      <Banner variant="warning" message={t('delete.warning')} style={{ marginBottom: space[3] }} />
-      {banner ? <Banner testID="delete-banner" variant={banner.variant} message={banner.message} style={{ marginBottom: space[3] }} /> : null}
-      {subscription}
-      {social ? <SocialReauth testID="delete-reauth" disabled={loading} onProof={(proof) => submit(proof)} /> : null}
-      <TextField
-        testID="delete-password"
-        label={t('delete.password')}
-        helper={t('delete.passwordHelp')}
-        value={password}
-        onChangeText={setPassword}
-        error={error}
-        disabled={loading}
-        secureTextEntry
-        passwordToggleLabels={passwordToggleLabels(t)}
-        autoCapitalize="none"
-        autoComplete="current-password"
-      />
+      {/* Trois groupes séparés par l'espace (32) : avertissement, abonnement, ré-authentification. */}
+      <View style={{ gap: space[6] }}>
+        <View style={{ gap: space[3] }}>
+          <Banner variant="warning" message={t('delete.warning')} />
+          {banner ? <Banner testID="delete-banner" variant={banner.variant} message={banner.message} /> : null}
+        </View>
+        {subscription}
+        <View style={{ gap: space[4] }}>
+          {social ? <SocialReauth testID="delete-reauth" disabled={loading} onProof={(proof) => submit(proof)} /> : null}
+          <TextField
+            testID="delete-password"
+            label={t('delete.password')}
+            helper={t('delete.passwordHelp')}
+            value={password}
+            onChangeText={setPassword}
+            error={error}
+            disabled={loading}
+            secureTextEntry
+            passwordToggleLabels={passwordToggleLabels(t)}
+            autoCapitalize="none"
+            autoComplete="current-password"
+          />
+        </View>
+      </View>
     </ScreenContainer>
   );
 }

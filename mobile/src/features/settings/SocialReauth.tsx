@@ -39,7 +39,7 @@ export function SocialReauth({ onProof, disabled, testID }: Props) {
   };
 
   return (
-    <View testID={testID} style={{ gap: space[2], marginBottom: space[3] }}>
+    <View testID={testID} style={{ gap: space[2] }}>
       {failed ? <Banner testID={`${testID}-error`} variant="warning" message={t('reauth.failed')} /> : null}
       {providers.map((provider) => (
         <Button

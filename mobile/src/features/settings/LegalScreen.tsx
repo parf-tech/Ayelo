@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { Banner, ListRow, ScreenContainer, Text } from '../../ui';
@@ -23,24 +24,28 @@ export function LegalScreen() {
   return (
     <ScreenContainer scroll testID="screen-legal">
       <ScreenHeader title={t('legal.title')} fallbackHref="/settings" />
-      {error ? <Banner testID="legal-error" variant="error" message={t('legal.openError')} style={{ marginBottom: space[3] }} /> : null}
-      {entries.map((entry) => (
-        <ListRow
-          key={entry.id}
-          testID={`legal-${entry.id}`}
-          label={entry.label}
-          description={entry.url || !__DEV__ ? undefined : t('legal.notConfigured')}
-          onPress={() => {
-            setError(false);
-            void openLegal(entry.id).then((ok) => setError(!ok));
-          }}
-        />
-      ))}
-      {__DEV__ ? (
-        <Text variant="caption" tone="textMuted" style={{ marginTop: space[4] }}>
-          {t('legal.draftNote')}
-        </Text>
-      ) : null}
+      <View style={{ gap: space[4] }}>
+        {error ? <Banner testID="legal-error" variant="error" message={t('legal.openError')} /> : null}
+        <View>
+          {entries.map((entry) => (
+            <ListRow
+              key={entry.id}
+              testID={`legal-${entry.id}`}
+              label={entry.label}
+              description={entry.url || !__DEV__ ? undefined : t('legal.notConfigured')}
+              onPress={() => {
+                setError(false);
+                void openLegal(entry.id).then((ok) => setError(!ok));
+              }}
+            />
+          ))}
+        </View>
+        {__DEV__ ? (
+          <Text variant="caption" tone="textMuted">
+            {t('legal.draftNote')}
+          </Text>
+        ) : null}
+      </View>
     </ScreenContainer>
   );
 }

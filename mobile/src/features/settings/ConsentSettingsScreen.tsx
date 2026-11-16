@@ -8,6 +8,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, ListRow, ScreenContainer, SwitchRow, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { SwitchGroup } from './SwitchGroup';
 
 const TOGGLES: ConsentKind[] = ['marketing', 'location', 'sensitive_data', 'verification_biometric'];
 
@@ -50,31 +51,47 @@ export function ConsentSettingsScreen() {
   return (
     <ScreenContainer scroll testID="screen-consent-settings">
       <ScreenHeader title={t('consentSettings.title')} fallbackHref="/settings" />
-      <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
+      <Text variant="body" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[5] }}>
         {t('consentSettings.intro')}
       </Text>
-      {banner ? <Banner testID="consent-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
+      {banner ? (
+        <Banner
+          testID="consent-banner"
+          variant="error"
+          message={banner}
+          onDismiss={() => setBanner(undefined)}
+          dismissLabel={t('ui.banner.dismiss')}
+          style={{ marginBottom: space[4] }}
+        />
+      ) : null}
       {confirmRevoke ? (
-        <View testID="consent-revoke-confirm" style={{ gap: space[2], marginBottom: space[3] }}>
+        <View testID="consent-revoke-confirm" style={{ gap: space[3], marginBottom: space[5] }}>
           <Banner variant="warning" message={`${t('consentSettings.revokeSensitive.title')} ${t('consentSettings.revokeSensitive.body')}`} />
           <Button testID="consent-revoke-yes" variant="danger" label={t('consentSettings.revokeSensitive.action')} onPress={() => void set('sensitive_data', false)} loading={busy} />
           <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirmRevoke(false)} />
         </View>
       ) : null}
       <AsyncView testID="consents" status={consents.status} error={consents.error} onRetry={() => void consents.reload()}>
-        {TOGGLES.map((kind) => (
-          <SwitchRow
-            key={kind}
-            testID={`consent-${kind}`}
-            label={t(`consentSettings.${kind}`)}
-            description={kind === 'sensitive_data' ? t('consentSettings.sensitive_data.hint') : undefined}
-            value={granted(kind)}
-            disabled={busy}
-            onValueChange={(value) => onToggle(kind, value)}
-          />
-        ))}
-        <ListRow label={t('consentSettings.terms')} />
-        <ListRow label={t('consentSettings.privacy')} />
+        <View style={{ gap: space[6] }}>
+          <SwitchGroup>
+            {TOGGLES.map((kind) => (
+              <SwitchRow
+                key={kind}
+                testID={`consent-${kind}`}
+                label={t(`consentSettings.${kind}`)}
+                description={kind === 'sensitive_data' ? t('consentSettings.sensitive_data.hint') : undefined}
+                value={granted(kind)}
+                disabled={busy}
+                onValueChange={(value) => onToggle(kind, value)}
+                divider={false}
+              />
+            ))}
+          </SwitchGroup>
+          <View>
+            <ListRow label={t('consentSettings.terms')} />
+            <ListRow label={t('consentSettings.privacy')} />
+          </View>
+        </View>
       </AsyncView>
     </ScreenContainer>
   );

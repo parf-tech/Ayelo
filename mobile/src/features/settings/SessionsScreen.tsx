@@ -56,53 +56,65 @@ export function SessionsScreen() {
   return (
     <ScreenContainer scroll testID="screen-sessions">
       <ScreenHeader title={t('sessions.title')} fallbackHref="/settings" />
-      {banner ? <Banner testID="sessions-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
-      {confirm ? (
-        <View testID="sessions-confirm" style={{ gap: space[2], marginBottom: space[3] }}>
+      <View style={{ paddingTop: space[3] }}>
+        {banner ? (
           <Banner
-            variant="warning"
-            message={confirm.kind === 'all' ? t('sessions.closeAll.confirm') : confirm.session.current ? t('sessions.closeCurrent.confirm') : t('sessions.close')}
+            testID="sessions-banner"
+            variant="error"
+            message={banner}
+            onDismiss={() => setBanner(undefined)}
+            dismissLabel={t('ui.banner.dismiss')}
+            style={{ marginBottom: space[4] }}
           />
-          <Button testID="sessions-confirm-yes" variant="danger" label={t('common.confirm')} onPress={() => void run()} loading={busy} />
-          <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirm(null)} />
-        </View>
-      ) : null}
-      <AsyncView
-        testID="sessions"
-        status={sessions.status}
-        error={sessions.error}
-        onRetry={() => void sessions.reload()}
-        empty={list.length === 0}
-        emptyTitle={t('sessions.empty')}
-      >
-        {list.map((s) => {
-          const date = s.last_active_at
-            ? new Date(s.last_active_at).toLocaleDateString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-            : t('sessions.unknown');
-          return (
-            <ListRow
-              key={s.id}
-              testID={`session-${s.id}`}
-              label={s.app_version ? t('sessions.row', { platform: platformName(s), version: s.app_version }) : t('sessions.rowNoVersion', { platform: platformName(s) })}
-              description={`${s.current ? `${t('sessions.current')}. ` : ''}${t('sessions.lastActive', { date })}`}
-              trailing={
-                <Button
-                  testID={`session-close-${s.id}`}
-                  variant="ghost"
-                  label={t('sessions.close')}
-                  accessibilityLabel={t('sessions.closeAria', { platform: platformName(s) })}
-                  onPress={() => setConfirm({ kind: 'one', session: s })}
-                />
-              }
+        ) : null}
+        {confirm ? (
+          <View testID="sessions-confirm" style={{ gap: space[3], marginBottom: space[5] }}>
+            <Banner
+              variant="warning"
+              message={confirm.kind === 'all' ? t('sessions.closeAll.confirm') : confirm.session.current ? t('sessions.closeCurrent.confirm') : t('sessions.close')}
             />
-          );
-        })}
-        {list.length > 0 ? (
-          <View style={{ marginTop: space[4] }}>
-            <Button testID="sessions-close-all" variant="secondary" label={t('sessions.closeAll')} onPress={() => setConfirm({ kind: 'all' })} />
+            <Button testID="sessions-confirm-yes" variant="danger" label={t('common.confirm')} onPress={() => void run()} loading={busy} />
+            <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirm(null)} />
           </View>
         ) : null}
-      </AsyncView>
+        <AsyncView
+          testID="sessions"
+          status={sessions.status}
+          error={sessions.error}
+          onRetry={() => void sessions.reload()}
+          empty={list.length === 0}
+          emptyTitle={t('sessions.empty')}
+        >
+          {list.map((s) => {
+            const date = s.last_active_at
+              ? new Date(s.last_active_at).toLocaleDateString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+              : t('sessions.unknown');
+            return (
+              <ListRow
+                key={s.id}
+                testID={`session-${s.id}`}
+                trailingBelow
+                label={s.app_version ? t('sessions.row', { platform: platformName(s), version: s.app_version }) : t('sessions.rowNoVersion', { platform: platformName(s) })}
+                description={`${s.current ? `${t('sessions.current')} · ` : ''}${t('sessions.lastActive', { date })}`}
+                trailing={
+                  <Button
+                    testID={`session-close-${s.id}`}
+                    variant="ghost"
+                    label={t('sessions.close')}
+                    accessibilityLabel={t('sessions.closeAria', { platform: platformName(s) })}
+                    onPress={() => setConfirm({ kind: 'one', session: s })}
+                  />
+                }
+              />
+            );
+          })}
+          {list.length > 0 ? (
+            <View style={{ marginTop: space[6] }}>
+              <Button testID="sessions-close-all" variant="secondary" label={t('sessions.closeAll')} onPress={() => setConfirm({ kind: 'all' })} />
+            </View>
+          ) : null}
+        </AsyncView>
+      </View>
     </ScreenContainer>
   );
 }

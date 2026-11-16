@@ -65,9 +65,11 @@ export function FiltersScreen() {
       }
     >
       <ScreenHeader title={t('filters.title')} />
-      <AsyncView status={draft ? 'ready' : prefs.status === 'error' ? 'error' : 'loading'} error={prefs.error} onRetry={() => void prefs.reload()} testID="filters">
-        {draft ? <PreferenceFields idPrefix="filter" showSeeking={false} value={draft} onChange={setDraft} /> : null}
-      </AsyncView>
+      <View style={{ paddingTop: space[3] }}>
+        <AsyncView status={draft ? 'ready' : prefs.status === 'error' ? 'error' : 'loading'} error={prefs.error} onRetry={() => void prefs.reload()} testID="filters">
+          {draft ? <PreferenceFields idPrefix="filter" showSeeking={false} value={draft} onChange={setDraft} /> : null}
+        </AsyncView>
+      </View>
     </ScreenContainer>
   );
 }

@@ -15,7 +15,7 @@ import { NavRow, RowGroup } from './GroupedList';
 function Section({ title }: { title: string }) {
   const { space } = useTheme();
   return (
-    <Text variant="caption" tone="textMuted" header style={{ marginTop: space[5], marginBottom: space[2], marginLeft: space[1], fontWeight: '700' }}>
+    <Text variant="caption" tone="textMuted" header style={{ marginTop: space[6], marginBottom: space[2], marginLeft: space[1], fontWeight: '600' }}>
       {title}
     </Text>
   );
@@ -61,7 +61,7 @@ export function SettingsScreen() {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], flexShrink: 1 }}>
             <Icon name="Globe" tone="primary" />
-            <Text variant="body" style={{ fontWeight: '600', flexShrink: 1 }}>
+            <Text variant="body" style={{ fontWeight: '500', flexShrink: 1 }}>
               {t('settings.language')}
             </Text>
           </View>

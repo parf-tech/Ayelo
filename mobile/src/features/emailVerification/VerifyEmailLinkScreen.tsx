@@ -1,10 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Skeleton, Text, TextField } from '../../ui';
+import { AuthHeader } from '../auth/AuthHeader';
 
 /**
  * Lien de confirmation (ayelo://verify-email?token=…) : appelle POST /auth/email/verify.
@@ -46,26 +48,27 @@ export function VerifyEmailLinkScreen() {
 
   return (
     <ScreenContainer testID="screen-verify-link" scroll>
-      <Text variant="title" header style={{ marginTop: space[5], marginBottom: space[4] }}>
+      <AuthHeader back={false} />
+      <Text variant="title" header style={{ marginTop: space[4], marginBottom: space[4] }}>
         {t('verifyEmail.link.title')}
       </Text>
       {status === 'working' ? (
-        <>
-          <Text variant="body" tone="textMuted" style={{ marginBottom: space[3] }}>
+        <View style={{ gap: space[3] }}>
+          <Text variant="body" tone="textMuted">
             {t('verifyEmail.link.working')}
           </Text>
           <Skeleton />
-        </>
+        </View>
       ) : null}
       {status === 'done' ? (
-        <>
-          <Banner testID="verify-link-success" variant="success" message={t('verifyEmail.link.success')} style={{ marginBottom: space[4] }} />
+        <View style={{ gap: space[6] }}>
+          <Banner testID="verify-link-success" variant="success" message={t('verifyEmail.link.success')} />
           <Button testID="verify-link-home" label={t('verifyEmail.link.home')} onPress={() => router.replace('/' as never)} />
-        </>
+        </View>
       ) : null}
       {status === 'idle' || status === 'error' ? (
-        <>
-          {message ? <Banner testID="verify-link-error" variant="error" message={message} style={{ marginBottom: space[3] }} /> : null}
+        <View style={{ gap: space[4] }}>
+          {message ? <Banner testID="verify-link-error" variant="error" message={message} /> : null}
           <TextField
             testID="verify-link-token"
             label={t('verifyEmail.link.tokenLabel')}
@@ -79,9 +82,8 @@ export function VerifyEmailLinkScreen() {
             label={t('verifyEmail.link.submit')}
             onPress={() => void verify(token)}
             disabled={token.trim() === ''}
-            style={{ marginTop: space[4] }}
           />
-        </>
+        </View>
       ) : null}
     </ScreenContainer>
   );

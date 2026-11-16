@@ -17,6 +17,8 @@ export type ListRowProps = {
   leading?: React.ReactNode;
   /** Élément à droite (badge). */
   trailing?: React.ReactNode;
+  /** `trailing` sous le texte (action à libellé long : « Fermer la session ») au lieu de la moitié de la ligne. */
+  trailingBelow?: boolean;
   accessibilityLabel?: string;
   testID?: string;
 };
@@ -30,6 +32,7 @@ export function ListRow({
   tone = 'default',
   leading,
   trailing,
+  trailingBelow = false,
   accessibilityLabel,
   testID,
 }: ListRowProps) {
@@ -55,11 +58,11 @@ export function ListRow({
     >
       {leading}
       <View style={{ flex: 1 }}>
-        <Text variant="body" tone={tone === 'danger' ? 'danger' : 'text'} style={{ fontWeight: '600' }} numberOfLines={2}>
+        <Text variant="body" tone={tone === 'danger' ? 'danger' : 'text'} style={{ fontWeight: '600' }}>
           {label}
         </Text>
         {description ? (
-          <Text variant="caption" tone="textMuted" numberOfLines={2}>
+          <Text variant="caption" tone="textMuted">
             {description}
           </Text>
         ) : null}
@@ -69,7 +72,7 @@ export function ListRow({
           {value}
         </Text>
       ) : null}
-      {trailing}
+      {trailingBelow ? null : trailing}
       {onPress ? (
         // Chevron décoratif (Icon masquée de l'arbre d'accessibilité), inversé en lecture de droite à gauche.
         <View style={{ transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }}>
@@ -77,6 +80,14 @@ export function ListRow({
         </View>
       ) : null}
     </View>
+  );
+  const body = trailingBelow && trailing ? (
+    <View>
+      {content}
+      <View style={{ alignSelf: 'flex-start', paddingHorizontal: space[2], paddingBottom: space[2] }}>{trailing}</View>
+    </View>
+  ) : (
+    content
   );
   if (!onPress) {
     // Ligne statique : regroupée (une seule vocalisation) seulement sans `trailing`. Avec un contrôle à droite
@@ -90,7 +101,7 @@ export function ListRow({
         accessibilityLabel={grouped ? accessibilityLabel : undefined}
         style={card}
       >
-        {content}
+        {body}
       </View>
     );
   }
@@ -102,7 +113,7 @@ export function ListRow({
       onPress={onPress}
       style={({ pressed }) => [card, { opacity: pressed ? stateOpacity.pressed : 1 }]}
     >
-      {content}
+      {body}
     </Pressable>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
@@ -37,35 +38,46 @@ export function BlockedScreen() {
   return (
     <ScreenContainer scroll testID="screen-blocked">
       <ScreenHeader title={t('blocked.title')} fallbackHref="/settings" />
-      {banner ? <Banner testID="blocked-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} style={{ marginBottom: space[3] }} /> : null}
-      <AsyncView
-        testID="blocked"
-        status={blocks.status}
-        error={blocks.error}
-        onRetry={() => void blocks.reload()}
-        empty={list.length === 0}
-        emptyTitle={t('blocked.empty')}
-        emptyDescription={t('blocked.empty.body')}
-      >
-        {list.map((b) => (
-          <ListRow
-            key={b.user_id}
-            testID={`blocked-${b.user_id}`}
-            label={b.display_name}
-            leading={<Avatar name={b.display_name} />}
-            trailing={
-              <Button
-                testID={`unblock-${b.user_id}`}
-                variant="secondary"
-                label={t('blocked.unblock')}
-                accessibilityLabel={t('blocked.unblockAria', { name: b.display_name })}
-                loading={busyId === b.user_id}
-                onPress={() => void unblock(b.user_id)}
-              />
-            }
+      <View style={{ paddingTop: space[3] }}>
+        {banner ? (
+          <Banner
+            testID="blocked-banner"
+            variant="error"
+            message={banner}
+            onDismiss={() => setBanner(undefined)}
+            dismissLabel={t('ui.banner.dismiss')}
+            style={{ marginBottom: space[4] }}
           />
-        ))}
-      </AsyncView>
+        ) : null}
+        <AsyncView
+          testID="blocked"
+          status={blocks.status}
+          error={blocks.error}
+          onRetry={() => void blocks.reload()}
+          empty={list.length === 0}
+          emptyTitle={t('blocked.empty')}
+          emptyDescription={t('blocked.empty.body')}
+        >
+          {list.map((b) => (
+            <ListRow
+              key={b.user_id}
+              testID={`blocked-${b.user_id}`}
+              label={b.display_name}
+              leading={<Avatar name={b.display_name} />}
+              trailing={
+                <Button
+                  testID={`unblock-${b.user_id}`}
+                  variant="ghost"
+                  label={t('blocked.unblock')}
+                  accessibilityLabel={t('blocked.unblockAria', { name: b.display_name })}
+                  loading={busyId === b.user_id}
+                  onPress={() => void unblock(b.user_id)}
+                />
+              }
+            />
+          ))}
+        </AsyncView>
+      </View>
     </ScreenContainer>
   );
 }
