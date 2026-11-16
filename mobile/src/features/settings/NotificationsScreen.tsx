@@ -6,9 +6,8 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, ScreenContainer, SwitchRow, Text } from '../../ui';
+import { AsyncView, Banner, ScreenContainer, SwitchGroup, SwitchRow, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
-import { SwitchGroup } from './SwitchGroup';
 
 /** Deux groupes : l'activité du compte, puis les nouveautés et offres (séparés par l'espace, sans titre ni trait). */
 const GROUPS: (keyof NotificationPrefs)[][] = [
@@ -23,18 +22,24 @@ export function NotificationsScreen() {
   const { api } = useAuth();
   const prefs = useResource(() => api.notifications.preferences(), [api]);
   const [banner, setBanner] = useState<string | undefined>();
+  // Réglages en cours d'enregistrement : une ligne n'est inerte que pendant SA requête, et un échec ne défait que SA valeur.
+  const [busyKeys, setBusyKeys] = useState<(keyof NotificationPrefs)[]>([]);
 
   const change = async (key: keyof NotificationPrefs, value: boolean) => {
+    if (busyKeys.includes(key)) return;
     setBanner(undefined);
-    const previous = prefs.data;
+    setBusyKeys((keys) => [...keys, key]);
+    const previousValue = Boolean(prefs.data?.[key]);
     prefs.setData((current) => (current ? { ...current, [key]: value } : current));
     try {
       const updated = await api.notifications.updatePreferences({ [key]: value });
       prefs.setData(updated);
     } catch (error) {
-      prefs.setData(previous);
+      prefs.setData((current) => (current ? { ...current, [key]: previousValue } : current));
       const { key: k, params } = apiErrorMessage(error);
       setBanner(t(k, params));
+    } finally {
+      setBusyKeys((keys) => keys.filter((k) => k !== key));
     }
   };
 
@@ -62,6 +67,7 @@ export function NotificationsScreen() {
                     testID={`notif-${key}`}
                     label={t(`notif.${key}`)}
                     value={Boolean(prefs.data?.[key])}
+                    disabled={busyKeys.includes(key)}
                     onValueChange={(value) => void change(key, value)}
                     divider={false}
                   />

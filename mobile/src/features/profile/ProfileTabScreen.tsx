@@ -6,10 +6,9 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { borderWidth, useTheme } from '../../theme';
-import { AsyncView, Avatar, Banner, Button, Icon, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
+import { AsyncView, Avatar, Banner, Button, Icon, NavRow, RowGroup, ScreenContainer, Text, useToast, VerifiedBadge } from '../../ui';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { countryLabel } from '../onboarding/countries';
-import { NavRow, RowGroup } from '../settings/GroupedList';
 
 /** Photo du profil : taille de l'avatar dans l'anneau. */
 const AVATAR_SIZE = 104;

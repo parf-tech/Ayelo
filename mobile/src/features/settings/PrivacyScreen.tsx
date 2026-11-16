@@ -6,9 +6,8 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, ScreenContainer, SwitchRow } from '../../ui';
+import { AsyncView, Banner, ScreenContainer, SwitchGroup, SwitchRow } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
-import { SwitchGroup } from './SwitchGroup';
 
 /** S51 : confidentialité (PATCH /me/privacy). Mise à jour immédiate, retour à la valeur précédente si le serveur refuse. */
 export function PrivacyScreen() {
@@ -17,14 +16,16 @@ export function PrivacyScreen() {
   const { api, refreshMe } = useAuth();
   const me = useResource(() => api.auth.me(), [api]);
   const [banner, setBanner] = useState<string | undefined>();
-  const [saving, setSaving] = useState(false);
+  // Réglages en cours d'enregistrement : seule la ligne touchée est inerte, un échec ne défait que sa propre valeur.
+  const [savingKeys, setSavingKeys] = useState<(keyof PrivacyInput)[]>([]);
   const profile = me.data?.profile ?? null;
 
   const change = async (patch: PrivacyInput) => {
-    if (!profile || saving) return;
+    const key = Object.keys(patch)[0] as keyof PrivacyInput;
+    if (!profile || savingKeys.includes(key)) return;
     setBanner(undefined);
-    setSaving(true);
-    const previous = me.data;
+    setSavingKeys((keys) => [...keys, key]);
+    const previousValue = profile[key];
     me.setData((current) => (current && current.profile ? { ...current, profile: { ...current.profile, ...patch } } : current));
     try {
       // Le serveur renvoie l'objet /me complet : on le prend tel quel.
@@ -32,11 +33,11 @@ export function PrivacyScreen() {
       me.setData(updated);
       void refreshMe();
     } catch (error) {
-      me.setData(previous);
-      const { key, params } = apiErrorMessage(error);
-      setBanner(t(key, params));
+      me.setData((current) => (current && current.profile ? { ...current, profile: { ...current.profile, [key]: previousValue } } : current));
+      const { key: errorKey, params } = apiErrorMessage(error);
+      setBanner(t(errorKey, params));
     } finally {
-      setSaving(false);
+      setSavingKeys((keys) => keys.filter((k) => k !== key));
     }
   };
 
@@ -69,7 +70,7 @@ export function PrivacyScreen() {
                 label={t('privacy.visible')}
                 description={t('privacy.visible.hint')}
                 value={profile.is_visible}
-                disabled={saving}
+                disabled={savingKeys.includes('is_visible')}
                 onValueChange={(is_visible) => void change({ is_visible })}
                 divider={false}
               />
@@ -77,7 +78,7 @@ export function PrivacyScreen() {
                 testID="privacy-distance"
                 label={t('privacy.hideDistance')}
                 value={profile.hide_distance}
-                disabled={saving}
+                disabled={savingKeys.includes('hide_distance')}
                 onValueChange={(hide_distance) => void change({ hide_distance })}
                 divider={false}
               />
@@ -85,7 +86,7 @@ export function PrivacyScreen() {
                 testID="privacy-lastseen"
                 label={t('privacy.hideLastSeen')}
                 value={profile.hide_last_seen}
-                disabled={saving}
+                disabled={savingKeys.includes('hide_last_seen')}
                 onValueChange={(hide_last_seen) => void change({ hide_last_seen })}
                 divider={false}
               />

@@ -124,6 +124,8 @@ export function DeleteAccountScreen() {
             passwordToggleLabels={passwordToggleLabels(t)}
             autoCapitalize="none"
             autoComplete="current-password"
+            returnKeyType="done"
+            onSubmitEditing={() => void submit()}
           />
         </View>
       </View>

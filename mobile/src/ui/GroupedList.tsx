@@ -1,7 +1,9 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
-import { borderWidth, focus, MIN_TARGET, stateOpacity, useTheme } from '../../theme';
-import { Icon, Text, useFocusRing, type IconName } from '../../ui';
+import { I18nManager, Pressable, View } from 'react-native';
+import { borderWidth, focus, MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { useFocusRing } from './hooks';
+import { Icon, type IconName } from './Icon';
+import { Text } from './Text';
 
 /**
  * Groupe de lignes sur une carte (réglages, profil) : fond `surface`, coins arrondis, un filet fin entre deux lignes seulement.
@@ -86,7 +88,10 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
           </Text>
         ) : null}
         {trailing}
-        <Icon name="ChevronRight" size="sm" tone="textMuted" />
+        {/* Chevron décoratif, inversé en lecture de droite à gauche (comme ListRow). */}
+        <View style={{ transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }}>
+          <Icon name="ChevronRight" size="sm" tone="textMuted" />
+        </View>
       </View>
     </Pressable>
   );

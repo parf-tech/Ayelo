@@ -1,35 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, DimensionValue, StyleProp, ViewStyle } from 'react-native';
-import { useTheme } from '../theme';
+import { Animated, DimensionValue, StyleProp, ViewStyle } from 'react-native';
+import { useI18n } from '../i18n';
+import { stateOpacity, useTheme } from '../theme';
+import { useReduceMotion } from './hooks';
 
 export type SkeletonProps = {
   width?: DimensionValue;
   height?: number;
   variant?: 'line' | 'card' | 'circle';
   testID?: string;
+  /** Libellé lu seul (défaut : « Chargement »). Dans un groupe déjà libellé, le parent masque les briques. */
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 /** Placeholder de chargement. Pulsation désactivée si « réduire les animations » est actif. */
-export function Skeleton({ width, height, variant = 'line', testID, style }: SkeletonProps) {
+export function Skeleton({ width, height, variant = 'line', testID, accessibilityLabel, style }: SkeletonProps) {
   const { colors, radius } = useTheme();
+  const { t } = useI18n();
   const [opacity] = useState(() => new Animated.Value(1));
-  // null = réglage système pas encore connu : on n'anime pas avant de savoir.
-  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled?.()
-      .then((enabled) => {
-        if (mounted) setReduceMotion(Boolean(enabled));
-      })
-      .catch(() => {
-        if (mounted) setReduceMotion(true);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // null = réglage système pas encore connu : on n'anime pas avant de savoir. Suit aussi un changement en cours d'utilisation.
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
     if (reduceMotion !== false) {
@@ -38,7 +29,7 @@ export function Skeleton({ width, height, variant = 'line', testID, style }: Ske
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.45, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: stateOpacity.skeleton, duration: 800, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
       ]),
     );
@@ -58,6 +49,7 @@ export function Skeleton({ width, height, variant = 'line', testID, style }: Ske
       testID={testID ?? 'skeleton'}
       accessible
       accessibilityRole="progressbar"
+      accessibilityLabel={accessibilityLabel ?? t('common.loading')}
       accessibilityState={{ busy: true }}
       style={[{ backgroundColor: colors.skeleton, opacity }, dims, style]}
     />

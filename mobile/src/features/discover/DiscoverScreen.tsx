@@ -157,9 +157,9 @@ export function DiscoverScreen() {
           testID="discover-filters"
           icon="SlidersHorizontal"
           variant="tonal"
-          accessibilityLabel={filtersActive ? `${t('discover.filters')}, ${t('filters.active')}` : t('discover.filters')}
+          accessibilityLabel={t('discover.filters')}
           selected={filtersActive}
-          badge={filtersActive ? { kind: 'dot' } : undefined}
+          badge={filtersActive ? { kind: 'dot', accessibilityLabel: t('filters.active') } : undefined}
           onPress={() => router.push('/filters' as never)}
         />
       </View>

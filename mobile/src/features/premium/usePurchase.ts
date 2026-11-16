@@ -12,6 +12,7 @@ export function usePurchase() {
   const { t } = useI18n();
   const { provider, status } = usePremium();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const [notice, setNotice] = useState<PurchaseNotice | undefined>();
 
   // Les causes techniques (Expo Go, clé RevenueCat absente...) ne sont montrées qu'en développement ; l'utilisateur lit un message générique.
@@ -25,7 +26,7 @@ export function usePurchase() {
     if (busyId) return;
     setNotice(undefined);
     if (!provider.available) {
-      setNotice({ variant: 'warning', message: unavailableMessage ?? '' });
+      setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.generic') });
       return;
     }
     setBusyId(productId);
@@ -56,12 +57,20 @@ export function usePurchase() {
   };
 
   const restore = async () => {
+    if (restoring) return;
     setNotice(undefined);
-    const outcome = await provider.restore();
-    if (outcome.kind === 'restored') setNotice({ variant: 'info', message: t('premium.restore.done') });
-    else if (outcome.kind === 'unavailable') setNotice({ variant: 'warning', message: unavailableMessage ?? '' });
-    else setNotice({ variant: 'error', message: t('premium.restore.error') });
+    setRestoring(true);
+    try {
+      const outcome = await provider.restore();
+      if (outcome.kind === 'restored') setNotice({ variant: 'info', message: t('premium.restore.done') });
+      else if (outcome.kind === 'unavailable') setNotice({ variant: 'warning', message: unavailableMessage ?? t('premium.unavailable.generic') });
+      else setNotice({ variant: 'error', message: t('premium.restore.error') });
+    } catch {
+      setNotice({ variant: 'error', message: t('premium.restore.error') });
+    } finally {
+      setRestoring(false);
+    }
   };
 
-  return { buy, restore, busyId, notice, setNotice, available: provider.available, unavailableMessage };
+  return { buy, restore, busyId, restoring, notice, setNotice, available: provider.available, unavailableMessage };
 }

@@ -2,9 +2,8 @@ import React from 'react';
 import { Platform, View } from 'react-native';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, Icon, Text, useToast } from '../../ui';
+import { Button, Icon, NavRow, RowGroup, Text, useToast } from '../../ui';
 import { openExternal } from '../legal/links';
-import { NavRow, RowGroup } from '../settings/GroupedList';
 
 export const APP_STORE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 export const PLAY_STORE_SUBSCRIPTIONS_URL = 'https://play.google.com/store/account/subscriptions';

@@ -5,6 +5,7 @@ export const commonFr = {
   'state.loadingMore': 'Chargement de la suite',
   'common.save': 'Enregistrer',
   'common.cancel': 'Annuler',
+  'common.counter': '{count} / {max}',
   'common.confirm': 'Confirmer',
   'common.delete': 'Supprimer',
   'common.send': 'Envoyer',

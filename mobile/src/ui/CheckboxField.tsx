@@ -5,6 +5,9 @@ import { Icon } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
 
+/** Côté de la case (pt). */
+const BOX_SIZE = 26;
+
 export type CheckboxFieldProps = {
   label: string;
   description?: string;
@@ -48,9 +51,10 @@ export function CheckboxField({
           alignItems: 'flex-start',
           padding: space[4],
           borderRadius: radius.md,
-          borderWidth: checked ? borderWidth.strong : borderWidth.hairline,
-          borderColor: checked ? colors.primary : colors.borderStrong,
-          backgroundColor: colors.surface,
+          // Trait constant (2 pt) : cocher ne déplace rien ; seul le contour change de couleur.
+          borderWidth: borderWidth.strong,
+          borderColor: disabled ? colors.disabledBg : checked ? colors.primary : colors.borderStrong,
+          backgroundColor: disabled ? colors.disabledBg : colors.surface,
           opacity: pressed && !disabled ? stateOpacity.pressed : 1,
         },
         ringStyle,
@@ -61,22 +65,22 @@ export function CheckboxField({
         accessible={false}
         importantForAccessibility="no-hide-descendants"
         style={{
-          width: 26,
-          height: 26,
+          width: BOX_SIZE,
+          height: BOX_SIZE,
           borderRadius: radius.sm,
-          borderWidth: 2,
-          borderColor: checked ? colors.primary : colors.textMuted,
-          backgroundColor: checked ? colors.primary : colors.bg,
+          borderWidth: borderWidth.strong,
+          borderColor: disabled ? colors.disabledText : checked ? colors.primary : colors.borderStrong,
+          backgroundColor: disabled ? (checked ? colors.disabledText : colors.disabledBg) : checked ? colors.primary : colors.bg,
           alignItems: 'center',
           justifyContent: 'center',
           marginRight: space[3],
-          marginTop: 2,
+          marginTop: borderWidth.strong,
         }}
       >
         {checked ? <Icon name="Check" size="md" tone="onPrimary" testID={testID ? `${testID}-check` : undefined} /> : null}
       </View>
       <View style={{ flex: 1 }}>
-        <Text variant="body" style={{ fontWeight: '600' }}>
+        <Text variant="body" tone={disabled ? 'textMuted' : 'text'} style={{ fontWeight: '600' }}>
           {label}
         </Text>
         {badge ? (

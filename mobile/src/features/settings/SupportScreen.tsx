@@ -57,7 +57,17 @@ export function SupportScreen() {
         <View style={{ gap: space[4] }}>
           {banner ? <Banner testID="support-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} /> : null}
           <TextField testID="support-subject" label={t('support.subject')} value={subject} onChangeText={setSubject} error={errors.subject} maxLength={120} disabled={sending} />
-          <TextField testID="support-body" label={t('support.body')} value={body} onChangeText={setBody} error={errors.body} multiline maxLength={4000} disabled={sending} />
+          <TextField
+            testID="support-body"
+            label={t('support.body')}
+            helper={t('common.counter', { count: body.length, max: 4000 })}
+            value={body}
+            onChangeText={setBody}
+            error={errors.body}
+            multiline
+            maxLength={4000}
+            disabled={sending}
+          />
           <View style={{ gap: space[2] }}>
             <Button testID="support-send" label={t('support.send')} onPress={() => void submit()} loading={sending} />
             {email ? (

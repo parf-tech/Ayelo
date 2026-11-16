@@ -29,6 +29,8 @@ export type TextFieldProps = Omit<TextInputProps, 'style' | 'accessibilityLabel'
 
 /** Hauteur minimale du cadre d'un champ (jeton MIN_TARGET + 8 = 52 pt). */
 const FIELD_MIN_HEIGHT = MIN_TARGET + 8;
+/** Hauteur minimale de la saisie multiligne (environ quatre lignes). */
+const MULTILINE_MIN_HEIGHT = 96;
 
 /**
  * Champ de saisie : texte, mot de passe (`secureTextEntry`), multiligne.
@@ -79,7 +81,8 @@ export function TextField({
           alignItems: multiline ? 'flex-start' : 'center',
           minHeight: FIELD_MIN_HEIGHT,
           borderRadius: radius.md,
-          borderWidth: focused || hasError ? borderWidth.strong : borderWidth.hairline,
+          // Trait constant (2 pt) : le focus ou l'erreur ne décalent pas le contenu, seule la couleur change.
+          borderWidth: borderWidth.strong,
           borderColor,
           backgroundColor: disabled ? colors.disabledBg : colors.surface,
           paddingHorizontal: space[3],
@@ -108,7 +111,7 @@ export function TextField({
           }}
           style={{
             flex: 1,
-            minHeight: multiline ? 96 : MIN_TARGET,
+            minHeight: multiline ? MULTILINE_MIN_HEIGHT : MIN_TARGET,
             paddingVertical: space[2],
             color: disabled ? colors.disabledText : colors.text,
             fontSize: type.body.size,

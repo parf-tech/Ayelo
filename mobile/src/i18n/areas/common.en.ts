@@ -5,6 +5,7 @@ export const commonEn = {
   'state.loadingMore': 'Loading more',
   'common.save': 'Save',
   'common.cancel': 'Cancel',
+  'common.counter': '{count} / {max}',
   'common.confirm': 'Confirm',
   'common.delete': 'Delete',
   'common.send': 'Send',

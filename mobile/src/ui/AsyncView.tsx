@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { isApiError } from '../api/errors';
 import { useI18n } from '../i18n';
 import { apiErrorMessage } from '../i18n/apiErrors';
 import { useTheme } from '../theme';
+import { announce } from './a11y/announce';
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
 import { Icon, type IconName } from './Icon';
@@ -47,6 +48,16 @@ export function AsyncView({
 }: AsyncViewProps) {
   const { t } = useI18n();
   const { space } = useTheme();
+
+  // iOS n'a pas de région vivante : entrer dans l'état d'erreur est annoncé (titre et message).
+  useEffect(() => {
+    if (status !== 'error') return;
+    const offline = isApiError(error) && error.isNetwork;
+    const { key, params } = apiErrorMessage(error);
+    announce(`${offline ? t('state.offline.title') : t('state.error.title')}. ${t(key, params)}`);
+    // `t` change d'identité avec la langue seulement : l'annonce part à l'entrée dans l'état d'erreur.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, error]);
 
   if (status === 'loading') {
     return (

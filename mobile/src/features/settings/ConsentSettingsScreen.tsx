@@ -6,9 +6,10 @@ import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { AsyncView, Banner, Button, ListRow, ScreenContainer, SwitchRow, Text } from '../../ui';
+import { AsyncView, Banner, NavRow, RowGroup, ScreenContainer, SwitchGroup, SwitchRow, Text } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
-import { SwitchGroup } from './SwitchGroup';
+import { type LegalDoc, useLegalOpener } from '../legal/useLegalOpener';
+import { ConfirmPanel } from './ConfirmPanel';
 
 const TOGGLES: ConsentKind[] = ['marketing', 'location', 'sensitive_data', 'verification_biometric'];
 
@@ -21,6 +22,8 @@ export function ConsentSettingsScreen() {
   const [banner, setBanner] = useState<string | undefined>();
   const [confirmRevoke, setConfirmRevoke] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [legalError, setLegalError] = useState(false);
+  const openLegal = useLegalOpener();
 
   const granted = (kind: ConsentKind) => consents.data?.data[kind]?.granted === true;
 
@@ -65,11 +68,15 @@ export function ConsentSettingsScreen() {
         />
       ) : null}
       {confirmRevoke ? (
-        <View testID="consent-revoke-confirm" style={{ gap: space[3], marginBottom: space[5] }}>
-          <Banner variant="warning" message={`${t('consentSettings.revokeSensitive.title')} ${t('consentSettings.revokeSensitive.body')}`} />
-          <Button testID="consent-revoke-yes" variant="danger" label={t('consentSettings.revokeSensitive.action')} onPress={() => void set('sensitive_data', false)} loading={busy} />
-          <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirmRevoke(false)} />
-        </View>
+        <ConfirmPanel
+          testID="consent-revoke-confirm"
+          confirmTestID="consent-revoke-yes"
+          message={`${t('consentSettings.revokeSensitive.title')} ${t('consentSettings.revokeSensitive.body')}`}
+          confirmLabel={t('consentSettings.revokeSensitive.action')}
+          onConfirm={() => void set('sensitive_data', false)}
+          onCancel={() => setConfirmRevoke(false)}
+          loading={busy}
+        />
       ) : null}
       <AsyncView testID="consents" status={consents.status} error={consents.error} onRetry={() => void consents.reload()}>
         <View style={{ gap: space[6] }}>
@@ -87,9 +94,21 @@ export function ConsentSettingsScreen() {
               />
             ))}
           </SwitchGroup>
-          <View>
-            <ListRow label={t('consentSettings.terms')} />
-            <ListRow label={t('consentSettings.privacy')} />
+          <View style={{ gap: space[3] }}>
+            {legalError ? <Banner testID="consent-legal-error" variant="error" message={t('legal.openError')} /> : null}
+            <RowGroup>
+              {(['terms', 'privacy'] as const satisfies readonly LegalDoc[]).map((doc) => (
+                <NavRow
+                  key={doc}
+                  testID={`consent-${doc}-open`}
+                  label={t(`consentSettings.${doc}`)}
+                  onPress={() => {
+                    setLegalError(false);
+                    void openLegal(doc).then((ok) => setLegalError(!ok));
+                  }}
+                />
+              ))}
+            </RowGroup>
           </View>
         </View>
       </AsyncView>

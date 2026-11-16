@@ -84,8 +84,8 @@ export function PremiumScreen() {
       <View style={{ marginBottom: space[4] }}>
         <PremiumBenefits />
       </View>
-      {!purchase.available ? (
-        <Banner testID="premium-unavailable" variant="warning" message={purchase.unavailableMessage ?? ''} style={{ marginBottom: space[3] }} />
+      {!purchase.available && purchase.unavailableMessage ? (
+        <Banner testID="premium-unavailable" variant="warning" message={purchase.unavailableMessage} style={{ marginBottom: space[3] }} />
       ) : null}
       {purchase.notice ? (
         <Banner testID="premium-notice" variant={purchase.notice.variant} message={purchase.notice.message} style={{ marginBottom: space[3] }} />
@@ -130,14 +130,25 @@ export function PremiumScreen() {
                   description={parts.filter(Boolean).join(' · ')}
                   selected={selected === plan.product_id}
                   onPress={() => setChosen(plan.product_id)}
+                  disabled={purchase.busyId !== null}
                 />
               );
             })}
           </View>
         ) : null}
-        <Button testID="premium-restore" variant="secondary" label={t('premium.restore')} onPress={() => void purchase.restore()} style={{ marginTop: space[2] }} />
-        <Button testID="premium-credits" variant="ghost" label={t('premium.credits.cta')} onPress={() => router.push('/premium/credits' as never)} />
       </AsyncView>
+      {/* Restaurer les achats et acheter des crédits restent toujours visibles (chargement, échec ou absence d'offres comprises) : exigence des boutiques. */}
+      <View style={{ marginTop: space[2] }}>
+        <Button
+          testID="premium-restore"
+          variant="secondary"
+          label={t('premium.restore')}
+          onPress={() => void purchase.restore()}
+          loading={purchase.restoring}
+          disabled={purchase.busyId !== null}
+        />
+        <Button testID="premium-credits" variant="ghost" label={t('premium.credits.cta')} onPress={() => router.push('/premium/credits' as never)} />
+      </View>
     </ScreenContainer>
   );
 }

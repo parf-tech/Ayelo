@@ -36,7 +36,7 @@ describe('i18n : parité fr / en', () => {
 
   it('les traductions anglaises ne sont pas de simples copies du français (hors termes identiques par nature)', () => {
     const byNature = (k: string) =>
-      ['app.name', 'intent.flirt.label', 'demo.sample.danger', 'birthdate.monthPlaceholder', 'brand.logoLabel', 'demo.logo', 'onboarding.step.photos'].includes(k) || k.startsWith('language.name.') || k.startsWith('country.');
+      ['app.name', 'intent.flirt.label', 'demo.sample.danger', 'birthdate.monthPlaceholder', 'brand.logoLabel', 'demo.logo', 'onboarding.step.photos', 'common.counter'].includes(k) || k.startsWith('language.name.') || k.startsWith('country.');
     const identical = (Object.keys(fr) as (keyof typeof fr)[]).filter((k) => fr[k] === en[k] && !byNature(k));
     expect(identical).toEqual([]);
   });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { borderWidth, iconSize, MIN_TARGET, stateOpacity, useTheme } from '../theme';
+import { borderWidth, MIN_TARGET, stateOpacity, useTheme } from '../theme';
 import { Icon, IconName, IconTone } from './Icon';
 import { Text } from './Text';
 import { useFocusRing } from './hooks/useFocusRing';
@@ -9,7 +9,8 @@ export type IconButtonVariant = 'plain' | 'tonal' | 'filled' | 'danger';
 export type IconButtonSize = 'md' | 'lg';
 
 export type IconButtonBadge =
-  | { kind: 'dot' }
+  /** Point d'état (filtre actif...) : le libellé est obligatoire, la pastille seule ne porte aucun sens pour un lecteur d'écran. */
+  | { kind: 'dot'; accessibilityLabel: string }
   | { kind: 'count'; count: number; accessibilityLabel: string };
 
 export type IconButtonProps = {
@@ -90,7 +91,7 @@ export function IconButton({
   }
 
   const label =
-    badge?.kind === 'count' && badge.accessibilityLabel
+    badge?.accessibilityLabel
       ? `${accessibilityLabel}, ${badge.accessibilityLabel}`
       : accessibilityLabel;
 
@@ -131,7 +132,7 @@ export function IconButton({
       {loading ? (
         <ActivityIndicator
           testID={`${id}-spinner`}
-          size={iconSize[glyphSize]}
+          size={glyphSize === 'lg' ? 'large' : 'small'}
           color={colors[tone]}
         />
       ) : (

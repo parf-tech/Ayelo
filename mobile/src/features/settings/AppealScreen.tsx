@@ -55,8 +55,19 @@ export function AppealScreen() {
           {t('appeal.subtitle')}
         </Text>
         <View style={{ gap: space[4] }}>
+          {!sanctionId ? <Banner testID="appeal-no-sanction" variant="warning" message={t('appeal.noSanction')} /> : null}
           {banner ? <Banner testID="appeal-banner" variant="error" message={banner} /> : null}
-          <TextField testID="appeal-message" label={t('appeal.message')} value={message} onChangeText={setMessage} error={error} multiline maxLength={2000} disabled={loading} />
+          <TextField
+            testID="appeal-message"
+            label={t('appeal.message')}
+            helper={t('common.counter', { count: message.length, max: 2000 })}
+            value={message}
+            onChangeText={setMessage}
+            error={error}
+            multiline
+            maxLength={2000}
+            disabled={loading}
+          />
         </View>
       </View>
     </ScreenContainer>

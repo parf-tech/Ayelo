@@ -6,7 +6,7 @@ import { hasRequiredConsents, SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow, useSignupGuard } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Button, CheckboxField, ScreenContainer, Text } from '../../ui';
+import { Banner, Button, CheckboxField, ScreenContainer, Text } from '../../ui';
 import { AuthHeader } from '../auth/AuthHeader';
 import { useLegalOpener } from '../legal/useLegalOpener';
 
@@ -18,6 +18,7 @@ export function ConsentsScreen() {
   const { state, dispatch } = useSignupFlow();
   const guard = useSignupGuard('consents');
   const openLegal = useLegalOpener();
+  const [legalError, setLegalError] = useState(false);
 
   const [consents, setConsents] = useState<ConsentsPayload>(
     state.consents ?? { terms: false, privacy: false, sensitive_data: false, marketing: false },
@@ -26,6 +27,11 @@ export function ConsentsScreen() {
   if (guard) return guard;
 
   const canContinue = hasRequiredConsents(consents);
+  // Un texte légal obligatoire qui ne s'ouvre pas ne doit jamais échouer en silence.
+  const read = (doc: 'terms' | 'privacy') => {
+    setLegalError(false);
+    void openLegal(doc).then((ok) => setLegalError(!ok));
+  };
   const set = (key: keyof ConsentsPayload) => (value: boolean) => setConsents((c) => ({ ...c, [key]: value }));
 
   const next = () => {
@@ -56,6 +62,7 @@ export function ConsentsScreen() {
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2], marginBottom: space[4] }}>
         {t('consents.intro')}
       </Text>
+      {legalError ? <Banner testID="consents-legal-error" variant="error" message={t('legal.openError')} style={{ marginBottom: space[3] }} /> : null}
       <View style={{ gap: space[3] }}>
         <CheckboxField
           testID="consent-terms"
@@ -65,7 +72,7 @@ export function ConsentsScreen() {
           checked={consents.terms}
           onChange={set('terms')}
         />
-        <Button testID="consent-terms-read" variant="ghost" label={t('consents.terms.read')} onPress={() => void openLegal('terms')} />
+        <Button testID="consent-terms-read" variant="ghost" label={t('consents.terms.read')} onPress={() => read('terms')} />
         <CheckboxField
           testID="consent-privacy"
           label={t('consents.privacy.label')}
@@ -74,7 +81,7 @@ export function ConsentsScreen() {
           checked={consents.privacy}
           onChange={set('privacy')}
         />
-        <Button testID="consent-privacy-read" variant="ghost" label={t('consents.privacy.read')} onPress={() => void openLegal('privacy')} />
+        <Button testID="consent-privacy-read" variant="ghost" label={t('consents.privacy.read')} onPress={() => read('privacy')} />
         <CheckboxField
           testID="consent-sensitive"
           label={t('consents.sensitive.label')}

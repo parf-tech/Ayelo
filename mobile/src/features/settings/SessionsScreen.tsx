@@ -8,6 +8,7 @@ import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, ListRow, ScreenContainer, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
+import { ConfirmPanel } from './ConfirmPanel';
 
 type Confirm = { kind: 'one'; session: Session } | { kind: 'all' } | null;
 
@@ -67,16 +68,6 @@ export function SessionsScreen() {
             style={{ marginBottom: space[4] }}
           />
         ) : null}
-        {confirm ? (
-          <View testID="sessions-confirm" style={{ gap: space[3], marginBottom: space[5] }}>
-            <Banner
-              variant="warning"
-              message={confirm.kind === 'all' ? t('sessions.closeAll.confirm') : confirm.session.current ? t('sessions.closeCurrent.confirm') : t('sessions.close')}
-            />
-            <Button testID="sessions-confirm-yes" variant="danger" label={t('common.confirm')} onPress={() => void run()} loading={busy} />
-            <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirm(null)} />
-          </View>
-        ) : null}
         <AsyncView
           testID="sessions"
           status={sessions.status}
@@ -89,9 +80,10 @@ export function SessionsScreen() {
             const date = s.last_active_at
               ? new Date(s.last_active_at).toLocaleDateString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
               : t('sessions.unknown');
+            const confirming = confirm?.kind === 'one' && confirm.session.id === s.id;
             return (
+              <React.Fragment key={s.id}>
               <ListRow
-                key={s.id}
                 testID={`session-${s.id}`}
                 trailingBelow
                 label={s.app_version ? t('sessions.row', { platform: platformName(s), version: s.app_version }) : t('sessions.rowNoVersion', { platform: platformName(s) })}
@@ -103,14 +95,42 @@ export function SessionsScreen() {
                     label={t('sessions.close')}
                     accessibilityLabel={t('sessions.closeAria', { platform: platformName(s) })}
                     onPress={() => setConfirm({ kind: 'one', session: s })}
+                    disabled={confirm !== null}
                   />
                 }
               />
+              {confirming ? (
+                <ConfirmPanel
+                  testID="sessions-confirm"
+                  confirmTestID="sessions-confirm-yes"
+                  message={s.current ? t('sessions.closeCurrent.confirm') : t('sessions.closeOne.confirm')}
+                  onConfirm={() => void run()}
+                  onCancel={() => setConfirm(null)}
+                  loading={busy}
+                />
+              ) : null}
+              </React.Fragment>
             );
           })}
           {list.length > 0 ? (
             <View style={{ marginTop: space[6] }}>
-              <Button testID="sessions-close-all" variant="secondary" label={t('sessions.closeAll')} onPress={() => setConfirm({ kind: 'all' })} />
+              <Button
+                testID="sessions-close-all"
+                variant="secondary"
+                label={t('sessions.closeAll')}
+                onPress={() => setConfirm({ kind: 'all' })}
+                disabled={confirm !== null}
+              />
+              {confirm?.kind === 'all' ? (
+                <ConfirmPanel
+                  testID="sessions-confirm"
+                  confirmTestID="sessions-confirm-yes"
+                  message={t('sessions.closeAll.confirm')}
+                  onConfirm={() => void run()}
+                  onCancel={() => setConfirm(null)}
+                  loading={busy}
+                />
+              ) : null}
             </View>
           ) : null}
         </AsyncView>

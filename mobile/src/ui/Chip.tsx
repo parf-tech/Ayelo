@@ -42,7 +42,7 @@ export function Chip({ label, selected, onPress, disabled = false, testID }: Chi
         borderWidth: borderWidth.strong,
         borderColor: selected ? colors.primary : colors.surface,
         backgroundColor: selected ? colors.bg : colors.surface,
-        opacity: disabled ? 0.6 : pressed ? stateOpacity.pressed : 1,
+        opacity: disabled ? stateOpacity.disabled : pressed ? stateOpacity.pressed : 1,
       }, ringStyle])}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 1 }}>

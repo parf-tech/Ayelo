@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, View } from 'react-native';
 import { borderWidth, space, useTheme } from '../theme';
 import { Text } from './Text';
@@ -21,19 +21,33 @@ export type AvatarProps = {
 /** Épaisseur du trait et écart entre l'anneau et la photo (jetons borderWidth.strong et space[1]). */
 const RING_WIDTH = borderWidth.strong;
 const RING_GAP = space[1];
+/** Rapport entre la taille de l'initiale et celle du disque. */
+const INITIAL_RATIO = 0.4;
 
 /** Pastille ronde : photo si disponible, sinon initiale (décorative : le nom est porté par le texte voisin). */
 export function Avatar({ uri, name, size = 48, ring, testID }: AvatarProps) {
-  const { colors } = useTheme();
+  const { colors, type } = useTheme();
+  // Photo illisible (adresse cassée, réseau) : on retombe sur l'initiale au lieu d'un disque vide.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const failed = uri != null && uri === failedUri;
   const ringKind = ring === true ? 'story' : ring === 'story' || ring === 'verified' ? ring : null;
   const inset = ringKind ? RING_WIDTH + RING_GAP : 0;
   const inner = size - 2 * inset;
   const base = { width: inner, height: inner, borderRadius: inner / 2, backgroundColor: colors.skeleton };
-  const body = uri ? (
-    <Image testID={testID} source={{ uri }} style={base} accessibilityIgnoresInvertColors accessible={false} />
+  // Taille de l'initiale proportionnelle au disque, plafonnée au titre le plus grand de l'échelle typographique.
+  const initialSize = Math.min(Math.max(Math.round(inner * INITIAL_RATIO), type.body.size), type.title.size);
+  const body = uri && !failed ? (
+    <Image
+      testID={testID}
+      source={{ uri }}
+      style={base}
+      accessibilityIgnoresInvertColors
+      accessible={false}
+      onError={() => setFailedUri(uri ?? null)}
+    />
   ) : (
     <View testID={testID} accessible={false} style={[base, { alignItems: 'center', justifyContent: 'center' }]}>
-      <Text variant="body" tone="textMuted" style={{ fontWeight: '700' }}>
+      <Text variant="body" tone="textMuted" style={{ fontWeight: '700', fontSize: initialSize, lineHeight: Math.round(initialSize * 1.25) }}>
         {name.trim().charAt(0).toUpperCase()}
       </Text>
     </View>

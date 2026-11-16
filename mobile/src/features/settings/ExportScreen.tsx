@@ -138,12 +138,17 @@ export function ExportScreen() {
               disabled={!job.url}
               onPress={() => job.url && void openExternal(job.url)}
             />
+            {!job.url ? (
+              <Text variant="caption" tone="textMuted" testID="export-no-url">
+                {t('export.noUrl')}
+              </Text>
+            ) : null}
           </View>
         ) : null}
         {job?.status === 'expired' || job?.status === 'failed' ? (
           <View style={{ gap: space[4] }}>
             <Banner testID="export-failed" variant="error" message={job.status === 'expired' ? t('export.expired') : t('export.failed')} />
-            <Button variant="secondary" label={t('export.request')} onPress={() => { setJob(null); }} />
+            <Button testID="export-new-request" variant="secondary" label={t('export.newRequest')} onPress={() => { setJob(null); }} />
           </View>
         ) : null}
       </View>

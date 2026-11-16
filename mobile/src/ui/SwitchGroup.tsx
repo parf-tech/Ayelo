@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { borderWidth, useTheme } from '../../theme';
+import { borderWidth, useTheme } from '../theme';
 
 /**
  * Groupe de bascules (`SwitchRow`) sur une carte `surface` : un filet fin sépare deux lignes d'un même groupe,

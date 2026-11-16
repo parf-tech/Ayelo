@@ -70,7 +70,6 @@ export function CreditsScreen() {
                 label={packLabel(pack.credits)}
                 description={price ?? t('premium.price.unknown')}
                 leading={<Icon name="MessageCircle" size="md" tone="primary" />}
-                accessibilityLabel={`${packLabel(pack.credits)}. ${price ?? t('premium.price.unknown')}`}
                 trailing={
                   <Button
                     testID={`buy-${pack.product_id}`}

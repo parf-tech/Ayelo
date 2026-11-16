@@ -221,7 +221,7 @@ describe('ScreenContainer et Button : ajouts facultatifs', () => {
 });
 
 describe('TextField : champ clair, étiquette persistante, erreur avec icône', () => {
-  it('hauteur >= 52, rayon 12, contour discret au repos puis anneau de focus 2 pt (jeton focusRing)', async () => {
+  it('hauteur >= 52, rayon 12, contour borderStrong au repos puis anneau de focus, même épaisseur de 2 pt (jeton focusRing)', async () => {
     await renderThemed(<TextField testID="f" label="Adresse e-mail" value="" onChangeText={jest.fn()} />);
     // Le cadre est le parent direct du champ natif.
     const field = screen.getByTestId('f');
@@ -229,7 +229,8 @@ describe('TextField : champ clair, étiquette persistante, erreur avec icône', 
     expect(Number(box.minHeight)).toBeGreaterThanOrEqual(52);
     expect(box.borderRadius).toBe(radius.md);
     expect(box.borderColor).toBe(colors.light.borderStrong);
-    expect(box.borderWidth).toBe(borderWidth.hairline);
+    // Trait constant : le focus ne décale pas le contenu (seule la couleur change).
+    expect(box.borderWidth).toBe(borderWidth.strong);
     await act(async () => field.props.onFocus({}));
     const focused = flat(screen.getByTestId('f').parent!.props.style);
     expect(focused.borderColor).toBe(colors.light.focusRing);

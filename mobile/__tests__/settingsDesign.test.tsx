@@ -8,7 +8,7 @@ import { ConsentSettingsScreen } from '../src/features/settings/ConsentSettingsS
 import { NotificationsScreen } from '../src/features/settings/NotificationsScreen';
 import { PrivacyScreen } from '../src/features/settings/PrivacyScreen';
 import { SessionsScreen } from '../src/features/settings/SessionsScreen';
-import { SwitchGroup } from '../src/features/settings/SwitchGroup';
+import { SwitchGroup } from '../src/ui/SwitchGroup';
 import { en } from '../src/i18n/en';
 import { fr } from '../src/i18n/fr';
 import { colors } from '../src/theme';

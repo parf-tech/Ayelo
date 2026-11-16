@@ -232,7 +232,7 @@ describe('IconButton', () => {
 
   it('badge en point : aucun texte, plafond « 99+ » pour un compteur', async () => {
     const view = await renderThemed(
-      <IconButton icon="Mic" accessibilityLabel="Micro" onPress={jest.fn()} badge={{ kind: 'dot' }} />,
+      <IconButton icon="Mic" accessibilityLabel="Micro" onPress={jest.fn()} badge={{ kind: 'dot', accessibilityLabel: 'enregistrement' }} />,
     );
     expect(screen.getByTestId('icon-button-Mic-badge', { includeHiddenElements: true })).toBeTruthy();
     await view.unmount();
@@ -249,7 +249,7 @@ describe('IconButton', () => {
 
   it('testID personnalisé : les parties en dérivent', async () => {
     await renderThemed(
-      <IconButton icon="X" accessibilityLabel="Fermer" onPress={jest.fn()} testID="close" badge={{ kind: 'dot' }} />,
+      <IconButton icon="X" accessibilityLabel="Fermer" onPress={jest.fn()} testID="close" badge={{ kind: 'dot', accessibilityLabel: 'nouveau' }} />,
     );
     expect(screen.getByTestId('close')).toBeTruthy();
     expect(screen.getByTestId('close-badge', { includeHiddenElements: true })).toBeTruthy();
