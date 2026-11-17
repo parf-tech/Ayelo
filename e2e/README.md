@@ -15,8 +15,9 @@ Le navigateur est le Chrome du poste (`channel: 'chrome'`) : le Chromium téléc
 ## Règles de la suite
 
 - Un seul worker : le serveur PHP intégré traite une requête à la fois et les limites de débit de l'API restent actives. La suite complète dure environ 14 à 25 minutes ; une lenteur du serveur peut faire échouer un test isolément (écran « Vous êtes hors ligne » après un délai dépassé, vu une fois sur `F06-H3`, qui réussit seul).
+- `global-setup.ts` échauffe l'API avant la suite (une connexion et les routes des écrans, session refermée). Sans cela, la toute première connexion sur un serveur PHP à froid a pris 19 s, au-delà du délai de requête du client (15 s) : « Connexion impossible » et échec du premier test connecté (constaté sur la 2e passe complète, 2026-11-17). Le comportement du client face à un délai dépassé reste couvert par `F01-E10`.
 - Chaque test échoue sur une erreur de console inattendue ou une réponse 5xx de l'API (`helpers.ts`). Le bruit connu du web (notifications push, animations natives) est filtré.
-- **Ordre** : `zz-f01-refus-age.spec.ts` s'exécute en dernier. Un refus d'âge verrouille l'appareil (90 jours) et l'adresse IP (30 minutes) : toute inscription d'un majeur depuis 127.0.0.1 est ensuite refusée. Pour rejouer la suite, recréer la base jetable (`scripts/dev-preview.ps1 -Stop`, puis démarrage).
+- **Ordre** : `zz-f01-refus-age.spec.ts` s'exécute en dernier. Un refus d'âge verrouille l'appareil (90 jours) et l'adresse IP (30 minutes) : toute inscription d'un majeur depuis 127.0.0.1 est ensuite refusée. Pour rejouer la suite, recréer la base jetable (`scripts/dev-preview.ps1 -Stop`, puis démarrage) et vérifier que le script affiche « Apercu arrete, base jetable supprimee » : avec l'ancienne base, les inscriptions sont refusées (403, verrou d'âge) et les cartes déjà vues ou bloquées manquent (10 échecs constatés à tort sur une base réutilisée).
 - Les comptes créés pour les suppressions ou les inscriptions sont jetables (`e2e-...@example.test`).
 
 ## Limites connues de l'aperçu

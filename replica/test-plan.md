@@ -7,7 +7,7 @@ Règle : on teste notre clone, jamais l'application d'origine. Les flux viennent
 ## Comment lire ce plan
 
 - **Colonne `auto`** : `e2e` = spécification Playwright dans `e2e/` (navigateur réel contre l'API réelle), `pest` = test backend existant, `jest` = test mobile existant (composants, avec API simulée), `manual` = à faire à la main ou sur appareil, `n/a` = non applicable.
-- **Colonne `result`** : `pass e2e` / `fail e2e` = spécification Playwright exécutée le 2026-11-17 (suite complète : 37 réussis, 1 ignoré, 1 échec transitoire rejoué avec succès) ; `pass pest` / `pass jest` = test existant, suite complète verte le 2026-11-17 (Pest 519, Jest 803) ; `manual` = non fait ; `non fait` = prévu par le plan, aucune spécification écrite ni exécutée dans cette passe. Une cellule vide n'a pas été exécutée.
+- **Colonne `result`** : `pass e2e` / `fail e2e` = spécification Playwright exécutée le 2026-11-17 (dernière suite complète, base neuve, 2026-11-17 : 38 réussis, 1 ignoré, 0 échec) ; `pass pest` / `pass jest` = test existant, suite complète verte le 2026-11-17 (Pest 519, Jest 803) ; `manual` = non fait ; `non fait` = prévu par le plan, aucune spécification écrite ni exécutée dans cette passe. Une cellule vide n'a pas été exécutée.
 - Un test Jest n'exerce pas le vrai backend : il ne compte que comme couverture du comportement de l'écran. Un test Pest n'exerce pas l'écran. Seuls les cas `e2e` traversent les deux.
 - Cas d'environnement : l'aperçu local n'a ni stockage de photos, ni temps réel, ni push, ni achats, ni appels (voir `docs/runbooks/apercu-local.md`). Ces cas sont `manual` et restent non vérifiés tant qu'ils ne sont pas faits sur appareil avec de vrais services.
 
@@ -104,7 +104,7 @@ Règle : on teste notre clone, jamais l'application d'origine. Les flux viennent
 | --- | --- | --- | --- | --- | --- | --- |
 | F06-H1 | blocage | happy | fiche, menu, « Bloquer », confirmer | profil disparu de la découverte, présent dans « Profils bloqués » | e2e ; pest `bloque : le profil disparaît…` | pass e2e (blocage depuis la fiche, présent dans « Personnes bloquées », déblocage, état serveur relu) ; pass pest |
 | F06-H2 | déblocage | happy | « Profils bloqués », débloquer | retiré de la liste | e2e | pass e2e (dans F06-H1) |
-| F06-H3 | signalement | happy | fiche, menu, « Signaler », motif, envoyer | confirmation | e2e ; pest `enregistre un signalement…` | pass e2e (un échec transitoire dans la suite complète : écran « hors ligne » par lenteur du serveur d'aperçu ; 4/4 en isolation) ; pass pest |
+| F06-H3 | signalement | happy | fiche, menu, « Signaler », motif, envoyer | confirmation | e2e ; pest `enregistre un signalement…` | pass e2e (un échec transitoire à la 1re passe complète : écran « hors ligne » par lenteur du serveur d'aperçu ; réussi à la suivante et 4/4 en isolation) ; pass pest |
 | F06-E1 | signalement | edge : deux fois le même signalement, 20 par jour | | pas de doublon, plafond | pest | pass pest |
 | F06-E2 | blocage | edge : double clic, blocage répété | | opération idempotente | pest ; e2e | pass e2e (double clic sans erreur) ; pass pest |
 | F06-E3 | signalement | edge : commentaire très long, emoji | | limite et accepté | e2e | pass e2e (5000 caractères : refusé par le contrat à 1000, jamais 5xx) |
@@ -137,7 +137,7 @@ Administration Filament, verrou de connexion du personnel, files de modération 
 
 ## Synthèse de la passe (2026-11-17)
 
-- **Spécifications e2e** : 39 tests dans `e2e/` (F01, F02, F03/F04/F05, F06, F07, F08, accessibilité et largeur 390 et 320 pt, refus d'âge). Dernière suite complète : 37 réussis, 1 ignoré (`F07-H2`, limite d'environnement), 1 échec transitoire (`F06-H3`, écran « hors ligne » par lenteur du serveur d'aperçu) qui réussit seul (4 sur 4) ; `F02-E4` corrigé ensuite (il ne vérifiait pas ce que son titre annonçait) et rejoué avec succès.
+- **Spécifications e2e** : 39 tests dans `e2e/` (F01, F02, F03/F04/F05, F06, F07, F08, accessibilité et largeur 390 et 320 pt, refus d'âge). Dernière suite complète (base neuve, avec échauffement de l'API) : 38 réussis, 1 ignoré (`F07-H2`, limite d'environnement), 0 échec, 11 min. Historique : la 1re passe complète avait 1 échec transitoire (`F06-H3`, écran « hors ligne » par lenteur du serveur d'aperçu) ; la 2e, 1 échec sur la première connexion à froid (19 s, délai client 15 s), corrigé côté suite par `e2e/global-setup.ts` ; `F02-E4` avait été corrigé entre-temps (il ne vérifiait pas ce que son titre annonçait).
 - **Bogues** : 3 trouvés, 3 corrigés, tous S3 (`replica/bugs.md`). Aucun S1 ni S2. Les trois sont passés de rouge à vert dans le navigateur après correction.
 - **Suites existantes** : Pest 519 réussis (2 ignorés) ; Jest 803 réussis sur 42 suites ; `tsc` et `eslint` sans erreur.
 - **Audit d'accessibilité** (axe, WCAG 2 A et AA, gravité sérieuse ou critique) : propre sur 8 écrans à 390 et 320 pt après correction ; pas de débordement horizontal à 320 pt.
