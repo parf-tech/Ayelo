@@ -36,6 +36,8 @@ export function WelcomeBenefits() {
             key={icon}
             testID={testID}
             accessible
+            // Une liste ne contient que des éléments de liste (axe : aria-required-children, relevé sur l'aperçu web).
+            role="listitem"
             style={
               stacked
                 ? { flexDirection: 'row', alignItems: 'center', gap: space[3] }

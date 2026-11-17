@@ -3,6 +3,7 @@ import React from 'react';
 import { ImageSourcePropType, View } from 'react-native';
 import { SIGNUP_ROUTES } from '../../flow/signupMachine';
 import { useSignupFlow } from '../../flow/SignupFlowProvider';
+import { setSessionNotice, useSessionNotice } from '../../auth/sessionNotice';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
 import { LanguageToggle } from '../common/LanguageToggle';
@@ -38,6 +39,7 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
   const { space } = useTheme();
   const { dispatch } = useSignupFlow();
   const deletion = useDeletionNotice();
+  const sessionExpired = useSessionNotice();
 
   const startSignup = () => {
     dispatch({ type: 'RESET' });
@@ -79,6 +81,16 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
           variant="info"
           message={t('delete.notice', { days: deletion.days })}
           onDismiss={() => setDeletionNotice(null)}
+          dismissLabel={t('ui.banner.dismiss')}
+          style={{ marginTop: space[3] }}
+        />
+      ) : null}
+      {sessionExpired ? (
+        <Banner
+          testID="welcome-session-notice"
+          variant="info"
+          message={t('error.unauthorized')}
+          onDismiss={() => setSessionNotice(false)}
           dismissLabel={t('ui.banner.dismiss')}
           style={{ marginTop: space[3] }}
         />

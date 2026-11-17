@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Platform, Pressable, Switch, View } from 'react-native';
 import { borderWidth, MIN_TARGET, useTheme } from '../theme';
 import { Icon, IconName } from './Icon';
 import { Text } from './Text';
@@ -68,8 +68,10 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
         testID={testID}
         accessibilityLabel={label}
         accessibilityHint={description}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: value, disabled }}
+        // Web : le champ natif du navigateur porte déjà le rôle et l'état ; les redéclarer sur le conteneur produisait deux
+        // interrupteurs imbriqués (axe : aria-required-attr, nested-interactive). Natif : rôle et état restent explicites.
+        accessibilityRole={Platform.OS === 'web' ? undefined : 'switch'}
+        accessibilityState={Platform.OS === 'web' ? undefined : { checked: value, disabled }}
         value={value}
         disabled={disabled}
         onValueChange={onValueChange}

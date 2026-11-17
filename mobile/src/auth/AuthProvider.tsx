@@ -7,6 +7,7 @@ import { useI18n } from '../i18n';
 import { getActiveLocale } from '../i18n/activeLocale';
 import { appStorage, getDeviceId, tokenStore } from '../storage';
 import { authReducer, AuthState, initialAuthState } from './authState';
+import { setSessionNotice } from './sessionNotice';
 
 export type AuthContextValue = {
   state: AuthState;
@@ -31,11 +32,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
   const { locale } = useI18n();
 
-  const expireSession = useCallback(async () => {
+  /** Efface la session locale (jeton, onboarding en attente) et revient à l'état déconnecté. */
+  const clearSession = useCallback(async () => {
     await tokenStore.clear();
     await appStorage.setOnboardingPending(false);
     dispatch({ type: 'SIGNED_OUT' });
   }, []);
+
+  /** Le serveur a refusé le jeton : l'accueil l'explique (BUG-001). Une déconnexion voulue passe par signOut, sans ce message. */
+  const expireSession = useCallback(async () => {
+    setSessionNotice(true);
+    await clearSession();
+  }, [clearSession]);
 
   const api = useMemo(
     () =>
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isNewAccount = Boolean(options?.isNewAccount);
     await tokenStore.set(response.token);
     await appStorage.setOnboardingPending(isNewAccount);
+    setSessionNotice(false);
     dispatch({ type: 'SIGNED_IN', user: response.user, isNewAccount });
   }, []);
 
@@ -96,8 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Hors ligne ou jeton déjà invalide : on efface quand même la session locale.
     }
-    await expireSession();
-  }, [api, expireSession]);
+    // Déconnexion voulue : pas de message « session expirée », même si le serveur a répondu 401 à la révocation.
+    setSessionNotice(false);
+    await clearSession();
+  }, [api, clearSession]);
 
   const completeOnboarding = useCallback(async () => {
     await appStorage.setOnboardingPending(false);

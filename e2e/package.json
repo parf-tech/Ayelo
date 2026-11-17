@@ -1,0 +1,12 @@
+{
+  "name": "ayelo-e2e",
+  "private": true,
+  "description": "Tests de bout en bout (Playwright) de l'apercu web de l'application contre le vrai backend local. Voir replica/test-plan.md.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "^1.65.1"
+  }
+}
