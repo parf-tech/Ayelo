@@ -66,7 +66,7 @@ Les portées OAuth demandées sont l'identité de base seulement (aucune API Cal
 
 ## Suites
 
-- Revues de sécurité : `docs/reviews/code-security-2.md` et `code-security-2-suivi.md`. Les agents en cours corrigent encore le verrou de connexion, N-09, N-13, F-06, le contrat OpenAPI et les décisions Q1 à Q3.
+- Revues de sécurité : `docs/reviews/code-security-2.md` et `code-security-2-suivi.md`. Le verrou de connexion, N-09, N-13, F-06, le contrat OpenAPI et les décisions Q1 à Q3 ont été traités (voir la passe du 2026-11-17 en bas de ce fichier).
 - Prochaine étape du skill : `/replica-test`.
 
 ## Passe de vérification : jeu fictif, RevenueCat, dead-letter, journaux, JWKS (2026-11-07)
@@ -78,3 +78,16 @@ Preuve : `backend/tests/Feature/BackendChecklistTest.php` (20 tests passent ; 2 
 - [~] Journal des échecs de tâches : table `failed_jobs` présente (migration `0001_01_01_000002`), purge `queue:prune-failed --hours=168` planifiée, écouteur `Queue::failing` (`QueueDeadLetterServiceProvider`) qui journalise en `critical` le nom du travail et la classe d'exception seulement. Testé avec la file `sync` et l'événement `JobFailed` ; **toujours jamais exécuté contre un vrai Redis** (donc non coché dans la section « E-mail et tâches »).
 - [x] Journaux sans donnée personnelle : processeur `App\Logging\RedactSensitiveData` appliqué à tous les canaux de `config/logging.php` (hors repli `emergency`) : e-mails, jetons porteurs, clés `password`/`token`/`secret`/`authorization`, longues chaînes hexadécimales ou base64. Testé, y compris sur les canaux `single` et `stack` réels. Réserves : les exceptions du contexte (et leur message) ne sont pas modifiées ; le contenu réel des journaux de production n'a pas été audité (la ligne « Pas de donnée utilisateur dans les URLs ni les journaux » reste `[~]`).
 - [x] Vrais JWKS Google et Apple : le code `JwtOAuthVerifier` récupère et analyse (`JWK::parseKeySet`) les clés réelles de `googleapis.com` et `appleid.apple.com` (RS256, `kid` présent) : test réseau passé le 2026-11-07. Ce qui reste non vérifié : un vrai `id_token` signé par Google ou Apple (aucun compte de développeur).
+
+## Passe de stabilisation : contrat OpenAPI, ré-authentification, aperçu local (2026-11-17)
+
+Preuve : suite Pest complète rejouée le 2026-11-17 sur PostgreSQL 16 (port 54330), PHP 8.5.12 : **519 réussis, 2 ignorés (tests réseau facultatifs), 0 échec, 3393 assertions** (246 s). Condition d'exécution : la variable `OPENSSL_CONF` doit pointer vers `C:/Program Files/Git/usr/ssl/openssl.cnf` (ce que fait `backend/scripts/php-pgsql.ps1`) ; sans elle, 19 tests RSA échouent sur `openssl_pkey_export`, ce qui n'est pas un défaut du code.
+
+- [x] **Ré-authentification (suppression et export de compte)** : `AccountController::reauthenticate()` ne renvoie plus de réponse, elle lève `ReauthenticationRefused` (403 `invalid_credentials` ou `invalid_oauth_token`) ou `ReauthenticationThrottled` (429 `rate_limited` avec `Retry-After`). Le format d'erreur reste `{ error: { code, message } }`. Ces exceptions ne sont pas journalisées (`dontReport`). Les compteurs d'échecs (5 par 15 minutes pour un couple compte et IP, 20 par compte) sont inchangés.
+- [x] **Contrat OpenAPI** : les quatre routes qui sortaient avec un schéma faux (200 vide pour les routes de ré-authentification, corps de requête absent, 202 des suppressions web, authentification de diffusion) sont documentées à la source : extension Scramble `ReauthenticationExceptionResponses`, transformateur `ReauthenticationRequestBody`, route `POST /broadcasting/auth` (`BroadcastAuthController`). `docs/openapi.json` compte 67 opérations ; `backend/tests/Unit/OpenApiContractTest.php` (5 tests) vérifie ces schémas. Les types du mobile sont générés (`npm run api:types`), jamais modifiés à la main.
+- [x] **Scramble en dépendance de développement seulement** : l'enregistrement du transformateur est protégé par `class_exists(Scramble::class)` ; l'image de production (`composer --no-dev`) n'en dépend pas. Garde de production : `APP_DEBUG=true` avec `APP_ENV=production` interrompt le démarrage.
+- [x] **Aperçu local des écrans connectés** : `CORS_DEV_ORIGINS` n'est lu que si `APP_ENV=local` (tests `CorsTest`), `PreviewSeeder` et `scripts/dev-preview.ps1` s'exécutent sur une base jetable séparée (port 54350). Procédure : `docs/runbooks/apercu-local.md`. L'aperçu navigateur a servi à la vérification visuelle (`docs/design/06-verification-visuelle.md`).
+
+Toujours non vérifié, sans changement depuis la passe du 2026-11-07 : événements RevenueCat réels, Cloudflare R2, Reverb, FCM, LiveKit, vrai `id_token` Google ou Apple, Redis réel pour la file et les échecs de tâches, exécution d'une restauration de sauvegarde, expéditeur et SPF/DKIM/DMARC, relecture juridique de la politique de confidentialité, audit du contenu réel des journaux de production. `composer audit` n'a pas pu être rejoué dans cette passe (`composer` absent du poste) : le dernier résultat propre date du 2026-11-06 et ne couvre pas la dépendance de développement `dedoc/scramble` ajoutée depuis ; la CI (`composer audit`) reste la référence.
+
+Prochaine étape du skill : `/replica-test`.
