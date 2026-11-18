@@ -76,7 +76,7 @@ Rôles : `moderator`, `support`, `admin`. Le mot de passe n'est jamais passé en
 
 - `SESSION_DRIVER` doit être un vrai pilote de session (`redis` ou `file`) pour le panneau ; `.env.example` utilise `array` pour l'API sans état (le panneau retombe sur `file` si `array` est détecté hors tests).
 - Planifier `php artisan sanctions:expire` (chaque minute) : réactive les comptes dont la suspension à durée limitée est terminée. Sans cela, une suspension expirée resterait bloquante (l'API refuse la connexion tant que le statut n'est pas `active`).
-- Après chaque déploiement : `php artisan filament:assets` (publie les ressources statiques du panneau dans `public/`).
+- Après chaque déploiement : `php artisan filament:assets` (publie les ressources statiques du panneau dans `public/`). En production, `infra/scripts/deploy.sh` le fait (en root, `public/` n'appartient pas à `www-data`) avec les migrations, `php artisan deploy:preflight` et les caches : voir `docs/runbooks/deploiement.md`.
 - En production : sous-domaine dédié et accès réseau restreint (docs/11), à configurer côté infrastructure ; le panneau n'a pas de restriction de domaine ou d'IP intégrée.
 
 ## License

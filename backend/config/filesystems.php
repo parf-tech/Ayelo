@@ -47,18 +47,8 @@ return [
             'report' => false,
         ],
 
-        's3' => [
-            'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
-            'report' => false,
-        ],
+        // Pas de disque `s3` : le stockage objet des médias et des exports passe par App\Services\Storage\MediaStorage
+        // (config/media.php, variables MEDIA_*). Un disque `s3` branché sur AWS_* serait lu par personne.
 
     ],
 

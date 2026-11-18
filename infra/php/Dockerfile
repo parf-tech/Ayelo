@@ -19,7 +19,12 @@ COPY backend/ ./
 COPY docs/schema/001_initial.sql ./database/sql/001_initial.sql
 RUN composer dump-autoload --optimize --no-dev --classmap-authoritative \
  && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
- && chown -R www-data:www-data storage bootstrap/cache
+ && chown -R www-data:www-data storage bootstrap/cache \
+ && cp -a public .public-dist
+# `.public-dist` : copie de public/ telle que livrée par l'image. Le volume nommé `app-public` (partagé avec Caddy) masque
+# public/ et n'est rempli qu'à sa première création : sans resynchronisation, une mise à jour de l'image laisserait un
+# index.php périmé. infra/scripts/deploy.sh recopie `.public-dist` dans le volume (en root : public/ n'appartient pas à
+# www-data, volontairement, pour qu'une faille applicative ne puisse pas y déposer de script servi par Caddy).
 
 FROM base AS runtime
 COPY --from=build /var/www/html /var/www/html

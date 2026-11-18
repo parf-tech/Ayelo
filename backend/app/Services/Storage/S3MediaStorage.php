@@ -11,15 +11,28 @@ class S3MediaStorage implements MediaStorage
 
     private ?S3Client $uploadClient = null;
 
-    private function client(): S3Client
+    /** @param  array<string, mixed>  $clientOptions  Options ajoutées au client S3 (les tests y passent un `handler` simulé). */
+    public function __construct(private array $clientOptions = []) {}
+
+    /** @return array<string, mixed> */
+    private function baseOptions(): array
     {
-        return $this->client ??= new S3Client([
+        return array_replace([
             'version' => 'latest',
             'region' => config('media.disk.region'),
             'endpoint' => config('media.disk.endpoint'),
             'use_path_style_endpoint' => true,
             'credentials' => ['key' => (string) config('media.disk.key'), 'secret' => (string) config('media.disk.secret')],
-        ]);
+            // Délais de connexion et de réponse, et nombre de nouvelles tentatives : (1 + retries) x timeout reste sous le
+            // `request_terminate_timeout` de PHP-FPM. Un stockage lent ne doit pas immobiliser un processus.
+            'http' => config('media.http'),
+            'retries' => (int) config('media.retries'),
+        ], $this->clientOptions);
+    }
+
+    private function client(): S3Client
+    {
+        return $this->client ??= new S3Client($this->baseOptions());
     }
 
     /**
@@ -28,14 +41,9 @@ class S3MediaStorage implements MediaStorage
      */
     private function uploadClient(): S3Client
     {
-        return $this->uploadClient ??= new S3Client([
-            'version' => 'latest',
-            'region' => config('media.disk.region'),
-            'endpoint' => config('media.disk.endpoint'),
-            'use_path_style_endpoint' => true,
-            'credentials' => ['key' => (string) config('media.disk.key'), 'secret' => (string) config('media.disk.secret')],
+        return $this->uploadClient ??= new S3Client(array_replace($this->baseOptions(), [
             'signature_provider' => fn (string $version, string $service, string $region) => new UploadSignatureV4($service, $region),
-        ]);
+        ]));
     }
 
     public function presignedUpload(string $key, string $mime, int $size, int $ttlMinutes): array
@@ -71,8 +79,14 @@ class S3MediaStorage implements MediaStorage
     {
         try {
             $result = $this->client()->headObject(['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
-        } catch (AwsException) {
-            return null;
+        } catch (AwsException $e) {
+            // Seul « l'objet n'existe pas » vaut null. Un refus d'accès (mauvaise clé), une panne ou un délai dépassé remontent :
+            // sinon ils passeraient pour un dépôt manquant (422 « fichier introuvable ») sans que personne ne voie la cause.
+            if ($e->getStatusCode() === 404 || in_array($e->getAwsErrorCode(), ['NotFound', 'NoSuchKey'], true)) {
+                return null;
+            }
+
+            throw $e;
         }
 
         return ['size' => (int) $result['ContentLength'], 'mime' => (string) $result['ContentType']];

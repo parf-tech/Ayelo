@@ -12,6 +12,16 @@ return [
         'region' => env('MEDIA_REGION', 'auto'),
     ],
 
+    // Délais du client S3 (secondes) : sans eux, un stockage qui ne répond pas garde un processus PHP-FPM jusqu'à
+    // `request_terminate_timeout` (60 s, infra/php/php-fpm-pool.conf). 20 s couvrent la lecture d'une image de 8 Mo.
+    'http' => [
+        'connect_timeout' => (float) env('MEDIA_CONNECT_TIMEOUT', 3),
+        'timeout' => (float) env('MEDIA_HTTP_TIMEOUT', 20),
+    ],
+    // Nouvelles tentatives du SDK après un échec transitoire (5xx, réseau). Défaut du SDK : 3, soit jusqu'à 4 x 20 s = 80 s,
+    // au-delà de la limite de 60 s de PHP-FPM. 1 : au plus 2 x 20 s.
+    'retries' => (int) env('MEDIA_RETRIES', 1),
+
     'upload_ttl_minutes' => 5,
 
     // Revue pentest P-07 : signer `content-length` et `content-type` dans l'URL présignée de dépôt (le SDK ne le fait pas par défaut).

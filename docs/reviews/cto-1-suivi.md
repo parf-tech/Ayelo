@@ -33,7 +33,7 @@ Vérifié sur ce poste : `HealthCheckTest` + `HealthTest` (6 tests verts, Postgr
 - [ ] URL présignées de 10 minutes qui contournent tout cache : domaine R2 personnalisé, code `ProfilePresenter` / décision propriétaire.
 
 ### 3.1 Dépendances externes
-- [ ] Délais d'attente et reprises du client R2, `head()` qui avale les erreurs, FCM, RevenueCat : code, hors périmètre.
+- [~] Délais d'attente et reprises du client R2, `head()` qui avale les erreurs, FCM, RevenueCat : R2 fait le 2026-11-18 (délais de 3 s / 20 s, une seule nouvelle tentative, `head()` ne renvoie plus `null` que sur un 404 ; test `DeployReadinessTest`, jamais exécuté contre un vrai bucket). FCM et RevenueCat : restent à faire.
 
 ### 3.2 Migrations, sauvegardes, observabilité
 - [ ] Stratégie de migration sans interruption, script / workflow de déploiement, test de gel de `001_initial.sql` : non traité.

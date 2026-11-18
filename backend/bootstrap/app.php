@@ -28,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         // Limite générale par compte ou par IP, et refus des comptes suspendus/bannis sur les jetons déjà émis (F-03, F-12).
+        // L'API n'a pas de page de connexion : sans cela, une requête non authentifiée sans en-tête `Accept: application/json`
+        // fait lever `route('login')` (RouteNotFoundException) dans le middleware, donc un 500 au lieu du 401 JSON rendu plus bas.
+        $middleware->redirectGuestsTo(fn () => null);
+
         $middleware->throttleApi('api');
         $middleware->appendToGroup('api', EnsureAccountActive::class);
         // Dernière activité : au plus une écriture par heure et par compte, aucune requête tant que le cache la couvre.

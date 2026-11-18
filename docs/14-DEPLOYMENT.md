@@ -72,6 +72,8 @@ Clé SSH uniquement, `ufw` (22 restreint, 80, 443), fail2ban, mises à jour auto
 
 ## Liste de contrôle de mise en production
 
+Procédure et script : [`runbooks/deploiement.md`](runbooks/deploiement.md) (`infra/scripts/deploy.sh`, `php artisan deploy:preflight`). Écrits, jamais exécutés.
+
 1. DNS et TLS valides.
 2. Variables d'environnement complètes et sans secret de test.
 3. Migrations exécutées ; jeux de données de démo absents.
