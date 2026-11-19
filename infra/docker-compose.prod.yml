@@ -46,7 +46,7 @@ services:
       WEB_DOMAIN: ${WEB_DOMAIN}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      # Site public statique (web/), en lecture seule. tools/ est présent mais jamais servi (Caddyfile, bloc WEB_DOMAIN).
+      # Site de présentation statique (web/), en lecture seule. tools/ est présent mais jamais servi (Caddyfile, bloc WEB_DOMAIN).
       - ../web:/srv/web:ro
       - caddy-data:/data
       - caddy-config:/config

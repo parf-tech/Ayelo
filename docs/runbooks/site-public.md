@@ -1,6 +1,6 @@
-# Site public statique (`web/`) : publication avec Caddy
+# Site de présentation statique (`web/`) : publication avec Caddy
 
-Réponse au constat P0-1 de `docs/reviews/design-1.md` (pages web publiques absentes). Le dossier `web/` contient un site statique : HTML et CSS simples, un seul petit script facultatif (`assets/deletion.js`, formulaires de suppression), aucune police ni ressource externe, aucun suivi, fonctionne hors ligne. Français à la racine, anglais sous `/en/`.
+Réponse au constat P0-1 de `docs/reviews/design-1.md` (pages web publiques absentes). Le dossier `web/` contient le **site de présentation** d'Ayelo (vitrine : landing et pages légales). Ce n'est pas le produit, qui est l'application mobile, l'API, le temps réel et l'admin. C'est un site statique : HTML et CSS simples, un seul petit script facultatif (`assets/deletion.js`, formulaires de suppression), aucune police ni ressource externe, aucun suivi, fonctionne hors ligne. Français à la racine, anglais sous `/en/`.
 
 **État : version provisoire.** Chaque page porte le bandeau « Version provisoire, à valider par un juriste » et des marqueurs visibles `[À COMPLÉTER : ...]` (société, adresse, e-mails, hébergeur, durées non fixées). Aucune entité, adresse ni e-mail n'est inventée : les adresses sont en `example.invalid` (jamais routable). Le texte vient de `docs/legal/*` (brouillons 0.1 et 0.2) et n'est pas validé. Ne pas retirer le bandeau avant la validation du juriste (`docs/legal/00-LISEZ-MOI.md`).
 
@@ -34,7 +34,7 @@ Aucune page web n'existait pour cela. `web/account/delete.html` (formulaire d'e-
 
 1. **`APP_WEB_URL=https://<WEB_DOMAIN>`** dans `infra/.env.prod`. Sans cela, le lien de l'e-mail pointe vers `APP_URL`, qui n'a pas de page.
 2. **Relier les formulaires à l'API** : les formulaires pointent par défaut vers `https://api.example.invalid`, et la page affiche alors « non relié au service ». Régénérer les pages : `python web/tools/build.py --api-base https://<API_DOMAIN>`, puis `python web/tools/check-links.py`.
-3. **CORS** : l'appel part du domaine du site vers le domaine de l'API. `backend/config/cors.php` n'ouvre CORS que pour `api/v1/account-deletion-requests*` (et la forme sans `v1`), méthodes `POST` et `OPTIONS`, en-tête `Content-Type`, sans identifiants, et seulement pour l'origine du site : `CORS_ALLOWED_ORIGINS` (origines complètes séparées par des virgules) ou, à défaut, l'origine de `APP_WEB_URL`. Tout le reste de l'API répond sans en-tête CORS. Test : `backend/tests/Feature/CorsTest.php`. À vérifier une fois avec un vrai navigateur après la mise en ligne. La CSP ci-dessous autorise `connect-src` et `form-action` vers `{$API_DOMAIN}` et rien d'autre.
+3. **CORS** : l'appel part du domaine du site de présentation vers le domaine de l'API. `backend/config/cors.php` n'ouvre CORS que pour `api/v1/account-deletion-requests*` (et la forme sans `v1`), méthodes `POST` et `OPTIONS`, en-tête `Content-Type`, sans identifiants, et seulement pour l'origine du site de présentation : `CORS_ALLOWED_ORIGINS` (origines complètes séparées par des virgules) ou, à défaut, l'origine de `APP_WEB_URL`. Tout le reste de l'API répond sans en-tête CORS. Test : `backend/tests/Feature/CorsTest.php`. À vérifier une fois avec un vrai navigateur après la mise en ligne. La CSP ci-dessous autorise `connect-src` et `form-action` vers `{$API_DOMAIN}` et rien d'autre.
 4. Les comptes créés uniquement par connexion sociale n'ont pas de mot de passe : la voie e-mail ne les exclut pas, mais leur cas n'a pas été testé. La page renvoie vers le support (voir la checklist stores, révocation Apple ouverte).
 5. **Annulation pendant le délai de 30 jours** : non vérifiée dans le code (la page ne la promet pas, elle renvoie au support). À trancher côté produit.
 
@@ -47,15 +47,15 @@ Reprises de `backend/config/retention.php` et `AccountDeletion::GRACE_DAYS`, **c
 Ajouter un snippet et un bloc d'hôte (le snippet `security_headers` existe déjà dans le fichier).
 
 ```caddyfile
-# En-têtes du site public. `security_headers` fournit déjà HSTS, nosniff, X-Frame-Options, Referrer-Policy no-referrer, etc.
-# Le site n'a ni script externe, ni police, ni image tierce : CSP default-src 'self'.
+# En-têtes du site de présentation. `security_headers` fournit déjà HSTS, nosniff, X-Frame-Options, Referrer-Policy no-referrer, etc.
+# Le site de présentation n'a ni script externe, ni police, ni image tierce : CSP default-src 'self'.
 # connect-src et form-action autorisent seulement l'API, pour les formulaires de suppression de compte.
 (web_headers) {
 	import security_headers
 	header Content-Security-Policy "default-src 'self'; connect-src 'self' https://{$API_DOMAIN}; form-action 'self' https://{$API_DOMAIN}; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
 }
 
-# Site public statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
+# Site de présentation statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
 {$WEB_DOMAIN} {
 	root * /srv/web
 	encode zstd gzip
@@ -115,7 +115,7 @@ python web/tools/build.py --api-base "https://$API_DOMAIN" && python web/tools/c
 
 Exemple : `python web/tools/build.py --api-base https://api.mondomaine.tld`. Sans `--api-base`, la valeur par défaut est `https://api.example.invalid` (les formulaires affichent « non relié au service »). Les `.html` régénérés sont versionnés : les valider et les déployer avec le dépôt (le volume `../web` est lu par Caddy sans redémarrage).
 
-## Modifier le site et le contrôler
+## Modifier le site de présentation et le contrôler
 
 - Les pages HTML sont **générées** par `web/tools/build.py` (textes français et anglais dans le même fichier, pour garder les deux synchrones) puis versionnées. Modifier le texte dans `build.py`, relancer `python web/tools/build.py`, ne pas éditer les `.html` à la main.
 - `python web/tools/check-links.py` (option `-v` pour le détail) vérifie : HTML bien formé (balises, doctype, `lang`, `title`, un seul `h1`), liens et ressources internes résolus, aucune ressource externe, parité fr/en, contraste WCAG AA des jetons en clair et en sombre. À brancher en CI avec les autres contrôles.

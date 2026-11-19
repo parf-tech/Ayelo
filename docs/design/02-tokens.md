@@ -82,7 +82,7 @@ Polices du système. Graisses nommées : `regular` 400, `medium` 500, `semibold`
 | `reduceMotion` (nouveau) | Plus de translation, d'échelle ni de rebond ; fondu seul, durée plafonnée à 120 ms. CSS : les durées passent à 120 ms au maximum sous `prefers-reduced-motion`. |
 | `elevation` (nouveau) | 0 : aucune ombre (repos, direction B). 1 : toast, `0 1px 2px` à 8 %, Android 1. 2 : feuille, menu, `0 4px 8px` à 12 %, Android 4. 3 : dialogue, `0 8px 16px` à 16 %, Android 8. |
 
-Changements de valeur par rapport à l'existant, tous issus de la direction B : `primary`, `bg`, `surface`, `text`, `textMuted`, `verified` et les couleurs d'état ; rayons 8 / 12 / 20 devenus 10 / 16 / 28 ; interligne du corps 22 devenu 24 (déjà celui du site web). Les opacités d'appui 0,7 / 0,78 / 0,8 des composants de `mobile/src/ui` sont remplacées par `stateOpacity.pressed` (0,8) ; aucun autre changement de code.
+Changements de valeur par rapport à l'existant, tous issus de la direction B : `primary`, `bg`, `surface`, `text`, `textMuted`, `verified` et les couleurs d'état ; rayons 8 / 12 / 20 devenus 10 / 16 / 28 ; interligne du corps 22 devenu 24 (déjà celui du site de présentation). Les opacités d'appui 0,7 / 0,78 / 0,8 des composants de `mobile/src/ui` sont remplacées par `stateOpacity.pressed` (0,8) ; aucun autre changement de code.
 
 ## 3. Contrastes
 

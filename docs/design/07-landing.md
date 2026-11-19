@@ -1,4 +1,4 @@
-# 07 : Refonte de la landing d'Ayelo, temps 1 (plan, aucun fichier du site modifié)
+# 07 : Refonte de la landing d'Ayelo, temps 1 (plan, aucun fichier du site de présentation modifié)
 
 Date : 2026-11-19. Brief : [`PROMPT-LANDING.md`](PROMPT-LANDING.md). Décisions Q1 à Q8 : toutes validées selon les recommandations du brief (positionnement inclusif, texte honnête « Bientôt sur les magasins », seulement ce qui existe, formulations factuelles, tout en code, thème selon l'appareil, Poppins 700, publication après validation des captures).
 

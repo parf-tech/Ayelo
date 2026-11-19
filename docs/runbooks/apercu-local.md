@@ -45,7 +45,7 @@ Le serveur d'API est lancé par `php -S` avec le routeur de Laravel plutôt que 
 
 ### CORS
 
-L'aperçu web est une autre origine que l'API. `backend/config/cors.php` ajoute une branche de développement, active uniquement si `APP_ENV=local` ET `CORS_DEV_ORIGINS` est non vide (vide dans `.env.example`) : toutes les routes `api/*`, méthodes GET/POST/PUT/PATCH/DELETE, en-têtes `Authorization`, `X-Device-Id`, `Accept-Language`, `Idempotency-Key`, origines exactes (jamais de joker, jamais d'identifiants). Dans tout autre environnement la configuration reste celle de la production (suppression de compte depuis le site public uniquement) ; `backend/tests/Feature/CorsTest.php` le vérifie (production, staging, test, et local avec liste vide).
+L'aperçu web est une autre origine que l'API. `backend/config/cors.php` ajoute une branche de développement, active uniquement si `APP_ENV=local` ET `CORS_DEV_ORIGINS` est non vide (vide dans `.env.example`) : toutes les routes `api/*`, méthodes GET/POST/PUT/PATCH/DELETE, en-têtes `Authorization`, `X-Device-Id`, `Accept-Language`, `Idempotency-Key`, origines exactes (jamais de joker, jamais d'identifiants). Dans tout autre environnement la configuration reste celle de la production (suppression de compte depuis le site de présentation uniquement) ; `backend/tests/Feature/CorsTest.php` le vérifie (production, staging, test, et local avec liste vide).
 
 ## Données (PreviewSeeder)
 

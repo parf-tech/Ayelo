@@ -28,7 +28,7 @@ Dans cet ordre, sans en sauter :
 3. `web/tools/build.py` (le générateur des 17 pages fr et en : **on modifie le générateur, jamais les HTML à la main**), `web/assets/site.css`, `web/assets/brand/` (symbole SVG, icône 1024), `web/assets/fonts/` (Poppins 400, 500, 600, 700, licence OFL).
 4. `docs/design/PROMPT-UIUX-EXPERT.md` (principes de conception, section 4), `docs/design/00-concurrents.md` (ce que font les autres : observer, ne rien copier), `docs/design/00-parcours-personas.md`, `docs/design/00-a11y.md`.
 5. `docs/design/captures/` et `docs/design/previews/` : rendus de l'application, pour que la page montre le vrai produit.
-6. `docs/runbooks/site-public.md` (déploiement et CSP du site) et `docs/legal/00-LISEZ-MOI.md` (ce qui est interdit d'inventer).
+6. `docs/runbooks/site-public.md` (déploiement et CSP du site de présentation) et `docs/legal/00-LISEZ-MOI.md` (ce qui est interdit d'inventer).
 7. Compétences à charger : `frontend-design:frontend-design`, `ui-ux-pro-max`, `anti-ai-design-patterns`, `unslop`, `design:design-critique`, `design:accessibility-review`, `design:ux-copy`, `ecc:frontend-a11y`, `ecc:make-interfaces-feel-better`, `web-performance-optimization`. Un aperçu destiné au propriétaire est un artefact **privé**.
 
 ## 4. Marque : ce que la charte impose
@@ -68,7 +68,7 @@ Rédaction : verbes simples, voix active, capitales de phrase, un seul rôle par
 ## 7. Contraintes techniques non négociables
 
 - **Génération** : modifier `web/tools/build.py` (et `web/assets/site.css`, `design/tokens.json` si besoin de jetons), puis `python web/tools/build.py --api-base https://api.ayelo.fr` et `python web/tools/check-links.py` (HTML bien formé, liens internes, **aucune ressource externe**, contrastes AA) : les deux doivent passer. Les 16 autres pages restent fonctionnellement identiques.
-- **CSP du site** : `default-src 'self'` (`infra/caddy/Caddyfile`, bloc `web_headers`). Donc : **ni style en ligne, ni script en ligne, ni police, image ou script externes**. Tout le CSS dans `site.css`, tout le JavaScript éventuel dans un fichier de `assets/`. SVG en ligne autorisé. Aucun suivi, aucune statistique.
+- **CSP du site de présentation** : `default-src 'self'` (`infra/caddy/Caddyfile`, bloc `web_headers`). Donc : **ni style en ligne, ni script en ligne, ni police, image ou script externes**. Tout le CSS dans `site.css`, tout le JavaScript éventuel dans un fichier de `assets/`. SVG en ligne autorisé. Aucun suivi, aucune statistique.
 - **Sans JavaScript** : la page est complète et utilisable sans. L'animation du héros est du CSS ou du SVG animé, jouée une fois, coupée par `prefers-reduced-motion`.
 - **Thèmes** : clair et sombre conçus ensemble (les jetons existent), pas d'inversion mécanique ; version blanche du symbole pour le sombre.
 - **Performance** (budget à mesurer, pas à supposer) : HTML + CSS + polices + images de la première vue sous 150 Ko transférés ; images en WebP ou AVIF **ou** SVG, dimensions déclarées (aucun décalage de mise en page) ; `font-display: swap`, préchargement de deux polices au plus ; Lighthouse mobile : performance ≥ 95, accessibilité 100, bonnes pratiques 100, SEO ≥ 95.

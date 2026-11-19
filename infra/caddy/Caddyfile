@@ -30,10 +30,10 @@
 	respond @admin_blocked 403
 }
 
-# En-têtes du site public (docs/runbooks/site-public.md). `security_headers` fournit déjà HSTS, nosniff, X-Frame-Options,
-# Referrer-Policy no-referrer, etc. Le site n'a ni script externe, ni police, ni image tierce : CSP default-src 'self'.
+# En-têtes du site de présentation (docs/runbooks/site-public.md). `security_headers` fournit déjà HSTS, nosniff, X-Frame-Options,
+# Referrer-Policy no-referrer, etc. Le site de présentation n'a ni script externe, ni police, ni image tierce : CSP default-src 'self'.
 # connect-src et form-action n'autorisent que l'API, pour les deux formulaires de suppression de compte
-# (backend/config/cors.php n'ouvre CORS que pour ces routes et seulement à l'origine du site).
+# (backend/config/cors.php n'ouvre CORS que pour ces routes et seulement à l'origine du site de présentation).
 (web_headers) {
 	import security_headers
 	header Content-Security-Policy "default-src 'self'; connect-src 'self' https://{$API_DOMAIN}; form-action 'self' https://{$API_DOMAIN}; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"
@@ -90,7 +90,7 @@
 	file_server
 }
 
-# Site public statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
+# Site de présentation statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
 # Le dossier web/ du dépôt est monté en lecture seule sur /srv/web (docker-compose.prod.yml).
 {$WEB_DOMAIN} {
 	root * /srv/web

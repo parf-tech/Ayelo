@@ -10,7 +10,7 @@ Application mobile de rencontres (Android et iOS), conception indépendante insp
 | --- | --- |
 | `backend/` | API Laravel 12 (PostgreSQL, Sanctum, Reverb, Filament 4 pour le back-office), tests Pest |
 | `mobile/` | application Expo / React Native (TypeScript), tests Jest |
-| `web/` | site public statique (conditions, confidentialité, suppression de compte) |
+| `web/` | site de présentation statique (conditions, confidentialité, suppression de compte) |
 | `infra/` | Docker Compose de production, Caddy, sauvegardes, PHP-FPM |
 | `tests/schema/` | tests du schéma SQL sur PostgreSQL 16 |
 | `docs/` | spécifications, architecture, décisions, revues de sécurité, procédures (`runbooks/`) |
