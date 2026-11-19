@@ -46,7 +46,9 @@ return [
     /*
      * OpenAPI version of the resulting document.
      */
-    'openapi_version' => OpenApiVersion::V3_1,
+    // Scramble est une dépendance de développement : absente de l'image de production (composer --no-dev), où ce fichier
+    // est pourtant chargé (php artisan package:discover). Sans cette garde, le build de l'image échoue (« Class OpenApiVersion not found »).
+    'openapi_version' => class_exists(OpenApiVersion::class) ? OpenApiVersion::V3_1 : null,
 
     'info' => [
         /*
