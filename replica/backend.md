@@ -6,7 +6,7 @@ Date : 2026-11-07. Référence d'architecture : `docs/08-SOFTWARE-ARCHITECTURE.m
 
 - **Pile :** Laravel 12 + PostgreSQL + Sanctum, pas Supabase. L'autorisation passe par des Policies Laravel et des contrôles dans chaque requête, pas par des politiques RLS.
 - **Paiements :** application mobile avec achats intégrés des stores, donc **RevenueCat** (webhook idempotent), pas Stripe Checkout. Stripe ne s'applique pas aux achats d'abonnement dans l'app (règles Apple et Google).
-- **E-mail :** transactionnel par SMTP configurable (`MAIL_*`), journal en local. Prestataire (Resend ou Postmark) non choisi.
+- **E-mail :** transactionnel via Resend SMTP (`MAIL_*`), journal en local. Domaine `ayelo.fr` et DNS configurés ; la vérification Resend et la clé SMTP de production restent à finaliser.
 - **Interdits du skill respectés :** aucune API privée de l'application d'origine n'est appelée ; aucun compte ni clé n'a été créé par Claude ; `.env.example` ne contient aucune valeur secrète.
 
 ## Authentification
@@ -36,7 +36,7 @@ Date : 2026-11-07. Référence d'architecture : `docs/08-SOFTWARE-ARCHITECTURE.m
 
 - [x] E-mails traduits (fr, en) pour vérification et réinitialisation.
 - [x] Tâches planifiées : expiration des sanctions, anonymisation, purge des exports et des dépôts abandonnés, balayage des médias orphelins, rejeu des événements de facturation.
-- [ ] Expéditeur sur le domaine du produit, SPF/DKIM/DMARC : dépend du choix du prestataire et du domaine (propriétaire).
+- [~] Expéditeur sur `ayelo.fr` configuré chez Resend ; DKIM et un CNAME de retour sont encore en attente de vérification, et aucun envoi réel n'a été testé.
 - [ ] Journal des échecs de tâches (dead-letter) : file Redis jamais exécutée contre un vrai Redis.
 
 ## Intégrations

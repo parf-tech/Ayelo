@@ -1,92 +1,72 @@
 # Procédure : e-mail transactionnel et DNS (SPF, DKIM, DMARC)
 
-**Statut : écrite, rien n'a été fait ni envoyé.** Aucun prestataire n'est choisi, aucun domaine n'est acheté, aucun enregistrement DNS n'existe, aucun e-mail réel n'est parti du code. Les valeurs de prestataire citées ci-dessous viennent de la mémoire de l'auteur et **doivent être relues dans la documentation et le tableau de bord du prestataire** le jour de la mise en place : en cas d'écart, le tableau de bord fait foi.
+**État au 2026-11-19 :** Resend est choisi ; `ayelo.fr` est ajouté au compte en région Irlande (`eu-west-1`). Les nameservers du domaine pointent vers Cloudflare et les trois enregistrements Resend ont été ajoutés en DNS uniquement. Le DNS public les résout, mais Resend affiche encore le domaine en attente : `send` est vérifié, DKIM et `rsend` restent en attente. La réception reste chez Hostinger (MX conservés, réception Resend désactivée). `infra/.env.prod` n'existe pas dans ce workspace : il faut vérifier/configurer la clé SMTP côté serveur. Aucun envoi réel n'a été vérifié depuis l'application.
 
 Ce que l'application envoie (code lu : `backend/app/Services/AccountMail.php`, `AccountController`) : vérification d'adresse, réinitialisation de mot de passe, confirmation de suppression de compte. Uniquement des e-mails transactionnels, en français et en anglais, sans marketing.
 
-## 1. Choisir le prestataire
+## 1. Prestataire retenu
 
-Le code n'a besoin d'aucun nouveau paquet PHP : Laravel 12 parle SMTP nativement (`backend/config/mail.php`, transport `smtp`, variables `MAIL_*`). Resend et Postmark offrent tous deux un relais SMTP. (`config/mail.php` et `config/services.php` prévoient aussi des transports par API, `RESEND_API_KEY` et `POSTMARK_API_KEY`, mais ils demanderaient un paquet supplémentaire : on reste en SMTP.)
+L'application utilise le transport SMTP natif de Laravel 12 ; aucun SDK supplémentaire n'est requis. Paramètres officiels Resend : `smtp.resend.com`, port `587` (STARTTLS) ou `465` (TLS implicite), utilisateur `resend`, mot de passe égal à une clé API Resend. La documentation du tableau de bord reste la référence si ces paramètres changent.
 
-| critère | Resend | Postmark |
-| --- | --- | --- |
-| Raccordement | SMTP (`smtp.resend.com`), utilisateur `resend`, mot de passe = clé d'API | SMTP (`smtp.postmarkapp.com`), utilisateur et mot de passe = jeton du serveur |
-| Orientation | e-mail développeur, tableau de bord simple | e-mail transactionnel uniquement, flux (« streams ») séparés transactionnel / diffusion |
-| Région des données | à vérifier (une région UE est proposée selon l'offre) | à vérifier (hébergement aux États-Unis, à confirmer) |
-| Tarif | **non vérifié** : lire la grille officielle le jour de l'achat | **non vérifié** : idem |
-| Rebonds et plaintes | suppression automatique des adresses en échec, webhooks | idem, avec historique détaillé |
-
-Points à trancher par le propriétaire (aucun n'est tranché ici) :
-1. **Région et sous-traitance** : le prestataire reçoit l'adresse e-mail et le contenu du message (lien de vérification, lien de réinitialisation) de chaque utilisateur. Il doit figurer dans la politique de confidentialité (`docs/legal/02-politique-confidentialite.md`) et faire l'objet d'un accord de traitement ; transferts hors UE : à valider par un juriste.
-2. **Volume et prix** : le volume prévu (inscriptions + réinitialisations) est faible au lancement ; comparer les paliers gratuits **au moment de l'achat**.
-3. **Marchés visés** : vague 1 France, Belgique, Suisse, Canada francophone. Tester la réception chez Gmail, Outlook et les fournisseurs locaux (Orange, Free, Proximus, Bell/Videotron) avant le lancement.
-
-Recommandation de travail, sans engagement : les deux conviennent techniquement ; choisir sur la région des données, l'accord de traitement et le prix du jour. Ne pas dépendre d'un seul prestataire sans en avoir testé un second sur un domaine d'essai.
+Créer une clé API limitée à l'envoi dans Resend et la conserver comme secret dans l'environnement de production. Elle va dans `MAIL_PASSWORD`, jamais dans Git, une image Docker ou les journaux. La région configurée et l'accord de traitement doivent être validés avant la mise en production (`docs/legal/02-politique-confidentialite.md`).
 
 ## 2. Domaine d'envoi
 
-Utiliser un **sous-domaine dédié à l'e-mail transactionnel**, par exemple `mail.<DOMAINE>`, plutôt que le domaine racine : la réputation d'envoi est isolée du site et des boîtes e-mail humaines (qui, elles, restent sur `<DOMAINE>`). Adresse d'expédition : `no-reply@mail.<DOMAINE>` ; prévoir une adresse de réponse lisible (`support@<DOMAINE>`) dans le contenu des messages, et une adresse `dmarc@<DOMAINE>` (ou un service de rapports) pour les rapports DMARC.
+Le domaine ajouté chez Resend est `ayelo.fr` (domaine racine) ; l'adresse d'expédition configurée est `no-reply@ayelo.fr`. C'est le choix actuellement appliqué, même si un sous-domaine dédié isolerait davantage la réputation d'envoi.
 
-`<DOMAINE>` n'existe pas encore (choix du nom en attente, voir `docs/DECISIONS-PROPRIETAIRE.md`). Tant qu'il n'y a pas de domaine, ne rien envoyer d'autre qu'en test (MAILER `log`).
+La messagerie humaine continue chez Hostinger : conserver ses MX, SPF, DKIM, autoconfig et autodiscover. Ne pas activer la réception Resend ni remplacer les MX Hostinger.
 
-## 3. Variables SMTP à renseigner
+## 3. Variables SMTP
 
-Dans `infra/.env.prod` (hors dépôt, droits 600). Le gabarit est dans `infra/.env.prod.example`, bloc `MAIL_*`.
+Dans `infra/.env.prod` (hors dépôt, droits 600), recopier le bloc de `infra/.env.prod.example` et ajouter la clé API Resend comme `MAIL_PASSWORD`. Le gabarit local `backend/.env.example` garde `MAIL_MAILER=log` afin que le développement n'envoie pas de vrais e-mails.
 
 | variable | valeur | remarque |
 | --- | --- | --- |
 | `MAIL_MAILER` | `smtp` | |
-| `MAIL_HOST` | `smtp.resend.com` ou `smtp.postmarkapp.com` | selon le prestataire |
-| `MAIL_PORT` | `587` (ou `465`) | avec 465, Laravel passe tout seul en TLS implicite (`smtps`) |
-| `MAIL_SCHEME` | vide | n'y toucher que si le prestataire l'impose |
-| `MAIL_USERNAME` | Resend : `resend` ; Postmark : jeton du serveur | **secret pour Postmark** |
-| `MAIL_PASSWORD` | Resend : clé d'API ; Postmark : le même jeton | **secret** |
-| `MAIL_FROM_ADDRESS` | `no-reply@mail.<DOMAINE>` | doit appartenir au domaine vérifié chez le prestataire |
-| `MAIL_FROM_NAME` | nom du produit | |
-| `MAIL_EHLO_DOMAIN` | nom d'hôte du serveur d'API | facultatif |
+| `MAIL_HOST` | `smtp.resend.com` | |
+| `MAIL_PORT` | `587` | STARTTLS ; `465` est aussi accepté pour TLS implicite |
+| `MAIL_SCHEME` | vide | Laravel/Symfony négocie STARTTLS sur le port 587 |
+| `MAIL_USERNAME` | `resend` | |
+| `MAIL_PASSWORD` | clé API Resend | secret ; créer une clé limitée à l'envoi |
+| `MAIL_FROM_ADDRESS` | `no-reply@ayelo.fr` | domaine d'envoi vérifié requis |
+| `MAIL_FROM_NAME` | `Ayelo` | |
+| `MAIL_EHLO_DOMAIN` | `ayelo.fr` | facultatif |
 
 Après modification : redémarrer `app`, `worker` et `scheduler` (le `worker` envoie les e-mails mis en file). Aucun secret dans le dépôt, dans l'image ni dans les journaux.
 
-## 4. Enregistrements DNS à créer
+## 4. Enregistrements DNS
 
-Les noms et valeurs **exacts** (sélecteur DKIM, cibles CNAME, valeur de la clé publique) sont générés par le prestataire quand on ajoute le domaine dans son tableau de bord : les copier tels quels. Le modèle ci-dessous donne la forme attendue ; les valeurs entre chevrons sont des emplacements à remplacer.
+Les noms et valeurs ci-dessous viennent du tableau de bord Resend pour `ayelo.fr`. Tous sont en DNS uniquement dans Cloudflare.
 
-### 4.1 SPF (TXT)
+### 4.1 Chemin de retour / SPF
 
-Un domaine ne peut avoir **qu'un seul** enregistrement SPF (deux enregistrements = SPF invalide). Il doit exister pour le domaine qui apparaît dans le chemin de retour (Return-Path, ou « MAIL FROM ») que le prestataire utilise.
+Ne pas ajouter de deuxième SPF au domaine racine : l'enregistrement Hostinger existant `v=spf1 include:_spf.mail.hostinger.com ~all` est conservé. Resend fournit ici des CNAME pour son chemin de retour :
 
-| prestataire | nom | type | valeur (forme attendue, à confirmer dans le tableau de bord) |
+| nom | type | cible | état Resend |
 | --- | --- | --- | --- |
-| Resend | `send.mail.<DOMAINE>` (ou `send.<DOMAINE>` selon ce que propose le tableau de bord) | TXT | `v=spf1 include:amazonses.com ~all` |
-| Resend | même nom | MX | `feedback-smtp.<région>.amazonses.com`, priorité 10 (rebonds) |
-| Postmark | `pm-bounces.mail.<DOMAINE>` | CNAME | `pm.mtasv.net` (chemin de retour, ce qui rend l'alignement SPF possible) |
-| Postmark | `mail.<DOMAINE>` (facultatif) | TXT | `v=spf1 include:spf.mtasv.net ~all` |
+| `rsend.ayelo.fr` | CNAME | `rsend-euw1.forge.rmta.net` | en attente |
+| `send.ayelo.fr` | CNAME | `send.forge.rmta.net` | vérifié |
 
-Si le sous-domaine porte déjà un SPF, **fusionner** les `include:` dans un seul enregistrement. Terminer par `~all` au départ, puis `-all` quand tout est validé.
+Les cibles sont propres au compte/région : ne pas les remplacer par des valeurs trouvées dans un ancien guide.
 
-### 4.2 DKIM (TXT ou CNAME)
+### 4.2 DKIM
 
-| prestataire | nom | type | valeur |
+| nom | type | contenu | état Resend |
 | --- | --- | --- | --- |
-| Resend | `resend._domainkey.mail.<DOMAINE>` | TXT | `p=<CLÉ_PUBLIQUE_FOURNIE_PAR_RESEND>` |
-| Postmark | `<SÉLECTEUR_FOURNI>._domainkey.mail.<DOMAINE>` | TXT | `k=rsa; p=<CLÉ_PUBLIQUE_FOURNIE_PAR_POSTMARK>` |
+| `resend._domainkey.ayelo.fr` | TXT | clé publique `p=...` générée par Resend | en attente |
 
-Le sélecteur et la clé viennent du tableau de bord. Si le fournisseur DNS limite la longueur d'une chaîne TXT, découper la clé en morceaux de 255 caractères au plus (le fournisseur DNS le fait souvent seul). Ne jamais générer ni publier soi-même une clé privée : seule la clé publique figure dans le DNS.
+La valeur complète est dans les tableaux de bord Resend et Cloudflare. C'est une clé publique ; ne jamais publier ni générer une clé privée.
 
 ### 4.3 DMARC (TXT)
 
-Un seul enregistrement, sur `_dmarc.<DOMAINE>` (la politique du domaine racine couvre aussi `mail.<DOMAINE>` par défaut) :
+L'enregistrement existant `_dmarc.ayelo.fr` est conservé avec `v=DMARC1; p=none`. Ne pas le remplacer pendant le démarrage de Resend.
 
-| nom | type | valeur |
-| --- | --- | --- |
-| `_dmarc.<DOMAINE>` | TXT | `v=DMARC1; p=none; rua=mailto:dmarc@<DOMAINE>; fo=1; adkim=r; aspf=r` |
-
-Montée en charge de la politique, chaque étape après au moins deux semaines de rapports propres :
+Durcir la politique seulement après au moins deux semaines de rapports propres :
 1. `p=none` (observation, aucun message rejeté) ;
 2. `p=quarantine; pct=25`, puis `pct=100` ;
 3. `p=reject`.
 
-Pour que DMARC passe, **au moins un** des deux alignements doit réussir : le domaine du DKIM (`d=`) ou le domaine du chemin de retour SPF doit être le même domaine que celui de l'adresse « From » (ou un sous-domaine, en alignement relaxé `r`). C'est la raison d'être du sous-domaine dédié et du chemin de retour personnalisé. Si les rapports DMARC sont envoyés à une adresse hors de `<DOMAINE>`, le domaine destinataire doit publier une autorisation : rester sur `<DOMAINE>` évite cela.
+Pour que DMARC passe, au moins un alignement doit réussir : DKIM (`d=`) ou domaine du chemin de retour SPF avec celui du From (en alignement relaxé, un sous-domaine est permis).
 
 ### 4.4 Facultatifs recommandés
 - **MTA-STS** et **TLS-RPT** : à étudier plus tard, non nécessaires au lancement.
@@ -95,23 +75,15 @@ Pour que DMARC passe, **au moins un** des deux alignements doit réussir : le do
 
 ## 5. Liste de vérification
 
-À cocher dans l'ordre, avec la date, qui l'a fait, et la preuve (capture ou copie de l'en-tête sans donnée personnelle). **Rien n'est coché aujourd'hui.**
-
-- [ ] Domaine acheté ; compte chez le prestataire créé par le propriétaire (aucune clé créée par un agent).
-- [ ] Domaine d'envoi ajouté chez le prestataire ; son tableau de bord affiche SPF et DKIM « vérifiés ».
-- [ ] Vérification directe dans le DNS (remplacer les valeurs) :
-  `dig +short TXT <SÉLECTEUR>._domainkey.mail.<DOMAINE>`, `dig +short TXT send.mail.<DOMAINE>` (ou le nom SPF du tableau de bord), `dig +short TXT _dmarc.<DOMAINE>`.
-- [ ] Un seul enregistrement SPF par nom (`dig +short TXT <nom> | grep -c spf1` donne 1).
-- [ ] `infra/.env.prod` renseigné ; services redémarrés.
-- [ ] Envoi d'un vrai message de vérification d'adresse depuis l'application (compte de test) vers une boîte Gmail personnelle.
-- [ ] **En-têtes** (Gmail : menu « Afficher l'original ») : `Authentication-Results` contient `spf=pass`, `dkim=pass` et `dmarc=pass`, et le domaine après `header.from=` est bien le domaine d'envoi. Faire de même vers une boîte Outlook.
-- [ ] **mail-tester.com** : envoyer un message de réinitialisation vers l'adresse jetable que le site fournit ; viser **9/10 ou plus** ; lire le détail (SPF, DKIM, DMARC, liste noire, contenu).
-- [ ] Le message arrive en boîte de réception, pas en courrier indésirable, chez Gmail, Outlook et au moins un fournisseur local d'un marché de la vague 1.
-- [ ] Le lien du message pointe vers `APP_WEB_URL` (HTTPS), pas vers `localhost` ni `example.invalid`.
-- [ ] Rebonds et plaintes : le tableau de bord du prestataire reçoit bien les rebonds (envoi vers une adresse inexistante sur un domaine d'essai), et le webhook de la section 5 bis est branché (une ligne apparaît dans `email_suppressions`).
-- [ ] Rapports DMARC agrégés reçus pendant deux semaines avant de durcir `p=`.
-- [ ] Réputation : inscrire le domaine d'envoi à Google Postmaster Tools.
-- [ ] Mettre à jour `replica/backend.md` (ligne « Expéditeur sur le domaine du produit, SPF/DKIM/DMARC ») et `docs/legal/02-politique-confidentialite.md` (nom du prestataire).
+- [x] Domaine `ayelo.fr` ajouté dans Resend, région Irlande (`eu-west-1`), envoi activé et réception désactivée.
+- [x] Nameservers Cloudflare et trois enregistrements Resend configurés ; les réponses DNS publiques sont visibles.
+- [ ] Vérification Resend complète : `send` est vérifié, DKIM et `rsend` sont encore en attente.
+- [ ] Créer une clé Resend limitée à l'envoi, la placer comme `MAIL_PASSWORD` dans `infra/.env.prod` (hors dépôt), puis redémarrer `app`, `worker` et `scheduler`.
+- [ ] Après vérification du domaine, tester un e-mail de vérification vers une boîte contrôlée.
+- [ ] **En-têtes** : `Authentication-Results` indique `spf=pass`, `dkim=pass` et `dmarc=pass`, avec `header.from=ayelo.fr`. Tester Gmail et Outlook.
+- [ ] Vérifier la réception en boîte principale, les rebonds/plaintes et le webhook de la section 5 bis.
+- [ ] Le lien reçu pointe vers `APP_WEB_URL` (HTTPS), pas vers `localhost` ni `example.invalid`.
+- [ ] Faire valider par un juriste l'accord de traitement, la région et la politique de confidentialité avant la mise en production.
 
 ## 5 bis. Rebonds et plaintes (webhook)
 
