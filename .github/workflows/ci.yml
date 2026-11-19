@@ -106,6 +106,9 @@ jobs:
       - name: Test de l'ordre des étapes de deploy.sh (faux docker, aucune commande réelle)
         run: bash infra/scripts/tests/deploy_test.sh
 
+      - name: Test de configure-env.sh (écriture des valeurs, secrets jamais affichés)
+        run: bash infra/scripts/tests/configure_env_test.sh
+
       - name: hadolint (informatif)
         continue-on-error: true
         run: |

@@ -8,7 +8,7 @@ Dernière mise à jour : 2026-11-18. Script : `infra/scripts/deploy.sh`. Contrô
 
 - Un VPS (8 Go, 4 vCPU à confirmer, `docs/14-DEPLOYMENT.md`) avec Docker Engine et Docker Compose v2 (`docker compose`), accès SSH par clé, `ufw` (22 restreint, 80, 443).
 - Les enregistrements DNS `API_DOMAIN`, `WS_DOMAIN`, `ADMIN_DOMAIN` et `WEB_DOMAIN` pointent vers le serveur (Caddy obtient les certificats au premier démarrage ; sans DNS valide il échoue et réessaie).
-- `infra/.env.prod` créé depuis `infra/.env.prod.example`, droits `600`, hors dépôt. Le script refuse un autre mode.
+- `infra/.env.prod` créé depuis `infra/.env.prod.example`, droits `600`, hors dépôt. Le script refuse un autre mode. `bash infra/scripts/configure-env.sh` y renseigne, sans écho ni affichage des secrets, l'e-mail Let's Encrypt (`ACME_EMAIL`), le stockage objet (`MEDIA_*`) et le destinataire GPG des sauvegardes (`BACKUP_GPG_RECIPIENT`).
 - Les clés et secrets fournis par le propriétaire (aucun n'est créé par l'équipe) : stockage objet `MEDIA_*`, `REDIS_PASSWORD`, `DB_PASSWORD`, `APP_KEY` (`php artisan key:generate --show`), Reverb, et si les fonctions sont ouvertes RevenueCat, FCM, LiveKit, Google et Apple, e-mail.
 - Pour les sauvegardes : `BACKUP_GPG_RECIPIENT` et le fichier de clé publique `BACKUP_GPG_PUBLIC_KEY_PATH` (`docs/runbooks/sauvegardes-chiffrement.md`). Le compose refuse de démarrer sans eux.
 - Une copie du dépôt sur le serveur, à l'étiquette à déployer (`git checkout vX.Y.Z`).
