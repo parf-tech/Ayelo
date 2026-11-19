@@ -99,7 +99,9 @@
 	header Cache-Control "public, max-age=3600"
 
 	# Le dossier tools/ (scripts de génération et de contrôle) n'est jamais servi.
-	@private path /tools /tools/* /.git /.git/*
+	# security.txt est un MODÈLE (« NE PAS PUBLIER TEL QUEL », contact en example.invalid) : masqué tant que le propriétaire
+	# n'a pas renseigné de vraie adresse. Retirer /.well-known/security.txt de cette liste une fois le fichier complété.
+	@private path /tools /tools/* /.git /.git/* /.well-known/security.txt
 	respond @private 404
 
 	# Les liens de la version anglaise sont relatifs : /en doit se terminer par une barre oblique.
@@ -119,4 +121,12 @@
 		import web_headers
 		file_server
 	}
+}
+
+# www -> domaine nu. Production : WEB_DOMAIN=ayelo.fr, donc ce bloc sert www.ayelo.fr (enregistrement A vers le serveur, comme
+# les autres hôtes) et redirige vers https://ayelo.fr. Si WEB_DOMAIN commence déjà par « www. » (préproduction), ce bloc
+# vise « www.www.… » : sans effet, mais Caddy y tentera un certificat ; ne pas le conserver dans ce cas.
+www.{$WEB_DOMAIN} {
+	import security_headers
+	redir https://{$WEB_DOMAIN}{uri} permanent
 }
