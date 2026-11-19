@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Renseigne dans infra/.env.prod les valeurs qu'aucun script ne peut inventer : e-mail Let's Encrypt, stockage objet (R2) et
-# destinataire GPG des sauvegardes. À lancer sur le serveur, une fois, avant infra/scripts/deploy.sh.
+# destinataire GPG et bucket distant des sauvegardes. À lancer sur le serveur, une fois, avant infra/scripts/deploy.sh.
 #
 #   bash infra/scripts/configure-env.sh
 #
@@ -54,9 +54,16 @@ ask MEDIA_BUCKET "Stockage objet : nom du bucket (media-staging)"
 ask MEDIA_ACCESS_KEY "Stockage objet : Access Key ID" secret
 ask MEDIA_SECRET_KEY "Stockage objet : Secret Access Key" secret
 ask BACKUP_GPG_RECIPIENT "Sauvegardes : identité de la clé GPG publique (ex. Ayelo backup <vous@exemple.fr>)"
+# Envoi hors serveur des sauvegardes : jeton R2 distinct de celui des médias, limité au seul bucket des sauvegardes.
+# BACKUP_BUCKET vide = aucun envoi, la copie reste sur le serveur (infra/scripts/backup.sh).
+ask BACKUP_BUCKET "Sauvegardes : nom du bucket distant (backups)"
+ask BACKUP_ENDPOINT "Sauvegardes : endpoint (https://<compte>.r2.cloudflarestorage.com)" "" https
+ask BACKUP_AWS_ACCESS_KEY_ID "Sauvegardes : Access Key ID (jeton limité au bucket des sauvegardes)" secret
+ask BACKUP_AWS_SECRET_ACCESS_KEY "Sauvegardes : Secret Access Key" secret
 
 echo "--- état (jamais les valeurs des secrets) ---"
-for key in ACME_EMAIL MEDIA_ENDPOINT MEDIA_BUCKET MEDIA_ACCESS_KEY MEDIA_SECRET_KEY BACKUP_GPG_RECIPIENT; do
+for key in ACME_EMAIL MEDIA_ENDPOINT MEDIA_BUCKET MEDIA_ACCESS_KEY MEDIA_SECRET_KEY BACKUP_GPG_RECIPIENT \
+  BACKUP_BUCKET BACKUP_ENDPOINT BACKUP_AWS_ACCESS_KEY_ID BACKUP_AWS_SECRET_ACCESS_KEY; do
   val="$(current "$key")"
   if [ -z "$val" ]; then echo "VIDE      $key"; else echo "renseigné $key (${#val} caractères)"; fi
 done

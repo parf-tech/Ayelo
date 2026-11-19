@@ -16,7 +16,9 @@ check() { if [ "$2" -eq 0 ]; then echo "ok   - $1"; else echo "FAIL - $1"; failu
 value() { sed -n "s/^$1=//p" "$ENV" | tail -n 1; }
 
 SECRET='S3cr&t|\avec$bizarres"'
+BSECRET='B4ck&up|\secret$"'
 printf '%s\n' "ops@exemple.fr" "https://abc123.r2.cloudflarestorage.com" "media-staging" "AKIAEXEMPLE" "$SECRET" "Ayelo backup <ops@exemple.fr>" \
+  "backups" "https://abc123.r2.cloudflarestorage.com" "AKIABACKUP" "$BSECRET" \
   | DEPLOY_ENV_FILE="$ENV" bash "$SCRIPT" > "$WORK/out.txt" 2>&1
 RC=$?
 check "premier passage : code 0" "$RC"
@@ -25,14 +27,17 @@ check "MEDIA_ENDPOINT écrit" "$([ "$(value MEDIA_ENDPOINT)" = "https://abc123.r
 check "MEDIA_BUCKET écrit" "$([ "$(value MEDIA_BUCKET)" = "media-staging" ]; echo $?)"
 check "MEDIA_SECRET_KEY écrit tel quel (| & \\ \$ \" conservés)" "$([ "$(value MEDIA_SECRET_KEY)" = "$SECRET" ]; echo $?)"
 check "BACKUP_GPG_RECIPIENT écrit" "$([ "$(value BACKUP_GPG_RECIPIENT)" = "Ayelo backup <ops@exemple.fr>" ]; echo $?)"
+check "BACKUP_BUCKET et BACKUP_ENDPOINT écrits" "$([ "$(value BACKUP_BUCKET)" = "backups" ] && [ "$(value BACKUP_ENDPOINT)" = "https://abc123.r2.cloudflarestorage.com" ]; echo $?)"
+check "BACKUP_AWS_SECRET_ACCESS_KEY écrit tel quel" "$([ "$(value BACKUP_AWS_SECRET_ACCESS_KEY)" = "$BSECRET" ] && [ "$(value BACKUP_AWS_ACCESS_KEY_ID)" = "AKIABACKUP" ]; echo $?)"
+check "les secrets de sauvegarde n'apparaissent pas dans la sortie" "$(! grep -qF -e 'B4ck' -e 'AKIABACKUP' "$WORK/out.txt"; echo $?)"
 check "le secret n'apparaît pas dans la sortie" "$(! grep -qF 'S3cr' "$WORK/out.txt"; echo $?)"
 check "la clé d'accès n'apparaît pas dans la sortie" "$(! grep -qF 'AKIAEXEMPLE' "$WORK/out.txt"; echo $?)"
 check "les autres lignes sont intactes (APP_ENV, DB_HOST)" "$([ "$(value APP_ENV)" = "production" ] && [ "$(value DB_HOST)" = "postgres" ]; echo $?)"
 check "le nombre de lignes est inchangé" "$([ "$(wc -l < "$ENV")" = "$(wc -l < "$EXAMPLE")" ]; echo $?)"
 
 # Deuxième passage : tout vide = on garde tout.
-printf '\n\n\n\n\n\n' | DEPLOY_ENV_FILE="$ENV" bash "$SCRIPT" > /dev/null 2>&1
-check "Entrée vide garde l'existant" "$([ "$(value MEDIA_BUCKET)" = "media-staging" ] && [ "$(value MEDIA_SECRET_KEY)" = "$SECRET" ]; echo $?)"
+printf '\n\n\n\n\n\n\n\n\n\n' | DEPLOY_ENV_FILE="$ENV" bash "$SCRIPT" > /dev/null 2>&1
+check "Entrée vide garde l'existant" "$([ "$(value MEDIA_BUCKET)" = "media-staging" ] && [ "$(value MEDIA_SECRET_KEY)" = "$SECRET" ] && [ "$(value BACKUP_BUCKET)" = "backups" ] && [ "$(value BACKUP_AWS_SECRET_ACCESS_KEY)" = "$BSECRET" ]; echo $?)"
 
 # Endpoint non https : refusé, rien n'est écrit.
 set +e

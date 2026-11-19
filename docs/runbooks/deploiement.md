@@ -2,13 +2,13 @@
 
 Dernière mise à jour : 2026-11-18. Script : `infra/scripts/deploy.sh`. Contrôle de configuration : `php artisan deploy:preflight`.
 
-**Statut : écrit, jamais exécuté.** Il n'y a ni serveur, ni Docker, ni Caddy sur le poste de développement. Ce qui a été essayé : l'ordre des étapes du script avec un faux `docker` (`infra/scripts/tests/deploy_test.sh`, 20 vérifications, rejoué en CI), la commande `deploy:preflight` (tests Pest `DeployReadinessTest`), les migrations et les caches de configuration, de routes et d'événements en mode production sur PostgreSQL 16. Tout le reste (construction de l'image, Compose, Caddy, certificats, assets du panneau, santé des conteneurs) est à valider en préproduction avant la première mise en production.
+**Statut au 2026-11-19 : exécuté une fois en préproduction** (VPS, `deploy.sh --first`, 11 conteneurs sains, certificats valides, `/api/v1/health` ok). Le premier essai a échoué à la construction de l'image : `config/scramble.php` lisait `OpenApiVersion` alors que Scramble est une dépendance de développement ; corrigé par une garde `class_exists`. Reste à valider : mise en production, retour arrière. Ancien statut, avant cet essai : **écrit, jamais exécuté.** Il n'y a ni serveur, ni Docker, ni Caddy sur le poste de développement. Ce qui a été essayé : l'ordre des étapes du script avec un faux `docker` (`infra/scripts/tests/deploy_test.sh`, 20 vérifications, rejoué en CI), la commande `deploy:preflight` (tests Pest `DeployReadinessTest`), les migrations et les caches de configuration, de routes et d'événements en mode production sur PostgreSQL 16. Tout le reste (construction de l'image, Compose, Caddy, certificats, assets du panneau, santé des conteneurs) est à valider en préproduction avant la première mise en production.
 
 ## Prérequis
 
 - Un VPS (8 Go, 4 vCPU à confirmer, `docs/14-DEPLOYMENT.md`) avec Docker Engine et Docker Compose v2 (`docker compose`), accès SSH par clé, `ufw` (22 restreint, 80, 443).
 - Les enregistrements DNS `API_DOMAIN`, `WS_DOMAIN`, `ADMIN_DOMAIN` et `WEB_DOMAIN` pointent vers le serveur (Caddy obtient les certificats au premier démarrage ; sans DNS valide il échoue et réessaie).
-- `infra/.env.prod` créé depuis `infra/.env.prod.example`, droits `600`, hors dépôt. Le script refuse un autre mode. `bash infra/scripts/configure-env.sh` y renseigne, sans écho ni affichage des secrets, l'e-mail Let's Encrypt (`ACME_EMAIL`), le stockage objet (`MEDIA_*`) et le destinataire GPG des sauvegardes (`BACKUP_GPG_RECIPIENT`).
+- `infra/.env.prod` créé depuis `infra/.env.prod.example`, droits `600`, hors dépôt. Le script refuse un autre mode. `bash infra/scripts/configure-env.sh` y renseigne, sans écho ni affichage des secrets, l'e-mail Let's Encrypt (`ACME_EMAIL`), le stockage objet (`MEDIA_*`), le destinataire GPG des sauvegardes (`BACKUP_GPG_RECIPIENT`) et leur bucket distant (`BACKUP_BUCKET`, `BACKUP_ENDPOINT`, `BACKUP_AWS_*`).
 - Les clés et secrets fournis par le propriétaire (aucun n'est créé par l'équipe) : stockage objet `MEDIA_*`, `REDIS_PASSWORD`, `DB_PASSWORD`, `APP_KEY` (`php artisan key:generate --show`), Reverb, et si les fonctions sont ouvertes RevenueCat, FCM, LiveKit, Google et Apple, e-mail.
 - Pour les sauvegardes : `BACKUP_GPG_RECIPIENT` et le fichier de clé publique `BACKUP_GPG_PUBLIC_KEY_PATH` (`docs/runbooks/sauvegardes-chiffrement.md`). Le compose refuse de démarrer sans eux.
 - Une copie du dépôt sur le serveur, à l'étiquette à déployer (`git checkout vX.Y.Z`).
@@ -54,7 +54,7 @@ L'application démarre volontairement même si ces valeurs manquent (un démarra
 
 ## Après le premier déploiement : stockage objet (R2)
 
-Rien de ceci n'a été fait : le code S3 n'a jamais parlé à un vrai bucket.
+État au 2026-11-19 : buckets `media-prod` et `backups` créés, privés (r2.dev désactivé, aucun domaine personnalisé, pas de CORS). Règle de cycle de vie `exports-expire-8d` (préfixe `exports/`, 8 jours) posée sur `media-prod`. Les clés `MEDIA_*` ont été essayées au niveau S3 depuis le VPS (PUT, HEAD, GET, LIST, DELETE sur `media-prod` : OK ; liste de `backups` : 403, donc clés bien limitées). Un second jeton R2 (`ayelo-backups-r2-rw`, Object Read & Write limité au bucket `backups`) alimente `BACKUP_*` : PUT et DELETE sur `backups` OK, 403 sur `media-prod`. Le code de l'application n'a pas encore parlé au bucket (points 4 et 5).
 
 1. **Buckets privés** `media-prod` (et `media-staging`), sans accès public ni domaine personnalisé. Un bucket séparé `backups` pour les sauvegardes, avec ses propres clés (`BACKUP_*`).
 2. **Jeton d'API R2 limité** à « Object Read & Write » sur le seul bucket `media-prod` (pas de jeton de compte). C'est la valeur de `MEDIA_ACCESS_KEY` / `MEDIA_SECRET_KEY`. `MEDIA_ENDPOINT` = `https://<identifiant de compte>.r2.cloudflarestorage.com` (sans le nom du bucket ; le client utilise l'adressage par chemin). `MEDIA_REGION=auto`.
