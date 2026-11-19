@@ -17,8 +17,11 @@ Dernière mise à jour : 2026-11-18. Script : `infra/scripts/deploy.sh`. Contrô
 
 ```bash
 cd /srv/ayelo                      # copie du dépôt, à l'étiquette voulue
+git sparse-checkout set --no-cone '/backend/' '/infra/' '/web/' '/docs/schema/' '/.dockerignore'
 bash infra/scripts/deploy.sh --first
 ```
+
+Le serveur ne garde que ce qui sert à la production : `backend/`, `infra/`, `web/`, le schéma `docs/schema/001_initial.sql` (copié dans l'image PHP) et `.dockerignore`. Ni documentation, ni cahier des charges, ni application mobile, ni maquettes sur le serveur : c'est le rôle de `git sparse-checkout`, qui laisse `git fetch`, `git checkout` et `git pull` fonctionner. Pour revenir au dépôt complet : `git sparse-checkout disable`. L'historique git (`.git`) contient encore les fichiers retirés du disque.
 
 `--first` saute la sauvegarde préalable (base vide, service `backup` pas encore lancé). Ensuite :
 
