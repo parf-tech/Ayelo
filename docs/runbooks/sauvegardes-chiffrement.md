@@ -13,7 +13,7 @@ Contexte : revue CTO n°1, section 3.2. Avant : sans `BACKUP_GPG_RECIPIENT`, les
 Sur le poste du responsable (pas sur le VPS) :
 
 ```
-gpg --quick-generate-key "Ayelo backups <backups@example.invalid>" ed25519 encr 3y   # ou rsa4096
+gpg --quick-generate-key "Ayelo backups <backups@example.invalid>" default default 3y   # ed25519 + sous-clé de chiffrement cv25519 ; "ed25519 encr" échoue (« Wrong key usage »), "rsa4096 encr" convient aussi
 gpg --armor --export "Ayelo backups <backups@example.invalid>" > backup-public.asc
 # sauvegarde de la clé privée : gestionnaire de mots de passe + copie papier/clé USB dans un coffre
 gpg --armor --export-secret-keys "Ayelo backups <backups@example.invalid>" > backup-private.asc   # NE JAMAIS copier sur le serveur
