@@ -58,7 +58,8 @@ class Page(HTMLParser):
                 err(f'{self.rel}: id en double « {a["id"]} »')
             self.ids.add(a['id'])
         for attr in ('href', 'src', 'action'):
-            if a.get(attr) is not None:
+            # <link rel="canonical"> et <link rel="alternate" hreflang> décrivent le document (URL absolues obligatoires) : pas des ressources chargées.
+            if a.get(attr) is not None and not (tag == 'link' and a.get('rel') in ('canonical', 'alternate')):
                 self.links.append((tag, attr, a[attr]))
         if tag not in VOID:
             self.stack.append((tag, self.getpos()[0]))

@@ -19,6 +19,8 @@ GRACE_DAYS = 30
 # Origine publique de l'API (domaine {$API_DOMAIN} de Caddy). Tant que c'est un hôte .invalid, les formulaires de suppression
 # affichent « non relié au service ». Production : python web/tools/build.py --api-base https://<API_DOMAIN>
 API_BASE = 'https://api.example.invalid'
+# Origine publique du site : URL absolues pour hreflang, canonical et Open Graph.
+SITE = 'https://ayelo.fr'
 REPORT_DAYS = 365
 SANCTION_DAYS = 365
 
@@ -51,6 +53,12 @@ UI = {
         'todo': '[À COMPLÉTER : %s]',
         'footer': 'Version provisoire du site, brouillon 0.1 (2026-11-07). Aucun suivi, aucune statistique, aucune ressource externe.',
         'dir': 'Pages du site',
+        'og_locale': 'fr_FR',
+        'og_alt': 'Ayelo, application de rencontres : Rencontrez, échangez, aimez',
+        'anchors': [('confiance', 'Confiance'), ('comment', 'Comment ça marche'), ('faq', 'Questions')],
+        'foot_title': 'Informations essentielles',
+        'foot_soon': 'Bientôt sur l’App Store et Google Play. Une question ? <a href="page:support">Écrivez au support</a>.',
+        'foot_legal': 'Éditeur du service : {{dénomination de la société, adresse, numéro d’immatriculation}}. Directeur de la publication : {{nom}}. Hébergeur du site : {{nom et adresse de l’hébergeur}}.',
     },
     'en': {
         'skip': 'Skip to content',
@@ -65,6 +73,12 @@ UI = {
         'todo': '[TO BE COMPLETED: %s]',
         'footer': 'Provisional site version, draft 0.1 (2026-11-07). No tracking, no analytics, no external resource.',
         'dir': 'Site pages',
+        'og_locale': 'en_US',
+        'og_alt': 'Ayelo, a dating app: Meet, chat, love',
+        'anchors': [('confiance', 'Trust'), ('comment', 'How it works'), ('faq', 'Questions')],
+        'foot_title': 'Key information',
+        'foot_soon': 'Coming soon to the App Store and Google Play. A question? <a href="page:support">Write to support</a>.',
+        'foot_legal': 'Service publisher: {{company name, address, registration number}}. Publication director: {{name}}. Site host: {{host name and address}}.',
     },
 }
 
@@ -73,49 +87,159 @@ UI = {
 # ---------------------------------------------------------------------------------------------------------------------
 PAGES = {}
 
-# ----- Accueil -----
+# ----- Accueil (landing) -----
+# Le symbole animé du héros : mêmes tracés que assets/brand/ayelo-symbole.svg (maître de la charte), découpés en trois groupes
+# (bulle arrière, bulle avant, cœur) pour que les deux bulles puissent se rejoindre. Aucune valeur de couleur nouvelle :
+# les dégradés sont ceux du symbole.
+HERO_SYMBOL = """<svg class="stage-symbol" viewBox="40 0 390 350" width="390" height="350" focusable="false" aria-hidden="true">
+<defs>
+<linearGradient id="g-warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB21A"/><stop offset=".55" stop-color="#FF713D"/><stop offset="1" stop-color="#F01883"/></linearGradient>
+<linearGradient id="g-pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF168C"/><stop offset="1" stop-color="#B90072"/></linearGradient>
+<linearGradient id="g-inner" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6D0A63"/><stop offset="1" stop-color="#3E0B4F"/></linearGradient>
+</defs>
+<g class="bubble bubble-back"><path d="M72 150 C72 76 132 25 207 25 C258 25 301 52 327 93 C350 129 348 173 327 207 C307 239 273 258 232 260 L173 315 L178 249 C112 231 72 198 72 150Z" fill="url(#g-warm)"/></g>
+<g class="bubble bubble-front"><path d="M157 159 C157 91 207 48 270 48 C316 48 353 71 377 107 C401 143 396 185 371 216 C348 245 310 259 267 260 L218 315 L222 252 C181 233 157 201 157 159Z" fill="url(#g-pink)"/></g>
+<g class="core"><path d="M270 105 C247 75 199 82 187 119 C175 157 205 184 270 231 C335 184 365 157 353 119 C341 82 293 75 270 105Z" fill="url(#g-inner)" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+<circle cx="225" cy="151" r="10" fill="#FFFFFF"/><circle cx="270" cy="151" r="10" fill="#FFFFFF"/><circle cx="315" cy="151" r="10" fill="#FFFFFF"/></g>
+</svg>"""
+
+# Icônes : un seul jeu (traits de 1,5, coins arrondis, 24 px), dessinées pour la page, décoratives (aria-hidden).
+ICON_SHIELD = '<svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>'
+ICON_FLAG = '<svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/></svg>'
+ICON_ALERT = '<svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+
 PAGES['index'] = {
-    'fr': ('Accueil', 'Ayelo, application de rencontres pour personnes majeures : règles de la communauté, sécurité, support et suppression de compte.', f"""
-<section class="hero">
-<div class="hero-text">
+    'fr': ('Rencontrez, échangez, aimez', 'Ayelo, application de rencontres pour personnes majeures : dites ce que vous cherchez, découvrez des profils qui y répondent, échangez quand l’intérêt est réciproque. Signalement, blocage et profils vérifiés.', """
+<section class="stage on-brand">
+<div class="wrap stage-grid">
+<div class="stage-copy">
 <h1>Rencontrez, échangez, aimez</h1>
-<p class="lead">Ayelo est une application de rencontres pour personnes majeures : se rencontrer, échanger et s’appeler. Ce site rassemble les informations publiques du service.</p>
-<p class="get">Télécharger l’application : {{{{liens App Store et Google Play}}}}</p>
+<p class="stage-lead">Ayelo est une application de rencontres pour personnes majeures. Dites ce que vous cherchez, découvrez des profils qui y répondent, puis échangez quand l’intérêt est réciproque.</p>
+<p class="stage-actions"><a class="btn btn-light" href="#comment">Voir comment ça marche</a><a class="btn btn-line" href="page:safety">Sécurité et signalement</a></p>
+<p class="stage-soon"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Bientôt sur l’App Store et Google Play</p>
 </div>
-<div class="hero-mark" aria-hidden="true"><img class="mark" src="@@BRAND@@/ayelo-symbole.svg" alt="" width="112" height="100"><span class="wordmark">Ayelo</span></div>
+<div class="stage-scene" role="img" aria-label="Aperçu fictif de l’application : une conversation entre deux membres, avec un indicateur de saisie.">
+@@SYMBOL@@
+<div class="phone"><div class="phone-screen">
+<div class="chat-head"><span class="avatar">A</span><span class="who"><b>Amina</b><small>Montréal · Origine : Maroc</small></span><span class="badge-ver">Vérifié</span></div>
+<div class="chat-body">
+<p class="msg in">Bonjour ! Ton profil m’a fait sourire. Tu cherches quoi ici ?</p>
+<p class="msg out">Bonjour Amina. Une relation durable. Et toi ?</p>
+<p class="msg in">Pareil. On se découvre doucement ?</p>
+<p class="msg in typing"><i></i><i></i><i></i></p>
+</div>
+</div></div>
+</div>
+</div>
 </section>
-<h2>Informations essentielles</h2>
-<ul class="rows">
-  <li><a href="page:terms"><strong>Conditions d’utilisation</strong><span>Ce que vous pouvez attendre du service, et ce que nous attendons de vous</span></a></li>
-  <li><a href="page:privacy"><strong>Politique de confidentialité</strong><span>Les données que nous traitons, pourquoi, et combien de temps</span></a></li>
-  <li><a href="page:community"><strong>Règles de la communauté</strong><span>Respect, consentement, zéro arnaque</span></a></li>
-  <li><a href="page:safety"><strong>Sécurité et signalement</strong><span>Bloquer, signaler, se protéger lors d’une rencontre</span></a></li>
-  <li><a href="page:support"><strong>Support et contact</strong><span>Une question, un problème, une demande liée à vos données</span></a></li>
-  <li><a href="page:delete"><strong>Supprimer mon compte</strong><span>Dans l’application ou depuis cette page, délai de {GRACE_DAYS} jours</span></a></li>
-</ul>
-<div class="callout notice"><span class="figure" aria-hidden="true">18+</span><p>Le service est réservé aux personnes de <strong>18 ans et plus</strong>. Nous ne vérifions pas l’identité des membres : voir « Sécurité et signalement ».</p></div>
-<p class="small">Éditeur du service : {{{{dénomination de la société, adresse, numéro d’immatriculation}}}}. Directeur de la publication : {{{{nom}}}}. Hébergeur du site : {{{{nom et adresse de l’hébergeur}}}}.</p>
+
+<section class="section" id="confiance" aria-labelledby="t-confiance">
+<div class="wrap">
+<div class="section-head"><h2 id="t-confiance">Des protections dès le premier message</h2><p>Ce que l’application met en place, avec ses limites.</p></div>
+<div class="proofs">
+<article class="proof proof-a">@@SHIELD@@<h3>Profils vérifiés</h3><p>Un badge indique qu’une revue de photo a été faite. Ce n’est pas une garantie d’identité : nous ne contrôlons pas les pièces d’identité, restez vigilant.</p><p class="proof-demo"><span class="badge-ver">Vérifié</span></p></article>
+<article class="proof proof-b">@@FLAG@@<h3>Signaler et bloquer</h3><p>Depuis une carte, un profil ou une conversation, ouvrez le menu et choisissez « Signaler ». Vous pouvez aussi bloquer la personne.</p></article>
+<article class="proof proof-c">@@ALERT@@<h3>Un rappel contre les arnaques</h3><p>Ne versez jamais d’argent à une personne rencontrée en ligne. L’application vous le rappelle.</p></article>
+<article class="proof proof-d"><p class="figure" aria-hidden="true">18+</p><div><h3>Réservé aux adultes</h3><p>Le service est réservé aux personnes de 18 ans et plus. L’âge est demandé avant la création du compte ; nous ne demandons pas de pièce d’identité.</p></div></article>
+</div>
+</div>
+</section>
+
+<section class="section section-steps" id="comment" aria-labelledby="t-comment">
+<div class="wrap">
+<div class="section-head"><h2 id="t-comment">Trois étapes</h2></div>
+<ol class="steps">
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span><h3>Créez votre profil</h3><p>Indiquez votre âge, quelques informations sur vous et ce que vous cherchez : mariage, relation durable, flirt, amitié ou « on verra bien ».</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><h3>Découvrez des profils</h3><p>Affinez selon le pays d’origine, le pays de résidence et l’intention. Vous pouvez signaler ou bloquer à tout moment.</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span><h3>Échangez</h3><p>Quand l’intérêt est réciproque, c’est un match : vous pouvez vous écrire.</p></li>
+</ol>
+</div>
+</section>
+
+<section class="section band" id="intentions" aria-labelledby="t-intentions">
+<div class="wrap intent">
+<div><h2 id="t-intentions">Chacun cherche quelque chose de différent</h2><p>Vous indiquez votre genre et celui que vous recherchez, puis ce qui compte pour vous. Vous pouvez aussi affiner par pays d’origine et pays de résidence.</p></div>
+<ul class="chips" aria-label="Les cinq intentions proposées"><li>Mariage</li><li>Relation durable</li><li>Flirt</li><li>Amitié</li><li>On verra bien</li></ul>
+</div>
+</section>
+
+<section class="section" id="faq" aria-labelledby="t-faq">
+<div class="wrap faq">
+<div class="section-head"><h2 id="t-faq">Questions fréquentes</h2></div>
+<div class="faq-list">
+<details><summary>Quel âge faut-il avoir ?</summary><p>18 ans et plus. L’âge est demandé avant la création du compte. Nous ne demandons pas de pièce d’identité.</p></details>
+<details><summary>Que veut dire « profil vérifié » ?</summary><p>Une revue de photo a été faite sur ce profil. Ce n’est pas une garantie d’identité : ne versez jamais d’argent à une personne rencontrée en ligne. <a href="page:safety">Sécurité et signalement</a></p></details>
+<details><summary>Comment signaler quelqu’un ?</summary><p>Depuis une carte, un profil ou une conversation, ouvrez le menu et choisissez « Signaler ». Vous pouvez aussi bloquer la personne. <a href="page:community">Règles de la communauté</a></p></details>
+<details><summary>Comment supprimer mon compte ?</summary><p>Dans l’application, ou depuis la page « Supprimer mon compte ». Le profil est masqué tout de suite, puis les données sont anonymisées après @@GRACE@@ jours. <a href="page:delete">Supprimer mon compte</a></p></details>
+</div>
+</div>
+</section>
 """),
-    'en': ('Home', 'Ayelo, a dating application for adults: community rules, safety, support and account deletion.', f"""
-<section class="hero">
-<div class="hero-text">
+    'en': ('Meet, chat, love', 'Ayelo, a dating app for adults: say what you are looking for, discover profiles that fit, chat once the interest is mutual. Reporting, blocking and verified profiles.', """
+<section class="stage on-brand">
+<div class="wrap stage-grid">
+<div class="stage-copy">
 <h1>Meet, chat, love</h1>
-<p class="lead">Ayelo is a dating application for adults: meet people, chat and call. This site gathers the public information about the service.</p>
-<p class="get">Download the application: {{{{App Store and Google Play links}}}}</p>
+<p class="stage-lead">Ayelo is a dating app for adults. Say what you are looking for, discover profiles that fit, then chat once the interest is mutual.</p>
+<p class="stage-actions"><a class="btn btn-light" href="#comment">See how it works</a><a class="btn btn-line" href="page:safety">Safety and reporting</a></p>
+<p class="stage-soon"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Coming soon to the App Store and Google Play</p>
 </div>
-<div class="hero-mark" aria-hidden="true"><img class="mark" src="@@BRAND@@/ayelo-symbole.svg" alt="" width="112" height="100"><span class="wordmark">Ayelo</span></div>
+<div class="stage-scene" role="img" aria-label="Fictional preview of the app: a conversation between two members, with a typing indicator.">
+@@SYMBOL@@
+<div class="phone"><div class="phone-screen">
+<div class="chat-head"><span class="avatar">A</span><span class="who"><b>Amina</b><small>Montréal · Origin: Morocco</small></span><span class="badge-ver">Verified</span></div>
+<div class="chat-body">
+<p class="msg in">Hi! Your profile made me smile. What are you looking for here?</p>
+<p class="msg out">Hi Amina. A lasting relationship. And you?</p>
+<p class="msg in">Same. Shall we get to know each other slowly?</p>
+<p class="msg in typing"><i></i><i></i><i></i></p>
+</div>
+</div></div>
+</div>
+</div>
 </section>
-<h2>Key information</h2>
-<ul class="rows">
-  <li><a href="page:terms"><strong>Terms of use</strong><span>What you can expect from the service, and what we expect from you</span></a></li>
-  <li><a href="page:privacy"><strong>Privacy policy</strong><span>The data we process, why, and for how long</span></a></li>
-  <li><a href="page:community"><strong>Community rules</strong><span>Respect, consent, zero scams</span></a></li>
-  <li><a href="page:safety"><strong>Safety and reporting</strong><span>Block, report, stay safe when you meet someone</span></a></li>
-  <li><a href="page:support"><strong>Support and contact</strong><span>A question, a problem, a request about your data</span></a></li>
-  <li><a href="page:delete"><strong>Delete my account</strong><span>In the app or from this page, {GRACE_DAYS}-day delay</span></a></li>
-</ul>
-<div class="callout notice"><span class="figure" aria-hidden="true">18+</span><p>The service is reserved for people aged <strong>18 and over</strong>. We do not verify the identity of members: see “Safety and reporting”.</p></div>
-<p class="small">Service publisher: {{{{company name, address, registration number}}}}. Publication director: {{{{name}}}}. Site host: {{{{host name and address}}}}.</p>
+
+<section class="section" id="confiance" aria-labelledby="t-confiance">
+<div class="wrap">
+<div class="section-head"><h2 id="t-confiance">Protections from the first message</h2><p>What the app puts in place, and where it stops.</p></div>
+<div class="proofs">
+<article class="proof proof-a">@@SHIELD@@<h3>Verified profiles</h3><p>A badge means a photo review was done. It is not a guarantee of identity: we do not check identity documents, so stay alert.</p><p class="proof-demo"><span class="badge-ver">Verified</span></p></article>
+<article class="proof proof-b">@@FLAG@@<h3>Report and block</h3><p>From a card, a profile or a conversation, open the menu and choose “Report”. You can also block the person.</p></article>
+<article class="proof proof-c">@@ALERT@@<h3>A reminder about scams</h3><p>Never send money to someone you met online. The app reminds you.</p></article>
+<article class="proof proof-d"><p class="figure" aria-hidden="true">18+</p><div><h3>Adults only</h3><p>The service is reserved for people aged 18 and over. Your age is asked before the account is created; we do not ask for an identity document.</p></div></article>
+</div>
+</div>
+</section>
+
+<section class="section section-steps" id="comment" aria-labelledby="t-comment">
+<div class="wrap">
+<div class="section-head"><h2 id="t-comment">Three steps</h2></div>
+<ol class="steps">
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span><h3>Create your profile</h3><p>Give your age, a few details about you and what you are looking for: marriage, a lasting relationship, a fling, friendship or “let’s see”.</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><h3>Discover profiles</h3><p>Refine by country of origin, country of residence and intention. You can report or block at any time.</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span><h3>Chat</h3><p>When the interest is mutual, it is a match: you can write to each other.</p></li>
+</ol>
+</div>
+</section>
+
+<section class="section band" id="intentions" aria-labelledby="t-intentions">
+<div class="wrap intent">
+<div><h2 id="t-intentions">Everyone is looking for something different</h2><p>You give your gender and the one you are looking for, then what matters to you. You can also refine by country of origin and country of residence.</p></div>
+<ul class="chips" aria-label="The five intentions"><li>Marriage</li><li>Lasting relationship</li><li>Fling</li><li>Friendship</li><li>Let’s see</li></ul>
+</div>
+</section>
+
+<section class="section" id="faq" aria-labelledby="t-faq">
+<div class="wrap faq">
+<div class="section-head"><h2 id="t-faq">Frequently asked questions</h2></div>
+<div class="faq-list">
+<details><summary>How old do I have to be?</summary><p>18 and over. Your age is asked before the account is created. We do not ask for an identity document.</p></details>
+<details><summary>What does “verified profile” mean?</summary><p>A photo review was done on this profile. It is not a guarantee of identity: never send money to someone you met online. <a href="page:safety">Safety and reporting</a></p></details>
+<details><summary>How do I report someone?</summary><p>From a card, a profile or a conversation, open the menu and choose “Report”. You can also block the person. <a href="page:community">Community rules</a></p></details>
+<details><summary>How do I delete my account?</summary><p>In the app, or from the “Delete my account” page. The profile is hidden right away, then the data is anonymised after @@GRACE@@ days. <a href="page:delete">Delete my account</a></p></details>
+</div>
+</div>
+</section>
 """),
 }
 
@@ -732,7 +856,19 @@ def rel(from_file: Path, to_file: Path) -> str:
     return os.path.relpath(to_file, from_file.parent).replace('\\', '/')
 
 
+def abs_url(lang, key):
+    """URL publique absolue d'une page (hreflang, canonical, Open Graph : les URL relatives y sont invalides)."""
+    path = PATHS[key]
+    if path.endswith('index.html'):
+        path = path[:-len('index.html')]
+    elif path.endswith('.html'):
+        path = path[:-len('.html')]
+    return SITE + '/' + ('en/' if lang == 'en' else '') + path
+
+
 def fill(text: str, lang: str, here: Path) -> str:
+    text = text.replace('@@SYMBOL@@', HERO_SYMBOL).replace('@@SHIELD@@', ICON_SHIELD).replace('@@FLAG@@', ICON_FLAG).replace('@@ALERT@@', ICON_ALERT)
+    text = text.replace('@@GRACE@@', str(GRACE_DAYS))
     text = re.sub(r'\{\{(.+?)\}\}', lambda m: '<mark class="todo">' + (UI[lang]['todo'] % m.group(1)) + '</mark>', text)
     text = text.replace('@@API@@', API_BASE)
     text = text.replace('@@BRAND@@', rel(here, ROOT / 'assets' / 'brand'))
@@ -748,18 +884,68 @@ def render(lang: str, key: str) -> str:
     other_href = rel(here, out_path(other, key))
     assets = rel(here, ROOT / 'assets')
     root_index = rel(here, out_path(lang, 'index'))
+    landing = key == 'index'
 
     def links(keys):
         return '\n'.join(
             '<li><a href="%s"%s>%s</a></li>' % (rel(here, out_path(lang, k)), ' aria-current="page"' if k == key else '', ui['nav'][k])
             for k in keys)
-    nav_bar = links(NAV_BAR)
-    nav_menu = links(NAV)
+    if landing:
+        # La landing : le menu porte les ancres de la page ; toutes les pages légales sont dans le pied de page.
+        nav_bar = nav_menu = '\n'.join('<li><a href="#%s">%s</a></li>' % a for a in ui['anchors'])
+    else:
+        nav_bar = links(NAV_BAR)
+        nav_menu = links(NAV)
     footer_links = links(NAV_FOOT)
-    robots = '<meta name="robots" content="noindex">\n' if key == 'confirm' else ''
+    noindex = key == 'confirm'
+    robots = '<meta name="robots" content="noindex">\n' if noindex else ''
     script = '<script src="%s/deletion.js" defer></script>\n' % assets if key in ('delete', 'confirm') else ''
     brand = ui['brand']
     page_title = '%s – %s' % (title, ui['brand'])
+    url = abs_url(lang, key)
+    seo = '' if noindex else f"""<link rel="canonical" href="{url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{brand}">
+<meta property="og:title" content="{page_title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="{url}">
+<meta property="og:locale" content="{ui['og_locale']}">
+<meta property="og:image" content="{SITE}/assets/brand/ayelo-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{ui['og_alt']}">
+<meta name="twitter:card" content="summary_large_image">
+"""
+    head_extra = ''
+    if landing:
+        head_extra = f"""<meta name="theme-color" content="#4B0F5B">
+<link rel="preload" href="{assets}/fonts/Poppins-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{assets}/fonts/Poppins-400.woff2" as="font" type="font/woff2" crossorigin>
+"""
+
+    header_cls = 'site on-brand' if landing else 'site'
+    if landing:
+        main = f'<main id="contenu">\n{body.strip()}\n</main>'
+        legal_links = '\n'.join(
+            '<li><a href="%s">%s</a></li>' % (rel(here, out_path(lang, k)), ui['nav'][k]) for k in ('terms', 'privacy', 'community', 'safety', 'support', 'delete'))
+        foot = f"""<footer class="site site-landing on-brand">
+<div class="wrap">
+<div class="foot-top"><p class="foot-brand"><img class="mark" src="{assets}/brand/ayelo-symbole.svg" alt="" width="40" height="36"><span>{brand}</span></p><p class="foot-soon">{ui['foot_soon']}</p></div>
+<nav class="foot-nav" aria-label="{ui['foot_title']}"><ul>
+{legal_links}
+</ul></nav>
+<p class="foot-legal">{ui['foot_legal']}</p>
+<p class="foot-meta">{ui['footer']}</p>
+</div>
+</footer>"""
+    else:
+        main = f'<main id="contenu"><div class="wrap">\n{body.strip()}\n</div></main>'
+        foot = f"""<footer class="site"><div class="wrap">
+<ul>
+{footer_links}
+</ul>
+<p>{ui['footer']}</p>
+</div></footer>"""
 
     html = f"""<!doctype html>
 <html lang="{lang}">
@@ -769,8 +955,10 @@ def render(lang: str, key: str) -> str:
 <meta name="color-scheme" content="light dark">
 {robots}<title>{page_title}</title>
 <meta name="description" content="{desc}">
-<link rel="alternate" hreflang="{other}" href="{other_href}">
-<link rel="icon" href="{rel(here, ROOT / 'favicon.svg')}" type="image/svg+xml">
+<link rel="alternate" hreflang="fr" href="{abs_url('fr', key)}">
+<link rel="alternate" hreflang="en" href="{abs_url('en', key)}">
+<link rel="alternate" hreflang="x-default" href="{abs_url('fr', key)}">
+{seo}{head_extra}<link rel="icon" href="{rel(here, ROOT / 'favicon.svg')}" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{assets}/brand/ayelo-app-icon-1024.png">
 <link rel="stylesheet" href="{assets}/tokens.css">
 <link rel="stylesheet" href="{assets}/site.css">
@@ -778,7 +966,7 @@ def render(lang: str, key: str) -> str:
 <body class="page-{key}">
 <a class="skip" href="#contenu">{ui['skip']}</a>
 <div class="banner" role="note"><div class="wrap"><p>{ui['banner']}</p></div></div>
-<header class="site"><div class="wrap">
+<header class="{header_cls}"><div class="wrap">
 <a class="brand" href="{root_index}"{' aria-current="page"' if key == 'index' else ''}><img class="mark" src="{assets}/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>{brand}</span></a>
 <nav class="nav-bar" aria-label="{ui['dir']}"><ul>
 {nav_bar}
@@ -789,15 +977,8 @@ def render(lang: str, key: str) -> str:
 {nav_menu}
 </ul></nav></details>
 </div></header>
-<main id="contenu"><div class="wrap">
-{body.strip()}
-</div></main>
-<footer class="site"><div class="wrap">
-<ul>
-{footer_links}
-</ul>
-<p>{ui['footer']}</p>
-</div></footer>
+{main}
+{foot}
 {script}</body>
 </html>
 """

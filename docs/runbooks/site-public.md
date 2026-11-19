@@ -101,6 +101,10 @@ Notes :
 
 Site publié sur le **domaine nu** : `WEB_DOMAIN=ayelo.fr`, `APP_WEB_URL=https://ayelo.fr` (même origine pour l'e-mail de suppression et pour CORS), `REVERB_ALLOWED_ORIGINS=ayelo.fr,ws.ayelo.fr`. `www.ayelo.fr` redirige en 301 vers `https://ayelo.fr` (dernier bloc du Caddyfile, `www.{$WEB_DOMAIN}`). DNS : A `ayelo.fr` et A `www.ayelo.fr` vers le VPS, en DNS seul (pas de proxy Cloudflare : Caddy obtient lui-même les certificats). Pages régénérées avec `--api-base https://api.ayelo.fr`. `/.well-known/security.txt` (modèle « NE PAS PUBLIER ») est masqué par le bloc `@private` jusqu'à ce qu'une vraie adresse soit renseignée. Les marqueurs « À COMPLÉTER » et la bannière « Version provisoire, à valider par un juriste » restent affichés tant que le propriétaire n'a pas fourni les valeurs.
 
+## Landing (refonte du 2026-11-19)
+
+L'accueil est une vraie landing (héros violet avec le symbole animé, confiance, trois étapes, intentions, questions fréquentes), générée par `web/tools/build.py` (`PAGES['index']`, rendu propre à `key == 'index'` dans `render()`) et stylée dans `web/assets/site.css` (section « Landing »). Brief : `docs/design/PROMPT-LANDING.md` ; plan, mesures et captures : `docs/design/07-landing.md`. Les pages légales gardent leur mise en page ; toutes les pages ont désormais `hreflang`, `canonical` et Open Graph en URL absolues (`SITE` dans `build.py`) et l'image de partage `assets/brand/ayelo-og.png` (1200 × 630). Ne jamais utiliser `--color-surface` comme texte clair sur le violet de marque (il devient sombre en thème sombre) : utiliser `--on-brand-muted`.
+
 ## Commande de production
 
 Depuis la racine du dépôt, une fois `API_DOMAIN` connu (même valeur que dans `infra/.env.prod`), avec le schéma `https://` et sans barre finale :

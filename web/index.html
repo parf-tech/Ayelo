@@ -4,9 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Accueil – Ayelo</title>
-<meta name="description" content="Ayelo, application de rencontres pour personnes majeures : règles de la communauté, sécurité, support et suppression de compte.">
-<link rel="alternate" hreflang="en" href="en/index.html">
+<title>Rencontrez, échangez, aimez – Ayelo</title>
+<meta name="description" content="Ayelo, application de rencontres pour personnes majeures : dites ce que vous cherchez, découvrez des profils qui y répondent, échangez quand l’intérêt est réciproque. Signalement, blocage et profils vérifiés.">
+<link rel="alternate" hreflang="fr" href="https://ayelo.fr/">
+<link rel="alternate" hreflang="en" href="https://ayelo.fr/en/">
+<link rel="alternate" hreflang="x-default" href="https://ayelo.fr/">
+<link rel="canonical" href="https://ayelo.fr/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ayelo">
+<meta property="og:title" content="Rencontrez, échangez, aimez – Ayelo">
+<meta property="og:description" content="Ayelo, application de rencontres pour personnes majeures : dites ce que vous cherchez, découvrez des profils qui y répondent, échangez quand l’intérêt est réciproque. Signalement, blocage et profils vérifiés.">
+<meta property="og:url" content="https://ayelo.fr/">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://ayelo.fr/assets/brand/ayelo-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ayelo, application de rencontres : Rencontrez, échangez, aimez">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#4B0F5B">
+<link rel="preload" href="assets/fonts/Poppins-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Poppins-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/brand/ayelo-app-icon-1024.png">
 <link rel="stylesheet" href="assets/tokens.css">
@@ -15,53 +32,111 @@
 <body class="page-index">
 <a class="skip" href="#contenu">Aller au contenu</a>
 <div class="banner" role="note"><div class="wrap"><p><strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.</p></div></div>
-<header class="site"><div class="wrap">
+<header class="site on-brand"><div class="wrap">
 <a class="brand" href="index.html" aria-current="page"><img class="mark" src="assets/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>Ayelo</span></a>
 <nav class="nav-bar" aria-label="Pages du site"><ul>
-<li><a href="legal/terms.html">Conditions d’utilisation</a></li>
-<li><a href="legal/privacy.html">Confidentialité</a></li>
-<li><a href="legal/community.html">Règles de la communauté</a></li>
-<li><a href="safety.html">Sécurité et signalement</a></li>
-<li><a href="support.html">Support</a></li>
+<li><a href="#confiance">Confiance</a></li>
+<li><a href="#comment">Comment ça marche</a></li>
+<li><a href="#faq">Questions</a></li>
 </ul></nav>
 <a class="lang" href="en/index.html" lang="en" hreflang="en" aria-label="Read this page in English">English</a>
 <details class="menu"><summary>Menu</summary>
 <nav aria-label="Pages du site"><ul>
-<li><a href="index.html" aria-current="page">Accueil</a></li>
+<li><a href="#confiance">Confiance</a></li>
+<li><a href="#comment">Comment ça marche</a></li>
+<li><a href="#faq">Questions</a></li>
+</ul></nav></details>
+</div></header>
+<main id="contenu">
+<section class="stage on-brand">
+<div class="wrap stage-grid">
+<div class="stage-copy">
+<h1>Rencontrez, échangez, aimez</h1>
+<p class="stage-lead">Ayelo est une application de rencontres pour personnes majeures. Dites ce que vous cherchez, découvrez des profils qui y répondent, puis échangez quand l’intérêt est réciproque.</p>
+<p class="stage-actions"><a class="btn btn-light" href="#comment">Voir comment ça marche</a><a class="btn btn-line" href="safety.html">Sécurité et signalement</a></p>
+<p class="stage-soon"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Bientôt sur l’App Store et Google Play</p>
+</div>
+<div class="stage-scene" role="img" aria-label="Aperçu fictif de l’application : une conversation entre deux membres, avec un indicateur de saisie.">
+<svg class="stage-symbol" viewBox="40 0 390 350" width="390" height="350" focusable="false" aria-hidden="true">
+<defs>
+<linearGradient id="g-warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB21A"/><stop offset=".55" stop-color="#FF713D"/><stop offset="1" stop-color="#F01883"/></linearGradient>
+<linearGradient id="g-pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF168C"/><stop offset="1" stop-color="#B90072"/></linearGradient>
+<linearGradient id="g-inner" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6D0A63"/><stop offset="1" stop-color="#3E0B4F"/></linearGradient>
+</defs>
+<g class="bubble bubble-back"><path d="M72 150 C72 76 132 25 207 25 C258 25 301 52 327 93 C350 129 348 173 327 207 C307 239 273 258 232 260 L173 315 L178 249 C112 231 72 198 72 150Z" fill="url(#g-warm)"/></g>
+<g class="bubble bubble-front"><path d="M157 159 C157 91 207 48 270 48 C316 48 353 71 377 107 C401 143 396 185 371 216 C348 245 310 259 267 260 L218 315 L222 252 C181 233 157 201 157 159Z" fill="url(#g-pink)"/></g>
+<g class="core"><path d="M270 105 C247 75 199 82 187 119 C175 157 205 184 270 231 C335 184 365 157 353 119 C341 82 293 75 270 105Z" fill="url(#g-inner)" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+<circle cx="225" cy="151" r="10" fill="#FFFFFF"/><circle cx="270" cy="151" r="10" fill="#FFFFFF"/><circle cx="315" cy="151" r="10" fill="#FFFFFF"/></g>
+</svg>
+<div class="phone"><div class="phone-screen">
+<div class="chat-head"><span class="avatar">A</span><span class="who"><b>Amina</b><small>Montréal · Origine : Maroc</small></span><span class="badge-ver">Vérifié</span></div>
+<div class="chat-body">
+<p class="msg in">Bonjour ! Ton profil m’a fait sourire. Tu cherches quoi ici ?</p>
+<p class="msg out">Bonjour Amina. Une relation durable. Et toi ?</p>
+<p class="msg in">Pareil. On se découvre doucement ?</p>
+<p class="msg in typing"><i></i><i></i><i></i></p>
+</div>
+</div></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="confiance" aria-labelledby="t-confiance">
+<div class="wrap">
+<div class="section-head"><h2 id="t-confiance">Des protections dès le premier message</h2><p>Ce que l’application met en place, avec ses limites.</p></div>
+<div class="proofs">
+<article class="proof proof-a"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><h3>Profils vérifiés</h3><p>Un badge indique qu’une revue de photo a été faite. Ce n’est pas une garantie d’identité : nous ne contrôlons pas les pièces d’identité, restez vigilant.</p><p class="proof-demo"><span class="badge-ver">Vérifié</span></p></article>
+<article class="proof proof-b"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/></svg><h3>Signaler et bloquer</h3><p>Depuis une carte, un profil ou une conversation, ouvrez le menu et choisissez « Signaler ». Vous pouvez aussi bloquer la personne.</p></article>
+<article class="proof proof-c"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><h3>Un rappel contre les arnaques</h3><p>Ne versez jamais d’argent à une personne rencontrée en ligne. L’application vous le rappelle.</p></article>
+<article class="proof proof-d"><p class="figure" aria-hidden="true">18+</p><div><h3>Réservé aux adultes</h3><p>Le service est réservé aux personnes de 18 ans et plus. L’âge est demandé avant la création du compte ; nous ne demandons pas de pièce d’identité.</p></div></article>
+</div>
+</div>
+</section>
+
+<section class="section section-steps" id="comment" aria-labelledby="t-comment">
+<div class="wrap">
+<div class="section-head"><h2 id="t-comment">Trois étapes</h2></div>
+<ol class="steps">
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></span><h3>Créez votre profil</h3><p>Indiquez votre âge, quelques informations sur vous et ce que vous cherchez : mariage, relation durable, flirt, amitié ou « on verra bien ».</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span><h3>Découvrez des profils</h3><p>Affinez selon le pays d’origine, le pays de résidence et l’intention. Vous pouvez signaler ou bloquer à tout moment.</p></li>
+<li><span class="step-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span><h3>Échangez</h3><p>Quand l’intérêt est réciproque, c’est un match : vous pouvez vous écrire.</p></li>
+</ol>
+</div>
+</section>
+
+<section class="section band" id="intentions" aria-labelledby="t-intentions">
+<div class="wrap intent">
+<div><h2 id="t-intentions">Chacun cherche quelque chose de différent</h2><p>Vous indiquez votre genre et celui que vous recherchez, puis ce qui compte pour vous. Vous pouvez aussi affiner par pays d’origine et pays de résidence.</p></div>
+<ul class="chips" aria-label="Les cinq intentions proposées"><li>Mariage</li><li>Relation durable</li><li>Flirt</li><li>Amitié</li><li>On verra bien</li></ul>
+</div>
+</section>
+
+<section class="section" id="faq" aria-labelledby="t-faq">
+<div class="wrap faq">
+<div class="section-head"><h2 id="t-faq">Questions fréquentes</h2></div>
+<div class="faq-list">
+<details><summary>Quel âge faut-il avoir ?</summary><p>18 ans et plus. L’âge est demandé avant la création du compte. Nous ne demandons pas de pièce d’identité.</p></details>
+<details><summary>Que veut dire « profil vérifié » ?</summary><p>Une revue de photo a été faite sur ce profil. Ce n’est pas une garantie d’identité : ne versez jamais d’argent à une personne rencontrée en ligne. <a href="safety.html">Sécurité et signalement</a></p></details>
+<details><summary>Comment signaler quelqu’un ?</summary><p>Depuis une carte, un profil ou une conversation, ouvrez le menu et choisissez « Signaler ». Vous pouvez aussi bloquer la personne. <a href="legal/community.html">Règles de la communauté</a></p></details>
+<details><summary>Comment supprimer mon compte ?</summary><p>Dans l’application, ou depuis la page « Supprimer mon compte ». Le profil est masqué tout de suite, puis les données sont anonymisées après 30 jours. <a href="account/delete.html">Supprimer mon compte</a></p></details>
+</div>
+</div>
+</section>
+</main>
+<footer class="site site-landing on-brand">
+<div class="wrap">
+<div class="foot-top"><p class="foot-brand"><img class="mark" src="assets/brand/ayelo-symbole.svg" alt="" width="40" height="36"><span>Ayelo</span></p><p class="foot-soon">Bientôt sur l’App Store et Google Play. Une question ? <a href="support.html">Écrivez au support</a>.</p></div>
+<nav class="foot-nav" aria-label="Informations essentielles"><ul>
 <li><a href="legal/terms.html">Conditions d’utilisation</a></li>
 <li><a href="legal/privacy.html">Confidentialité</a></li>
 <li><a href="legal/community.html">Règles de la communauté</a></li>
 <li><a href="safety.html">Sécurité et signalement</a></li>
 <li><a href="support.html">Support</a></li>
 <li><a href="account/delete.html">Supprimer mon compte</a></li>
-</ul></nav></details>
-</div></header>
-<main id="contenu"><div class="wrap">
-<section class="hero">
-<div class="hero-text">
-<h1>Rencontrez, échangez, aimez</h1>
-<p class="lead">Ayelo est une application de rencontres pour personnes majeures : se rencontrer, échanger et s’appeler. Ce site rassemble les informations publiques du service.</p>
-<p class="get">Télécharger l’application : <mark class="todo">[À COMPLÉTER : liens App Store et Google Play]</mark></p>
+</ul></nav>
+<p class="foot-legal">Éditeur du service : <mark class="todo">[À COMPLÉTER : dénomination de la société, adresse, numéro d’immatriculation]</mark>. Directeur de la publication : <mark class="todo">[À COMPLÉTER : nom]</mark>. Hébergeur du site : <mark class="todo">[À COMPLÉTER : nom et adresse de l’hébergeur]</mark>.</p>
+<p class="foot-meta">Version provisoire du site, brouillon 0.1 (2026-11-07). Aucun suivi, aucune statistique, aucune ressource externe.</p>
 </div>
-<div class="hero-mark" aria-hidden="true"><img class="mark" src="assets/brand/ayelo-symbole.svg" alt="" width="112" height="100"><span class="wordmark">Ayelo</span></div>
-</section>
-<h2>Informations essentielles</h2>
-<ul class="rows">
-  <li><a href="legal/terms.html"><strong>Conditions d’utilisation</strong><span>Ce que vous pouvez attendre du service, et ce que nous attendons de vous</span></a></li>
-  <li><a href="legal/privacy.html"><strong>Politique de confidentialité</strong><span>Les données que nous traitons, pourquoi, et combien de temps</span></a></li>
-  <li><a href="legal/community.html"><strong>Règles de la communauté</strong><span>Respect, consentement, zéro arnaque</span></a></li>
-  <li><a href="safety.html"><strong>Sécurité et signalement</strong><span>Bloquer, signaler, se protéger lors d’une rencontre</span></a></li>
-  <li><a href="support.html"><strong>Support et contact</strong><span>Une question, un problème, une demande liée à vos données</span></a></li>
-  <li><a href="account/delete.html"><strong>Supprimer mon compte</strong><span>Dans l’application ou depuis cette page, délai de 30 jours</span></a></li>
-</ul>
-<div class="callout notice"><span class="figure" aria-hidden="true">18+</span><p>Le service est réservé aux personnes de <strong>18 ans et plus</strong>. Nous ne vérifions pas l’identité des membres : voir « Sécurité et signalement ».</p></div>
-<p class="small">Éditeur du service : <mark class="todo">[À COMPLÉTER : dénomination de la société, adresse, numéro d’immatriculation]</mark>. Directeur de la publication : <mark class="todo">[À COMPLÉTER : nom]</mark>. Hébergeur du site : <mark class="todo">[À COMPLÉTER : nom et adresse de l’hébergeur]</mark>.</p>
-</div></main>
-<footer class="site"><div class="wrap">
-<ul>
-<li><a href="account/delete.html">Supprimer mon compte</a></li>
-</ul>
-<p>Version provisoire du site, brouillon 0.1 (2026-11-07). Aucun suivi, aucune statistique, aucune ressource externe.</p>
-</div></footer>
+</footer>
 </body>
 </html>
