@@ -119,6 +119,10 @@ Héros A (violet plein cadre) ; aperçu « conversation » ; sections Confiance,
 
 **Limites** : mesures faites en local (le serveur de production ajoute de la latence et compresse avec Caddy) ; performance en ligne à remesurer après publication. Aucun essai sur un vrai appareil ni avec un lecteur d'écran. Les marqueurs « À COMPLÉTER » et le bandeau provisoire sont conservés (éditeur, directeur de la publication, hébergeur dans le pied de page).
 
-## 9. Suite
+## 9. Temps 3 : mise en ligne (2026-11-19)
 
-Temps 3 seulement après un « go » écrit : commit, push, `git pull --ff-only` sur le VPS (le dossier `web/` est monté en lecture seule, aucun redéploiement), vérification en ligne (200, `www` en 301, CSP intacte, polices et image de partage en 200, Lighthouse en ligne), mise à jour de `docs/runbooks/site-public.md`.
+Accord écrit du propriétaire (choix « Publier maintenant »). Commit `ec4fd18` poussé sur `origin/main`, VPS mis à jour par `git pull --ff-only` (le dossier `web/` est monté en lecture seule, aucun redéploiement).
+
+**Vérifié en ligne** : `https://ayelo.fr/` et `/en/` 200 ; `www.ayelo.fr` 301 vers l'apex ; `/legal/privacy` 200 ; `ayelo-og.png` 200 (99 982 octets) ; polices et `site.css` 200 ; `/.well-known/security.txt` et `/tools/build.py` 404 ; CSP `default-src 'self'` intacte ; `hreflang` fr, en, x-default, `canonical` et `og:image` absolus dans le HTML servi ; CORS du formulaire de suppression toujours accepté depuis `https://ayelo.fr` ; console sans erreur. **Lighthouse mobile en ligne : accessibilité 100, bonnes pratiques 100, SEO 100 (0 échec), CLS 0,00.** LCP en ligne non capturé (la trace a rendu un jeu « sans navigation » deux fois) : la valeur de 995 ms est celle de la version locale.
+
+**Reste ouvert** : marqueurs « À COMPLÉTER » (éditeur, directeur de la publication, hébergeur) et bandeau provisoire conservés tant que les textes ne sont pas validés ; liens App Store et Google Play à ajouter quand l'application sera publiée ; aucun test sur un vrai appareil ni avec un lecteur d'écran.
