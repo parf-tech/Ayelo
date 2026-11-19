@@ -97,6 +97,10 @@ Notes :
 
 `infra/docker-compose.prod.yml`, service `caddy` : variable `WEB_DOMAIN: ${WEB_DOMAIN}` et volume `../web:/srv/web:ro`. `infra/.env.prod.example` porte `WEB_DOMAIN=www.example.invalid`, `APP_WEB_URL=https://www.example.invalid` et `CORS_ALLOWED_ORIGINS=` (vide : repli sur `APP_WEB_URL`). Les deux valeurs `WEB_DOMAIN` et `APP_WEB_URL` doivent désigner le même hôte. Seul Caddy utilise `WEB_DOMAIN` (l'application utilise `APP_WEB_URL`). Le dossier `web/tools/` est monté mais jamais servi (bloc `@private` du Caddyfile). Les blocs `(web_headers)` et `{$WEB_DOMAIN}` sont dans `infra/caddy/Caddyfile` : l'extrait ci-dessus en est la référence, ne pas l'ajouter une seconde fois.
 
+## Production en ligne (2026-11-19)
+
+Site publié sur le **domaine nu** : `WEB_DOMAIN=ayelo.fr`, `APP_WEB_URL=https://ayelo.fr` (même origine pour l'e-mail de suppression et pour CORS), `REVERB_ALLOWED_ORIGINS=ayelo.fr,ws.ayelo.fr`. `www.ayelo.fr` redirige en 301 vers `https://ayelo.fr` (dernier bloc du Caddyfile, `www.{$WEB_DOMAIN}`). DNS : A `ayelo.fr` et A `www.ayelo.fr` vers le VPS, en DNS seul (pas de proxy Cloudflare : Caddy obtient lui-même les certificats). Pages régénérées avec `--api-base https://api.ayelo.fr`. `/.well-known/security.txt` (modèle « NE PAS PUBLIER ») est masqué par le bloc `@private` jusqu'à ce qu'une vraie adresse soit renseignée. Les marqueurs « À COMPLÉTER » et la bannière « Version provisoire, à valider par un juriste » restent affichés tant que le propriétaire n'a pas fourni les valeurs.
+
 ## Commande de production
 
 Depuis la racine du dépôt, une fois `API_DOMAIN` connu (même valeur que dans `infra/.env.prod`), avec le schéma `https://` et sans barre finale :
