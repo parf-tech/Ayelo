@@ -62,7 +62,7 @@ final class DeployPreflight
         }
 
         if (! config('media.sign_upload_headers')) {
-            $warnings[] = 'MEDIA_SIGN_UPLOAD_HEADERS=false : la taille et le type d\'un dépôt ne sont pas liés à l\'URL présignée (media:purge-oversized supprime les dépôts hors norme toutes les 5 minutes). À passer à true après essai sur le vrai bucket.';
+            $warnings[] = 'MEDIA_SIGN_UPLOAD_HEADERS=false : la taille et le type d\'un dépôt ne sont pas liés à l\'URL présignée (media:purge-oversized supprime les dépôts hors norme toutes les 5 minutes). Signature vérifiée contre R2 le 2026-11-19 ; à passer à true après un dépôt d\'essai depuis l\'application mobile.';
         }
         if (self::blank(config('billing.webhook_secret'))) {
             $warnings[] = 'REVENUECAT_WEBHOOK_SECRET est vide : le webhook de facturation répond 401, aucun abonnement n\'est appliqué.';
