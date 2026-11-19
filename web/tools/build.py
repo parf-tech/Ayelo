@@ -33,12 +33,15 @@ PATHS = {
     'delete': 'account/delete.html',
     'confirm': 'confirm-deletion.html',
 }
-NAV = ['index', 'terms', 'privacy', 'community', 'safety', 'support', 'delete']
+NAV = ['index', 'terms', 'privacy', 'community', 'safety', 'support', 'delete']  # menu mobile : tout le site
+NAV_BAR = ['terms', 'privacy', 'community', 'safety', 'support']  # barre d'en-tête (le logo ramène à l'accueil)
+NAV_FOOT = ['delete']  # ce que la barre ne porte pas
 
 UI = {
     'fr': {
         'skip': 'Aller au contenu',
-        'brand': '[Nom de l’application]',
+        'brand': 'Ayelo',
+        'menu': 'Menu',
         'banner': '<strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.',
         'nav': {'index': 'Accueil', 'terms': 'Conditions d’utilisation', 'privacy': 'Confidentialité',
                 'community': 'Règles de la communauté', 'safety': 'Sécurité et signalement', 'support': 'Support',
@@ -51,7 +54,8 @@ UI = {
     },
     'en': {
         'skip': 'Skip to content',
-        'brand': '[Application name]',
+        'brand': 'Ayelo',
+        'menu': 'Menu',
         'banner': '<strong>Provisional version, to be validated by a lawyer.</strong> This text is a technical draft, it is not legal advice and must not be treated as final. <mark class="todo">[TO BE COMPLETED]</mark> marks are fields the service owner must fill in. The French text is the reference draft.',
         'nav': {'index': 'Home', 'terms': 'Terms of use', 'privacy': 'Privacy',
                 'community': 'Community rules', 'safety': 'Safety and reporting', 'support': 'Support',
@@ -71,36 +75,46 @@ PAGES = {}
 
 # ----- Accueil -----
 PAGES['index'] = {
-    'fr': ('Accueil', 'Informations légales, règles de la communauté, sécurité, support et suppression de compte.', f"""
-<h1>[Nom de l’application]</h1>
-<p class="lead">Application de rencontres pour personnes majeures : se rencontrer, échanger et s’appeler. Ce site rassemble les informations publiques du service.</p>
-<p>Télécharger l’application : {{{{liens App Store et Google Play}}}}</p>
+    'fr': ('Accueil', 'Ayelo, application de rencontres pour personnes majeures : règles de la communauté, sécurité, support et suppression de compte.', f"""
+<section class="hero">
+<div class="hero-text">
+<h1>Rencontrez, échangez, aimez</h1>
+<p class="lead">Ayelo est une application de rencontres pour personnes majeures : se rencontrer, échanger et s’appeler. Ce site rassemble les informations publiques du service.</p>
+<p class="get">Télécharger l’application : {{{{liens App Store et Google Play}}}}</p>
+</div>
+<div class="hero-mark" aria-hidden="true"><img class="mark" src="@@BRAND@@/ayelo-symbole.svg" alt="" width="112" height="100"><span class="wordmark">Ayelo</span></div>
+</section>
 <h2>Informations essentielles</h2>
-<ul class="cards">
-  <li><a href="page:terms"><strong>Conditions d’utilisation</strong>Ce que vous pouvez attendre du service, et ce que nous attendons de vous.</a></li>
-  <li><a href="page:privacy"><strong>Politique de confidentialité</strong>Les données que nous traitons, pourquoi, et combien de temps.</a></li>
-  <li><a href="page:community"><strong>Règles de la communauté</strong>Respect, consentement, zéro arnaque.</a></li>
-  <li><a href="page:safety"><strong>Sécurité et signalement</strong>Bloquer, signaler, se protéger lors d’une rencontre.</a></li>
-  <li><a href="page:support"><strong>Support et contact</strong>Une question, un problème, une demande liée à vos données.</a></li>
-  <li><a href="page:delete"><strong>Supprimer mon compte</strong>Dans l’application ou depuis cette page, délai de {GRACE_DAYS} jours.</a></li>
+<ul class="rows">
+  <li><a href="page:terms"><strong>Conditions d’utilisation</strong><span>Ce que vous pouvez attendre du service, et ce que nous attendons de vous</span></a></li>
+  <li><a href="page:privacy"><strong>Politique de confidentialité</strong><span>Les données que nous traitons, pourquoi, et combien de temps</span></a></li>
+  <li><a href="page:community"><strong>Règles de la communauté</strong><span>Respect, consentement, zéro arnaque</span></a></li>
+  <li><a href="page:safety"><strong>Sécurité et signalement</strong><span>Bloquer, signaler, se protéger lors d’une rencontre</span></a></li>
+  <li><a href="page:support"><strong>Support et contact</strong><span>Une question, un problème, une demande liée à vos données</span></a></li>
+  <li><a href="page:delete"><strong>Supprimer mon compte</strong><span>Dans l’application ou depuis cette page, délai de {GRACE_DAYS} jours</span></a></li>
 </ul>
-<div class="callout"><p>Le service est réservé aux personnes de <strong>18 ans et plus</strong>. Nous ne vérifions pas l’identité des membres : voir « Sécurité et signalement ».</p></div>
+<div class="callout notice"><span class="figure" aria-hidden="true">18+</span><p>Le service est réservé aux personnes de <strong>18 ans et plus</strong>. Nous ne vérifions pas l’identité des membres : voir « Sécurité et signalement ».</p></div>
 <p class="small">Éditeur du service : {{{{dénomination de la société, adresse, numéro d’immatriculation}}}}. Directeur de la publication : {{{{nom}}}}. Hébergeur du site : {{{{nom et adresse de l’hébergeur}}}}.</p>
 """),
-    'en': ('Home', 'Legal information, community rules, safety, support and account deletion.', f"""
-<h1>[Application name]</h1>
-<p class="lead">A dating application for adults: meet people, chat and call. This site gathers the public information about the service.</p>
-<p>Download the application: {{{{App Store and Google Play links}}}}</p>
+    'en': ('Home', 'Ayelo, a dating application for adults: community rules, safety, support and account deletion.', f"""
+<section class="hero">
+<div class="hero-text">
+<h1>Meet, chat, love</h1>
+<p class="lead">Ayelo is a dating application for adults: meet people, chat and call. This site gathers the public information about the service.</p>
+<p class="get">Download the application: {{{{App Store and Google Play links}}}}</p>
+</div>
+<div class="hero-mark" aria-hidden="true"><img class="mark" src="@@BRAND@@/ayelo-symbole.svg" alt="" width="112" height="100"><span class="wordmark">Ayelo</span></div>
+</section>
 <h2>Key information</h2>
-<ul class="cards">
-  <li><a href="page:terms"><strong>Terms of use</strong>What you can expect from the service, and what we expect from you.</a></li>
-  <li><a href="page:privacy"><strong>Privacy policy</strong>The data we process, why, and for how long.</a></li>
-  <li><a href="page:community"><strong>Community rules</strong>Respect, consent, zero scams.</a></li>
-  <li><a href="page:safety"><strong>Safety and reporting</strong>Block, report, stay safe when you meet someone.</a></li>
-  <li><a href="page:support"><strong>Support and contact</strong>A question, a problem, a request about your data.</a></li>
-  <li><a href="page:delete"><strong>Delete my account</strong>In the app or from this page, {GRACE_DAYS}-day delay.</a></li>
+<ul class="rows">
+  <li><a href="page:terms"><strong>Terms of use</strong><span>What you can expect from the service, and what we expect from you</span></a></li>
+  <li><a href="page:privacy"><strong>Privacy policy</strong><span>The data we process, why, and for how long</span></a></li>
+  <li><a href="page:community"><strong>Community rules</strong><span>Respect, consent, zero scams</span></a></li>
+  <li><a href="page:safety"><strong>Safety and reporting</strong><span>Block, report, stay safe when you meet someone</span></a></li>
+  <li><a href="page:support"><strong>Support and contact</strong><span>A question, a problem, a request about your data</span></a></li>
+  <li><a href="page:delete"><strong>Delete my account</strong><span>In the app or from this page, {GRACE_DAYS}-day delay</span></a></li>
 </ul>
-<div class="callout"><p>The service is reserved for people aged <strong>18 and over</strong>. We do not verify the identity of members: see “Safety and reporting”.</p></div>
+<div class="callout notice"><span class="figure" aria-hidden="true">18+</span><p>The service is reserved for people aged <strong>18 and over</strong>. We do not verify the identity of members: see “Safety and reporting”.</p></div>
 <p class="small">Service publisher: {{{{company name, address, registration number}}}}. Publication director: {{{{name}}}}. Site host: {{{{host name and address}}}}.</p>
 """),
 }
@@ -721,6 +735,7 @@ def rel(from_file: Path, to_file: Path) -> str:
 def fill(text: str, lang: str, here: Path) -> str:
     text = re.sub(r'\{\{(.+?)\}\}', lambda m: '<mark class="todo">' + (UI[lang]['todo'] % m.group(1)) + '</mark>', text)
     text = text.replace('@@API@@', API_BASE)
+    text = text.replace('@@BRAND@@', rel(here, ROOT / 'assets' / 'brand'))
     text = re.sub(r'href="page:(\w+)"', lambda m: 'href="%s"' % rel(here, out_path(lang, m.group(1))), text)
     return text
 
@@ -734,10 +749,13 @@ def render(lang: str, key: str) -> str:
     assets = rel(here, ROOT / 'assets')
     root_index = rel(here, out_path(lang, 'index'))
 
-    nav = '\n'.join(
-        '<li><a href="%s"%s>%s</a></li>' % (rel(here, out_path(lang, k)), ' aria-current="page"' if k == key else '', ui['nav'][k])
-        for k in NAV)
-    footer_links = '\n'.join('<li><a href="%s">%s</a></li>' % (rel(here, out_path(lang, k)), ui['nav'][k]) for k in NAV)
+    def links(keys):
+        return '\n'.join(
+            '<li><a href="%s"%s>%s</a></li>' % (rel(here, out_path(lang, k)), ' aria-current="page"' if k == key else '', ui['nav'][k])
+            for k in keys)
+    nav_bar = links(NAV_BAR)
+    nav_menu = links(NAV)
+    footer_links = links(NAV_FOOT)
     robots = '<meta name="robots" content="noindex">\n' if key == 'confirm' else ''
     script = '<script src="%s/deletion.js" defer></script>\n' % assets if key in ('delete', 'confirm') else ''
     brand = ui['brand']
@@ -753,18 +771,23 @@ def render(lang: str, key: str) -> str:
 <meta name="description" content="{desc}">
 <link rel="alternate" hreflang="{other}" href="{other_href}">
 <link rel="icon" href="{rel(here, ROOT / 'favicon.svg')}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{assets}/brand/ayelo-app-icon-1024.png">
 <link rel="stylesheet" href="{assets}/tokens.css">
 <link rel="stylesheet" href="{assets}/site.css">
 </head>
-<body>
+<body class="page-{key}">
 <a class="skip" href="#contenu">{ui['skip']}</a>
 <div class="banner" role="note"><div class="wrap"><p>{ui['banner']}</p></div></div>
 <header class="site"><div class="wrap">
-<a class="brand" href="{root_index}">{brand}</a>
-<nav aria-label="{ui['dir']}"><ul>
-{nav}
+<a class="brand" href="{root_index}"{' aria-current="page"' if key == 'index' else ''}><img class="mark" src="{assets}/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>{brand}</span></a>
+<nav class="nav-bar" aria-label="{ui['dir']}"><ul>
+{nav_bar}
 </ul></nav>
-<p class="lang"><a href="{other_href}" lang="{other}" hreflang="{other}" aria-label="{ui['switch_label']}">{ui['switch']}</a></p>
+<a class="lang" href="{other_href}" lang="{other}" hreflang="{other}" aria-label="{ui['switch_label']}">{ui['switch']}</a>
+<details class="menu"><summary>{ui['menu']}</summary>
+<nav aria-label="{ui['dir']}"><ul>
+{nav_menu}
+</ul></nav></details>
 </div></header>
 <main id="contenu"><div class="wrap">
 {body.strip()}
@@ -790,6 +813,7 @@ NOT_FOUND = """<!doctype html>
 <meta name="robots" content="noindex">
 <title>Page introuvable – Page not found</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/brand/ayelo-app-icon-1024.png">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
