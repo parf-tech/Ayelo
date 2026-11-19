@@ -77,8 +77,8 @@ Pour que DMARC passe, au moins un alignement doit réussir : DKIM (`d=`) ou doma
 
 - [x] Domaine `ayelo.fr` ajouté dans Resend, région Irlande (`eu-west-1`), envoi activé et réception désactivée.
 - [x] Nameservers Cloudflare et trois enregistrements Resend configurés ; les réponses DNS publiques sont visibles.
-- [ ] Vérification Resend complète : `send` est vérifié, DKIM et `rsend` sont encore en attente.
-- [ ] Créer une clé Resend limitée à l'envoi, la placer comme `MAIL_PASSWORD` dans `infra/.env.prod` (hors dépôt), puis redémarrer `app`, `worker` et `scheduler`.
+- [x] Vérification Resend : un envoi depuis `no-reply@ayelo.fr` est accepté par Resend le 2026-11-19 (domaine utilisable pour l'envoi). Confirmer dans le tableau de bord que DKIM et `rsend` sont « Verified ».
+- [x] Clé Resend limitée à l'envoi en place comme `MAIL_PASSWORD` dans `infra/.env.prod` (2026-11-19, hors dépôt) ; `MAIL_MAILER=smtp` ; essai vers `delivered@resend.dev` accepté. Reste : webhooks de rebond et de plainte (section suivante), DMARC `p=none` à durcir.
 - [ ] Après vérification du domaine, tester un e-mail de vérification vers une boîte contrôlée.
 - [ ] **En-têtes** : `Authentication-Results` indique `spf=pass`, `dkim=pass` et `dmarc=pass`, avec `header.from=ayelo.fr`. Tester Gmail et Outlook.
 - [ ] Vérifier la réception en boîte principale, les rebonds/plaintes et le webhook de la section 5 bis.
