@@ -2089,6 +2089,9 @@
                                                                     "string",
                                                                     "null"
                                                                 ]
+                                                            },
+                                                            "online": {
+                                                                "type": "boolean"
                                                             }
                                                         },
                                                         "required": [
@@ -2752,6 +2755,9 @@
                                                             "string",
                                                             "null"
                                                         ]
+                                                    },
+                                                    "online": {
+                                                        "type": "boolean"
                                                     }
                                                 },
                                                 "required": [
@@ -3313,6 +3319,9 @@
                                                                     "string",
                                                                     "null"
                                                                 ]
+                                                            },
+                                                            "online": {
+                                                                "type": "boolean"
                                                             }
                                                         },
                                                         "required": [
@@ -4596,6 +4605,23 @@
                 }
             }
         },
+        "/me/presence": {
+            "post": {
+                "operationId": "presence.heartbeat",
+                "summary": "Battement de pr\u00e9sence : l'application ouverte mais sans autre appel (lecture d'une conversation, par exemple) le\nrenvoie environ une fois par minute pour rester \u00ab en ligne \u00bb. Le middleware `TouchLastSeen` pose la pr\u00e9sence ; ce\ncontr\u00f4leur ne fait que r\u00e9pondre",
+                "tags": [
+                    "Presence"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/me/profile": {
             "put": {
                 "operationId": "profile.upsert",
@@ -5622,6 +5648,9 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "online": {
+                                            "type": "boolean"
                                         }
                                     },
                                     "required": [

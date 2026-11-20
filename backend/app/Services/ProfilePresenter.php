@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /** Représentation JSON des profils : complète pour soi, restreinte pour les autres. */
 class ProfilePresenter
 {
-    public function __construct(private MediaStorage $storage) {}
+    public function __construct(private MediaStorage $storage, private Presence $presence) {}
 
     /**
      * Profil du propriétaire : les champs de confidentialité et de vérification s'ajoutent à ceux des autres.
@@ -42,11 +42,11 @@ class ProfilePresenter
     }
 
     /**
-     * `last_seen_at` est absent quand la personne le masque ; `media[].status` est toujours nul pour les autres.
+     * `last_seen_at` et `online` sont absents quand la personne les masque ; `media[].status` est toujours nul pour les autres.
      *
      * @return array<string, mixed>
      *
-     * @scramble-return array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}
+     * @scramble-return array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null, online?: bool}
      */
     public function public(Profile $profile): array
     {
@@ -67,10 +67,12 @@ class ProfilePresenter
         $profiles = new EloquentCollection(is_array($profiles) ? $profiles : iterator_to_array($profiles, false));
         $profiles->loadMissing('user');
         $media = $this->mediaFor($profiles->pluck('user_id')->all(), false);
+        // Présence de toute la liste en une seule lecture groupée du cache.
+        $online = $this->presence->onlineAmong($profiles->pluck('user_id')->all());
 
         $out = [];
         foreach ($profiles as $profile) {
-            $out[$profile->user_id] = $this->base($profile, $profile->user, false, $media->get($profile->user_id, collect()));
+            $out[$profile->user_id] = $this->base($profile, $profile->user, false, $media->get($profile->user_id, collect()), $online);
         }
 
         return $out;
@@ -99,7 +101,7 @@ class ProfilePresenter
     }
 
     /** @return array<string, mixed> */
-    private function base(Profile $profile, User $user, bool $owner, ?Collection $preloadedMedia = null): array
+    private function base(Profile $profile, User $user, bool $owner, ?Collection $preloadedMedia = null, ?array $online = null): array
     {
         // Les listes passent leurs médias préchargés (`publicMany`) ; un profil isolé fait sa propre requête.
         $media = $preloadedMedia ?? $this->mediaFor([$user->id], $owner)->get($user->id, collect());
@@ -125,8 +127,10 @@ class ProfilePresenter
             ])->values()->all(),
         ];
 
+        // Dernière connexion et présence en ligne (FR-D-4) : masquées ensemble par `hide_last_seen` (FR-B-7), jamais montrées à soi-même.
         if (! $profile->hide_last_seen && ! $owner) {
             $data['last_seen_at'] = $user->last_seen_at?->toIso8601String();
+            $data['online'] = $online !== null ? isset($online[$user->id]) : $this->presence->isOnline($user->id);
         }
 
         if ($owner) {

@@ -5,6 +5,7 @@ import { CallProvider } from '../features/calls/CallProvider';
 import { DiscoverFiltersProvider } from '../features/discover/DiscoverFiltersProvider';
 import { ConversationsProvider, useConversations } from '../features/messages/ConversationsProvider';
 import { PremiumProvider } from '../features/premium/PremiumProvider';
+import { PresenceHeartbeat } from '../features/presence/PresenceHeartbeat';
 import { useI18n } from '../i18n';
 import { REALTIME_EVENTS, RealtimeProvider, useChannel, userChannel } from '../realtime';
 import { useToast } from '../ui';
@@ -62,6 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <PremiumProvider>
             <CallProvider>
               <UserEvents />
+              <PresenceHeartbeat />
               {children}
             </CallProvider>
           </PremiumProvider>

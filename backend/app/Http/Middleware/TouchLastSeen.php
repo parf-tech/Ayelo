@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Presence;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -19,17 +20,23 @@ class TouchLastSeen
 {
     public const INTERVAL_SECONDS = 3600;
 
+    public function __construct(private Presence $presence) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
         if ($response->getStatusCode() < 400 && $request->bearerToken()) {
             $user = $request->user('sanctum');
-            if ($user !== null && $user->status === 'active'
-                && Cache::add('last_seen.'.$user->id, 1, self::INTERVAL_SECONDS)) {
-                DB::table('users')->where('id', $user->id)
-                    ->where(fn ($q) => $q->whereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subSeconds(self::INTERVAL_SECONDS)))
-                    ->update(['last_seen_at' => now()]);
+            if ($user !== null && $user->status === 'active') {
+                // Présence en ligne (FR-D-4) : clé de cache à durée de vie courte, aucun accès à la base.
+                $this->presence->touch($user->id);
+
+                if (Cache::add('last_seen.'.$user->id, 1, self::INTERVAL_SECONDS)) {
+                    DB::table('users')->where('id', $user->id)
+                        ->where(fn ($q) => $q->whereNull('last_seen_at')->orWhere('last_seen_at', '<', now()->subSeconds(self::INTERVAL_SECONDS)))
+                        ->update(['last_seen_at' => now()]);
+                }
             }
         }
 

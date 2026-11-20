@@ -32,7 +32,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentes
 | Vérification de profil | demande, consentement biométrique, décision, suppression du selfie | B2 |
 | Appels (serveur) | sonnerie, réponse, refus, fin, manqué, durée maximale, jetons LiveKit | D (signalisation) |
 
-70 routes sont implémentées (`17-IMPLEMENTED-ROUTES.md`).
+71 routes sont implémentées (`17-IMPLEMENTED-ROUTES.md`).
 
 ## En cours au moment de la rédaction
 

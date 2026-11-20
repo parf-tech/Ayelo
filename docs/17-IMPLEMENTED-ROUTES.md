@@ -2,7 +2,7 @@
 
 Générées le 2026-11-06 par `php artisan route:list --path=api/v1 --json` (état du code, pas de la spécification). La spécification reste `10-API-SPECIFICATIONS.md` ; l'écart est listé dans `16-STATUS.md`.
 
-Total : 70 routes (méthode × chemin). Authentification : « jeton » = Sanctum obligatoire.
+Total : 71 routes (méthode × chemin). Authentification : « jeton » = Sanctum obligatoire.
 
 | méthode | chemin | accès | limite de débit |
 | --- | --- | --- | --- |
@@ -59,6 +59,7 @@ Total : 70 routes (méthode × chemin). Authentification : « jeton » = Sanctum
 | PUT | `/me/notifications` | public | — |
 | GET | `/me/preferences` | public | — |
 | PUT | `/me/preferences` | public | — |
+| POST | `/me/presence` | public | — |
 | PATCH | `/me/privacy` | public | — |
 | PUT | `/me/profile` | public | — |
 | GET | `/me/sanctions` | public | — |

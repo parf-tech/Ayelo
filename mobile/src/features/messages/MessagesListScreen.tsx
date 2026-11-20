@@ -115,11 +115,14 @@ export function MessagesListScreen() {
             const name = item.profile?.display_name ?? '';
             const preview = previewText(t, item.last_message);
             const unread = item.unread > 0;
+            // Présence (FR-D-4) : `online` est absent quand la personne la masque. Le point est décoratif, l'information passe par le libellé.
+            const online = item.profile?.online === true;
+            const rowLabel = unread ? t(item.unread === 1 ? 'messages.row.unread.one' : 'messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview });
             return (
               <Pressable
                 testID={`conversation-${item.id}`}
                 accessibilityRole="button"
-                accessibilityLabel={unread ? t(item.unread === 1 ? 'messages.row.unread.one' : 'messages.row.unread', { name, count: item.unread, preview }) : t('messages.row', { name, preview })}
+                accessibilityLabel={online ? `${rowLabel} ${t('messages.row.online')}` : rowLabel}
                 onPress={() => open(item)}
                 style={({ pressed }) => ({
                   flexDirection: 'row',
@@ -130,7 +133,26 @@ export function MessagesListScreen() {
                   opacity: pressed ? stateOpacity.pressed : 1,
                 })}
               >
-                <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={AVATAR_SIZE} />
+                <View>
+                  <Avatar uri={item.profile ? primaryPhotoUrl(item.profile) : null} name={name} size={AVATAR_SIZE} />
+                  {online ? (
+                    <View
+                      testID={`online-${item.id}`}
+                      accessible={false}
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        bottom: 0,
+                        width: space[3],
+                        height: space[3],
+                        borderRadius: radius.pill,
+                        backgroundColor: colors.success,
+                        borderWidth: borderWidth.strong,
+                        borderColor: colors.bg,
+                      }}
+                    />
+                  ) : null}
+                </View>
                 <View style={{ flex: 1, gap: space[1] }}>
                   <Text variant={unread ? 'bodyBold' : 'bodyStrong'} numberOfLines={1}>
                     {name}

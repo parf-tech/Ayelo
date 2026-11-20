@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicProfileController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/me/profile', [ProfileController::class, 'upsert']);
     Route::patch('/me/privacy', [ProfileController::class, 'privacy']);
     Route::match(['get', 'put'], '/me/preferences', [ProfileController::class, 'preferences']);
+    Route::post('/me/presence', [PresenceController::class, 'heartbeat'])->middleware('throttle:presence');
 
     Route::post('/media/upload-url', [MediaController::class, 'uploadUrl'])->middleware('throttle:media-upload');
     Route::post('/media/{id}/complete', [MediaController::class, 'complete'])->whereUuid('id');

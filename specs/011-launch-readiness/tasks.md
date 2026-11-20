@@ -7,7 +7,7 @@
 - [x] T004 Contrat OpenAPI généré depuis le code (`docs/openapi.json`, 67 opérations, outil dedoc/scramble, vérifié à jour par la CI) + types TypeScript générés (`mobile/src/api/openapi.d.ts`, script `npm run api:types`). Les types manuscrits du client mobile ne sont pas encore remplacés (spec 010 T090)
 - [ ] T005 Parcours Maestro (inscription, match, message, blocage, signalement, suppression)
 - [ ] T006 Test de concurrence réelle pour les matchs et l'ouverture de conversation
-- [ ] T007 Présence calculée côté serveur (Redis) ; filtre de texte fr/en
+- [~] T007 Présence calculée côté serveur : **faite** (voir 004 T009) ; reste le filtre de texte fr/en (prestataire de modération, ADR 005)
 - [~] T008 Brouillons juridiques étiquetés « brouillon » dans `docs/legal/` (CGU, confidentialité, règles de la communauté, matrice marché × obligation) : **à faire valider par un juriste**
 - [~] T009 Liste de contrôle des stores `docs/release/01-checklist-stores.md` : rédigée, à comparer aux politiques officielles le jour de la soumission
 

@@ -7,6 +7,7 @@ export const messagesFr = {
   'messages.unread.one': '1 message non lu',
   'messages.unread.more': 'plus de {count} messages non lus',
   'messages.row': '{name}. {preview}',
+  'messages.row.online': 'En ligne.',
   'messages.row.unread': '{name}, {count} non lus. {preview}',
   'messages.row.unread.one': '{name}, 1 non lu. {preview}',
   'messages.preview.mine': 'Vous : {text}',

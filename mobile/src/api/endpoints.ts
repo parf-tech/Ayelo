@@ -103,6 +103,8 @@ export function createEndpoints(client: ApiClient) {
     updatePreferences: (body: Partial<Preferences>) => request<Preferences>('PUT', '/me/preferences', { body }),
     /** Renvoie l'objet /me complet (profil mis à jour, crédits, premium), comme GET /me. */
     updatePrivacy: (body: PrivacyInput) => request<PrivacyUpdateResponse>('PATCH', '/me/privacy', { body }),
+    /** Battement de présence (FR-D-4) : à envoyer environ une fois par minute, application au premier plan. */
+    heartbeat: () => request<void>('POST', '/me/presence'),
     createUploadUrl: (body: UploadUrlRequest) => request<UploadUrlResponse>('POST', '/media/upload-url', { body }),
     completeUpload: (mediaId: string) => request<MediaCompleteResponse>('POST', `/media/${mediaId}/complete`),
     orderMedia: (ids: string[]) => request<{ ids: string[] }>('PUT', '/me/media/order', { body: { ids } }),

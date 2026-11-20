@@ -761,6 +761,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/presence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Battement de présence : l'application ouverte mais sans autre appel (lecture d'une conversation, par exemple) le
+         *     renvoie environ une fois par minute pour rester « en ligne ». Le middleware `TouchLastSeen` pose la présence ; ce
+         *     contrôleur ne fait que répondre
+         */
+        post: operations["presence.heartbeat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/profile": {
         parameters: {
             query?: never;
@@ -2038,6 +2059,7 @@ export interface operations {
                                     url: string | null;
                                 }[];
                                 last_seen_at?: string | null;
+                                online?: boolean;
                             } | null;
                         }[];
                         meta: {
@@ -2283,6 +2305,7 @@ export interface operations {
                                 url: string | null;
                             }[];
                             last_seen_at?: string | null;
+                            online?: boolean;
                         }[];
                         next_cursor: string | null;
                     };
@@ -2558,6 +2581,7 @@ export interface operations {
                                     url: string | null;
                                 }[];
                                 last_seen_at?: string | null;
+                                online?: boolean;
                             } | null;
                         }[];
                     };
@@ -3127,6 +3151,25 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "presence.heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "profile.upsert": {
         parameters: {
             query?: never;
@@ -3400,6 +3443,7 @@ export interface operations {
                             url: string | null;
                         }[];
                         last_seen_at?: string | null;
+                        online?: boolean;
                     };
                 };
             };

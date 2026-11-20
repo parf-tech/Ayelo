@@ -27,7 +27,7 @@ class MatchController extends Controller
         $conversations = DB::table('conversations')->whereIn('match_id', $rows->pluck('id'))->pluck('id', 'match_id');
 
         /**
-         * @body array{data: list<array{id: string, created_at: string, conversation_id: string|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null}|null}>}
+         * @body array{data: list<array{id: string, created_at: string, conversation_id: string|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null, online?: bool}|null}>}
          */
         return response()->json(['data' => $rows->map(function ($m) use ($me, $presented, $conversations) {
             $otherId = $m->user_a === $me ? $m->user_b : $m->user_a;
