@@ -193,7 +193,8 @@ class LegalContent extends AdminService
         if (! mb_check_encoding($text, 'UTF-8')) {
             throw new DomainException("Texte invalide pour « {$label} » (encodage).");
         }
-        $text = trim(str_replace(["\r\n", "\r"], "\n", $text));
+        // Une tabulation (collage depuis Word ou un tableur) devient une espace : elle ne doit pas faire refuser tout le texte.
+        $text = trim(str_replace(["\r\n", "\r", "\t"], ["\n", "\n", ' '], $text));
         if (preg_match('/[\x00-\x09\x0B-\x1F\x7F]/', $text) === 1) {
             throw new DomainException("Texte invalide pour « {$label} » (caractère de contrôle).");
         }

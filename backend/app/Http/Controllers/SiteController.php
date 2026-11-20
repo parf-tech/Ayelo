@@ -15,6 +15,9 @@ class SiteController extends Controller
 {
     public function show(Request $request, SitePageRenderer $renderer, string $page = ''): Response
     {
+        // Caddy pose ce paramètre FastCGI (env SITE_PROXY 1) dans le seul bloc du site : la route interne n'est joignable par aucun autre hôte.
+        abort_unless($request->server('SITE_PROXY') === '1', 404);
+
         $file = $renderer->pageFor($page);
         abort_if($file === null, 404);
 

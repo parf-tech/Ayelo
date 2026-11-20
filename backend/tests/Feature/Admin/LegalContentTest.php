@@ -103,6 +103,12 @@ it('normalise les fins de ligne et rogne les espaces', function () {
     expect(DB::table('site_legal_fields')->value('draft'))->toBe("Rue A\nParis");
 });
 
+it('remplace une tabulation (collage depuis Word ou un tableur) par une espace au lieu de refuser le texte', function () {
+    legalService()->saveDraft(Seed::staff('admin'), ['contact_privacy_email' => ['fr' => 'Rue A	Paris']]);
+
+    expect(DB::table('site_legal_fields')->value('draft'))->toBe('Rue A Paris');
+});
+
 it('refuse une clé inconnue, une langue inconnue, un texte trop long ou un caractère de contrôle, sans rien écrire', function (array $values) {
     $admin = Seed::staff('admin');
     $good = ['contact_privacy_email' => ['fr' => 'valide']];

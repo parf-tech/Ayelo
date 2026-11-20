@@ -6,6 +6,13 @@ use Tests\Support\LegalFixture;
 
 beforeEach(function () {
     LegalFixture::make();
+    // Caddy pose ce paramètre FastCGI dans le seul bloc du site ; la route le exige (aucune autre porte d'entrée).
+    $this->withServerVariables(['SITE_PROXY' => '1']);
+});
+
+it('répond 404 sans le marqueur posé par Caddy (route interne jamais joignable autrement)', function () {
+    $this->withServerVariables(['SITE_PROXY' => ''])->get('/_site/legal/terms')->assertNotFound();
+    $this->withServerVariables(['SITE_PROXY' => '0'])->get('/_site/')->assertNotFound();
 });
 
 it('sert une page remplie, publique et cachable, sans cookie', function () {

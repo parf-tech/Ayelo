@@ -120,6 +120,11 @@
 		rewrite * /_site{path}
 		php_fastcgi app:9000 {
 			root /var/www/html/public
+			# Caddy transmet à PHP l'URI D'ORIGINE (REQUEST_URI), pas l'adresse réécrite : sans ceci Laravel verrait /legal/terms,
+			# jamais /_site/legal/terms (toutes les pages en 404) et ce domaine deviendrait une porte d'entrée vers toutes les routes
+			# de l'application (/api, /up, /livewire). On impose donc l'adresse interne, et un marqueur que la route exige.
+			env REQUEST_URI /_site{http.request.orig_uri.path}
+			env SITE_PROXY 1
 			# Adresse inconnue de l'application : la page 404 du site (handle_errors, plus bas), pas la page d'erreur de Laravel.
 			@app_missing status 404
 			handle_response @app_missing {
@@ -151,7 +156,10 @@
 			header Cache-Control "public, max-age=60"
 			header @confirm Cache-Control "no-store"
 			try_files {http.request.orig_uri.path} {http.request.orig_uri.path}.html {http.request.orig_uri.path}/index.html
-			file_server
+			# Dans un gestionnaire d'erreurs, file_server reprend le code de l'erreur (502) : on veut un 200 pour la page de repli.
+			file_server {
+				status 200
+			}
 		}
 		# 404 : la page web/404.html, avec le code 404 conservé.
 		handle {

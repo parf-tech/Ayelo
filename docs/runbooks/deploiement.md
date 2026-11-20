@@ -40,8 +40,13 @@ bash infra/scripts/deploy.sh
 
 ```bash
 DC="docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml"
+# Le conteneur voit-il bien le fichier du dépôt ? (le dossier infra/caddy est monté, pas le fichier seul : un git pull remplace le
+# fichier par un nouveau, un montage de fichier unique garderait l'ancien et validate/reload liraient l'ancienne configuration)
+sha256sum infra/caddy/Caddyfile; $DC exec -T caddy sha256sum /etc/caddy/Caddyfile   # les deux sommes doivent être identiques
 $DC exec -T caddy caddy validate --config /etc/caddy/Caddyfile && $DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 ```
+
+Si les deux sommes diffèrent (conteneur créé avant le passage au montage de dossier), recréer le conteneur : `$DC up -d --force-recreate caddy` (quelques secondes d'interruption).
 
 **Mentions légales du site** (2026-11-20) : les pages du site de présentation passent par l'application (route interne `/_site`, remplissage des textes publiés depuis le panneau d'administration) avec repli sur les fichiers statiques. Le service `app` monte donc `web/` en lecture seule (`SITE_WEB_ROOT=/srv/web`) : `deploy:preflight` avertit si `tools/legal-slots.json` est introuvable. Fonctionnement, contrôle et retour arrière : `docs/runbooks/site-public.md`, section « Mentions légales saisies depuis le panneau d'administration ».
 

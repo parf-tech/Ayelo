@@ -134,19 +134,23 @@ class LegalContentPage extends Page
     public function saveDraft(): void
     {
         $values = $this->formValues();
-        Staff::run(fn () => app(LegalContent::class)->saveDraft(Staff::current(), $values), Staff::t('admin.legal.saved'));
-        $this->form->fill($this->storedTexts());
+        // En cas de refus, le formulaire garde la saisie : la recharger depuis la base ferait perdre tout ce qui vient d'être tapé.
+        if (Staff::run(fn () => app(LegalContent::class)->saveDraft(Staff::current(), $values), Staff::t('admin.legal.saved'))) {
+            $this->form->fill($this->storedTexts());
+        }
     }
 
     protected function publishAll(): void
     {
         $values = $this->formValues();
-        Staff::run(function () use ($values): void {
+        $done = Staff::run(function () use ($values): void {
             $service = app(LegalContent::class);
             $service->saveDraft(Staff::current(), $values);
             $service->publish(Staff::current());
         }, Staff::t('admin.legal.published'));
-        $this->form->fill($this->storedTexts());
+        if ($done) {
+            $this->form->fill($this->storedTexts());
+        }
     }
 
     protected function discardDrafts(): void

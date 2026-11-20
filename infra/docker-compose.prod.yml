@@ -45,7 +45,9 @@ services:
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS}
       WEB_DOMAIN: ${WEB_DOMAIN}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Le DOSSIER est monté, pas le fichier : un `git pull` remplace le Caddyfile par un nouveau fichier (autre inode) ; un montage
+      # de fichier unique garderait l'ancien et `caddy validate` / `caddy reload` liraient l'ancienne configuration.
+      - ./caddy:/etc/caddy:ro
       # Site de présentation statique (web/), en lecture seule. tools/ est présent mais jamais servi (Caddyfile, bloc WEB_DOMAIN).
       - ../web:/srv/web:ro
       - caddy-data:/data
