@@ -125,6 +125,8 @@ Exemple : `python web/tools/build.py --api-base https://api.mondomaine.tld`. San
 
 ## Mentions légales saisies depuis le panneau d'administration
 
+> **STATUT 2026-11-20 : routage Caddy RETIRÉ (retour arrière).** Le bloc Caddy qui faisait passer les pages par l'application a rendu des pages vides (200 sans corps) en production : le `handle_response` avec `error` n'écrit aucune réponse. L'ancien Caddyfile statique est rétabli ; le code de l'application, la page `/admin/legal`, les tables et les emplacements `data-legal` des pages restent en place, mais **un texte publié depuis l'administration n'apparaît pas encore sur le site**. Ne pas publier de texte tant que le routage n'est pas réparé et vérifié. Le texte ci-dessous décrit la conception visée.
+
 Depuis le 2026-11-20, les textes qui étaient des marqueurs « À COMPLÉTER » se saisissent dans le panneau d'administration, sans développeur : **`/admin/legal`** (« Mentions légales », droit `legal.manage`, rôle administrateur seulement, 2FA et liste d'IP du panneau).
 
 - **Brouillon puis publication.** Un champ par texte et par langue (FR et EN côte à côte), environ 33 champs en 7 groupes, texte brut (ni HTML ni lien ; une ligne vide sépare deux paragraphes). « Enregistrer le brouillon » n'affiche rien sur le site. « Publier » (avec confirmation qui liste les champs modifiés) met en ligne. Un champ sans texte publié garde son marqueur « À COMPLÉTER ». « Retirer la bannière provisoire » supprime la bannière « Version provisoire, à valider par un juriste » de toutes les pages (à faire seulement une fois les textes validés par un juriste). Chaque action est inscrite au journal d'audit (`legal.draft_saved`, `legal.published`, `legal.discarded`, `legal.banner_changed`).

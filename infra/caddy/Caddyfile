@@ -96,6 +96,7 @@
 	root * /srv/web
 	encode zstd gzip
 	import web_headers
+	header Cache-Control "public, max-age=3600"
 
 	# Le dossier tools/ (scripts de génération et de contrôle) n'est jamais servi.
 	# security.txt est un MODÈLE (« NE PAS PUBLIER TEL QUEL », contact en example.invalid) : masqué tant que le propriétaire
@@ -110,64 +111,15 @@
 	@confirm path /confirm-deletion /confirm-deletion.html /en/confirm-deletion /en/confirm-deletion.html
 	header @confirm Cache-Control "no-store"
 
-	# Pages HTML : remplies par l'application avec les mentions légales publiées depuis le panneau d'administration
-	# (backend/app/Http/Controllers/SiteController.php, route interne /_site{adresse}, URL propres résolues par l'application).
-	# Tout ce qui n'est pas une page reste servi tel quel plus bas. La route interne n'est jamais joignable directement :
-	# /_site et /_site/* sont exclus de ce traitement, donc répondent 404 comme n'importe quelle adresse inconnue.
-	# L'application choisit elle-même le Cache-Control de ces réponses (public, max-age=300 ; no-store pour la confirmation).
-	@pages not path /assets/* /favicon.svg /robots.txt /.well-known/* /_site /_site/*
-	handle @pages {
-		rewrite * /_site{path}
-		php_fastcgi app:9000 {
-			root /var/www/html/public
-			# Caddy transmet à PHP l'URI D'ORIGINE (REQUEST_URI), pas l'adresse réécrite : sans ceci Laravel verrait /legal/terms,
-			# jamais /_site/legal/terms (toutes les pages en 404) et ce domaine deviendrait une porte d'entrée vers toutes les routes
-			# de l'application (/api, /up, /livewire). On impose donc l'adresse interne, et un marqueur que la route exige.
-			env REQUEST_URI /_site{http.request.orig_uri.path}
-			env SITE_PROXY 1
-			# Adresse inconnue de l'application : la page 404 du site (handle_errors, plus bas), pas la page d'erreur de Laravel.
-			@app_missing status 404
-			handle_response @app_missing {
-				error "page introuvable" 404
-			}
-			# Une réponse 5xx de l'application déclenche le repli statique (handle_errors, plus bas).
-			@app_failed status 5xx
-			handle_response @app_failed {
-				error "application indisponible" 502
-			}
-		}
-	}
-
-	# Ressources (feuilles de style, polices, images, scripts, robots.txt) et, par défaut, fichiers statiques.
 	# URL propres : /legal/terms sert legal/terms.html, /en/ sert en/index.html.
-	handle {
-		header Cache-Control "public, max-age=3600"
-		try_files {path} {path}.html {path}/index.html
-		file_server
-	}
+	try_files {path} {path}.html {path}/index.html
+	file_server
 
+	# 404 : la page web/404.html, avec le code 404 conservé.
 	handle_errors {
-		# Application arrêtée, injoignable ou en erreur : la page statique correspondante, avec ses marqueurs « À COMPLÉTER »
-		# (le site de présentation ne tombe jamais avec l'application).
-		@app_down expression {err.status_code} >= 500
-		handle @app_down {
-			root * /srv/web
-			import web_headers
-			header Cache-Control "public, max-age=60"
-			header @confirm Cache-Control "no-store"
-			try_files {http.request.orig_uri.path} {http.request.orig_uri.path}.html {http.request.orig_uri.path}/index.html
-			# Dans un gestionnaire d'erreurs, file_server reprend le code de l'erreur (502) : on veut un 200 pour la page de repli.
-			file_server {
-				status 200
-			}
-		}
-		# 404 : la page web/404.html, avec le code 404 conservé.
-		handle {
-			root * /srv/web
-			rewrite * /404.html
-			import web_headers
-			file_server
-		}
+		rewrite * /404.html
+		import web_headers
+		file_server
 	}
 }
 
