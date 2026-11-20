@@ -577,3 +577,24 @@ create table email_suppressions (
   provider text not null,
   created_at timestamptz not null default now()
 );
+
+-- textes des mentions légales du site de présentation, saisis depuis le panneau d'administration (page « Mentions légales »).
+-- Une ligne par champ et par langue : `draft` = texte en attente de publication (null = aucun brouillon, '' = effacement en attente),
+-- `published` = texte affiché sur le site (null = marqueur « À COMPLÉTER » conservé). Les clés viennent de web/tools/legal-slots.json.
+-- Migration miroir : 2026_11_20_000000_create_site_legal.php
+create table site_legal_fields (
+  key text not null,
+  lang text not null check (lang in ('fr','en')),
+  draft text,
+  published text,
+  updated_at timestamptz not null default now(),
+  published_at timestamptz,
+  primary key (key, lang)
+);
+
+-- réglages du site de présentation : `banner_visible` = '1' / '0' (absent = bannière « version provisoire » affichée).
+create table site_legal_settings (
+  name text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
