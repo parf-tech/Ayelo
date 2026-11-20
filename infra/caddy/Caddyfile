@@ -90,19 +90,24 @@
 	file_server
 }
 
-# Site de présentation statique (conditions, confidentialité, règles, sécurité, support, suppression de compte).
-# Le dossier web/ du dépôt est monté en lecture seule sur /srv/web (docker-compose.prod.yml).
+# Site de présentation : pages HTML de web/ remplies par l'application avec les mentions légales publiées depuis le panneau
+# d'administration (route interne /_site, backend/app/Http/Controllers/SiteController.php), repli sur les fichiers statiques.
+# Le dossier web/ du dépôt est monté en lecture seule sur /srv/web (docker-compose.prod.yml), dans ce conteneur et dans `app`.
+# Ce bloc a été essayé sur le serveur (Caddy 2.8 en conteneur isolé) avant la mise en production ; voir
+# docs/runbooks/site-public.md (section « Mentions légales saisies depuis le panneau d'administration »).
 {$WEB_DOMAIN} {
 	root * /srv/web
 	encode zstd gzip
 	import web_headers
-	header Cache-Control "public, max-age=3600"
 
-	# Le dossier tools/ (scripts de génération et de contrôle) n'est jamais servi.
-	# security.txt est un MODÈLE (« NE PAS PUBLIER TEL QUEL », contact en example.invalid) : masqué tant que le propriétaire
-	# n'a pas renseigné de vraie adresse. Retirer /.well-known/security.txt de cette liste une fois le fichier complété.
-	@private path /tools /tools/* /.git /.git/* /.well-known/security.txt
-	respond @private 404
+	# Jamais servis : le dossier tools/ (scripts de génération, catalogue des champs), .git, et la route interne /_site (elle n'est
+	# atteinte que par la réécriture plus bas). security.txt est un MODÈLE (« NE PAS PUBLIER TEL QUEL », contact en example.invalid) :
+	# masqué tant que le propriétaire n'a pas renseigné de vraie adresse. `handle` (et non `respond`) : les blocs `handle` passent
+	# avant les directives `respond` dans l'ordre de Caddy, un `respond` serait masqué par le `handle @pages`.
+	@private path /tools /tools/* /.git /.git/* /.well-known/security.txt /_site /_site/*
+	handle @private {
+		respond 404
+	}
 
 	# Les liens de la version anglaise sont relatifs : /en doit se terminer par une barre oblique.
 	redir /en /en/ permanent
@@ -111,15 +116,66 @@
 	@confirm path /confirm-deletion /confirm-deletion.html /en/confirm-deletion /en/confirm-deletion.html
 	header @confirm Cache-Control "no-store"
 
-	# URL propres : /legal/terms sert legal/terms.html, /en/ sert en/index.html.
-	try_files {path} {path}.html {path}/index.html
-	file_server
+	# Pages HTML : celles qui existent dans web/ (/, /legal/terms, /legal/terms.html, /en/...) vont à l'application ; ressources,
+	# 404.html et toute adresse inconnue restent servies par Caddy (404.html pour les adresses inconnues, comme avant).
+	@pages {
+		not path /assets/* /favicon.svg /robots.txt /404.html
+		file {
+			root /srv/web
+			try_files {path} {path}.html {path}/index.html
+		}
+	}
+	handle @pages {
+		# Transport FastCGI explicite, pas `php_fastcgi` : celui-ci cherche index.php sous le root du SITE (/srv/web) et, ne le
+		# trouvant pas, ne transmet rien (réponse 200 vide, constatée en production le 2026-11-20). `split .php` est obligatoire
+		# (sans lui PHP-FPM répond « Access denied. »).
+		rewrite * /index.php
+		reverse_proxy app:9000 {
+			transport fastcgi {
+				root /var/www/html/public
+				split .php
+				# Caddy transmet à PHP l'URI D'ORIGINE (REQUEST_URI) : on impose l'adresse interne que la route attend, et un marqueur
+				# que la route exige (sans lui, 404) : ce domaine n'ouvre ainsi aucune autre route de l'application (/api, /up, /livewire).
+				env REQUEST_URI /_site{http.request.orig_uri.path}
+				env SITE_PROXY 1
+			}
+			# Toute réponse en échec de l'application (4xx, 5xx) : repli statique (handle_errors, plus bas). Application arrêtée ou
+			# injoignable (502/503/504) : même repli.
+			@app_failed status 4xx 5xx
+			handle_response @app_failed {
+				error "application indisponible" 502
+			}
+		}
+	}
 
-	# 404 : la page web/404.html, avec le code 404 conservé.
-	handle_errors {
-		rewrite * /404.html
-		import web_headers
+	# Ressources (feuilles de style, polices, images, scripts, robots.txt) et page 404.
+	handle {
+		header Cache-Control "public, max-age=3600"
+		try_files {path} {path}.html {path}/index.html
 		file_server
+	}
+
+	handle_errors {
+		# Application arrêtée, injoignable ou en échec : la page statique correspondante, avec ses marqueurs « À COMPLÉTER »,
+		# en 200 (dans un gestionnaire d'erreurs file_server reprendrait sinon le code de l'erreur, 502).
+		@app_down expression {err.status_code} >= 500
+		handle @app_down {
+			root * /srv/web
+			import web_headers
+			header Cache-Control "public, max-age=60"
+			header @confirm Cache-Control "no-store"
+			try_files {http.request.orig_uri.path} {http.request.orig_uri.path}.html {http.request.orig_uri.path}/index.html
+			file_server {
+				status 200
+			}
+		}
+		# 404 : la page web/404.html, avec le code 404 conservé.
+		handle {
+			root * /srv/web
+			rewrite * /404.html
+			import web_headers
+			file_server
+		}
 	}
 }
 
