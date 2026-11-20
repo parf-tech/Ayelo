@@ -122,7 +122,7 @@ Brancher LiveKit consiste à écrire une classe `LiveKitMediaEngine implements M
 ## Client API (`src/api`)
 
 - `createApiClient` : base URL configurable, `X-Device-Id`, `Authorization: Bearer` sur les routes authentifiées, `Accept-Language`, délai de 15 s, erreurs `{ error: { code, message, fields? } }` (`ApiError`, `Retry-After`), tableaux au format Laravel (`countries[]=FR`).
-- `createEndpoints` n'expose **que** les routes qui existent dans `backend/routes/api/*.php`. Les types de `types.ts` suivent les contrôleurs du backend (relus ligne à ligne) ; ils seront remplacés par un client généré (`backend/openapi.yaml`, tâche T090).
+- `createEndpoints` n'expose **que** les routes qui existent dans `backend/routes/api/*.php`. Les types de `types.ts` dérivent du contrat généré (`src/api/openapi.d.ts`, produit par `npm run api:types` depuis `docs/openapi.json`, via les aides de `generated.ts` : `OpRequest`, `OpResponse`, `Refine`) partout où le contrat est exploitable (tâche T090). Une vingtaine de types restent écrits à la main parce que le contrat les décrit comme des objets vides, trop étroitement ou en `string` : la liste et la raison de chacun sont dans `__tests__/apiTypes.test.ts`, qui échoue dès qu'un type devient dérivable ou qu'un type manuscrit s'ajoute. Pas de client généré : `endpoints.ts` reste écrit à la main.
 - Le jeton ne passe jamais par `AsyncStorage` (non installé) ; il reste dans `expo-secure-store`.
 
 ## Écarts connus avec l'API et limites
@@ -133,4 +133,4 @@ Brancher LiveKit consiste à écrire une classe `LiveKitMediaEngine implements M
 - Suppression de compte S55 : seul le mot de passe est géré. Pour un compte Google / Apple, le serveur exige `provider` + `id_token` ; la connexion sociale n'est pas implémentée, l'écran l'explique et renvoie au support.
 - La liste de pays est la liste courte des marchés du lancement, pas la liste ISO complète.
 - **Non vérifié** : rendu sur appareil ou émulateur, navigation réelle (`Stack`, `Tabs`, `Redirect`, seulement compilés par l'export Metro), geste de swipe (la décision est testée ; le `PanResponder` ne l'est pas), contre un vrai backend, Reverb réel, RevenueCat réel, caméra réelle. Les tests utilisent un faux serveur et un faux transport.
-- Tests de bout en bout (Maestro, gate G4) et client généré (T090) : non faits.
+- Tests de bout en bout (Maestro, gate G4) : non faits. Types générés (T090) : voir ci-dessus ; ce qui reste manuscrit dépend du contrat OpenAPI du backend, pas de l'application.

@@ -1,7 +1,8 @@
 // Types des requêtes et réponses de l'API v1 (alignés sur les contrôleurs du backend Laravel, routes sous /api/v1).
 // Les formes de requête et de réponse sont dérivées du contrat généré (./openapi.d.ts, via ./generated).
 // Là où le contrat reste trop large ou incomplet, le type est corrigé localement avec Refine ; les écarts connus
-// sont signalés en commentaire. Les types sans opération dans le contrat restent écrits à la main.
+// sont signalés en commentaire. Les types que le contrat décrit mal (objets vides, énumérations en string, statuts omis)
+// restent écrits à la main : `__tests__/apiTypes.test.ts` en garde la liste et la raison.
 import type { Item, OpRequest, OpResponse, Refine } from './generated';
 
 export type Platform = OpRequest<'auth.login'>['platform'];
@@ -21,10 +22,13 @@ export type PageQuery = { cursor?: string; limit?: number };
 /** Liste sans curseur (le backend renvoie { data: [...] }). */
 export type ListResponse<T> = { data: T[] };
 /**
- * GET /conversations : pagination par curseur optionnelle (`limit` 1-100, `cursor` opaque). `meta` est facultatif :
- * un serveur plus ancien ne le renvoie pas, la liste est alors complète. À remplacer par le type généré une fois le contrat régénéré.
+ * GET /conversations : pagination par curseur optionnelle (`limit` 1-100, `cursor` opaque). La forme vient du contrat généré
+ * (qui décrit `meta`) ; `meta` reste facultatif ici : un serveur plus ancien ne le renvoie pas, la liste est alors complète.
  */
-export type ConversationListResponse = { data: Conversation[]; meta?: { next_cursor: string | null } };
+export type ConversationListResponse = Refine<
+  OpResponse<'conversation.index'>,
+  { data: Conversation[]; meta?: OpResponse<'conversation.index'>['meta'] }
+>;
 
 // ---- Auth ---------------------------------------------------------------------------------------
 
@@ -69,7 +73,7 @@ export type DataExport = {
   expires_at?: string | null;
 };
 
-export type DeleteAccountResponse = { status: 'scheduled'; purge_after_days: number };
+export type DeleteAccountResponse = OpResponse<'account.destroy', 202>;
 /** Ré-authentification de DELETE /me et de POST /me/export : mot de passe, ou jeton du fournisseur (+ nonce facultatif). */
 export type DeleteAccountRequest = OpRequest<'account.destroy'>;
 export type ExportRequest = OpRequest<'account.requestExport'>;
@@ -229,15 +233,15 @@ export type SendableMessageType = SendMessageRequest['type'];
 // ---- Appels -------------------------------------------------------------------------------------
 
 export type CallKind = 'audio' | 'video';
-export type LiveKitInfo = { url: string; room: string; token: string };
+export type LiveKitInfo = OpResponse<'call.token'>['livekit'];
 export type CallStartResponse = {
   id: string;
   status: 'ringing' | 'busy';
   ring_seconds?: number;
   livekit?: LiveKitInfo;
 };
-export type CallAcceptResponse = { id: string; status: 'accepted'; livekit: LiveKitInfo };
-export type CallTokenResponse = { livekit: LiveKitInfo };
+export type CallAcceptResponse = OpResponse<'call.accept'>;
+export type CallTokenResponse = OpResponse<'call.token'>;
 
 // ---- Monétisation -------------------------------------------------------------------------------
 
@@ -261,7 +265,8 @@ export type Transaction = {
 
 // ---- Notifications ------------------------------------------------------------------------------
 
-export type DeviceRegistration = { push_token?: string; voip_push_token?: string; app_version?: string };
+/** PUT /me/device. Le contrat accepte aussi `null` pour effacer un jeton ; l'application n'envoie que des chaînes. */
+export type DeviceRegistration = OpRequest<'device.update'>;
 export type NotificationPrefs = {
   push_messages: boolean;
   push_matches: boolean;
