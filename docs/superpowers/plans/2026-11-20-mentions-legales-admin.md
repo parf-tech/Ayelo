@@ -59,7 +59,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 1 : générateur — emplacements nommés et catalogue
+### Task 1: générateur — emplacements nommés et catalogue
 
 **Files :**
 - Modify : `web/tools/build.py` (marqueurs `{{…}}` des chaînes `UI` et `{{{{…}}}}` des corps de page, `fill()`, `render()`, `main()`)
@@ -89,7 +89,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 2 : tables, configuration et lecture du catalogue
+### Task 2: tables, configuration et lecture du catalogue
 
 **Files :**
 - Modify : `docs/schema/001_initial.sql` (après `email_suppressions`), `backend/tests/Feature/SchemaTest.php` (37 → 39 tables)
@@ -109,7 +109,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 3 : droit, service et audit
+### Task 3: droit, service et audit
 
 **Files :**
 - Modify : `backend/app/Services/Admin/Permissions.php` (constante `LEGAL_MANAGE = 'legal.manage'`, ajoutée au rôle administrateur seulement), `backend/lang/fr/admin.php` et `backend/lang/en/admin.php` (`audit.legal.{draft_saved,published,discarded,banner_changed}`)
@@ -144,7 +144,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 4 : rendu public
+### Task 4: rendu public
 
 **Files :**
 - Create : `backend/app/Services/Site/SitePageRenderer.php`, `backend/app/Http/Controllers/SiteController.php`
@@ -171,7 +171,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 5 : page d'administration
+### Task 5: page d'administration
 
 **Files :**
 - Create : `backend/app/Filament/Pages/LegalContentPage.php`
@@ -199,7 +199,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 6 : infrastructure (Caddy et montage)
+### Task 6: infrastructure (Caddy et montage)
 
 **Files :**
 - Modify : `infra/docker-compose.prod.yml` (service `app` : volume `../web:/srv/web:ro` et `environment: SITE_WEB_ROOT: /srv/web`), `infra/caddy/Caddyfile` (bloc `{$WEB_DOMAIN}`), `docs/runbooks/site-public.md`, `docs/runbooks/deploiement.md`
@@ -218,7 +218,7 @@ Entrées ou conditions que la spec laisse sous silence, par ordre de probabilit�
 
 ---
 
-### Tâche 7 : première publication réelle et clôture
+### Task 7: première publication réelle et clôture
 
 **Files :**
 - Modify : `docs/reviews/restant.md` (mentions légales : saisie via l'admin ; le contenu juridique reste à fournir), `docs/16-STATUS.md` si une ligne décrit ce chantier

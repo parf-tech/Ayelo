@@ -28,7 +28,7 @@
 </head>
 <body class="page-delete">
 <a class="skip" href="#contenu">Skip to content</a>
-<div class="banner" role="note"><div class="wrap"><p><strong>Provisional version, to be validated by a lawyer.</strong> This text is a technical draft, it is not legal advice and must not be treated as final. <mark class="todo">[TO BE COMPLETED]</mark> marks are fields the service owner must fill in. The French text is the reference draft.</p></div></div>
+<div class="banner" role="note" data-legal-banner><div class="wrap"><p><strong>Provisional version, to be validated by a lawyer.</strong> This text is a technical draft, it is not legal advice and must not be treated as final. <mark class="todo">[TO BE COMPLETED]</mark> marks are fields the service owner must fill in. The French text is the reference draft.</p></div></div>
 <header class="site"><div class="wrap">
 <a class="brand" href="../index.html"><img class="mark" src="../../assets/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>Ayelo</span></a>
 <nav class="nav-bar" aria-label="Site pages"><ul>
@@ -69,14 +69,14 @@
   <button type="submit">Get the confirmation link</button>
   <div class="status" role="status" aria-live="polite"></div>
 </form>
-<p class="small">Service address in this form: <mark class="todo">[TO BE COMPLETED: to be set by the operator, see docs/runbooks/site-public.md]</mark>. For an account created only with Google or Apple (no password), way 2 is not yet available in every case: write to <a href="../support.html">support</a>.</p>
+<p class="small">Service address in this form: <mark class="todo" data-legal="delete_service_address">[TO BE COMPLETED: to be set by the operator, see docs/runbooks/site-public.md]</mark>. For an account created only with Google or Apple (no password), way 2 is not yet available in every case: write to <a href="../support.html">support</a>.</p>
 <noscript><p class="small">Without JavaScript the form still submits, but the service’s answer is shown raw. You will receive the same e-mail.</p></noscript>
 
 <h2>30-day delay</h2>
 <ul>
   <li>For 30 days your account is pending deletion: profile invisible, sessions closed.</li>
   <li>After that, anonymisation is automatic and <strong>final</strong>.</li>
-  <li>To change your mind before the end of the delay: contact <a href="../support.html">support</a> <mark class="todo">[TO BE COMPLETED: cancellation procedure to be confirmed: not verified in the code]</mark>.</li>
+  <li>To change your mind before the end of the delay: contact <a href="../support.html">support</a> <mark class="todo" data-legal="delete_cancel_procedure">[TO BE COMPLETED: cancellation procedure to be confirmed: not verified in the code]</mark>.</li>
 </ul>
 
 <h2>Premium subscription</h2>
@@ -97,14 +97,14 @@
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Item</th><th scope="col">Retention</th></tr></thead>
 <tbody>
-<tr><td>Date of birth</td><td>Reduced to the year (not erased) <mark class="todo">[TO BE COMPLETED: to be validated by a lawyer]</mark></td></tr>
+<tr><td>Date of birth</td><td>Reduced to the year (not erased) <mark class="todo" data-legal="delete_birthdate_note">[TO BE COMPLETED: to be validated by a lawyer]</mark></td></tr>
 <tr><td>Minimal account row (identifier, “deleted” status)</td><td>As long as reports or sanctions refer to it</td></tr>
 <tr><td>Free text of reports about or from the account</td><td>365 days after creation, then erased (unless a case is kept as evidence)</td></tr>
 <tr><td>Reason for sanctions</td><td>365 days after the sanction, then replaced by a marker</td></tr>
-<tr><td>If the account was suspended or banned: hash of the e-mail and phone number, risk signals</td><td>Kept to prevent ban evasion. Period: <mark class="todo">[TO BE COMPLETED: to be set]</mark></td></tr>
-<tr><td>Proof of consent (without IP address)</td><td><mark class="todo">[TO BE COMPLETED: period to be set]</mark></td></tr>
-<tr><td>Purchases and accounting records</td><td><mark class="todo">[TO BE COMPLETED: accounting period: lawyer]</mark></td></tr>
-<tr><td>Server backups</td><td>A deleted item may remain in a backup until it rotates (14 days by default <mark class="todo">[TO BE COMPLETED: to be validated]</mark>), without being restored to production</td></tr>
+<tr><td>If the account was suspended or banned: hash of the e-mail and phone number, risk signals</td><td>Kept to prevent ban evasion. Period: <mark class="todo" data-legal="retention_sanction_hash">[TO BE COMPLETED: to be set]</mark></td></tr>
+<tr><td>Proof of consent (without IP address)</td><td><mark class="todo" data-legal="retention_consent_proof">[TO BE COMPLETED: period to be set]</mark></td></tr>
+<tr><td>Purchases and accounting records</td><td><mark class="todo" data-legal="retention_accounting">[TO BE COMPLETED: accounting period: lawyer]</mark></td></tr>
+<tr><td>Server backups</td><td>A deleted item may remain in a backup until it rotates (14 days by default <mark class="todo" data-legal="delete_backup_note">[TO BE COMPLETED: to be validated]</mark>), without being restored to production</td></tr>
 </tbody></table></div>
 <p>See also the <a href="../legal/privacy.html">privacy policy</a>.</p>
 </div></main>

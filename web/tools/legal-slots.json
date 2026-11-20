@@ -1,0 +1,604 @@
+{
+  "version": 1,
+  "pages": [
+    "account/delete.html",
+    "confirm-deletion.html",
+    "en/account/delete.html",
+    "en/confirm-deletion.html",
+    "en/index.html",
+    "en/legal/community.html",
+    "en/legal/privacy.html",
+    "en/legal/terms.html",
+    "en/safety.html",
+    "en/support.html",
+    "index.html",
+    "legal/community.html",
+    "legal/privacy.html",
+    "legal/terms.html",
+    "safety.html",
+    "support.html"
+  ],
+  "groups": {
+    "publisher": [
+      "foot_publisher",
+      "foot_director",
+      "foot_host",
+      "terms_publisher",
+      "privacy_host_name"
+    ],
+    "contacts": [
+      "contact_support_email",
+      "contact_privacy_email",
+      "contact_security_email",
+      "support_postal_address",
+      "support_response_delay",
+      "safety_response_delay"
+    ],
+    "terms": [
+      "terms_pricing",
+      "terms_liability",
+      "terms_governing_law",
+      "terms_changes"
+    ],
+    "privacy": [
+      "privacy_controller",
+      "privacy_birthdate_note",
+      "privacy_push_legal_basis",
+      "privacy_mail_provider",
+      "privacy_moderation_provider",
+      "privacy_moderation_data",
+      "privacy_transfers",
+      "privacy_backup_encryption"
+    ],
+    "retention": [
+      "retention_sanction_hash",
+      "retention_logs",
+      "retention_accounting",
+      "retention_consent_proof",
+      "retention_backups"
+    ],
+    "safety": [
+      "safety_authorities"
+    ],
+    "deletion": [
+      "delete_service_address",
+      "delete_cancel_procedure",
+      "delete_birthdate_note",
+      "delete_backup_note"
+    ]
+  },
+  "slots": {
+    "foot_publisher": {
+      "group": "publisher",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Éditeur du service (pied de page)",
+        "en": "Service publisher (footer)"
+      },
+      "hint": {
+        "fr": "dénomination de la société, adresse, numéro d’immatriculation",
+        "en": "company name, address, registration number"
+      },
+      "pages": [
+        "index"
+      ]
+    },
+    "foot_director": {
+      "group": "publisher",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Directeur de la publication (pied de page)",
+        "en": "Publication director (footer)"
+      },
+      "hint": {
+        "fr": "nom",
+        "en": "name"
+      },
+      "pages": [
+        "index"
+      ]
+    },
+    "foot_host": {
+      "group": "publisher",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Hébergeur du site (pied de page)",
+        "en": "Site host (footer)"
+      },
+      "hint": {
+        "fr": "nom et adresse de l’hébergeur",
+        "en": "host name and address"
+      },
+      "pages": [
+        "index"
+      ]
+    },
+    "terms_publisher": {
+      "group": "publisher",
+      "kind": "block",
+      "max": 5000,
+      "label": {
+        "fr": "Identité de l’éditeur (conditions d’utilisation)",
+        "en": "Publisher identity (terms of use)"
+      },
+      "hint": {
+        "fr": "dénomination de la société, forme, capital, siège, numéro d’immatriculation, directeur de la publication, hébergeur, adresse de contact",
+        "en": "company name, legal form, capital, registered office, registration number, publication director, host, contact address"
+      },
+      "pages": [
+        "terms"
+      ]
+    },
+    "privacy_host_name": {
+      "group": "publisher",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Hébergeur du serveur : nom et lieu",
+        "en": "Server host: name and location"
+      },
+      "hint": {
+        "fr": "nom, lieu",
+        "en": "name, location"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "contact_support_email": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "E-mail du support",
+        "en": "Support e-mail"
+      },
+      "hint": {
+        "fr": "support@example.invalid",
+        "en": "support@example.invalid"
+      },
+      "pages": [
+        "support"
+      ]
+    },
+    "contact_privacy_email": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "E-mail pour les données personnelles",
+        "en": "Personal data e-mail"
+      },
+      "hint": {
+        "fr": "privacy@example.invalid",
+        "en": "privacy@example.invalid"
+      },
+      "pages": [
+        "privacy",
+        "support"
+      ]
+    },
+    "contact_security_email": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "E-mail sécurité et failles techniques",
+        "en": "Security and vulnerabilities e-mail"
+      },
+      "hint": {
+        "fr": "security@example.invalid",
+        "en": "security@example.invalid"
+      },
+      "pages": [
+        "safety",
+        "support"
+      ]
+    },
+    "support_postal_address": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Adresse postale de l’éditeur",
+        "en": "Publisher postal address"
+      },
+      "hint": {
+        "fr": "adresse postale de l’éditeur",
+        "en": "publisher postal address"
+      },
+      "pages": [
+        "support"
+      ]
+    },
+    "support_response_delay": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Délai de réponse du support",
+        "en": "Support response time"
+      },
+      "hint": {
+        "fr": "à confirmer par le propriétaire, aucun engagement pris à ce jour",
+        "en": "to be confirmed by the owner, no commitment made so far"
+      },
+      "pages": [
+        "support"
+      ]
+    },
+    "safety_response_delay": {
+      "group": "contacts",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Délai de traitement d’un signalement",
+        "en": "Report processing time"
+      },
+      "hint": {
+        "fr": "délai à confirmer par le propriétaire, aucun engagement pris à ce jour",
+        "en": "time to be confirmed by the owner, no commitment made so far"
+      },
+      "pages": [
+        "safety"
+      ]
+    },
+    "terms_pricing": {
+      "group": "terms",
+      "kind": "block",
+      "max": 5000,
+      "label": {
+        "fr": "Prix, durées, renouvellement, rétractation",
+        "en": "Prices, durations, renewal, withdrawal"
+      },
+      "hint": {
+        "fr": "prix, durées, renouvellement, droit de rétractation selon le pays : à rédiger par un juriste",
+        "en": "prices, durations, renewal, withdrawal right by country: to be drafted by a lawyer"
+      },
+      "pages": [
+        "terms"
+      ]
+    },
+    "terms_liability": {
+      "group": "terms",
+      "kind": "block",
+      "max": 5000,
+      "label": {
+        "fr": "Responsabilité, garanties légales, force majeure",
+        "en": "Liability, legal warranties, force majeure"
+      },
+      "hint": {
+        "fr": "limitation de responsabilité, garanties légales, force majeure : juriste",
+        "en": "limitation of liability, legal warranties, force majeure: lawyer"
+      },
+      "pages": [
+        "terms"
+      ]
+    },
+    "terms_governing_law": {
+      "group": "terms",
+      "kind": "block",
+      "max": 5000,
+      "label": {
+        "fr": "Droit applicable, juridiction, médiation",
+        "en": "Governing law, jurisdiction, mediation"
+      },
+      "hint": {
+        "fr": "droit applicable, juridiction, médiation, spécificités consommateurs par pays : juriste",
+        "en": "governing law, jurisdiction, mediation, consumer specifics by country: lawyer"
+      },
+      "pages": [
+        "terms"
+      ]
+    },
+    "terms_changes": {
+      "group": "terms",
+      "kind": "block",
+      "max": 5000,
+      "label": {
+        "fr": "Modification des conditions et information des membres",
+        "en": "How the terms change and how members are told"
+      },
+      "hint": {
+        "fr": "modalités de modification et de notification des conditions",
+        "en": "how the terms are changed and how members are notified"
+      },
+      "pages": [
+        "terms"
+      ]
+    },
+    "privacy_controller": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Responsable du traitement, délégué, représentant",
+        "en": "Controller, data protection officer, representative"
+      },
+      "hint": {
+        "fr": "identité, adresse, délégué à la protection des données, représentant dans l’UE ou au Royaume-Uni si nécessaire",
+        "en": "identity, address, data protection officer, EU or UK representative if needed"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_birthdate_note": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Date de naissance réduite à l’année : validation",
+        "en": "Date of birth reduced to the year: validation"
+      },
+      "hint": {
+        "fr": "à valider par un juriste",
+        "en": "to be validated by a lawyer"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_push_legal_basis": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Notifications : base légale à valider",
+        "en": "Notifications: legal basis to validate"
+      },
+      "hint": {
+        "fr": "à valider",
+        "en": "to be validated"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_mail_provider": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Fournisseur d’e-mail",
+        "en": "E-mail provider"
+      },
+      "hint": {
+        "fr": "à choisir",
+        "en": "to be chosen"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_moderation_provider": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Prestataire de modération",
+        "en": "Moderation provider"
+      },
+      "hint": {
+        "fr": "éventuel, non choisi",
+        "en": "possible, not chosen"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_moderation_data": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Prestataire de modération : données transmises",
+        "en": "Moderation provider: data shared"
+      },
+      "hint": {
+        "fr": "à définir",
+        "en": "to be defined"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_transfers": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Transferts hors Union européenne",
+        "en": "Transfers outside the European Union"
+      },
+      "hint": {
+        "fr": "mécanismes de transfert, garanties, accords de traitement : juriste",
+        "en": "transfer mechanisms, safeguards, processing agreements: lawyer"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "privacy_backup_encryption": {
+      "group": "privacy",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Chiffrement des sauvegardes",
+        "en": "Backup encryption"
+      },
+      "hint": {
+        "fr": "niveau de chiffrement des sauvegardes à confirmer avant publication",
+        "en": "backup encryption level to be confirmed before publication"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "retention_sanction_hash": {
+      "group": "retention",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Empreinte d’un compte sanctionné : durée",
+        "en": "Hash of a sanctioned account: period"
+      },
+      "hint": {
+        "fr": "durée à fixer",
+        "en": "period to be set"
+      },
+      "pages": [
+        "delete",
+        "privacy"
+      ]
+    },
+    "retention_logs": {
+      "group": "retention",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Journaux techniques : durée et contenu",
+        "en": "Technical logs: period and content"
+      },
+      "hint": {
+        "fr": "durée et contenu à définir",
+        "en": "period and content to be defined"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "retention_accounting": {
+      "group": "retention",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Achats et pièces comptables : durée",
+        "en": "Purchases and accounting records: period"
+      },
+      "hint": {
+        "fr": "durée comptable : juriste",
+        "en": "accounting period: lawyer"
+      },
+      "pages": [
+        "delete",
+        "privacy"
+      ]
+    },
+    "retention_consent_proof": {
+      "group": "retention",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Preuves de consentement : durée",
+        "en": "Proof of consent: period"
+      },
+      "hint": {
+        "fr": "durée à fixer",
+        "en": "period to be set"
+      },
+      "pages": [
+        "delete"
+      ]
+    },
+    "retention_backups": {
+      "group": "retention",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Sauvegardes du serveur : durée",
+        "en": "Server backups: period"
+      },
+      "hint": {
+        "fr": "durée finale à valider : aujourd’hui 14 jours par défaut",
+        "en": "final period to be validated: currently 14 days by default"
+      },
+      "pages": [
+        "privacy"
+      ]
+    },
+    "safety_authorities": {
+      "group": "safety",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Signalement aux autorités : procédure et délais",
+        "en": "Reporting to authorities: procedure and deadlines"
+      },
+      "hint": {
+        "fr": "procédure, autorité destinataire et délais : juriste",
+        "en": "procedure, receiving authority and deadlines: lawyer"
+      },
+      "pages": [
+        "safety"
+      ]
+    },
+    "delete_service_address": {
+      "group": "deletion",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Adresse du service du formulaire de suppression",
+        "en": "Service address of the deletion form"
+      },
+      "hint": {
+        "fr": "à renseigner par l’exploitant, voir docs/runbooks/site-public.md",
+        "en": "to be set by the operator, see docs/runbooks/site-public.md"
+      },
+      "pages": [
+        "delete"
+      ]
+    },
+    "delete_cancel_procedure": {
+      "group": "deletion",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Annulation d’une suppression : procédure",
+        "en": "Cancelling a deletion: procedure"
+      },
+      "hint": {
+        "fr": "procédure d’annulation à confirmer : non vérifiée dans le code",
+        "en": "cancellation procedure to be confirmed: not verified in the code"
+      },
+      "pages": [
+        "delete"
+      ]
+    },
+    "delete_birthdate_note": {
+      "group": "deletion",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Date de naissance réduite à l’année : validation",
+        "en": "Date of birth reduced to the year: validation"
+      },
+      "hint": {
+        "fr": "à valider par un juriste",
+        "en": "to be validated by a lawyer"
+      },
+      "pages": [
+        "delete"
+      ]
+    },
+    "delete_backup_note": {
+      "group": "deletion",
+      "kind": "line",
+      "max": 300,
+      "label": {
+        "fr": "Sauvegardes : validation du délai de rotation",
+        "en": "Backups: validation of the rotation delay"
+      },
+      "hint": {
+        "fr": "à valider",
+        "en": "to be validated"
+      },
+      "pages": [
+        "delete"
+      ]
+    }
+  }
+}

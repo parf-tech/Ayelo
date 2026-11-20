@@ -28,7 +28,7 @@
 </head>
 <body class="page-delete">
 <a class="skip" href="#contenu">Aller au contenu</a>
-<div class="banner" role="note"><div class="wrap"><p><strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.</p></div></div>
+<div class="banner" role="note" data-legal-banner><div class="wrap"><p><strong>Version provisoire, à valider par un juriste.</strong> Ce texte est un brouillon technique, il n’est pas un avis juridique et ne doit pas être considéré comme définitif. Les mentions <mark class="todo">[À COMPLÉTER]</mark> sont des champs que le propriétaire du service doit renseigner.</p></div></div>
 <header class="site"><div class="wrap">
 <a class="brand" href="../index.html"><img class="mark" src="../assets/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>Ayelo</span></a>
 <nav class="nav-bar" aria-label="Pages du site"><ul>
@@ -69,14 +69,14 @@
   <button type="submit">Recevoir le lien de confirmation</button>
   <div class="status" role="status" aria-live="polite"></div>
 </form>
-<p class="small">Adresse du service dans ce formulaire : <mark class="todo">[À COMPLÉTER : à renseigner par l’exploitant, voir docs/runbooks/site-public.md]</mark>. Pour un compte créé uniquement avec Google ou Apple (sans mot de passe), la voie 2 n’est pas encore disponible dans tous les cas : écrivez au <a href="../support.html">support</a>.</p>
+<p class="small">Adresse du service dans ce formulaire : <mark class="todo" data-legal="delete_service_address">[À COMPLÉTER : à renseigner par l’exploitant, voir docs/runbooks/site-public.md]</mark>. Pour un compte créé uniquement avec Google ou Apple (sans mot de passe), la voie 2 n’est pas encore disponible dans tous les cas : écrivez au <a href="../support.html">support</a>.</p>
 <noscript><p class="small">Sans JavaScript, le formulaire s’envoie quand même, mais la réponse du service s’affiche brute. Vous recevrez le même e-mail.</p></noscript>
 
 <h2>Délai de 30 jours</h2>
 <ul>
   <li>Pendant 30 jours, votre compte est en attente de suppression : profil invisible, sessions fermées.</li>
   <li>Passé ce délai, l’anonymisation est automatique et <strong>définitive</strong>.</li>
-  <li>Pour changer d’avis avant la fin du délai : contactez le <a href="../support.html">support</a> <mark class="todo">[À COMPLÉTER : procédure d’annulation à confirmer : non vérifiée dans le code]</mark>.</li>
+  <li>Pour changer d’avis avant la fin du délai : contactez le <a href="../support.html">support</a> <mark class="todo" data-legal="delete_cancel_procedure">[À COMPLÉTER : procédure d’annulation à confirmer : non vérifiée dans le code]</mark>.</li>
 </ul>
 
 <h2>Abonnement Premium</h2>
@@ -97,14 +97,14 @@
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Élément</th><th scope="col">Conservation</th></tr></thead>
 <tbody>
-<tr><td>Date de naissance</td><td>Réduite à l’année (pas effacée) <mark class="todo">[À COMPLÉTER : à valider par un juriste]</mark></td></tr>
+<tr><td>Date de naissance</td><td>Réduite à l’année (pas effacée) <mark class="todo" data-legal="delete_birthdate_note">[À COMPLÉTER : à valider par un juriste]</mark></td></tr>
 <tr><td>Ligne de compte minimale (identifiant, statut « supprimé »)</td><td>Tant que des signalements ou sanctions s’y rattachent</td></tr>
 <tr><td>Texte libre des signalements concernant ou émis par le compte</td><td>365 jours après leur création, puis effacé (sauf conservation probatoire d’un dossier)</td></tr>
 <tr><td>Motif des sanctions</td><td>365 jours après la sanction, puis remplacé par un marqueur</td></tr>
-<tr><td>Si le compte a été suspendu ou banni : empreinte (hash) de l’e-mail et du téléphone, signaux de risque</td><td>Conservés pour empêcher le contournement d’un bannissement. Durée : <mark class="todo">[À COMPLÉTER : à fixer]</mark></td></tr>
-<tr><td>Preuves de consentement (sans adresse IP)</td><td><mark class="todo">[À COMPLÉTER : durée à fixer]</mark></td></tr>
-<tr><td>Achats et pièces comptables</td><td><mark class="todo">[À COMPLÉTER : durée comptable : juriste]</mark></td></tr>
-<tr><td>Sauvegardes du serveur</td><td>Une donnée supprimée peut subsister dans une sauvegarde jusqu’à sa rotation (14 jours par défaut <mark class="todo">[À COMPLÉTER : à valider]</mark>), sans être restaurée en production</td></tr>
+<tr><td>Si le compte a été suspendu ou banni : empreinte (hash) de l’e-mail et du téléphone, signaux de risque</td><td>Conservés pour empêcher le contournement d’un bannissement. Durée : <mark class="todo" data-legal="retention_sanction_hash">[À COMPLÉTER : à fixer]</mark></td></tr>
+<tr><td>Preuves de consentement (sans adresse IP)</td><td><mark class="todo" data-legal="retention_consent_proof">[À COMPLÉTER : durée à fixer]</mark></td></tr>
+<tr><td>Achats et pièces comptables</td><td><mark class="todo" data-legal="retention_accounting">[À COMPLÉTER : durée comptable : juriste]</mark></td></tr>
+<tr><td>Sauvegardes du serveur</td><td>Une donnée supprimée peut subsister dans une sauvegarde jusqu’à sa rotation (14 jours par défaut <mark class="todo" data-legal="delete_backup_note">[À COMPLÉTER : à valider]</mark>), sans être restaurée en production</td></tr>
 </tbody></table></div>
 <p>Voir aussi la <a href="../legal/privacy.html">politique de confidentialité</a>.</p>
 </div></main>

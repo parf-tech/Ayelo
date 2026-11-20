@@ -4,8 +4,11 @@
 Le résultat est du HTML simple, versionné tel quel : ce script ne sert qu'à garder les deux langues synchrones.
 Utilisation : python web/tools/build.py [--api-base https://api.exemple]   (aucune dépendance hors bibliothèque standard).
 
-Dans les textes : {{xxx}} devient un marqueur visible [À COMPLÉTER : xxx] ; href="page:clé" devient le chemin relatif de la page.
+Dans les textes : {{clé|aide}} devient un emplacement nommé, affiché [À COMPLÉTER : aide] tant qu'aucun texte n'est publié ;
+href="page:clé" devient le chemin relatif de la page. La clé doit être déclarée dans SLOTS (ci-dessous) : l'écran « Mentions
+légales » du panneau d'administration remplit ces emplacements à partir de tools/legal-slots.json, écrit à chaque génération.
 """
+import json
 import re
 import sys
 from pathlib import Path
@@ -58,7 +61,7 @@ UI = {
         'anchors': [('confiance', 'Confiance'), ('comment', 'Comment ça marche'), ('faq', 'Questions')],
         'foot_title': 'Informations essentielles',
         'foot_soon': 'Bientôt sur l’App Store et Google Play. Une question ? <a href="page:support">Écrivez au support</a>.',
-        'foot_legal': 'Éditeur du service : {{dénomination de la société, adresse, numéro d’immatriculation}}. Directeur de la publication : {{nom}}. Hébergeur du site : {{nom et adresse de l’hébergeur}}.',
+        'foot_legal': 'Éditeur du service : {{foot_publisher|dénomination de la société, adresse, numéro d’immatriculation}}. Directeur de la publication : {{foot_director|nom}}. Hébergeur du site : {{foot_host|nom et adresse de l’hébergeur}}.',
     },
     'en': {
         'skip': 'Skip to content',
@@ -78,7 +81,7 @@ UI = {
         'anchors': [('confiance', 'Trust'), ('comment', 'How it works'), ('faq', 'Questions')],
         'foot_title': 'Key information',
         'foot_soon': 'Coming soon to the App Store and Google Play. A question? <a href="page:support">Write to support</a>.',
-        'foot_legal': 'Service publisher: {{company name, address, registration number}}. Publication director: {{name}}. Site host: {{host name and address}}.',
+        'foot_legal': 'Service publisher: {{foot_publisher|company name, address, registration number}}. Publication director: {{foot_director|name}}. Site host: {{foot_host|host name and address}}.',
     },
 }
 
@@ -250,10 +253,10 @@ PAGES['terms'] = {
 <p class="lead">Brouillon 0.1, non validé juridiquement. Dernière mise à jour du brouillon : 2026-11-06.</p>
 
 <h2>1. Qui sommes-nous</h2>
-<p>{{{{dénomination de la société, forme, capital, siège, numéro d’immatriculation, directeur de la publication, hébergeur, adresse de contact}}}}</p>
+<p>{{{{terms_publisher|dénomination de la société, forme, capital, siège, numéro d’immatriculation, directeur de la publication, hébergeur, adresse de contact}}}}</p>
 
 <h2>2. Objet</h2>
-<p>L’application <mark class="todo">[Nom]</mark> permet à des personnes majeures de se rencontrer, d’échanger et d’appeler. Elle est gratuite à l’installation ; certaines fonctions sont payantes (abonnement Premium, crédits).</p>
+<p>L’application Ayelo permet à des personnes majeures de se rencontrer, d’échanger et d’appeler. Elle est gratuite à l’installation ; certaines fonctions sont payantes (abonnement Premium, crédits).</p>
 
 <h2>3. Conditions d’accès</h2>
 <ul>
@@ -274,7 +277,7 @@ PAGES['terms'] = {
 
 <h2>7. Abonnements et achats</h2>
 <p>Les achats passent par l’App Store ou Google Play. L’abonnement se renouvelle automatiquement jusqu’à annulation dans les réglages du store ; <strong>supprimer l’application ou le compte n’annule pas l’abonnement</strong>. Remboursements : selon les règles du store.</p>
-<p>{{{{prix, durées, renouvellement, droit de rétractation selon le pays : à rédiger par un juriste}}}}</p>
+<p>{{{{terms_pricing|prix, durées, renouvellement, droit de rétractation selon le pays : à rédiger par un juriste}}}}</p>
 
 <h2>8. Suppression du compte</h2>
 <p>Vous pouvez supprimer votre compte dans l’application ou <a href="page:delete">depuis cette page web</a>. Votre profil est masqué immédiatement ; vos données personnelles sont anonymisées après {GRACE_DAYS} jours, hors celles que la loi ou la sécurité nous obligent à conserver (signalements, sanctions).</p>
@@ -283,23 +286,23 @@ PAGES['terms'] = {
 <p>Nous examinons les signalements. Une sanction vous est notifiée avec son motif ; vous pouvez la contester une fois.</p>
 
 <h2>10. Responsabilité</h2>
-<p>{{{{limitation de responsabilité, garanties légales, force majeure : juriste}}}}</p>
+<p>{{{{terms_liability|limitation de responsabilité, garanties légales, force majeure : juriste}}}}</p>
 
 <h2>11. Droit applicable et litiges</h2>
-<p>{{{{droit applicable, juridiction, médiation, spécificités consommateurs par pays : juriste}}}}</p>
+<p>{{{{terms_governing_law|droit applicable, juridiction, médiation, spécificités consommateurs par pays : juriste}}}}</p>
 
 <h2>12. Modification</h2>
-<p>{{{{modalités de modification et de notification des conditions}}}}</p>
+<p>{{{{terms_changes|modalités de modification et de notification des conditions}}}}</p>
 """),
     'en': ('Terms of use', 'General terms of use of the service (provisional version).', f"""
 <h1>Terms of use</h1>
 <p class="lead">Draft 0.1, not legally validated. Draft last updated: 2026-11-06. This English text is a working translation of the French draft.</p>
 
 <h2>1. Who we are</h2>
-<p>{{{{company name, legal form, capital, registered office, registration number, publication director, host, contact address}}}}</p>
+<p>{{{{terms_publisher|company name, legal form, capital, registered office, registration number, publication director, host, contact address}}}}</p>
 
 <h2>2. Purpose</h2>
-<p>The <mark class="todo">[Name]</mark> application lets adults meet, chat and call each other. It is free to install; some features are paid (Premium subscription, credits).</p>
+<p>The Ayelo application lets adults meet, chat and call each other. It is free to install; some features are paid (Premium subscription, credits).</p>
 
 <h2>3. Access conditions</h2>
 <ul>
@@ -320,7 +323,7 @@ PAGES['terms'] = {
 
 <h2>7. Subscriptions and purchases</h2>
 <p>Purchases go through the App Store or Google Play. The subscription renews automatically until you cancel it in your store settings; <strong>deleting the application or the account does not cancel the subscription</strong>. Refunds follow the store rules.</p>
-<p>{{{{prices, durations, renewal, withdrawal right by country: to be drafted by a lawyer}}}}</p>
+<p>{{{{terms_pricing|prices, durations, renewal, withdrawal right by country: to be drafted by a lawyer}}}}</p>
 
 <h2>8. Account deletion</h2>
 <p>You can delete your account in the application or <a href="page:delete">from this web page</a>. Your profile is hidden immediately; your personal data is anonymised after {GRACE_DAYS} days, except what the law or security requires us to keep (reports, sanctions).</p>
@@ -329,13 +332,13 @@ PAGES['terms'] = {
 <p>We review reports. A sanction is notified to you with its reason; you can appeal it once.</p>
 
 <h2>10. Liability</h2>
-<p>{{{{limitation of liability, legal warranties, force majeure: lawyer}}}}</p>
+<p>{{{{terms_liability|limitation of liability, legal warranties, force majeure: lawyer}}}}</p>
 
 <h2>11. Governing law and disputes</h2>
-<p>{{{{governing law, jurisdiction, mediation, consumer specifics by country: lawyer}}}}</p>
+<p>{{{{terms_governing_law|governing law, jurisdiction, mediation, consumer specifics by country: lawyer}}}}</p>
 
 <h2>12. Changes</h2>
-<p>{{{{how the terms are changed and how members are notified}}}}</p>
+<p>{{{{terms_changes|how the terms are changed and how members are notified}}}}</p>
 """),
 }
 
@@ -346,25 +349,25 @@ PAGES['privacy'] = {
 <p class="lead">Brouillon 0.2, non validé juridiquement. Les durées indiquées sont celles du fonctionnement actuel du service ; ce ne sont pas des choix juridiques validés et elles peuvent changer avant la publication.</p>
 
 <h2>1. Responsable du traitement</h2>
-<p>{{{{identité, adresse, délégué à la protection des données, représentant dans l’UE ou au Royaume-Uni si nécessaire}}}}. Contact pour vos données : {{{{privacy@example.invalid}}}}</p>
+<p>{{{{privacy_controller|identité, adresse, délégué à la protection des données, représentant dans l’UE ou au Royaume-Uni si nécessaire}}}}. Contact pour vos données : {{{{contact_privacy_email|privacy@example.invalid}}}}</p>
 
 <h2>2. Données que nous traitons et pourquoi</h2>
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Donnée</th><th scope="col">Finalité</th><th scope="col">Base légale (à valider)</th><th scope="col">Conservation actuelle</th></tr></thead>
 <tbody>
-<tr><td>E-mail, mot de passe (haché), date de naissance</td><td>Créer et sécuriser le compte, vérifier l’âge</td><td>Contrat, obligation légale</td><td>Jusqu’à l’anonymisation ({GRACE_DAYS} jours après la demande de suppression). À l’anonymisation, la date de naissance est <strong>réduite à l’année</strong>, elle n’est pas effacée {{{{à valider par un juriste}}}}</td></tr>
+<tr><td>E-mail, mot de passe (haché), date de naissance</td><td>Créer et sécuriser le compte, vérifier l’âge</td><td>Contrat, obligation légale</td><td>Jusqu’à l’anonymisation ({GRACE_DAYS} jours après la demande de suppression). À l’anonymisation, la date de naissance est <strong>réduite à l’année</strong>, elle n’est pas effacée {{{{privacy_birthdate_note|à valider par un juriste}}}}</td></tr>
 <tr><td>Nom d’affichage, genre, genre recherché, pays d’origine et de résidence, ville, intention, présentation</td><td>Profil et mise en relation</td><td>Contrat ; <strong>consentement explicite</strong> pour les données sensibles</td><td>Idem</td></tr>
 <tr><td>Photos</td><td>Profil, après examen</td><td>Contrat</td><td>Supprimées à l’anonymisation</td></tr>
 <tr><td>Messages</td><td>Échanges entre membres</td><td>Contrat</td><td>Contenu effacé à l’anonymisation du compte de l’expéditeur</td></tr>
 <tr><td>Selfie de vérification</td><td>Vérifier le profil</td><td><strong>Consentement explicite</strong></td><td>Supprimé dès la décision de vérification</td></tr>
-<tr><td>Signalements, sanctions, journal d’audit</td><td>Sécurité, modération, obligations légales</td><td>Intérêt légitime, obligation légale</td><td>Texte libre d’un signalement : {REPORT_DAYS} jours puis effacé, une fois le compte d’une des parties anonymisé (sauf conservation probatoire). Motif d’une sanction : {SANCTION_DAYS} jours puis remplacé par un marqueur, une fois le compte sanctionné anonymisé. Empreinte (hash) de l’e-mail d’un compte sanctionné : {{{{durée à fixer}}}}</td></tr>
+<tr><td>Signalements, sanctions, journal d’audit</td><td>Sécurité, modération, obligations légales</td><td>Intérêt légitime, obligation légale</td><td>Texte libre d’un signalement : {REPORT_DAYS} jours puis effacé, une fois le compte d’une des parties anonymisé (sauf conservation probatoire). Motif d’une sanction : {SANCTION_DAYS} jours puis remplacé par un marqueur, une fois le compte sanctionné anonymisé. Empreinte (hash) de l’e-mail d’un compte sanctionné : {{{{retention_sanction_hash|durée à fixer}}}}</td></tr>
 <tr><td>Appareil (empreinte), adresse IP</td><td>Limites de débit, sécurité, mémoire d’un refus d’âge</td><td>Intérêt légitime</td><td>IP non conservée durablement, sauf refus d’âge : <strong>30 minutes</strong>. Appareil, e-mail (empreinte chiffrée) et identifiant de connexion sociale d’un refus d’âge : <strong>90 jours</strong></td></tr>
-<tr><td>Jeton de notification (appareil), plateforme</td><td>Envoyer des notifications</td><td>Contrat ou consentement {{{{à valider}}}}</td><td>Jusqu’à la déconnexion, la suppression du compte ou l’invalidité du jeton</td></tr>
+<tr><td>Jeton de notification (appareil), plateforme</td><td>Envoyer des notifications</td><td>Contrat ou consentement {{{{privacy_push_legal_basis|à valider}}}}</td><td>Jusqu’à la déconnexion, la suppression du compte ou l’invalidité du jeton</td></tr>
 <tr><td>Archive d’export de vos données</td><td>Vous remettre une copie de vos données</td><td>Obligation légale (droit d’accès)</td><td><strong>7 jours</strong>, puis suppression</td></tr>
 <tr><td>Codes à usage unique (vérification d’e-mail, réinitialisation, confirmation de suppression)</td><td>Sécuriser le compte</td><td>Contrat</td><td>24 h (vérification), 60 min (réinitialisation et confirmation de suppression)</td></tr>
 <tr><td>Envois de médias non finalisés ou orphelins</td><td>Hygiène du stockage</td><td>Intérêt légitime</td><td>24 h (non finalisés), 48 h (objets sans ligne en base)</td></tr>
-<tr><td>Journaux techniques du serveur</td><td>Exploitation, sécurité</td><td>Intérêt légitime</td><td>{{{{durée et contenu à définir}}}}</td></tr>
-<tr><td>Achats</td><td>Accès Premium, comptabilité</td><td>Contrat, obligation légale</td><td>{{{{durée comptable : juriste}}}}</td></tr>
+<tr><td>Journaux techniques du serveur</td><td>Exploitation, sécurité</td><td>Intérêt légitime</td><td>{{{{retention_logs|durée et contenu à définir}}}}</td></tr>
+<tr><td>Achats</td><td>Accès Premium, comptabilité</td><td>Contrat, obligation légale</td><td>{{{{retention_accounting|durée comptable : juriste}}}}</td></tr>
 </tbody></table></div>
 <p class="small">Aucun outil d’analyse d’usage ni de suivi publicitaire n’est intégré à l’application ni à ce site.</p>
 
@@ -377,20 +380,20 @@ PAGES['privacy'] = {
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Prestataire</th><th scope="col">Rôle</th><th scope="col">Données concernées</th></tr></thead>
 <tbody>
-<tr><td>Hébergeur du serveur {{{{nom, lieu}}}}</td><td>Exécute l’application serveur, la base de données, les journaux et les sauvegardes</td><td>Toutes les données du service, y compris les messages (stockés en clair, voir ci-dessous)</td></tr>
+<tr><td>Hébergeur du serveur {{{{privacy_host_name|nom, lieu}}}}</td><td>Exécute l’application serveur, la base de données, les journaux et les sauvegardes</td><td>Toutes les données du service, y compris les messages (stockés en clair, voir ci-dessous)</td></tr>
 <tr><td>Cloudflare R2</td><td>Stockage des photos, selfies de vérification, archives d’export</td><td>Fichiers image (métadonnées EXIF retirées), archives d’export de {7} jours</td></tr>
 <tr><td>RevenueCat, Apple App Store, Google Play</td><td>Achats et abonnement Premium</td><td>Identifiant interne d’utilisateur (pas l’e-mail), reçus d’achat ; les moyens de paiement restent chez les stores</td></tr>
 <tr><td>Firebase Cloud Messaging (Google), service de notifications d’Apple</td><td>Notifications</td><td>Jeton d’appareil. <strong>Contenu de la notification : pour un message, les 80 premiers caractères du texte ; pour un appel, le nom d’affichage de l’appelant</strong></td></tr>
 <tr><td>LiveKit Cloud</td><td>Appels audio et vidéo</td><td>Identifiant, nom d’affichage, salle. <strong>Les flux audio et vidéo des appels passent par ses serveurs</strong></td></tr>
-<tr><td>Fournisseur d’e-mail {{{{à choisir}}}}</td><td>E-mails de vérification, de réinitialisation et de confirmation de suppression</td><td>Adresse e-mail, langue, lien à usage unique</td></tr>
+<tr><td>Fournisseur d’e-mail {{{{privacy_mail_provider|à choisir}}}}</td><td>E-mails de vérification, de réinitialisation et de confirmation de suppression</td><td>Adresse e-mail, langue, lien à usage unique</td></tr>
 <tr><td>Google et Apple (connexion sociale)</td><td>Connexion avec Google ou Apple</td><td>Identifiant du compte social et e-mail reçus ; aucune donnée de l’utilisateur envoyée</td></tr>
-<tr><td>Prestataire de modération {{{{éventuel, non choisi}}}}</td><td>Aide à la modération</td><td>{{{{à définir}}}}</td></tr>
+<tr><td>Prestataire de modération {{{{privacy_moderation_provider|éventuel, non choisi}}}}</td><td>Aide à la modération</td><td>{{{{privacy_moderation_data|à définir}}}}</td></tr>
 </tbody></table></div>
-<p>Les temps réels (messages, appels entrants) passent par un serveur auto-hébergé, sans tiers. Certains prestataires peuvent traiter des données hors de l’Union européenne : {{{{mécanismes de transfert, garanties, accords de traitement : juriste}}}}.</p>
+<p>Les temps réels (messages, appels entrants) passent par un serveur auto-hébergé, sans tiers. Certains prestataires peuvent traiter des données hors de l’Union européenne : {{{{privacy_transfers|mécanismes de transfert, garanties, accords de traitement : juriste}}}}.</p>
 <p><strong>Important :</strong> les messages ne sont <strong>pas chiffrés de bout en bout</strong>. Ils sont protégés en transit et par des contrôles d’accès, mais stockés en clair sur le serveur.</p>
 
 <h2>5. Vos droits</h2>
-<p>Accès et export (dans l’application, une demande par jour), rectification, suppression (dans l’application ou <a href="page:delete">sur cette page web</a>), opposition, limitation, retrait du consentement, réclamation auprès de l’autorité de contrôle. Contact : {{{{privacy@example.invalid}}}}</p>
+<p>Accès et export (dans l’application, une demande par jour), rectification, suppression (dans l’application ou <a href="page:delete">sur cette page web</a>), opposition, limitation, retrait du consentement, réclamation auprès de l’autorité de contrôle. Contact : {{{{contact_privacy_email|privacy@example.invalid}}}}</p>
 
 <h2>6. Mineurs</h2>
 <p>Le service est réservé aux personnes de 18 ans et plus. Un compte soupçonné d’appartenir à un mineur est suspendu et examiné.</p>
@@ -399,32 +402,32 @@ PAGES['privacy'] = {
 <p>Communications chiffrées en transit, mots de passe hachés, accès restreints, journalisation des actions d’administration. Aucune mesure n’est infaillible.</p>
 
 <h2>8. Sauvegardes</h2>
-<p>Des sauvegardes du serveur sont conservées {{{{durée finale à valider : aujourd’hui 14 jours par défaut}}}}. Une donnée supprimée peut y subsister jusqu’à leur rotation, sans être restaurée en production. {{{{niveau de chiffrement des sauvegardes à confirmer avant publication}}}}</p>
+<p>Des sauvegardes du serveur sont conservées {{{{retention_backups|durée finale à valider : aujourd’hui 14 jours par défaut}}}}. Une donnée supprimée peut y subsister jusqu’à leur rotation, sans être restaurée en production. {{{{privacy_backup_encryption|niveau de chiffrement des sauvegardes à confirmer avant publication}}}}</p>
 """),
     'en': ('Privacy policy', 'Data processed, purposes, retention periods, recipients and rights (provisional version).', f"""
 <h1>Privacy policy</h1>
 <p class="lead">Draft 0.2, not legally validated. The periods shown are those of the service as it currently works; they are not validated legal choices and may change before publication. This English text is a working translation of the French draft.</p>
 
 <h2>1. Data controller</h2>
-<p>{{{{identity, address, data protection officer, EU or UK representative if needed}}}}. Contact for your data: {{{{privacy@example.invalid}}}}</p>
+<p>{{{{privacy_controller|identity, address, data protection officer, EU or UK representative if needed}}}}. Contact for your data: {{{{contact_privacy_email|privacy@example.invalid}}}}</p>
 
 <h2>2. Data we process and why</h2>
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Data</th><th scope="col">Purpose</th><th scope="col">Legal basis (to be validated)</th><th scope="col">Current retention</th></tr></thead>
 <tbody>
-<tr><td>E-mail, password (hashed), date of birth</td><td>Create and secure the account, check age</td><td>Contract, legal obligation</td><td>Until anonymisation ({GRACE_DAYS} days after the deletion request). At anonymisation the date of birth is <strong>reduced to the year</strong>, it is not erased {{{{to be validated by a lawyer}}}}</td></tr>
+<tr><td>E-mail, password (hashed), date of birth</td><td>Create and secure the account, check age</td><td>Contract, legal obligation</td><td>Until anonymisation ({GRACE_DAYS} days after the deletion request). At anonymisation the date of birth is <strong>reduced to the year</strong>, it is not erased {{{{privacy_birthdate_note|to be validated by a lawyer}}}}</td></tr>
 <tr><td>Display name, gender, gender sought, country of origin and residence, city, intent, bio</td><td>Profile and matching</td><td>Contract; <strong>explicit consent</strong> for sensitive data</td><td>Same</td></tr>
 <tr><td>Photos</td><td>Profile, after review</td><td>Contract</td><td>Deleted at anonymisation</td></tr>
 <tr><td>Messages</td><td>Exchanges between members</td><td>Contract</td><td>Content erased when the sender’s account is anonymised</td></tr>
 <tr><td>Verification selfie</td><td>Verify the profile</td><td><strong>Explicit consent</strong></td><td>Deleted as soon as the verification decision is made</td></tr>
-<tr><td>Reports, sanctions, audit log</td><td>Safety, moderation, legal obligations</td><td>Legitimate interest, legal obligation</td><td>Free text of a report: {REPORT_DAYS} days, then erased once the account of one of the parties is anonymised (unless kept as evidence). Reason for a sanction: {SANCTION_DAYS} days, then replaced by a marker once the sanctioned account is anonymised. Hash of the e-mail of a sanctioned account: {{{{period to be set}}}}</td></tr>
+<tr><td>Reports, sanctions, audit log</td><td>Safety, moderation, legal obligations</td><td>Legitimate interest, legal obligation</td><td>Free text of a report: {REPORT_DAYS} days, then erased once the account of one of the parties is anonymised (unless kept as evidence). Reason for a sanction: {SANCTION_DAYS} days, then replaced by a marker once the sanctioned account is anonymised. Hash of the e-mail of a sanctioned account: {{{{retention_sanction_hash|period to be set}}}}</td></tr>
 <tr><td>Device (fingerprint), IP address</td><td>Rate limiting, security, memory of an age refusal</td><td>Legitimate interest</td><td>IP not kept long term, except after an age refusal: <strong>30 minutes</strong>. Device, e-mail (keyed hash) and social login identifier after an age refusal: <strong>90 days</strong></td></tr>
-<tr><td>Notification token (device), platform</td><td>Send notifications</td><td>Contract or consent {{{{to be validated}}}}</td><td>Until sign-out, account deletion or the token becomes invalid</td></tr>
+<tr><td>Notification token (device), platform</td><td>Send notifications</td><td>Contract or consent {{{{privacy_push_legal_basis|to be validated}}}}</td><td>Until sign-out, account deletion or the token becomes invalid</td></tr>
 <tr><td>Data export archive</td><td>Give you a copy of your data</td><td>Legal obligation (right of access)</td><td><strong>7 days</strong>, then deleted</td></tr>
 <tr><td>One-time codes (e-mail verification, password reset, deletion confirmation)</td><td>Secure the account</td><td>Contract</td><td>24 h (verification), 60 min (reset and deletion confirmation)</td></tr>
 <tr><td>Unfinished or orphan media uploads</td><td>Storage hygiene</td><td>Legitimate interest</td><td>24 h (unfinished), 48 h (objects without a database row)</td></tr>
-<tr><td>Technical server logs</td><td>Operations, security</td><td>Legitimate interest</td><td>{{{{period and content to be defined}}}}</td></tr>
-<tr><td>Purchases</td><td>Premium access, accounting</td><td>Contract, legal obligation</td><td>{{{{accounting period: lawyer}}}}</td></tr>
+<tr><td>Technical server logs</td><td>Operations, security</td><td>Legitimate interest</td><td>{{{{retention_logs|period and content to be defined}}}}</td></tr>
+<tr><td>Purchases</td><td>Premium access, accounting</td><td>Contract, legal obligation</td><td>{{{{retention_accounting|accounting period: lawyer}}}}</td></tr>
 </tbody></table></div>
 <p class="small">No usage analytics tool and no advertising tracker is built into the application or this site.</p>
 
@@ -437,20 +440,20 @@ PAGES['privacy'] = {
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Provider</th><th scope="col">Role</th><th scope="col">Data concerned</th></tr></thead>
 <tbody>
-<tr><td>Server host {{{{name, location}}}}</td><td>Runs the server application, the database, logs and backups</td><td>All service data, including messages (stored in clear text, see below)</td></tr>
+<tr><td>Server host {{{{privacy_host_name|name, location}}}}</td><td>Runs the server application, the database, logs and backups</td><td>All service data, including messages (stored in clear text, see below)</td></tr>
 <tr><td>Cloudflare R2</td><td>Storage of photos, verification selfies, export archives</td><td>Image files (EXIF metadata removed), 7-day export archives</td></tr>
 <tr><td>RevenueCat, Apple App Store, Google Play</td><td>Purchases and Premium subscription</td><td>Internal user identifier (not the e-mail), purchase receipts; payment methods stay with the stores</td></tr>
 <tr><td>Firebase Cloud Messaging (Google), Apple notification service</td><td>Notifications</td><td>Device token. <strong>Notification content: for a message, the first 80 characters of the text; for a call, the caller’s display name</strong></td></tr>
 <tr><td>LiveKit Cloud</td><td>Audio and video calls</td><td>Identifier, display name, room. <strong>Call audio and video streams go through its servers</strong></td></tr>
-<tr><td>E-mail provider {{{{to be chosen}}}}</td><td>Verification, reset and deletion confirmation e-mails</td><td>E-mail address, language, one-time link</td></tr>
+<tr><td>E-mail provider {{{{privacy_mail_provider|to be chosen}}}}</td><td>Verification, reset and deletion confirmation e-mails</td><td>E-mail address, language, one-time link</td></tr>
 <tr><td>Google and Apple (social sign-in)</td><td>Sign in with Google or Apple</td><td>Social account identifier and e-mail received; no user data sent</td></tr>
-<tr><td>Moderation provider {{{{possible, not chosen}}}}</td><td>Moderation support</td><td>{{{{to be defined}}}}</td></tr>
+<tr><td>Moderation provider {{{{privacy_moderation_provider|possible, not chosen}}}}</td><td>Moderation support</td><td>{{{{privacy_moderation_data|to be defined}}}}</td></tr>
 </tbody></table></div>
-<p>Real-time features (messages, incoming calls) run on a self-hosted server, with no third party. Some providers may process data outside the European Union: {{{{transfer mechanisms, safeguards, processing agreements: lawyer}}}}.</p>
+<p>Real-time features (messages, incoming calls) run on a self-hosted server, with no third party. Some providers may process data outside the European Union: {{{{privacy_transfers|transfer mechanisms, safeguards, processing agreements: lawyer}}}}.</p>
 <p><strong>Important:</strong> messages are <strong>not end-to-end encrypted</strong>. They are protected in transit and by access controls, but stored in clear text on the server.</p>
 
 <h2>5. Your rights</h2>
-<p>Access and export (in the application, one request per day), rectification, deletion (in the application or <a href="page:delete">on this web page</a>), objection, restriction, withdrawal of consent, complaint to the supervisory authority. Contact: {{{{privacy@example.invalid}}}}</p>
+<p>Access and export (in the application, one request per day), rectification, deletion (in the application or <a href="page:delete">on this web page</a>), objection, restriction, withdrawal of consent, complaint to the supervisory authority. Contact: {{{{contact_privacy_email|privacy@example.invalid}}}}</p>
 
 <h2>6. Minors</h2>
 <p>The service is reserved for people aged 18 and over. An account suspected of belonging to a minor is suspended and reviewed.</p>
@@ -459,7 +462,7 @@ PAGES['privacy'] = {
 <p>Communications encrypted in transit, hashed passwords, restricted access, logging of administration actions. No measure is infallible.</p>
 
 <h2>8. Backups</h2>
-<p>Server backups are kept for {{{{final period to be validated: currently 14 days by default}}}}. A deleted item may remain in them until they rotate, without being restored to production. {{{{backup encryption level to be confirmed before publication}}}}</p>
+<p>Server backups are kept for {{{{retention_backups|final period to be validated: currently 14 days by default}}}}. A deleted item may remain in them until they rotate, without being restored to production. {{{{privacy_backup_encryption|backup encryption level to be confirmed before publication}}}}</p>
 """),
 }
 
@@ -565,7 +568,7 @@ PAGES['safety'] = {
 
 <h2>Ce qui se passe après un signalement</h2>
 <ol>
-  <li>Un membre de l’équipe examine le signalement. Objectif de délai de traitement : {{{{délai à confirmer par le propriétaire, aucun engagement pris à ce jour}}}}.</li>
+  <li>Un membre de l’équipe examine le signalement. Objectif de délai de traitement : {{{{safety_response_delay|délai à confirmer par le propriétaire, aucun engagement pris à ce jour}}}}.</li>
   <li>Selon la gravité : avertissement, suspension temporaire, bannissement, signalement aux autorités.</li>
   <li>Le membre sanctionné est informé du motif et peut contester une fois.</li>
   <li>Une personne soupçonnée d’être mineure est suspendue à titre préventif dans certains cas, puis son dossier est examiné en priorité.</li>
@@ -573,10 +576,10 @@ PAGES['safety'] = {
 <p>Conservation du texte d’un signalement : voir la <a href="page:privacy">politique de confidentialité</a>. Nous ne communiquons pas à la personne signalée l’identité de qui l’a signalée.</p>
 
 <h2>Contenu illicite ou mineurs</h2>
-<p>Les contenus impliquant des mineurs, la traite des êtres humains ou l’exploitation sexuelle font l’objet d’une <strong>tolérance zéro</strong> et d’un signalement aux autorités compétentes {{{{procédure, autorité destinataire et délais : juriste}}}}.</p>
+<p>Les contenus impliquant des mineurs, la traite des êtres humains ou l’exploitation sexuelle font l’objet d’une <strong>tolérance zéro</strong> et d’un signalement aux autorités compétentes {{{{safety_authorities|procédure, autorité destinataire et délais : juriste}}}}.</p>
 
 <h2>Nous écrire</h2>
-<p>Pour une question de sécurité qui ne passe pas par l’application, ou pour nous signaler une faille technique : {{{{security@example.invalid}}}}. Voir aussi <a href="page:support">support et contact</a>.</p>
+<p>Pour une question de sécurité qui ne passe pas par l’application, ou pour nous signaler une faille technique : {{{{contact_security_email|security@example.invalid}}}}. Voir aussi <a href="page:support">support et contact</a>.</p>
 """),
     'en': ('Safety and reporting', 'Stay safe, block and report a member, and what happens next (provisional version).', f"""
 <h1>Safety and reporting</h1>
@@ -602,7 +605,7 @@ PAGES['safety'] = {
 
 <h2>What happens after a report</h2>
 <ol>
-  <li>A team member reviews the report. Target processing time: {{{{time to be confirmed by the owner, no commitment made so far}}}}.</li>
+  <li>A team member reviews the report. Target processing time: {{{{safety_response_delay|time to be confirmed by the owner, no commitment made so far}}}}.</li>
   <li>Depending on severity: warning, temporary suspension, ban, report to the authorities.</li>
   <li>The sanctioned member is told the reason and can appeal once.</li>
   <li>A person suspected of being a minor is, in some cases, suspended as a precaution, then the case is reviewed as a priority.</li>
@@ -610,10 +613,10 @@ PAGES['safety'] = {
 <p>Retention of report text: see the <a href="page:privacy">privacy policy</a>. We do not tell the reported person who reported them.</p>
 
 <h2>Unlawful content or minors</h2>
-<p>Content involving minors, human trafficking or sexual exploitation is met with <strong>zero tolerance</strong> and reported to the competent authorities {{{{procedure, receiving authority and deadlines: lawyer}}}}.</p>
+<p>Content involving minors, human trafficking or sexual exploitation is met with <strong>zero tolerance</strong> and reported to the competent authorities {{{{safety_authorities|procedure, receiving authority and deadlines: lawyer}}}}.</p>
 
 <h2>Write to us</h2>
-<p>For a safety question that cannot go through the application, or to report a technical vulnerability: {{{{security@example.invalid}}}}. See also <a href="page:support">support and contact</a>.</p>
+<p>For a safety question that cannot go through the application, or to report a technical vulnerability: {{{{contact_security_email|security@example.invalid}}}}. See also <a href="page:support">support and contact</a>.</p>
 """),
 }
 
@@ -625,11 +628,11 @@ PAGES['support'] = {
 
 <h2>Nous contacter</h2>
 <ul>
-  <li>Support : {{{{support@example.invalid}}}}</li>
-  <li>Données personnelles : {{{{privacy@example.invalid}}}}</li>
-  <li>Sécurité et failles techniques : {{{{security@example.invalid}}}}</li>
-  <li>Courrier : {{{{adresse postale de l’éditeur}}}}</li>
-  <li>Délai de réponse : {{{{à confirmer par le propriétaire, aucun engagement pris à ce jour}}}}</li>
+  <li>Support : {{{{contact_support_email|support@example.invalid}}}}</li>
+  <li>Données personnelles : {{{{contact_privacy_email|privacy@example.invalid}}}}</li>
+  <li>Sécurité et failles techniques : {{{{contact_security_email|security@example.invalid}}}}</li>
+  <li>Courrier : {{{{support_postal_address|adresse postale de l’éditeur}}}}</li>
+  <li>Délai de réponse : {{{{support_response_delay|à confirmer par le propriétaire, aucun engagement pris à ce jour}}}}</li>
 </ul>
 <p class="small">Ne nous envoyez jamais votre mot de passe. Nous ne vous le demanderons jamais.</p>
 
@@ -653,11 +656,11 @@ PAGES['support'] = {
 
 <h2>Contact us</h2>
 <ul>
-  <li>Support: {{{{support@example.invalid}}}}</li>
-  <li>Personal data: {{{{privacy@example.invalid}}}}</li>
-  <li>Security and technical vulnerabilities: {{{{security@example.invalid}}}}</li>
-  <li>Mail: {{{{publisher postal address}}}}</li>
-  <li>Response time: {{{{to be confirmed by the owner, no commitment made so far}}}}</li>
+  <li>Support: {{{{contact_support_email|support@example.invalid}}}}</li>
+  <li>Personal data: {{{{contact_privacy_email|privacy@example.invalid}}}}</li>
+  <li>Security and technical vulnerabilities: {{{{contact_security_email|security@example.invalid}}}}</li>
+  <li>Mail: {{{{support_postal_address|publisher postal address}}}}</li>
+  <li>Response time: {{{{support_response_delay|to be confirmed by the owner, no commitment made so far}}}}</li>
 </ul>
 <p class="small">Never send us your password. We will never ask for it.</p>
 
@@ -709,14 +712,14 @@ PAGES['delete'] = {
   <button type="submit">Recevoir le lien de confirmation</button>
   <div class="status" role="status" aria-live="polite"></div>
 </form>
-<p class="small">Adresse du service dans ce formulaire : {{{{à renseigner par l’exploitant, voir docs/runbooks/site-public.md}}}}. Pour un compte créé uniquement avec Google ou Apple (sans mot de passe), la voie 2 n’est pas encore disponible dans tous les cas : écrivez au <a href="page:support">support</a>.</p>
+<p class="small">Adresse du service dans ce formulaire : {{{{delete_service_address|à renseigner par l’exploitant, voir docs/runbooks/site-public.md}}}}. Pour un compte créé uniquement avec Google ou Apple (sans mot de passe), la voie 2 n’est pas encore disponible dans tous les cas : écrivez au <a href="page:support">support</a>.</p>
 <noscript><p class="small">Sans JavaScript, le formulaire s’envoie quand même, mais la réponse du service s’affiche brute. Vous recevrez le même e-mail.</p></noscript>
 
 <h2>Délai de {GRACE_DAYS} jours</h2>
 <ul>
   <li>Pendant {GRACE_DAYS} jours, votre compte est en attente de suppression : profil invisible, sessions fermées.</li>
   <li>Passé ce délai, l’anonymisation est automatique et <strong>définitive</strong>.</li>
-  <li>Pour changer d’avis avant la fin du délai : contactez le <a href="page:support">support</a> {{{{procédure d’annulation à confirmer : non vérifiée dans le code}}}}.</li>
+  <li>Pour changer d’avis avant la fin du délai : contactez le <a href="page:support">support</a> {{{{delete_cancel_procedure|procédure d’annulation à confirmer : non vérifiée dans le code}}}}.</li>
 </ul>
 
 <h2>Abonnement Premium</h2>
@@ -737,14 +740,14 @@ PAGES['delete'] = {
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Élément</th><th scope="col">Conservation</th></tr></thead>
 <tbody>
-<tr><td>Date de naissance</td><td>Réduite à l’année (pas effacée) {{{{à valider par un juriste}}}}</td></tr>
+<tr><td>Date de naissance</td><td>Réduite à l’année (pas effacée) {{{{delete_birthdate_note|à valider par un juriste}}}}</td></tr>
 <tr><td>Ligne de compte minimale (identifiant, statut « supprimé »)</td><td>Tant que des signalements ou sanctions s’y rattachent</td></tr>
 <tr><td>Texte libre des signalements concernant ou émis par le compte</td><td>{REPORT_DAYS} jours après leur création, puis effacé (sauf conservation probatoire d’un dossier)</td></tr>
 <tr><td>Motif des sanctions</td><td>{SANCTION_DAYS} jours après la sanction, puis remplacé par un marqueur</td></tr>
-<tr><td>Si le compte a été suspendu ou banni : empreinte (hash) de l’e-mail et du téléphone, signaux de risque</td><td>Conservés pour empêcher le contournement d’un bannissement. Durée : {{{{à fixer}}}}</td></tr>
-<tr><td>Preuves de consentement (sans adresse IP)</td><td>{{{{durée à fixer}}}}</td></tr>
-<tr><td>Achats et pièces comptables</td><td>{{{{durée comptable : juriste}}}}</td></tr>
-<tr><td>Sauvegardes du serveur</td><td>Une donnée supprimée peut subsister dans une sauvegarde jusqu’à sa rotation (14 jours par défaut {{{{à valider}}}}), sans être restaurée en production</td></tr>
+<tr><td>Si le compte a été suspendu ou banni : empreinte (hash) de l’e-mail et du téléphone, signaux de risque</td><td>Conservés pour empêcher le contournement d’un bannissement. Durée : {{{{retention_sanction_hash|à fixer}}}}</td></tr>
+<tr><td>Preuves de consentement (sans adresse IP)</td><td>{{{{retention_consent_proof|durée à fixer}}}}</td></tr>
+<tr><td>Achats et pièces comptables</td><td>{{{{retention_accounting|durée comptable : juriste}}}}</td></tr>
+<tr><td>Sauvegardes du serveur</td><td>Une donnée supprimée peut subsister dans une sauvegarde jusqu’à sa rotation (14 jours par défaut {{{{delete_backup_note|à valider}}}}), sans être restaurée en production</td></tr>
 </tbody></table></div>
 <p>Voir aussi la <a href="page:privacy">politique de confidentialité</a>.</p>
 """),
@@ -767,14 +770,14 @@ PAGES['delete'] = {
   <button type="submit">Get the confirmation link</button>
   <div class="status" role="status" aria-live="polite"></div>
 </form>
-<p class="small">Service address in this form: {{{{to be set by the operator, see docs/runbooks/site-public.md}}}}. For an account created only with Google or Apple (no password), way 2 is not yet available in every case: write to <a href="page:support">support</a>.</p>
+<p class="small">Service address in this form: {{{{delete_service_address|to be set by the operator, see docs/runbooks/site-public.md}}}}. For an account created only with Google or Apple (no password), way 2 is not yet available in every case: write to <a href="page:support">support</a>.</p>
 <noscript><p class="small">Without JavaScript the form still submits, but the service’s answer is shown raw. You will receive the same e-mail.</p></noscript>
 
 <h2>{GRACE_DAYS}-day delay</h2>
 <ul>
   <li>For {GRACE_DAYS} days your account is pending deletion: profile invisible, sessions closed.</li>
   <li>After that, anonymisation is automatic and <strong>final</strong>.</li>
-  <li>To change your mind before the end of the delay: contact <a href="page:support">support</a> {{{{cancellation procedure to be confirmed: not verified in the code}}}}.</li>
+  <li>To change your mind before the end of the delay: contact <a href="page:support">support</a> {{{{delete_cancel_procedure|cancellation procedure to be confirmed: not verified in the code}}}}.</li>
 </ul>
 
 <h2>Premium subscription</h2>
@@ -795,14 +798,14 @@ PAGES['delete'] = {
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Item</th><th scope="col">Retention</th></tr></thead>
 <tbody>
-<tr><td>Date of birth</td><td>Reduced to the year (not erased) {{{{to be validated by a lawyer}}}}</td></tr>
+<tr><td>Date of birth</td><td>Reduced to the year (not erased) {{{{delete_birthdate_note|to be validated by a lawyer}}}}</td></tr>
 <tr><td>Minimal account row (identifier, “deleted” status)</td><td>As long as reports or sanctions refer to it</td></tr>
 <tr><td>Free text of reports about or from the account</td><td>{REPORT_DAYS} days after creation, then erased (unless a case is kept as evidence)</td></tr>
 <tr><td>Reason for sanctions</td><td>{SANCTION_DAYS} days after the sanction, then replaced by a marker</td></tr>
-<tr><td>If the account was suspended or banned: hash of the e-mail and phone number, risk signals</td><td>Kept to prevent ban evasion. Period: {{{{to be set}}}}</td></tr>
-<tr><td>Proof of consent (without IP address)</td><td>{{{{period to be set}}}}</td></tr>
-<tr><td>Purchases and accounting records</td><td>{{{{accounting period: lawyer}}}}</td></tr>
-<tr><td>Server backups</td><td>A deleted item may remain in a backup until it rotates (14 days by default {{{{to be validated}}}}), without being restored to production</td></tr>
+<tr><td>If the account was suspended or banned: hash of the e-mail and phone number, risk signals</td><td>Kept to prevent ban evasion. Period: {{{{retention_sanction_hash|to be set}}}}</td></tr>
+<tr><td>Proof of consent (without IP address)</td><td>{{{{retention_consent_proof|period to be set}}}}</td></tr>
+<tr><td>Purchases and accounting records</td><td>{{{{retention_accounting|accounting period: lawyer}}}}</td></tr>
+<tr><td>Server backups</td><td>A deleted item may remain in a backup until it rotates (14 days by default {{{{delete_backup_note|to be validated}}}}), without being restored to production</td></tr>
 </tbody></table></div>
 <p>See also the <a href="page:privacy">privacy policy</a>.</p>
 """),
@@ -845,6 +848,127 @@ PAGES['confirm'] = {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Emplacements nommés des mentions légales
+# ---------------------------------------------------------------------------------------------------------------------
+# Chaque texte que le propriétaire doit fournir est un emplacement `{{clé|aide}}` (la clé est la même en français et en anglais,
+# l'aide est dans la langue de la page). Le panneau d'administration publie le texte de chaque clé ; sans texte publié, la page
+# garde le marqueur « À COMPLÉTER ». Genre « line » : texte brut inséré dans une phrase, une liste ou une cellule. Genre « block » :
+# paragraphes entiers, le marqueur occupe seul un <p>. Les valeurs sont du texte brut, jamais du HTML.
+GROUPS = ('publisher', 'contacts', 'terms', 'privacy', 'retention', 'safety', 'deletion')
+LINE_MAX, BLOCK_MAX = 300, 5000
+
+
+def _slot(group: str, kind: str, fr: str, en: str) -> dict:
+    return {'group': group, 'kind': kind, 'max': BLOCK_MAX if kind == 'block' else LINE_MAX, 'label': {'fr': fr, 'en': en}}
+
+
+SLOTS = {
+    # Éditeur et hébergeur
+    'foot_publisher': _slot('publisher', 'line', 'Éditeur du service (pied de page)', 'Service publisher (footer)'),
+    'foot_director': _slot('publisher', 'line', 'Directeur de la publication (pied de page)', 'Publication director (footer)'),
+    'foot_host': _slot('publisher', 'line', 'Hébergeur du site (pied de page)', 'Site host (footer)'),
+    'terms_publisher': _slot('publisher', 'block', 'Identité de l’éditeur (conditions d’utilisation)', 'Publisher identity (terms of use)'),
+    'privacy_host_name': _slot('publisher', 'line', 'Hébergeur du serveur : nom et lieu', 'Server host: name and location'),
+    # Contacts
+    'contact_support_email': _slot('contacts', 'line', 'E-mail du support', 'Support e-mail'),
+    'contact_privacy_email': _slot('contacts', 'line', 'E-mail pour les données personnelles', 'Personal data e-mail'),
+    'contact_security_email': _slot('contacts', 'line', 'E-mail sécurité et failles techniques', 'Security and vulnerabilities e-mail'),
+    'support_postal_address': _slot('contacts', 'line', 'Adresse postale de l’éditeur', 'Publisher postal address'),
+    'support_response_delay': _slot('contacts', 'line', 'Délai de réponse du support', 'Support response time'),
+    'safety_response_delay': _slot('contacts', 'line', 'Délai de traitement d’un signalement', 'Report processing time'),
+    # Conditions d'utilisation
+    'terms_pricing': _slot('terms', 'block', 'Prix, durées, renouvellement, rétractation', 'Prices, durations, renewal, withdrawal'),
+    'terms_liability': _slot('terms', 'block', 'Responsabilité, garanties légales, force majeure', 'Liability, legal warranties, force majeure'),
+    'terms_governing_law': _slot('terms', 'block', 'Droit applicable, juridiction, médiation', 'Governing law, jurisdiction, mediation'),
+    'terms_changes': _slot('terms', 'block', 'Modification des conditions et information des membres', 'How the terms change and how members are told'),
+    # Données personnelles
+    'privacy_controller': _slot('privacy', 'line', 'Responsable du traitement, délégué, représentant', 'Controller, data protection officer, representative'),
+    'privacy_birthdate_note': _slot('privacy', 'line', 'Date de naissance réduite à l’année : validation', 'Date of birth reduced to the year: validation'),
+    'privacy_push_legal_basis': _slot('privacy', 'line', 'Notifications : base légale à valider', 'Notifications: legal basis to validate'),
+    'privacy_mail_provider': _slot('privacy', 'line', 'Fournisseur d’e-mail', 'E-mail provider'),
+    'privacy_moderation_provider': _slot('privacy', 'line', 'Prestataire de modération', 'Moderation provider'),
+    'privacy_moderation_data': _slot('privacy', 'line', 'Prestataire de modération : données transmises', 'Moderation provider: data shared'),
+    'privacy_transfers': _slot('privacy', 'line', 'Transferts hors Union européenne', 'Transfers outside the European Union'),
+    'privacy_backup_encryption': _slot('privacy', 'line', 'Chiffrement des sauvegardes', 'Backup encryption'),
+    # Durées de conservation
+    'retention_sanction_hash': _slot('retention', 'line', 'Empreinte d’un compte sanctionné : durée', 'Hash of a sanctioned account: period'),
+    'retention_logs': _slot('retention', 'line', 'Journaux techniques : durée et contenu', 'Technical logs: period and content'),
+    'retention_accounting': _slot('retention', 'line', 'Achats et pièces comptables : durée', 'Purchases and accounting records: period'),
+    'retention_consent_proof': _slot('retention', 'line', 'Preuves de consentement : durée', 'Proof of consent: period'),
+    'retention_backups': _slot('retention', 'line', 'Sauvegardes du serveur : durée', 'Server backups: period'),
+    # Sécurité et signalements
+    'safety_authorities': _slot('safety', 'line', 'Signalement aux autorités : procédure et délais', 'Reporting to authorities: procedure and deadlines'),
+    # Suppression de compte
+    'delete_service_address': _slot('deletion', 'line', 'Adresse du service du formulaire de suppression', 'Service address of the deletion form'),
+    'delete_cancel_procedure': _slot('deletion', 'line', 'Annulation d’une suppression : procédure', 'Cancelling a deletion: procedure'),
+    'delete_birthdate_note': _slot('deletion', 'line', 'Date de naissance réduite à l’année : validation', 'Date of birth reduced to the year: validation'),
+    'delete_backup_note': _slot('deletion', 'line', 'Sauvegardes : validation du délai de rotation', 'Backups: validation of the rotation delay'),
+}
+
+# Emplacements rencontrés pendant la génération : clé -> {'hint': {langue: aide}, 'pages': {clés de page}}. Vidé au début de main().
+FOUND: dict = {}
+
+_MARKER = re.compile(r'\{\{([a-z][a-z0-9_]*)\|((?:(?!\}\}).)+)\}\}')
+_BLOCK_MARKER = re.compile(r'<p>\{\{([a-z][a-z0-9_]*)\|((?:(?!\}\}).)+)\}\}</p>')
+
+
+def _declared(key: str, hint: str, lang: str, page: str) -> dict:
+    slot = SLOTS.get(key)
+    if slot is None:
+        raise ValueError('emplacement non déclaré dans SLOTS : ' + key)
+    entry = FOUND.setdefault(key, {'hint': {}, 'pages': set()})
+    entry['hint'].setdefault(lang, hint)
+    if page:
+        entry['pages'].add(page)
+    return slot
+
+
+def fill_slots(text: str, lang: str, page: str = '') -> str:
+    """Remplace chaque `{{clé|aide}}` par son balisage ; l'aide devient le marqueur visible par défaut."""
+    todo = UI[lang]['todo']
+
+    def block(m):
+        slot = SLOTS.get(m.group(1))
+        if slot is None or slot['kind'] != 'block':
+            return m.group(0)  # un champ « ligne » seul dans un paragraphe reste une ligne : traité plus bas
+        _declared(m.group(1), m.group(2), lang, page)
+        return '<div data-legal-block="%s"><p><mark class="todo">%s</mark></p></div>' % (m.group(1), todo % m.group(2))
+
+    def line(m):
+        slot = _declared(m.group(1), m.group(2), lang, page)
+        if slot['kind'] == 'block':
+            raise ValueError('l’emplacement « %s » est un bloc : il doit occuper seul un paragraphe' % m.group(1))
+        return '<mark class="todo" data-legal="%s">%s</mark>' % (m.group(1), todo % m.group(2))
+
+    text = _BLOCK_MARKER.sub(block, text)
+    text = _MARKER.sub(line, text)
+    if '{{' in text or '}}' in text:
+        raise ValueError('marqueur {{…}} sans clé ou sans aide dans la page ' + (page or '?'))
+    return text
+
+
+def catalog() -> dict:
+    """Catalogue lu par le panneau d'administration. À appeler après le rendu de toutes les pages."""
+    unused = sorted(set(SLOTS) - set(FOUND))
+    if unused:
+        raise ValueError('emplacements déclarés mais absents des pages : ' + ', '.join(unused))
+    slots = {}
+    for key, slot in SLOTS.items():
+        hints = FOUND[key]['hint']
+        if set(hints) != {'fr', 'en'}:
+            raise ValueError('emplacement « %s » absent d’une des deux langues' % key)
+        if slot['group'] not in GROUPS:
+            raise ValueError('groupe inconnu pour « %s » : %s' % (key, slot['group']))
+        slots[key] = {**slot, 'hint': {'fr': hints['fr'], 'en': hints['en']}, 'pages': sorted(FOUND[key]['pages'])}
+    return {
+        'version': 1,
+        'pages': sorted(out_path(lang, key).relative_to(ROOT).as_posix() for key in PATHS for lang in ('fr', 'en')),
+        'groups': {group: [k for k, s in SLOTS.items() if s['group'] == group] for group in GROUPS},
+        'slots': slots,
+    }
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Rendu
 # ---------------------------------------------------------------------------------------------------------------------
 def out_path(lang, key):
@@ -866,10 +990,10 @@ def abs_url(lang, key):
     return SITE + '/' + ('en/' if lang == 'en' else '') + path
 
 
-def fill(text: str, lang: str, here: Path) -> str:
+def fill(text: str, lang: str, here: Path, page: str = '') -> str:
     text = text.replace('@@SYMBOL@@', HERO_SYMBOL).replace('@@SHIELD@@', ICON_SHIELD).replace('@@FLAG@@', ICON_FLAG).replace('@@ALERT@@', ICON_ALERT)
     text = text.replace('@@GRACE@@', str(GRACE_DAYS))
-    text = re.sub(r'\{\{(.+?)\}\}', lambda m: '<mark class="todo">' + (UI[lang]['todo'] % m.group(1)) + '</mark>', text)
+    text = fill_slots(text, lang, page)
     text = text.replace('@@API@@', API_BASE)
     text = text.replace('@@BRAND@@', rel(here, ROOT / 'assets' / 'brand'))
     text = re.sub(r'href="page:(\w+)"', lambda m: 'href="%s"' % rel(here, out_path(lang, m.group(1))), text)
@@ -965,7 +1089,7 @@ def render(lang: str, key: str) -> str:
 </head>
 <body class="page-{key}">
 <a class="skip" href="#contenu">{ui['skip']}</a>
-<div class="banner" role="note"><div class="wrap"><p>{ui['banner']}</p></div></div>
+<div class="banner" role="note" data-legal-banner><div class="wrap"><p>{ui['banner']}</p></div></div>
 <header class="{header_cls}"><div class="wrap">
 <a class="brand" href="{root_index}"{' aria-current="page"' if key == 'index' else ''}><img class="mark" src="{assets}/brand/ayelo-symbole.svg" alt="" width="32" height="29"><span>{brand}</span></a>
 <nav class="nav-bar" aria-label="{ui['dir']}"><ul>
@@ -982,7 +1106,7 @@ def render(lang: str, key: str) -> str:
 {script}</body>
 </html>
 """
-    return fill(html, lang, here)
+    return fill(html, lang, here, key)
 
 
 NOT_FOUND = """<!doctype html>
@@ -1019,6 +1143,7 @@ def main() -> int:
             print('--api-base doit commencer par https://')
             return 2
     n = 0
+    FOUND.clear()
     for key in PATHS:
         for lang in ('fr', 'en'):
             target = out_path(lang, key)
@@ -1026,7 +1151,10 @@ def main() -> int:
             target.write_text(render(lang, key), encoding='utf-8', newline='\n')
             n += 1
     (ROOT / '404.html').write_text(NOT_FOUND, encoding='utf-8', newline='\n')
-    print('pages écrites :', n + 1)
+    # Catalogue des emplacements : lu par le panneau d'administration (backend/app/Services/Site/LegalCatalog.php). Jamais servi.
+    (ROOT / 'tools' / 'legal-slots.json').write_text(
+        json.dumps(catalog(), ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
+    print('pages écrites :', n + 1, '| emplacements :', len(SLOTS))
     return 0
 
 
