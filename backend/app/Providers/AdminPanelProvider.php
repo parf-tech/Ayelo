@@ -8,6 +8,7 @@ use App\Filament\Commands\StaffResetTwoFactorCommand;
 use App\Filament\Models;
 use App\Filament\Pages\Auth\EditStaffProfile;
 use App\Filament\Pages\Auth\StaffLogin;
+use App\Filament\Pages\LegalContentPage;
 use App\Filament\Policies;
 use App\Filament\Resources;
 use App\Filament\Support\StaffLocale;
@@ -111,7 +112,7 @@ class AdminPanelProvider extends PanelProvider
                 Resources\SupportTicketResource::class,
                 Resources\AuditEntryResource::class,
             ])
-            ->pages([Dashboard::class])
+            ->pages([Dashboard::class, LegalContentPage::class])
             ->widgets([AdminStatsWidget::class])
             ->middleware([
                 EncryptCookies::class,

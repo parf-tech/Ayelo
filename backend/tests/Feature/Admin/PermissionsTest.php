@@ -32,6 +32,7 @@ const PAGES = [
     '/admin/users' => ['moderator' => false, 'support' => true, 'admin' => true],
     '/admin/tickets' => ['moderator' => false, 'support' => true, 'admin' => true],
     '/admin/audit-log' => ['moderator' => false, 'support' => false, 'admin' => true],
+    '/admin/legal' => ['moderator' => false, 'support' => false, 'admin' => true],
     '/admin' => ['moderator' => true, 'support' => true, 'admin' => true],
 ];
 

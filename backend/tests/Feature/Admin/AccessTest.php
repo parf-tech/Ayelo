@@ -41,7 +41,7 @@ it('ne laisse un compte sans 2FA voir que l’écran de configuration', function
     $staff = Seed::staff('admin', twoFactor: false);
     $setup = Filament::getSetUpRequiredMultiFactorAuthenticationUrl();
 
-    foreach (['/admin', '/admin/reports', '/admin/media-queue', '/admin/appeals', '/admin/verifications', '/admin/users', '/admin/tickets', '/admin/audit-log'] as $path) {
+    foreach (['/admin', '/admin/reports', '/admin/media-queue', '/admin/appeals', '/admin/verifications', '/admin/users', '/admin/tickets', '/admin/audit-log', '/admin/legal'] as $path) {
         $this->actingAs($staff, 'staff')->get($path)->assertRedirect($setup);
     }
     $this->actingAs($staff, 'staff')->get($setup)->assertOk();
