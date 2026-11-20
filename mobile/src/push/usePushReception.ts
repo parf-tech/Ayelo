@@ -19,6 +19,19 @@ function identifierOf(response: unknown): string | null {
 }
 
 /**
+ * Appel du module de notifications, sans jamais laisser remonter d'exception : certaines plateformes n'ont pas toutes les
+ * méthodes (le web n'a pas `getLastNotificationResponse`), et une exception ici ferait tomber la mise en page racine, donc
+ * toute l'application. Meilleur effort, comme l'enregistrement du jeton.
+ */
+function attempt<T>(call: () => T): T | undefined {
+  try {
+    return call();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Traite un toucher, une seule fois par notification. Sans session ouverte ou pendant l'onboarding (garde `guardArea`),
  * le toucher est consommé sans navigation : il n'est pas rejoué plus tard, à la connexion.
  */
@@ -28,7 +41,7 @@ function consume(response: Response, live: Live, handled: Set<string>): void {
     if (handled.has(id)) return;
     handled.add(id);
   }
-  Notifications.clearLastNotificationResponse();
+  attempt(() => Notifications.clearLastNotificationResponse());
   if (live.decision !== 'allow') return;
   const href = pushDestination(dataOf(response?.notification));
   if (href === null || href === live.pathname) return; // rien à ouvrir, ou conversation déjà affichée
@@ -84,14 +97,16 @@ export function usePushReception(): void {
   });
 
   useEffect(() => {
-    Notifications.setNotificationHandler({
-      handleNotification: async (notification) => {
-        const { decision: now, pathname: here } = live.current;
-        const target = pushDestination(dataOf(notification));
-        const show = now === 'allow' && !(target !== null && target === here);
-        return { shouldShowBanner: show, shouldShowList: show, shouldPlaySound: show, shouldSetBadge: false };
-      },
-    });
+    attempt(() =>
+      Notifications.setNotificationHandler({
+        handleNotification: async (notification) => {
+          const { decision: now, pathname: here } = live.current;
+          const target = pushDestination(dataOf(notification));
+          const show = now === 'allow' && !(target !== null && target === here);
+          return { shouldShowBanner: show, shouldShowList: show, shouldPlaySound: show, shouldSetBadge: false };
+        },
+      }),
+    );
 
     const receive = (response: Response | null) => {
       if (!response) return;
@@ -101,12 +116,12 @@ export function usePushReception(): void {
       }
       consume(response, live.current, handled.current);
     };
-    const subscription = Notifications.addNotificationResponseReceivedListener(receive);
-    receive(Notifications.getLastNotificationResponse());
+    const subscription = attempt(() => Notifications.addNotificationResponseReceivedListener(receive));
+    attempt(() => receive(Notifications.getLastNotificationResponse()));
 
     return () => {
-      subscription.remove();
-      Notifications.setNotificationHandler(null);
+      attempt(() => subscription?.remove());
+      attempt(() => Notifications.setNotificationHandler(null));
     };
   }, []);
 

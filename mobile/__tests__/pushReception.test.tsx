@@ -351,3 +351,31 @@ describe('navigateur pas encore prêt (démarrage à froid)', () => {
     expect(mockNav.listeners.size).toBe(0);
   });
 });
+
+describe('module de notifications indisponible (web, simulateur) : jamais d’exception dans la mise en page racine', () => {
+  it('la lecture du toucher de démarrage lève : l’écouteur reste installé et un toucher ultérieur fonctionne', async () => {
+    N.getLastNotificationResponse.mockImplementation(() => {
+      throw new Error('ExpoNotifications.getLastNotificationResponse is not available on web');
+    });
+    await renderHook(() => usePushReception());
+    expect(N.addNotificationResponseReceivedListener).toHaveBeenCalledTimes(1);
+    await tap(message(CONV));
+    expect(router.push).toHaveBeenCalledWith(`/conversation/${CONV}`);
+  });
+
+  it('l’abonnement aux touchers lève : aucune exception, démontage sans erreur', async () => {
+    N.addNotificationResponseReceivedListener.mockImplementation(() => {
+      throw new Error('not available');
+    });
+    const { unmount } = await renderHook(() => usePushReception());
+    await expect(unmount()).resolves.not.toThrow();
+  });
+
+  it('le gestionnaire de premier plan lève : aucune exception', async () => {
+    N.setNotificationHandler.mockImplementation(() => {
+      throw new Error('not available');
+    });
+    const { unmount } = await renderHook(() => usePushReception());
+    await expect(unmount()).resolves.not.toThrow();
+  });
+});
