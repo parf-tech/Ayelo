@@ -79,6 +79,7 @@ __tests__/                    tests Jest
 - **Découvrir (S10)** : pile de cartes avec geste (droite = like, gauche = passer, haut = coup de cœur) **et** boutons / actions d'accessibilité équivalents ; préchargement par curseur ; états vide, chargement, erreur, hors ligne, quota (429) et Premium requis (402) ; annulation (Premium). Filtres S09, match S12, détail S11 avec menu Bloquer / Signaler / Écrire (3 taps).
 - **Messages (S13, S14)** : liste avec non-lus ; conversation avec envoi optimiste (`client_id`), renvoi en échec avec le **même** `client_id` (le serveur est idempotent), pagination par curseur, accusés remis / lus, « écrit… », bannière de sécurité quand la réponse porte `safety_hint: money_request`.
 - **Profil et paramètres (S50 à S57, S59, S60, S65 à S67)** : confidentialité, notifications, sessions, bloqués, consentements, sanctions et contestation, export, support, mentions légales, suppression de compte avec ré-authentification.
+- **Historique des achats (S34)** : Réglages, section Abonnement, puis `settings/purchases`. `GET /billing/transactions` (les 100 derniers, sans curseur : aucune pagination) ; `GET /billing/offers` ne sert qu'à nommer les produits (sinon « Achat »). Lecture seule : remboursement et résiliation restent dans la boutique. Le montant vient de `price_cents` (le serveur écrit prix × 100 quelle que soit la devise) ; prix, devise, date ou statut illisibles sont omis, jamais remplacés par une valeur inventée.
 
 ## Temps réel (Reverb)
 

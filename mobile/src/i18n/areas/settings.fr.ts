@@ -83,6 +83,17 @@ export const settingsFr = {
   'blocked.unblockAria': 'Débloquer {name}',
   'blocked.unblocked': 'Personne débloquée.',
 
+  'settings.purchases': 'Historique des achats',
+  'purchases.title': 'Historique des achats',
+  'purchases.empty': 'Aucun achat pour le moment.',
+  'purchases.empty.body': 'Vos achats Premium et vos crédits apparaîtront ici.',
+  'purchases.product.subscription': 'Abonnement Premium, {plan}',
+  'purchases.product.unknown': 'Achat',
+  'purchases.status.completed': 'Confirmé',
+  'purchases.status.pending': 'En attente',
+  'purchases.status.refunded': 'Remboursé',
+  'purchases.status.failed': 'Échoué',
+
   'delete.title': 'Supprimer mon compte',
   'delete.warning':
     'Votre profil, vos photos et vos conversations sont masqués dès maintenant, puis supprimés définitivement au bout de 30 jours.',

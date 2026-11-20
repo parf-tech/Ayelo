@@ -83,6 +83,17 @@ export const settingsEn = {
   'blocked.unblockAria': 'Unblock {name}',
   'blocked.unblocked': 'Person unblocked.',
 
+  'settings.purchases': 'Purchase history',
+  'purchases.title': 'Purchase history',
+  'purchases.empty': 'No purchases yet.',
+  'purchases.empty.body': 'Your Premium purchases and credits will appear here.',
+  'purchases.product.subscription': 'Premium subscription, {plan}',
+  'purchases.product.unknown': 'Purchase',
+  'purchases.status.completed': 'Confirmed',
+  'purchases.status.pending': 'Pending',
+  'purchases.status.refunded': 'Refunded',
+  'purchases.status.failed': 'Failed',
+
   'delete.title': 'Delete my account',
   'delete.warning':
     'Your profile, photos and conversations are hidden right away, then permanently deleted after 30 days.',

@@ -71,6 +71,9 @@ export function SettingsScreen() {
           store={billing.data?.subscription?.store}
           periodEnd={billing.data?.subscription?.period_end}
         />
+        <RowGroup>
+          <NavRow testID="settings-purchases" icon="Clock" label={t('settings.purchases')} onPress={go('/settings/purchases')} />
+        </RowGroup>
       </View>
       <Section title={t('settings.section.privacy')} />
       <RowGroup>

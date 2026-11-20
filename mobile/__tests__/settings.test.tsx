@@ -60,6 +60,7 @@ describe('S50 Paramètres', () => {
     const targets: [string, string][] = [
       ['settings-preferences', '/settings/preferences'],
       ['settings-notifications', '/settings/notifications'],
+      ['settings-purchases', '/settings/purchases'],
       ['settings-privacy', '/settings/privacy'],
       ['settings-sessions', '/settings/sessions'],
       ['settings-blocked', '/settings/blocked'],
