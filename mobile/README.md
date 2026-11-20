@@ -80,6 +80,7 @@ __tests__/                    tests Jest
 - **Messages (S13, S14)** : liste avec non-lus ; conversation avec envoi optimiste (`client_id`), renvoi en échec avec le **même** `client_id` (le serveur est idempotent), pagination par curseur, accusés remis / lus, « écrit… », bannière de sécurité quand la réponse porte `safety_hint: money_request`.
 - **Profil et paramètres (S50 à S57, S59, S60, S65 à S67)** : confidentialité, notifications, sessions, bloqués, consentements, sanctions et contestation, export, support, mentions légales, suppression de compte avec ré-authentification.
 - **Historique des achats (S34)** : Réglages, section Abonnement, puis `settings/purchases`. `GET /billing/transactions` (les 100 derniers, sans curseur : aucune pagination) ; `GET /billing/offers` ne sert qu'à nommer les produits (sinon « Achat »). Lecture seule : remboursement et résiliation restent dans la boutique. Le montant vient de `price_cents` (le serveur écrit prix × 100 quelle que soit la devise) ; prix, devise, date ou statut illisibles sont omis, jamais remplacés par une valeur inventée.
+- **Notifications push** : `src/push/registerPush.ts` enregistre le jeton natif (`PUT /me/device`, FCM ou APNs) une fois la session ouverte et l'onboarding terminé ; `src/push/usePushReception.ts` (monté dans `app/_layout.tsx`) traite la réception. Au premier plan, une notification qui vise la conversation déjà ouverte n'affiche rien, et rien ne s'affiche sans session ouverte. Toucher une notification de message ouvre `/conversation/{id}` : le `data` du serveur (`{ type: 'message', conversation_id }`, identifiants seulement) est validé par la liste blanche des liens profonds (P-12) ; un `data` mal formé ou une notification d'appel n'ouvre aucun écran. Le toucher qui lance l'application à froid est relu une fois, après la restauration de la session et le montage du navigateur (un toucher reçu avant est conservé) ; sans session ou en onboarding il est ignoré et n'est pas rejoué à la connexion. Aucune permission supplémentaire, aucun contenu de message, aucune trace.
 
 ## Temps réel (Reverb)
 
@@ -106,7 +107,7 @@ Ce qui n'existe **pas** : le média (audio / vidéo). Une interface abstraite `M
 Ne sont **pas implémentés** et exigent un build de développement ainsi que le prototype D0 (`docs/DECISIONS-PROPRIETAIRE.md`, C2) :
 - le moteur média LiveKit (`@livekit/react-native`, qui dépend de `@livekit/react-native-webrtc`) ;
 - l'appel entrant application fermée : CallKit (iOS, avec push VoIP PushKit) et ConnectionService (Android) ;
-- l'enregistrement des jetons de notification (`PUT /me/device`) : `expo-notifications` n'est pas installé.
+- l'ouverture d'un écran d'appel depuis une notification : l'appel entrant passe par la signalisation temps réel, pas par le push (voir « Notifications push »).
 
 Brancher LiveKit consiste à écrire une classe `LiveKitMediaEngine implements MediaEngine` et à la passer à `<CallProvider mediaEngine={…}>` ; la réponse de `POST /calls` et `/calls/{id}/accept` fournit déjà `livekit: { url, room, token }`.
 

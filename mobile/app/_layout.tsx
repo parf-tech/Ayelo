@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '../src/auth/AuthProvider';
 import { SignupFlowProvider, useSignupFlow } from '../src/flow/SignupFlowProvider';
 import { OnboardingProvider, useOnboardingDraft } from '../src/features/onboarding/OnboardingProvider';
 import { I18nProvider } from '../src/i18n';
+import { PushReception } from '../src/push/PushReception';
 import { PushRegistration } from '../src/push/PushRegistration';
 import { FontsReadyProvider, ThemeProvider, useTheme } from '../src/theme';
 import { FONT_ASSETS } from '../src/theme/fontAssets';
@@ -53,6 +54,7 @@ export default function RootLayout() {
                   <OnboardingProvider>
                     <SessionCleanup />
                     <PushRegistration />
+                    <PushReception />
                     <ThemedStatusBar />
                     <ThemedNavigation>
                       <Slot />
