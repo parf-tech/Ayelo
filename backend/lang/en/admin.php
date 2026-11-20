@@ -46,6 +46,7 @@ return [
         'reporter' => ['abnormal_ratio' => 'Reporter with abnormal ratio'],
         'admin' => ['cap_exceeded' => 'Administrator cap exceeded'],
         'staff' => ['created' => 'Staff account created', 'login' => 'Sign-in', 'login_failed' => 'Failed sign-in', 'logout' => 'Sign-out', 'password_changed' => 'Password changed'],
+        'legal' => ['draft_saved' => 'Legal notices: draft saved', 'published' => 'Legal notices published', 'discarded' => 'Legal notices: drafts discarded', 'banner_changed' => '“Provisional version” banner changed'],
     ],
     'resource' => [
         'report' => ['one' => 'report', 'many' => 'reports', 'nav' => 'Reports'],

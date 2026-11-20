@@ -46,6 +46,7 @@ return [
         'reporter' => ['abnormal_ratio' => 'Signalant au ratio anormal'],
         'admin' => ['cap_exceeded' => 'Plafond administrateur dépassé'],
         'staff' => ['created' => 'Compte du personnel créé', 'login' => 'Connexion', 'login_failed' => 'Connexion échouée', 'logout' => 'Déconnexion', 'password_changed' => 'Mot de passe modifié'],
+        'legal' => ['draft_saved' => 'Mentions légales : brouillon enregistré', 'published' => 'Mentions légales publiées', 'discarded' => 'Mentions légales : brouillons abandonnés', 'banner_changed' => 'Bannière « version provisoire » modifiée'],
     ],
     'resource' => [
         'report' => ['one' => 'signalement', 'many' => 'signalements', 'nav' => 'Signalements'],

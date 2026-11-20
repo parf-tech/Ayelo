@@ -33,6 +33,9 @@ final class Permissions
 
     public const AUDIT_VIEW = 'audit.view';
 
+    /** Mentions légales du site de présentation : brouillon, publication, bannière (App\Services\Admin\LegalContent). */
+    public const LEGAL_MANAGE = 'legal.manage';
+
     /** @var array<string, list<string>> */
     private const MATRIX = [
         StaffUser::ROLE_MODERATOR => [
@@ -44,6 +47,7 @@ final class Permissions
         StaffUser::ROLE_ADMIN => [
             self::MEDIA_MODERATE, self::REPORTS_REVIEW, self::APPEALS_REVIEW, self::VERIFICATIONS_REVIEW, self::SELFIE_VIEW,
             self::USERS_VIEW, self::USERS_MANAGE, self::CREDITS_ADJUST, self::PREMIUM_GRANT, self::TICKETS_MANAGE, self::AUDIT_VIEW,
+            self::LEGAL_MANAGE,
         ],
     ];
 
