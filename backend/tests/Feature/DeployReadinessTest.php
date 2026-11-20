@@ -235,6 +235,14 @@ it('signale en avertissement (sans bloquer) les services facultatifs absents et 
         ->and($warnings)->toContain('MAIL_WEBHOOK_SECRET');
 });
 
+it('ne signale pas les webhooks d\'e-mail quand l\'une des deux voies est configurée (Resend par Svix, ou Postmark par secret partagé)', function () {
+    productionConfig(['services.mail_webhook.secret' => null, 'services.mail_webhook.svix_secret' => 'whsec_'.base64_encode('secret-de-test')]);
+    expect(implode("\n", DeployPreflight::inspect()['warnings']))->not->toContain('MAIL_WEBHOOK');
+
+    productionConfig(['services.mail_webhook.secret' => 'partage', 'services.mail_webhook.svix_secret' => null]);
+    expect(implode("\n", DeployPreflight::inspect()['warnings']))->not->toContain('MAIL_WEBHOOK');
+});
+
 it('la commande deploy:preflight sort en erreur (code 1) et nomme le défaut', function () {
     productionConfig(['media.disk.bucket' => '']);
 

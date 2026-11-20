@@ -49,10 +49,14 @@ return [
         'private_key' => env('FCM_PRIVATE_KEY'),
     ],
 
-    // Webhooks de rebond / plainte du prestataire d'e-mail (Postmark, Resend). Secret partagé envoyé dans l'en-tête
-    // X-Mail-Webhook-Secret (ou Authorization: Bearer) ; vide = route fermée (401). Voir docs/runbooks/email-dns.md.
+    // Webhooks de rebond / plainte du prestataire d'e-mail. Deux authentifications, jamais mélangées :
+    //  - Resend signe ses envois avec Svix (en-têtes svix-id, svix-timestamp, svix-signature) et ne permet pas d'ajouter un
+    //    en-tête : `svix_secret` est le « signing secret » du webhook (whsec_...) ;
+    //  - Postmark : secret partagé envoyé dans X-Mail-Webhook-Secret (ou Authorization: Bearer), `secret`.
+    // Un secret vide ferme la voie correspondante (401). Voir docs/runbooks/email-dns.md.
     'mail_webhook' => [
         'secret' => env('MAIL_WEBHOOK_SECRET'),
+        'svix_secret' => env('MAIL_WEBHOOK_SVIX_SECRET'),
     ],
 
     // LiveKit : la clé et le secret d'API ne quittent jamais le serveur ; le client reçoit un jeton de 10 minutes.

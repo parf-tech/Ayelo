@@ -77,8 +77,9 @@ final class DeployPreflight
                 $warnings[] = $variable.' est vide : les appels ne peuvent pas être établis.';
             }
         }
-        if (self::blank(config('services.mail_webhook.secret'))) {
-            $warnings[] = 'MAIL_WEBHOOK_SECRET est vide : les rebonds et plaintes d\'e-mail ne sont pas reçus (route fermée).';
+        // Une seule voie suffit : signature Svix (Resend) ou secret partagé (Postmark).
+        if (self::blank(config('services.mail_webhook.secret')) && self::blank(config('services.mail_webhook.svix_secret'))) {
+            $warnings[] = 'MAIL_WEBHOOK_SVIX_SECRET (Resend) et MAIL_WEBHOOK_SECRET (Postmark) sont vides : les rebonds et plaintes d\'e-mail ne sont pas reçus (route fermée).';
         }
         foreach (['google' => 'GOOGLE_CLIENT_IDS', 'apple' => 'APPLE_CLIENT_IDS'] as $provider => $variable) {
             if (self::blank(config('services.oauth.'.$provider.'.client_ids'))) {
