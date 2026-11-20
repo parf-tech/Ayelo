@@ -4,6 +4,7 @@ import { isApiError } from '../../api/errors';
 import { useAuth } from '../../auth/AuthProvider';
 import { availableOAuthProviders, type OAuthProof } from '../../auth/oauthProof';
 import { useI18n } from '../../i18n';
+import { useBiometricLock } from '../../security/BiometricLockProvider';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
@@ -22,6 +23,7 @@ export function DeleteAccountScreen() {
   const { t } = useI18n();
   const { space, colors, radius } = useTheme();
   const { api, signOut } = useAuth();
+  const { confirm: confirmBiometric } = useBiometricLock();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [banner, setBanner] = useState<{ variant: 'error' | 'warning'; message: string } | undefined>();
@@ -42,6 +44,8 @@ export function DeleteAccountScreen() {
       return;
     }
     setError(undefined);
+    // Verrou biométrique activé : confirmation de l'appareil AVANT l'envoi (elle s'ajoute au mot de passe, elle ne le remplace pas).
+    if (!(await confirmBiometric())) return;
     setLoading(true);
     try {
       // Compte social : preuve neuve du fournisseur (jeton + nonce brut), jamais rejouée ; sinon le mot de passe.

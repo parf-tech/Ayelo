@@ -6,7 +6,8 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../../theme';
-import { Banner, Button, NavRow, RowGroup, ScreenContainer, Text } from '../../ui';
+import { useBiometricLock } from '../../security/BiometricLockProvider';
+import { Banner, Button, NavRow, RowGroup, ScreenContainer, SwitchRow, Text, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
 import { ManageSubscription } from '../premium/ManageSubscription';
 
@@ -25,6 +26,8 @@ export function SettingsScreen() {
   const { t, locale, setLocale } = useI18n();
   const { space } = useTheme();
   const { api, signOut } = useAuth();
+  const toast = useToast();
+  const { supported: biometricSupported, enabled: biometricEnabled, setEnabled: setBiometric } = useBiometricLock();
   // Statut d'abonnement : seulement pour choisir la boutique (ou signaler un Premium offert). « Gérer mon abonnement »
   // reste affiché même si l'appel échoue : le chemin de résiliation ne dépend pas du réseau.
   const billing = useResource(() => api.billing.status(), [api]);
@@ -34,6 +37,11 @@ export function SettingsScreen() {
   // Version affichée seulement si la configuration la connaît : jamais une version inventée.
   const version = Constants.expoConfig?.version;
   const go = (path: string) => () => router.push(path as never);
+  // Activer ou désactiver demande la confirmation de l'appareil ; une annulation ne dit rien, un échec prévient.
+  const toggleBiometric = async (on: boolean) => {
+    const outcome = await setBiometric(on);
+    if (outcome === 'failed' || outcome === 'unsupported') toast.show({ message: t('settings.biometric.error'), variant: 'error' });
+  };
 
   const logout = async () => {
     setLoggingOut(true);
@@ -76,6 +84,18 @@ export function SettingsScreen() {
         </RowGroup>
       </View>
       <Section title={t('settings.section.privacy')} />
+      {biometricSupported ? (
+        <RowGroup>
+          <SwitchRow
+            testID="settings-biometric"
+            label={t('settings.biometric')}
+            description={t('settings.biometric.hint')}
+            value={biometricEnabled}
+            onValueChange={(on) => void toggleBiometric(on)}
+            divider={false}
+          />
+        </RowGroup>
+      ) : null}
       <RowGroup>
         <NavRow testID="settings-privacy" icon="Lock" label={t('settings.privacy')} onPress={go('/settings/privacy')} />
         <NavRow testID="settings-sessions" icon="Clock" label={t('settings.sessions')} onPress={go('/settings/sessions')} />

@@ -148,6 +148,24 @@ describe('permissions natives déclarées dans app.json', () => {
   });
 });
 
+describe('biométrie : description d’usage de Face ID', () => {
+  const plugins = readJson('app.json').expo.plugins as unknown[];
+  const options = (name: string) => (plugins.find((p) => Array.isArray(p) && p[0] === name) as [string, Record<string, unknown>] | undefined)?.[1];
+
+  it('le plugin de l’authentification locale est déclaré, avec une description française de Face ID', () => {
+    expect(readJson('package.json').dependencies['expo-local-authentication']).toBeDefined();
+    const local = options('expo-local-authentication');
+    expect(local).toBeDefined();
+    expect(String(local?.faceIDPermission)).toMatch(/Face ID/);
+    expect(String(local?.faceIDPermission)).not.toMatch(/Allow \$\(PRODUCT_NAME\)/);
+  });
+
+  it('expo-secure-store ne remet pas sa description anglaise par défaut : même texte que l’authentification locale', () => {
+    expect(options('expo-secure-store')?.faceIDPermission).toBeTruthy();
+    expect(options('expo-secure-store')?.faceIDPermission).toBe(options('expo-local-authentication')?.faceIDPermission);
+  });
+});
+
 describe('prix par mois (offres de plusieurs mois)', () => {
   const product = (price: number, months: number, extra = {}) => ({
     productId: `p${months}`,

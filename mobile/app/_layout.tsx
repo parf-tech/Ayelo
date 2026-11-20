@@ -9,6 +9,8 @@ import { OnboardingProvider, useOnboardingDraft } from '../src/features/onboardi
 import { I18nProvider } from '../src/i18n';
 import { PushReception } from '../src/push/PushReception';
 import { PushRegistration } from '../src/push/PushRegistration';
+import { BiometricGate } from '../src/security/BiometricGate';
+import { BiometricLockProvider } from '../src/security/BiometricLockProvider';
 import { FontsReadyProvider, ThemeProvider, useTheme } from '../src/theme';
 import { FONT_ASSETS } from '../src/theme/fontAssets';
 import { buildNavigationTheme } from '../src/theme/navigationTheme';
@@ -50,17 +52,21 @@ export default function RootLayout() {
           <I18nProvider>
             <ToastProvider>
               <AuthProvider>
-                <SignupFlowProvider>
-                  <OnboardingProvider>
-                    <SessionCleanup />
-                    <PushRegistration />
-                    <PushReception />
-                    <ThemedStatusBar />
-                    <ThemedNavigation>
-                      <Slot />
-                    </ThemedNavigation>
-                  </OnboardingProvider>
-                </SignupFlowProvider>
+                <BiometricLockProvider>
+                  <SignupFlowProvider>
+                    <OnboardingProvider>
+                      <SessionCleanup />
+                      <PushRegistration />
+                      <PushReception />
+                      <ThemedStatusBar />
+                      <BiometricGate>
+                        <ThemedNavigation>
+                          <Slot />
+                        </ThemedNavigation>
+                      </BiometricGate>
+                    </OnboardingProvider>
+                  </SignupFlowProvider>
+                </BiometricLockProvider>
               </AuthProvider>
             </ToastProvider>
           </I18nProvider>

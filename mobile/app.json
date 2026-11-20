@@ -77,7 +77,18 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "Ayelo utilise Face ID pour verrouiller l'application et confirmer les actions sensibles."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Ayelo utilise Face ID pour verrouiller l'application et confirmer les actions sensibles."
+        }
+      ],
       "expo-localization",
       [
         "expo-image-picker",

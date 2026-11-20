@@ -5,6 +5,7 @@ import type { DataExport } from '../../api/types';
 import { useAuth } from '../../auth/AuthProvider';
 import { availableOAuthProviders, type OAuthProof } from '../../auth/oauthProof';
 import { useI18n } from '../../i18n';
+import { useBiometricLock } from '../../security/BiometricLockProvider';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
 import { Banner, Button, ScreenContainer, Skeleton, Text, TextField } from '../../ui';
@@ -20,6 +21,7 @@ export function ExportScreen() {
   const { t, locale } = useI18n();
   const { space, colors, radius } = useTheme();
   const { api } = useAuth();
+  const { confirm: confirmBiometric } = useBiometricLock();
   const [job, setJob] = useState<DataExport | null>(null);
   const [loading, setLoading] = useState(false);
   const [banner, setBanner] = useState<string | undefined>();
@@ -65,6 +67,8 @@ export function ExportScreen() {
       return;
     }
     setPasswordError(undefined);
+    // Verrou biométrique activé : confirmation de l'appareil AVANT l'envoi (elle s'ajoute au mot de passe).
+    if (!(await confirmBiometric())) return;
     setLoading(true);
     try {
       // Ré-authentification comme DELETE /me : le mot de passe n'est jamais conservé.

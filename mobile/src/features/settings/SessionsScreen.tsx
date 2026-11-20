@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
+import { useBiometricLock } from '../../security/BiometricLockProvider';
 import { useTheme } from '../../theme';
 import { AsyncView, Banner, Button, ListRow, ScreenContainer, useToast } from '../../ui';
 import { ScreenHeader } from '../common/ScreenHeader';
@@ -18,6 +19,7 @@ export function SessionsScreen() {
   const { space } = useTheme();
   const toast = useToast();
   const { api, signOut } = useAuth();
+  const { confirm: confirmBiometric } = useBiometricLock();
   const sessions = useResource(() => api.auth.sessions(), [api]);
   const [confirm, setConfirm] = useState<Confirm>(null);
   // Bouton « Fermer la session » de chaque ligne : le focus du lecteur d'écran y revient quand le panneau se ferme.
@@ -29,6 +31,8 @@ export function SessionsScreen() {
 
   const run = async () => {
     if (!confirm) return;
+    // Verrou biométrique activé : confirmation de l'appareil avant de fermer une ou toutes les sessions.
+    if (!(await confirmBiometric())) return;
     setBusy(true);
     setBanner(undefined);
     try {

@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   deviceId: 'ayelo.device_id',
   locale: 'ayelo.locale',
   onboardingPending: 'ayelo.onboarding_pending',
+  biometricLock: 'ayelo.biometric_lock',
 } as const;

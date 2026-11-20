@@ -94,6 +94,18 @@ export const settingsEn = {
   'purchases.status.refunded': 'Refunded',
   'purchases.status.failed': 'Failed',
 
+  'settings.biometric': 'Lock the app',
+  'settings.biometric.hint':
+    'Face ID, fingerprint or your phone’s passcode, asked after 1 minute away from the app. Also confirms deleting your account, exporting your data and closing sessions.',
+  'settings.biometric.error': 'Unable to change the lock.',
+  'biometric.prompt.unlock': 'Unlock Ayelo',
+  'biometric.prompt.enable': 'Confirm to turn on app lock',
+  'biometric.prompt.disable': 'Confirm to turn off app lock',
+  'biometric.prompt.sensitive': 'Confirm this action',
+  'lock.title': 'Ayelo is locked',
+  'lock.body': 'Your conversations are protected. Unlock with biometrics or your phone passcode.',
+  'lock.unlock': 'Unlock',
+
   'delete.title': 'Delete my account',
   'delete.warning':
     'Your profile, photos and conversations are hidden right away, then permanently deleted after 30 days.',

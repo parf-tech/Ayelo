@@ -16,5 +16,6 @@ Preuve (rejouée par l'agent mobile le 2026-11-06, sorties dans son rapport) : `
 - [~] T060 [US7] Vérification de profil
 - [~] T070 [US8] Interface d'appel + `MediaEngine` abstrait
 - [~] T051 [US6] S34 Historique des achats (`GET /billing/transactions`, écran `settings/purchases`, entrée dans Réglages) : écrit et testé par Jest (faux serveur), non vérifié sur appareil
+- [~] T052 [US6] Verrouillage biométrique de l'application et confirmation avant les actions sensibles (`expo-local-authentication`, `src/security/`, interrupteur dans Réglages) : écrit et testé par Jest (module simulé), non vérifié sur appareil
 - [ ] T080 Tests de bout en bout (Maestro) sur émulateur contre un backend local — gate G4
 - [~] T090 Remplacer les types d'API manuscrits par les types générés : `openapi.d.ts` généré et compilé, **migration des écrans non faite**

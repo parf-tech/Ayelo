@@ -94,6 +94,18 @@ export const settingsFr = {
   'purchases.status.refunded': 'Remboursé',
   'purchases.status.failed': 'Échoué',
 
+  'settings.biometric': 'Verrouiller l’application',
+  'settings.biometric.hint':
+    'Face ID, empreinte ou code du téléphone, demandé après 1 minute hors de l’application. Confirme aussi la suppression du compte, l’export des données et la fermeture des sessions.',
+  'settings.biometric.error': 'Le verrouillage n’a pas pu être modifié.',
+  'biometric.prompt.unlock': 'Déverrouillez Ayelo',
+  'biometric.prompt.enable': 'Confirmez pour activer le verrouillage de l’application',
+  'biometric.prompt.disable': 'Confirmez pour désactiver le verrouillage',
+  'biometric.prompt.sensitive': 'Confirmez cette action',
+  'lock.title': 'Ayelo est verrouillé',
+  'lock.body': 'Vos conversations sont protégées. Déverrouillez avec la biométrie ou le code de votre téléphone.',
+  'lock.unlock': 'Déverrouiller',
+
   'delete.title': 'Supprimer mon compte',
   'delete.warning':
     'Votre profil, vos photos et vos conversations sont masqués dès maintenant, puis supprimés définitivement au bout de 30 jours.',
