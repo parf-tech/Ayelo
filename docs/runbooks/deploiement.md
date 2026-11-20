@@ -36,6 +36,15 @@ git fetch --tags && git checkout vX.Y.Z
 bash infra/scripts/deploy.sh
 ```
 
+**Après un changement de `infra/caddy/Caddyfile`** : le fichier est monté en lecture seule, Caddy ne le relit pas tout seul. Contrôler puis recharger sans coupure, et ne jamais recharger une configuration qui ne valide pas :
+
+```bash
+DC="docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml"
+$DC exec -T caddy caddy validate --config /etc/caddy/Caddyfile && $DC exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+**Mentions légales du site** (2026-11-20) : les pages du site de présentation passent par l'application (route interne `/_site`, remplissage des textes publiés depuis le panneau d'administration) avec repli sur les fichiers statiques. Le service `app` monte donc `web/` en lecture seule (`SITE_WEB_ROOT=/srv/web`) : `deploy:preflight` avertit si `tools/legal-slots.json` est introuvable. Fonctionnement, contrôle et retour arrière : `docs/runbooks/site-public.md`, section « Mentions légales saisies depuis le panneau d'administration ».
+
 ## Ce que fait le script, dans l'ordre
 
 | étape | pourquoi |

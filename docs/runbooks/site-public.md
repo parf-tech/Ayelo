@@ -44,6 +44,8 @@ Reprises de `backend/config/retention.php` et `AccountDeletion::GRACE_DAYS`, **c
 
 ## Caddy : bloc à ajouter à `infra/caddy/Caddyfile`
 
+> Depuis le 2026-11-20 le bloc en service est celui de `infra/caddy/Caddyfile` (pages remplies par l'application avec repli statique, voir la section « Mentions légales saisies depuis le panneau d'administration »). L'extrait ci-dessous est la version statique d'origine, gardée pour mémoire : ne pas le recopier.
+
 Ajouter un snippet et un bloc d'hôte (le snippet `security_headers` existe déjà dans le fichier).
 
 ```caddyfile
@@ -95,7 +97,7 @@ Notes :
 
 ## Compose : variable et volume (déjà en place)
 
-`infra/docker-compose.prod.yml`, service `caddy` : variable `WEB_DOMAIN: ${WEB_DOMAIN}` et volume `../web:/srv/web:ro`. `infra/.env.prod.example` porte `WEB_DOMAIN=www.example.invalid`, `APP_WEB_URL=https://www.example.invalid` et `CORS_ALLOWED_ORIGINS=` (vide : repli sur `APP_WEB_URL`). Les deux valeurs `WEB_DOMAIN` et `APP_WEB_URL` doivent désigner le même hôte. Seul Caddy utilise `WEB_DOMAIN` (l'application utilise `APP_WEB_URL`). Le dossier `web/tools/` est monté mais jamais servi (bloc `@private` du Caddyfile). Les blocs `(web_headers)` et `{$WEB_DOMAIN}` sont dans `infra/caddy/Caddyfile` : l'extrait ci-dessus en est la référence, ne pas l'ajouter une seconde fois.
+`infra/docker-compose.prod.yml`, service `caddy` : variable `WEB_DOMAIN: ${WEB_DOMAIN}` et volume `../web:/srv/web:ro` ; service `app` : le même volume `../web:/srv/web:ro` et `SITE_WEB_ROOT: /srv/web` (mentions légales). `infra/.env.prod.example` porte `WEB_DOMAIN=www.example.invalid`, `APP_WEB_URL=https://www.example.invalid` et `CORS_ALLOWED_ORIGINS=` (vide : repli sur `APP_WEB_URL`). Les deux valeurs `WEB_DOMAIN` et `APP_WEB_URL` doivent désigner le même hôte. Seul Caddy utilise `WEB_DOMAIN` (l'application utilise `APP_WEB_URL`). Le dossier `web/tools/` est monté mais jamais servi (bloc `@private` du Caddyfile). Les blocs `(web_headers)` et `{$WEB_DOMAIN}` sont dans `infra/caddy/Caddyfile` : l'extrait ci-dessus en est la référence, ne pas l'ajouter une seconde fois.
 
 ## Production en ligne (2026-11-19)
 
@@ -120,6 +122,19 @@ Exemple : `python web/tools/build.py --api-base https://api.mondomaine.tld`. San
 - Les pages HTML sont **générées** par `web/tools/build.py` (textes français et anglais dans le même fichier, pour garder les deux synchrones) puis versionnées. Modifier le texte dans `build.py`, relancer `python web/tools/build.py`, ne pas éditer les `.html` à la main.
 - `python web/tools/check-links.py` (option `-v` pour le détail) vérifie : HTML bien formé (balises, doctype, `lang`, `title`, un seul `h1`), liens et ressources internes résolus, aucune ressource externe, parité fr/en, contraste WCAG AA des jetons en clair et en sombre. À brancher en CI avec les autres contrôles.
 - Jetons : `web/assets/tokens.css` recopie `mobile/src/theme/tokens.ts` (couleurs, espacement, rayons, typographie ; spécification `docs/reviews/design-1.md` 8.3). Mettre les deux à jour ensemble.
+
+## Mentions légales saisies depuis le panneau d'administration
+
+Depuis le 2026-11-20, les textes qui étaient des marqueurs « À COMPLÉTER » se saisissent dans le panneau d'administration, sans développeur : **`/admin/legal`** (« Mentions légales », droit `legal.manage`, rôle administrateur seulement, 2FA et liste d'IP du panneau).
+
+- **Brouillon puis publication.** Un champ par texte et par langue (FR et EN côte à côte), environ 33 champs en 7 groupes, texte brut (ni HTML ni lien ; une ligne vide sépare deux paragraphes). « Enregistrer le brouillon » n'affiche rien sur le site. « Publier » (avec confirmation qui liste les champs modifiés) met en ligne. Un champ sans texte publié garde son marqueur « À COMPLÉTER ». « Retirer la bannière provisoire » supprime la bannière « Version provisoire, à valider par un juriste » de toutes les pages (à faire seulement une fois les textes validés par un juriste). Chaque action est inscrite au journal d'audit (`legal.draft_saved`, `legal.published`, `legal.discarded`, `legal.banner_changed`).
+- **Délai.** La publication est visible sur le site au plus tard 5 minutes après (`Cache-Control: public, max-age=300`).
+- **Comment ça marche.** `web/tools/build.py` pose des emplacements nommés (`data-legal`, `data-legal-block`, `data-legal-banner`) dans les pages et écrit `web/tools/legal-slots.json` (catalogue des champs, jamais servi). Caddy réécrit les adresses de pages en `/_site{adresse}` vers l'application (`SiteController`, sans session ni cookie), qui remplace chaque emplacement par le texte publié (échappé : jamais de HTML). Les ressources (`/assets/*`, `favicon.svg`, `robots.txt`) restent servies directement.
+- **Repli.** Si l'application est arrêtée, injoignable ou répond en 5xx, Caddy sert le fichier statique de la page (avec ses marqueurs) : le site ne tombe pas avec l'application. Une adresse inconnue donne la page `404.html` du site.
+- **Quand `build.py` change** (nouvel emplacement, texte de page) : relancer `python web/tools/build.py --api-base "https://$API_DOMAIN"` puis `python web/tools/check-links.py`, **commiter les `.html` et `legal-slots.json`** ensemble. Un test (`LegalCatalogTest`) échoue si le catalogue et les pages divergent.
+- **Contrôle** (curl) : `curl -sI https://ayelo.fr/legal/terms` répond 200 avec `X-Site-Source: app`, `Cache-Control` contenant `max-age=300` et aucun `Set-Cookie` ; `curl -sI https://ayelo.fr/assets/site.css` n'a pas `X-Site-Source`. Repli : `docker compose ... stop app`, la même page répond 200 sans `X-Site-Source`, puis `start app`.
+- **Retour arrière.** Retirer le bloc `handle @pages { ... }` du bloc `{$WEB_DOMAIN}` de `infra/caddy/Caddyfile` (garder le `handle { ... }` statique), valider, recharger : le site revient aux fichiers statiques seuls ; la page du panneau et les textes saisis restent intacts.
+- **Hors périmètre** : le reste du texte des pages (landing, titres), `/.well-known/security.txt` (modèle masqué), les liens des stores. Le contenu juridique reste à fournir par le propriétaire et son juriste.
 
 ## Limites connues
 

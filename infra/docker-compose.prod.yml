@@ -58,9 +58,14 @@ services:
     <<: *app
     env_file: .env.prod
     command: ["php-fpm"]
+    # Les pages du site de présentation (web/) sont remplies par l'application avec les mentions légales saisies depuis le
+    # panneau d'administration : dossier monté en lecture seule, comme dans le conteneur caddy (backend/config/site.php).
+    environment:
+      SITE_WEB_ROOT: /srv/web
     volumes:
       - app-storage:/var/www/html/storage
       - app-public:/var/www/html/public
+      - ../web:/srv/web:ro
     # Mémoire plafonnée : le pool FPM (infra/php/php-fpm-pool.conf, FPM_MAX_CHILDREN) est dimensionné pour ce plafond.
     # Changer l'un sans l'autre = soit des processus tués par le noyau (OOM), soit de la RAM inutilisée.
     deploy:

@@ -81,6 +81,10 @@ final class DeployPreflight
         if (self::blank(config('services.mail_webhook.secret')) && self::blank(config('services.mail_webhook.svix_secret'))) {
             $warnings[] = 'MAIL_WEBHOOK_SVIX_SECRET (Resend) et MAIL_WEBHOOK_SECRET (Postmark) sont vides : les rebonds et plaintes d\'e-mail ne sont pas reçus (route fermée).';
         }
+        // Le conteneur `app` lit le catalogue des mentions légales dans le dossier du site monté en lecture seule (docker-compose.prod.yml).
+        if (! is_file(rtrim((string) config('site.web_root'), '/\\').'/tools/legal-slots.json')) {
+            $warnings[] = 'SITE_WEB_ROOT : catalogue des mentions légales introuvable (tools/legal-slots.json) : la page « Mentions légales » du panneau est indisponible et le site reste servi par ses fichiers statiques.';
+        }
         foreach (['google' => 'GOOGLE_CLIENT_IDS', 'apple' => 'APPLE_CLIENT_IDS'] as $provider => $variable) {
             if (self::blank(config('services.oauth.'.$provider.'.client_ids'))) {
                 $warnings[] = $variable.' est vide : la connexion '.ucfirst($provider).' est refusée.';

@@ -244,6 +244,15 @@ it('ne signale pas les webhooks d\'e-mail quand l\'une des deux voies est config
     expect(implode("\n", DeployPreflight::inspect()['warnings']))->not->toContain('MAIL_WEBHOOK');
 });
 
+it('signale en avertissement un dossier du site sans catalogue des mentions légales (SITE_WEB_ROOT)', function () {
+    productionConfig(['site.web_root' => sys_get_temp_dir().'/ayelo-sans-catalogue-'.bin2hex(random_bytes(4))]);
+
+    $result = DeployPreflight::inspect();
+
+    expect($result['errors'])->toBe([])
+        ->and(implode("\n", $result['warnings']))->toContain('SITE_WEB_ROOT');
+});
+
 it('la commande deploy:preflight sort en erreur (code 1) et nomme le défaut', function () {
     productionConfig(['media.disk.bucket' => '']);
 
