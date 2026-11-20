@@ -118,7 +118,7 @@ export function VerificationScreen() {
             >
               <Icon name="Camera" size="lg" tone="primary" />
               <View style={{ flex: 1 }}>
-                <Text variant="caption" tone="textMuted">
+                <Text variant="bodySmall" tone="textMuted">
                   {t('verify.pose')}
                 </Text>
                 <Text variant="h2" testID="verify-pose">
@@ -142,7 +142,7 @@ export function VerificationScreen() {
                   }}
                 />
                 {consentError ? (
-                  <Text variant="caption" tone="danger" accessibilityRole="alert" testID="verify-consent-error">
+                  <Text variant="bodySmall" tone="danger" accessibilityRole="alert" testID="verify-consent-error">
                     {t('verify.consent.required')}
                   </Text>
                 ) : null}

@@ -134,11 +134,11 @@ export function TextField({
       </View>
       {error ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[1], marginTop: space[1] }}>
-          <View style={{ marginTop: (type.caption.line - iconSize.sm) / 2 }}>
+          <View style={{ marginTop: (type.bodySmall.line - iconSize.sm) / 2 }}>
             <Icon name="CircleAlert" size="sm" tone="danger" />
           </View>
           <Text
-            variant="caption"
+            variant="bodySmall"
             tone="danger"
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
@@ -149,7 +149,7 @@ export function TextField({
           </Text>
         </View>
       ) : helper ? (
-        <Text variant="caption" tone="textMuted" style={{ marginTop: space[1] }}>
+        <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1] }}>
           {helper}
         </Text>
       ) : null}

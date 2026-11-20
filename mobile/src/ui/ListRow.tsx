@@ -64,13 +64,13 @@ export function ListRow({
           {label}
         </Text>
         {description ? (
-          <Text variant="caption" tone="textMuted">
+          <Text variant="bodySmall" tone="textMuted">
             {description}
           </Text>
         ) : null}
       </View>
       {value ? (
-        <Text variant="caption" tone="textMuted">
+        <Text variant="bodySmall" tone="textMuted">
           {value}
         </Text>
       ) : null}

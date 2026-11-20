@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { TextInputInstance, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
 import { useResource } from '../../hooks/useResource';
 import { useI18n } from '../../i18n';
@@ -18,6 +18,7 @@ export function SupportScreen() {
   const tickets = useResource(() => api.safety.supportTickets(), [api]);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const bodyRef = useRef<TextInputInstance>(null);
   const [errors, setErrors] = useState<{ subject?: string; body?: string }>({});
   const [banner, setBanner] = useState<string | undefined>();
   const [sending, setSending] = useState(false);
@@ -56,9 +57,20 @@ export function SupportScreen() {
       <View style={{ gap: space[6] }}>
         <View style={{ gap: space[4] }}>
           {banner ? <Banner testID="support-banner" variant="error" message={banner} onDismiss={() => setBanner(undefined)} dismissLabel={t('ui.banner.dismiss')} /> : null}
-          <TextField testID="support-subject" label={t('support.subject')} value={subject} onChangeText={setSubject} error={errors.subject} maxLength={120} disabled={sending} />
+          <TextField
+            testID="support-subject"
+            label={t('support.subject')}
+            value={subject}
+            onChangeText={setSubject}
+            error={errors.subject}
+            maxLength={120}
+            disabled={sending}
+            returnKeyType="next"
+            onSubmitEditing={() => bodyRef.current?.focus()}
+          />
           <TextField
             testID="support-body"
+            inputRef={bodyRef}
             label={t('support.body')}
             helper={t('common.counter', { count: body.length, max: 4000 })}
             value={body}

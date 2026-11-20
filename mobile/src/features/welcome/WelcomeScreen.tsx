@@ -113,7 +113,7 @@ export function WelcomeScreen({ heroImage, heroImageLabel }: WelcomeScreenProps 
         <View style={{ alignSelf: 'stretch', marginTop: space[6] }}>
           <WelcomeBenefits />
         </View>
-        <Text variant="caption" tone="onBrand" align="center" style={{ marginTop: space[5] }}>
+        <Text variant="bodySmall" tone="onBrand" align="center" style={{ marginTop: space[5] }}>
           {t('welcome.safety')}
         </Text>
       </View>

@@ -41,7 +41,7 @@ export function LegalScreen() {
           ))}
         </View>
         {__DEV__ ? (
-          <Text variant="caption" tone="textMuted">
+          <Text variant="bodySmall" tone="textMuted">
             {t('legal.draftNote')}
           </Text>
         ) : null}

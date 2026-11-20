@@ -116,6 +116,8 @@ export function ExportScreen() {
               passwordToggleLabels={passwordToggleLabels(t)}
               autoCapitalize="none"
               autoComplete="current-password"
+              returnKeyType="done"
+              onSubmitEditing={() => void request()}
             />
             <Button testID="export-request" label={t('export.request')} onPress={() => void request()} loading={loading} />
           </View>
@@ -139,7 +141,7 @@ export function ExportScreen() {
               onPress={() => job.url && void openExternal(job.url)}
             />
             {!job.url ? (
-              <Text variant="caption" tone="textMuted" testID="export-no-url">
+              <Text variant="bodySmall" tone="textMuted" testID="export-no-url">
                 {t('export.noUrl')}
               </Text>
             ) : null}

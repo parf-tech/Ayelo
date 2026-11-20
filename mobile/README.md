@@ -108,6 +108,7 @@ Ne sont **pas implémentés** et exigent un build de développement ainsi que le
 - le moteur média LiveKit (`@livekit/react-native`, qui dépend de `@livekit/react-native-webrtc`) ;
 - l'appel entrant application fermée : CallKit (iOS, avec push VoIP PushKit) et ConnectionService (Android) ;
 - l'ouverture d'un écran d'appel depuis une notification : l'appel entrant passe par la signalisation temps réel, pas par le push (voir « Notifications push »).
+- la permission du micro : `RECORD_AUDIO` (Android) et `NSMicrophoneUsageDescription` (iOS) ne sont **pas** déclarés dans `app.json` (aucun code ne s'en sert tant que les appels sont masqués), et `RECORD_AUDIO` est dans `blockedPermissions`. À rétablir, avec la demande de permission au moment de l'appel, en livrant le moteur média ; `__tests__/buildConfig.test.ts` échoue dès qu'un module de capture audio est importé. L'effet sur le manifeste Android n'est pas vérifiable sans build natif.
 
 Brancher LiveKit consiste à écrire une classe `LiveKitMediaEngine implements MediaEngine` et à la passer à `<CallProvider mediaEngine={…}>` ; la réponse de `POST /calls` et `/calls/{id}/accept` fournit déjà `livekit: { url, room, token }`.
 

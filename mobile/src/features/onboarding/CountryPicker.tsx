@@ -54,6 +54,7 @@ export function CountryPicker({ value, onChange, error, label, searchPlaceholder
         error={error}
         testID={`${idPrefix}-search`}
         autoCorrect={false}
+        returnKeyType="search"
       />
       <View accessibilityRole="radiogroup" accessibilityLabel={fieldLabel} style={{ marginTop: space[2], gap: space[2] }}>
         {visible.length === 0 ? (

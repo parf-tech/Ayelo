@@ -141,7 +141,7 @@ export function PhotosManager({ onChange }: Props) {
       <Text variant="caption" tone="textMuted" testID="photos-count">
         {t('photos.count', { count: total, max: MAX_PHOTOS })}
       </Text>
-      <Text variant="caption" tone="textMuted" style={{ marginBottom: space[3] }}>
+      <Text variant="bodySmall" tone="textMuted" style={{ marginBottom: space[3] }}>
         {t('photos.reviewNote')}
       </Text>
       {banner ? (
@@ -194,7 +194,7 @@ export function PhotosManager({ onChange }: Props) {
                     tone={photo.status === 'approved' ? 'success' : 'warning'}
                   />
                   <Text
-                    variant="captionMedium"
+                    variant="bodySmallMedium"
                     tone={photo.status === 'approved' ? 'success' : 'warning'}
                     style={{ flexShrink: 1 }}
                     testID={`photo-status-${photo.id}`}
@@ -205,7 +205,7 @@ export function PhotosManager({ onChange }: Props) {
               ) : null}
               {confirmId === photo.id ? (
                 <View style={{ padding: space[2], gap: space[1] }}>
-                  <Text variant="caption">{t('photos.deleteConfirm')}</Text>
+                  <Text variant="bodySmall">{t('photos.deleteConfirm')}</Text>
                   <Button testID={`photo-confirm-${photo.id}`} variant="danger" label={t('common.delete')} onPress={() => void remove(photo.id)} />
                   <Button variant="ghost" label={t('common.cancel')} onPress={() => setConfirmId(null)} />
                 </View>
@@ -255,7 +255,7 @@ export function PhotosManager({ onChange }: Props) {
                   </View>
                 ) : null}
               </View>
-              <Text variant="captionMedium" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2] }}>
+              <Text variant="bodySmallMedium" tone={upload.status === 'failed' ? 'danger' : 'textMuted'} style={{ padding: space[2] }}>
                 {upload.status === 'failed' ? (upload.message ?? t('photos.failed')) : t('photos.uploading')}
               </Text>
               {upload.status === 'failed' ? (

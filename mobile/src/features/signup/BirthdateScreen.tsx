@@ -120,7 +120,7 @@ export function BirthdateScreen() {
       <Text variant="body" tone="textMuted" style={{ marginTop: space[2] }}>
         {t('birthdate.subtitle')}
       </Text>
-      <Text variant="caption" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[4] }}>
+      <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1], marginBottom: space[4] }}>
         {t('birthdate.minAge')}
       </Text>
 
@@ -143,6 +143,7 @@ export function BirthdateScreen() {
       >
         <TextField
           testID="birthdate-day"
+          autoComplete="birthdate-day"
           label={t('birthdate.day')}
           placeholder={t('birthdate.dayPlaceholder')}
           value={fields.day}
@@ -157,6 +158,7 @@ export function BirthdateScreen() {
         />
         <TextField
           testID="birthdate-month"
+          autoComplete="birthdate-month"
           label={t('birthdate.month')}
           placeholder={t('birthdate.monthPlaceholder')}
           value={fields.month}
@@ -172,6 +174,7 @@ export function BirthdateScreen() {
         />
         <TextField
           testID="birthdate-year"
+          autoComplete="birthdate-year"
           label={t('birthdate.year')}
           placeholder={t('birthdate.yearPlaceholder')}
           value={fields.year}
@@ -194,11 +197,11 @@ export function BirthdateScreen() {
       {message ? (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[1], marginTop: space[2] }}>
           <Announce message={message} />
-          <View style={{ marginTop: (type.caption.line - iconSize.sm) / 2 }}>
+          <View style={{ marginTop: (type.bodySmall.line - iconSize.sm) / 2 }}>
             <Icon name="CircleAlert" size="sm" tone="danger" />
           </View>
           <Text
-            variant="caption"
+            variant="bodySmall"
             tone="danger"
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
@@ -209,7 +212,7 @@ export function BirthdateScreen() {
           </Text>
         </View>
       ) : (
-        <Text variant="caption" tone="textMuted" testID="birthdate-help" style={{ marginTop: space[2] }}>
+        <Text variant="bodySmall" tone="textMuted" testID="birthdate-help" style={{ marginTop: space[2] }}>
           {t('birthdate.fieldsHelp')}
         </Text>
       )}

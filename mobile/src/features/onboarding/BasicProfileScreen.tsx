@@ -82,7 +82,7 @@ export function BasicProfileScreen() {
               ))}
             </View>
             {errors.gender ? (
-              <Text variant="caption" tone="danger" accessibilityRole="alert">
+              <Text variant="bodySmall" tone="danger" accessibilityRole="alert">
                 <Announce message={errors.gender} />
                 {errors.gender}
               </Text>

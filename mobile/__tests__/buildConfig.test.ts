@@ -118,6 +118,53 @@ describe('thème de navigation et écran de démarrage (sans flash blanc)', () =
   });
 });
 
+describe('permissions natives : seulement ce que le code utilise', () => {
+  const expo = readJson('app.json').expo;
+
+  /** Fichiers source de l'application (le micro n'est utilisé nulle part tant que les appels sont masqués). */
+  function sourceFiles(dir: string): string[] {
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(full);
+      return /\.(ts|tsx)$/.test(entry.name) ? [full] : [];
+    });
+  }
+
+  it('Android : le micro n’est pas demandé (appels masqués, moteur média absent) et il est bloqué contre un ajout par une dépendance', () => {
+    expect(expo.android.permissions).not.toContain('android.permission.RECORD_AUDIO');
+    expect(expo.android.blockedPermissions).toContain('android.permission.RECORD_AUDIO');
+    // Ce que le code utilise reste demandé : selfie de vérification, notifications.
+    expect(expo.android.permissions).toEqual(expect.arrayContaining(['android.permission.CAMERA', 'android.permission.POST_NOTIFICATIONS']));
+  });
+
+  it('iOS : pas de description d’usage du micro, mais celles de la caméra et des photos restent', () => {
+    const plist = expo.ios.infoPlist as Record<string, string>;
+    expect(plist.NSMicrophoneUsageDescription).toBeUndefined();
+    expect(plist.NSPhotoLibraryUsageDescription).toBeTruthy();
+  });
+
+  it('le sélecteur d’images ne demande pas le micro', () => {
+    const picker = (expo.plugins as unknown[]).find((p) => Array.isArray(p) && p[0] === 'expo-image-picker') as [string, Record<string, unknown>];
+    expect(picker[1].microphonePermission).toBe(false);
+    expect(picker[1].cameraPermission).toBeTruthy();
+  });
+
+  it('aucun code ni dépendance n’utilise le micro : si le moteur média des appels arrive, rétablir RECORD_AUDIO et NSMicrophoneUsageDescription', () => {
+    // Imports de modules qui ouvrent le micro, ou appels d'API de capture : les commentaires qui citent LiveKit ne comptent pas.
+    const microModules = /^(?:expo-av|expo-audio|react-native-webrtc|@livekit\/.+)$/;
+    const microImport = /(?:from\s+|require\(\s*|import\(\s*)['"](expo-av|expo-audio|react-native-webrtc|@livekit\/[^'"]+)['"]/;
+    const microCall = /requestMicrophonePermissions|requestRecordingPermissions|getUserMedia/;
+    const offenders = [...sourceFiles(path.join(root, 'src')), ...sourceFiles(path.join(root, 'app'))].filter((file) => {
+      const text = fs.readFileSync(file, 'utf8');
+      return microImport.test(text) || microCall.test(text);
+    });
+    expect(offenders.map((file) => path.relative(root, file))).toEqual([]);
+    const pkg = readJson('package.json');
+    const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
+    expect(deps.filter((name) => microModules.test(name))).toEqual([]);
+  });
+});
+
 describe('prix par mois (offres de plusieurs mois)', () => {
   const product = (price: number, months: number, extra = {}) => ({
     productId: `p${months}`,

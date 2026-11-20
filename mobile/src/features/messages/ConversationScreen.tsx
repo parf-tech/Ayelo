@@ -341,7 +341,7 @@ export function ConversationScreen() {
       {realtimeStatus !== 'connected' && thread.status === 'ready' ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: space[1] }}>
           <Icon name="WifiOff" size="sm" tone="textMuted" />
-          <Text variant="caption" tone="textMuted" testID="realtime-off" style={{ flex: 1 }}>
+          <Text variant="bodySmall" tone="textMuted" testID="realtime-off" style={{ flex: 1 }}>
             {t('conversation.realtime.off')}
           </Text>
         </View>

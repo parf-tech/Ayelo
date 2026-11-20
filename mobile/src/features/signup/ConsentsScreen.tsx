@@ -49,7 +49,7 @@ export function ConsentsScreen() {
           {/* Échec d'ouverture d'un texte légal : près du bouton, pas en haut d'une page qui défile. */}
           {legalError ? <Banner testID="consents-legal-error" variant="error" message={t('legal.openError')} /> : null}
           {!canContinue ? (
-            <Text variant="caption" tone="textMuted" testID="consents-missing" accessibilityLiveRegion="polite">
+            <Text variant="bodySmall" tone="textMuted" testID="consents-missing" accessibilityLiveRegion="polite">
               {t('consents.missing')}
             </Text>
           ) : null}

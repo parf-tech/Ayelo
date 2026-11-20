@@ -109,7 +109,7 @@ export function PurchaseResultScreen() {
             <Text variant="body" accessibilityLiveRegion="polite" testID="purchase-validating">
               {t('purchase.validating')}
             </Text>
-            <Text variant="caption" tone="textMuted">
+            <Text variant="bodySmall" tone="textMuted">
               {t('purchase.validating.hint')}
             </Text>
             <Skeleton />

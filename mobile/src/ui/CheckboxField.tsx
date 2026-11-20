@@ -84,12 +84,12 @@ export function CheckboxField({
           {label}
         </Text>
         {badge ? (
-          <Text variant="caption" tone="textMuted" style={{ marginTop: space[1] }}>
+          <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1] }}>
             {badge}
           </Text>
         ) : null}
         {description ? (
-          <Text variant="caption" tone="textMuted" style={{ marginTop: space[1] }}>
+          <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1] }}>
             {description}
           </Text>
         ) : null}

@@ -22,8 +22,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true,
         "NSCameraUsageDescription": "Ayelo utilise la caméra pour le selfie de vérification de votre profil.",
-        "NSPhotoLibraryUsageDescription": "Ayelo accède à vos photos pour que vous puissiez les ajouter à votre profil.",
-        "NSMicrophoneUsageDescription": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs."
+        "NSPhotoLibraryUsageDescription": "Ayelo accède à vos photos pour que vous puissiez les ajouter à votre profil."
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -59,10 +58,10 @@
       "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.POST_NOTIFICATIONS"
       ],
       "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.SYSTEM_ALERT_WINDOW"

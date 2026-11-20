@@ -163,7 +163,7 @@ export function ProfileEditScreen() {
             // Groupes séparés par l'espace (32), champs d'un même groupe à 16 : aucun trait entre deux champs seuls.
             <View style={{ gap: space[6] }}>
               <View style={{ gap: space[4] }}>
-                <TextField testID="edit-name" label={t('profile.name')} value={form.displayName} onChangeText={(displayName) => patch({ displayName })} error={errors.name} maxLength={40} />
+                <TextField testID="edit-name" label={t('profile.name')} value={form.displayName} onChangeText={(displayName) => patch({ displayName })} error={errors.name} maxLength={40} returnKeyType="done" />
                 <View accessibilityRole="radiogroup" accessibilityLabel={t('profile.gender')} style={{ gap: space[1] }}>
                   <Text variant="labelStrong">
                     {t('profile.gender')}
@@ -203,7 +203,7 @@ export function ProfileEditScreen() {
                   value={form.origin}
                   onChange={(origin) => patch({ origin })}
                 />
-                <TextField testID="edit-city" label={t('profile.city')} value={form.city} onChangeText={(city) => patch({ city })} error={errors.city} maxLength={80} />
+                <TextField testID="edit-city" label={t('profile.city')} value={form.city} onChangeText={(city) => patch({ city })} error={errors.city} maxLength={80} returnKeyType="done" />
               </View>
 
               <FormSection title={t('intent.title')}>

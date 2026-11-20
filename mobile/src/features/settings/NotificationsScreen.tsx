@@ -76,7 +76,7 @@ export function NotificationsScreen() {
               </SwitchGroup>
             ))}
           </View>
-          <Text variant="caption" tone="textMuted" style={{ marginTop: space[3] }}>
+          <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[3] }}>
             {t('notif.note')}
           </Text>
         </AsyncView>

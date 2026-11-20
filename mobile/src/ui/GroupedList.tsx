@@ -79,18 +79,18 @@ export function NavRow({ label, onPress, icon, description, value, tone = 'defau
             {label}
           </Text>
           {description ? (
-            <Text variant="caption" tone="textMuted">
+            <Text variant="bodySmall" tone="textMuted">
               {description}
             </Text>
           ) : null}
           {value && isLarge ? (
-            <Text variant="caption" tone="textMuted">
+            <Text variant="bodySmall" tone="textMuted">
               {value}
             </Text>
           ) : null}
         </View>
         {value && !isLarge ? (
-          <Text variant="caption" tone="textMuted">
+          <Text variant="bodySmall" tone="textMuted">
             {value}
           </Text>
         ) : null}

@@ -40,7 +40,7 @@ export function FormSection({ title, hint, optional = false, testID, children }:
       </View>
       {children}
       {hint ? (
-        <Text variant="caption" tone="textMuted">
+        <Text variant="bodySmall" tone="textMuted">
           {hint}
         </Text>
       ) : null}

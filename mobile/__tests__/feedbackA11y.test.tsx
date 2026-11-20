@@ -14,7 +14,7 @@ import {
   toastDurationMs,
 } from '../src/ui';
 import { resetAnnounceDebounce } from '../src/ui/a11y/announce';
-import { spyAnnounce } from './helpers/a11y';
+import { mockScreenReader, spyAnnounce } from './helpers/a11y';
 import { flatStyle as flat, renderThemed } from './helpers/render';
 import { focus, resetRouterMocks } from './helpers/routerMock';
 
@@ -145,6 +145,41 @@ describe('Toast : durée, action, position', () => {
     expect(toastDurationMs({ variant: 'success' })).toBe(6000);
     expect(toastDurationMs({ variant: 'info' })).toBe(6000);
     expect(toastDurationMs({ variant: 'error' })).toBe(10000);
+  });
+
+  it('la durée suit la longueur du message : plancher par type, plus de temps pour un texte long, plafond 30 s', () => {
+    const long = 'x'.repeat(200); // 3 s + 60 ms par caractère = 15 s
+    expect(toastDurationMs({ variant: 'success', message: 'Enregistré' })).toBe(6000);
+    expect(toastDurationMs({ variant: 'success', message: long })).toBe(15000);
+    expect(toastDurationMs({ variant: 'error', message: 'x'.repeat(50) })).toBe(10000);
+    expect(toastDurationMs({ variant: 'error', message: 'x'.repeat(2000) })).toBe(30000);
+    // Une durée imposée par l'appelant est respectée ; une action reste sans limite.
+    expect(toastDurationMs({ variant: 'info', message: long, durationMs: 2000 })).toBe(2000);
+    expect(toastDurationMs({ variant: 'info', message: long, actionLabel: 'Voir' })).toBeNull();
+  });
+
+  it('un message long reste affiché le temps de le lire', async () => {
+    const long = 'Votre demande est enregistrée. '.repeat(6).trim(); // 185 caractères
+    await open({ message: long, variant: 'success' });
+    await act(async () => {
+      jest.advanceTimersByTime(6500);
+    });
+    expect(screen.getByText(long)).toBeOnTheScreen();
+    await act(async () => {
+      jest.advanceTimersByTime(8000);
+    });
+    expect(screen.queryByText(long)).not.toBeOnTheScreen();
+  });
+
+  it('lecteur d’écran actif : le toast n’est jamais fermé automatiquement', async () => {
+    mockScreenReader(true);
+    await open({ message: 'Enregistré', variant: 'success' });
+    await act(async () => {
+      jest.advanceTimersByTime(120000);
+    });
+    expect(screen.getByText('Enregistré')).toBeOnTheScreen();
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(screen.getByRole('button', { name: 'Fermer la notification' }));
+    expect(screen.queryByText('Enregistré')).not.toBeOnTheScreen();
   });
 
   it('iOS : annonce le toast à son apparition', async () => {

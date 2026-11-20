@@ -340,6 +340,13 @@ describe('Connexion, inscription : logo et comportement conservés', () => {
     expect(screen.getByRole('button', { name: 'Continuer' })).toBeDisabled();
   });
 
+  it('date de naissance : chaque champ dit au système ce qu’il attend (auto-remplissage jour / mois / année)', async () => {
+    await renderApp(<BirthdateScreen />);
+    expect(screen.getByTestId('birthdate-day').props.autoComplete).toBe('birthdate-day');
+    expect(screen.getByTestId('birthdate-month').props.autoComplete).toBe('birthdate-month');
+    expect(screen.getByTestId('birthdate-year').props.autoComplete).toBe('birthdate-year');
+  });
+
   it('consentements : quatre cases, deux liens vers les textes légaux, logo, continuer désactivé', async () => {
     await renderApp(<ConsentsScreen />, atConsents);
     expect(screen.getByTestId('auth-logo')).toBeOnTheScreen();

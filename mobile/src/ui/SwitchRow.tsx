@@ -59,7 +59,7 @@ export function SwitchRow({ label, description, value, onValueChange, disabled =
           {label}
         </Text>
         {description ? (
-          <Text variant="caption" tone="textMuted">
+          <Text variant="bodySmall" tone="textMuted">
             {description}
           </Text>
         ) : null}

@@ -84,7 +84,7 @@ export function ChoiceCard({ label, description, selected, onPress, disabled = f
           {label}
         </Text>
         {description && !tile ? (
-          <Text variant="caption" tone="textMuted" style={{ marginTop: space[1] }}>
+          <Text variant="bodySmall" tone="textMuted" style={{ marginTop: space[1] }}>
             {description}
           </Text>
         ) : null}

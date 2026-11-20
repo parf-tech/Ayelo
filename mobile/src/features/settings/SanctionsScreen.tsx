@@ -60,7 +60,7 @@ export function SanctionsScreen() {
                   {sanctionKindLabel(t, s.kind)}
                 </Text>
                 <Text variant="body">{t('sanctions.reason', { reason: s.reason })}</Text>
-                <Text variant="caption" tone="textMuted">
+                <Text variant="bodySmall" tone="textMuted">
                   {s.ends_at ? t('sanctions.period', { start: fmt(s.starts_at), end: fmt(s.ends_at) }) : t('sanctions.periodOpen', { start: fmt(s.starts_at) })}
                 </Text>
               </View>
