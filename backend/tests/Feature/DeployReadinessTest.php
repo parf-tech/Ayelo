@@ -218,6 +218,7 @@ it('signale en avertissement (sans bloquer) les services facultatifs absents et 
         'services.fcm.project_id' => null,
         'services.livekit.url' => null,
         'services.mail_webhook.secret' => null,
+        'services.mail_webhook.svix_secret' => null, // sinon le .env du poste (secret Resend) masque l'avertissement
         'services.oauth.google.client_ids' => [],
         'services.oauth.apple.client_ids' => [],
     ]);
