@@ -112,7 +112,13 @@ class MessageController extends Controller
         $hint = $data['type'] === 'text' ? $safety->inspect($me->id, (string) $data['body']) : null;
 
         $payload = $this->presentOne($message) + ($hint ? ['safety_hint' => $hint] : []);
-        MessageCreated::dispatch($id, $payload);
+        // Diffusion immédiate (ShouldBroadcastNow) : Reverb injoignable ne doit pas transformer un message enregistré en erreur 500.
+        // L'échec est rapporté ; le client relit la conversation à la reconnexion, le push part quand même.
+        try {
+            MessageCreated::dispatch($id, $payload);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $recipient = $conversations->other($conversation, $me->id);
         // Confidentialité (revues F-28 et P-14) : la file ne transporte que l'identifiant du message ; le job construit le corps

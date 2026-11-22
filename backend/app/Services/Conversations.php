@@ -37,6 +37,7 @@ class Conversations
 
     public function creditBalance(string $userId, string $type = 'conversation'): int
     {
-        return (int) DB::table('credit_ledger')->where('user_id', $userId)->where('credit_type', $type)->sum('delta');
+        // Table de soldes tenue à jour par un déclencheur sur `credit_ledger` (migration create_credit_balances) ; 0 sans ligne.
+        return (int) DB::table('credit_balances')->where('user_id', $userId)->where('credit_type', $type)->value('balance');
     }
 }
