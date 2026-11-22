@@ -109,6 +109,12 @@ jobs:
       - name: Test de configure-env.sh (écriture des valeurs, secrets jamais affichés)
         run: bash infra/scripts/tests/configure_env_test.sh
 
+      - name: Test de la sonde externe (repli statique en 200 jamais pris pour un site sain ; faux curl)
+        run: bash infra/scripts/tests/probe_externe_test.sh
+
+      - name: Test de l'essai du routage Caddy (Caddyfile d'essai généré, défauts attrapés ; faux docker et curl)
+        run: bash infra/scripts/tests/caddy_routage_test.sh
+
       - name: hadolint (informatif)
         continue-on-error: true
         run: |

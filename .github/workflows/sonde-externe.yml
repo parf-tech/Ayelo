@@ -1,0 +1,54 @@
+name: sonde-externe
+
+# Surveillance de disponibilité depuis les serveurs de GitHub, donc INDÉPENDANTE du serveur de production (une sonde interne tombe
+# avec lui). Deux tâches distinctes = deux alertes distinctes (docs/runbooks/observabilite.md, « Sonde externe ») :
+#  - api  : GET /api/v1/health, 200 et "status":"ok" ;
+#  - site : GET /legal/terms, 200 ET en-tête X-Site-Source: app. Le site a un repli statique qui répond 200 application arrêtée :
+#           sans cet en-tête, un simple « 200 » masquerait la panne (cause `site_repli_statique`).
+# Un échec envoie un e-mail GitHub à la personne qui a modifié le planning en dernier (réglage « Actions » des notifications de son
+# compte : « Send notifications for failed workflows only »). Un planning ne tourne QUE sur la branche par défaut, et GitHub le
+# désactive après 60 jours sans activité dans le dépôt : le relancer à la main (onglet Actions) si l'e-mail d'avertissement arrive.
+# Chaque tâche tente 3 fois à 30 s d'intervalle avant d'échouer : un rechargement de Caddy ou un déploiement de quelques secondes
+# ne déclenche pas d'alerte, une vraie panne oui (environ 1 minute 30 plus tard).
+# Seuls des GET sont envoyés, aucun secret n'est utilisé ; les adresses sont publiques.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: infra/scripts/probe-externe.sh
+          sparse-checkout-cone-mode: false
+      - name: API de production, santé de la base, de Redis et de la file
+        run: |
+          for attempt in 1 2 3; do
+            bash infra/scripts/probe-externe.sh api https://api.ayelo.fr && exit 0
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          exit 1
+
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          sparse-checkout: infra/scripts/probe-externe.sh
+          sparse-checkout-cone-mode: false
+      - name: Site de présentation servi par l'application et non par le repli statique
+        run: |
+          for attempt in 1 2 3; do
+            bash infra/scripts/probe-externe.sh site https://ayelo.fr && exit 0
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          exit 1

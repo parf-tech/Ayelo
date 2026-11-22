@@ -71,6 +71,7 @@
     "foot_publisher": {
       "group": "publisher",
       "kind": "line",
+      "multiline": true,
       "max": 300,
       "label": {
         "fr": "Éditeur du service (pied de page)",
@@ -87,6 +88,7 @@
     "foot_director": {
       "group": "publisher",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Directeur de la publication (pied de page)",
@@ -103,6 +105,7 @@
     "foot_host": {
       "group": "publisher",
       "kind": "line",
+      "multiline": true,
       "max": 300,
       "label": {
         "fr": "Hébergeur du site (pied de page)",
@@ -119,6 +122,7 @@
     "terms_publisher": {
       "group": "publisher",
       "kind": "block",
+      "multiline": false,
       "max": 5000,
       "label": {
         "fr": "Identité de l’éditeur (conditions d’utilisation)",
@@ -135,6 +139,7 @@
     "privacy_host_name": {
       "group": "publisher",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Hébergeur du serveur : nom et lieu",
@@ -151,6 +156,7 @@
     "contact_support_email": {
       "group": "contacts",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "E-mail du support",
@@ -167,6 +173,7 @@
     "contact_privacy_email": {
       "group": "contacts",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "E-mail pour les données personnelles",
@@ -184,6 +191,7 @@
     "contact_security_email": {
       "group": "contacts",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "E-mail sécurité et failles techniques",
@@ -201,6 +209,7 @@
     "support_postal_address": {
       "group": "contacts",
       "kind": "line",
+      "multiline": true,
       "max": 300,
       "label": {
         "fr": "Adresse postale de l’éditeur",
@@ -217,6 +226,7 @@
     "support_response_delay": {
       "group": "contacts",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Délai de réponse du support",
@@ -233,6 +243,7 @@
     "safety_response_delay": {
       "group": "contacts",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Délai de traitement d’un signalement",
@@ -249,6 +260,7 @@
     "terms_pricing": {
       "group": "terms",
       "kind": "block",
+      "multiline": false,
       "max": 5000,
       "label": {
         "fr": "Prix, durées, renouvellement, rétractation",
@@ -265,6 +277,7 @@
     "terms_liability": {
       "group": "terms",
       "kind": "block",
+      "multiline": false,
       "max": 5000,
       "label": {
         "fr": "Responsabilité, garanties légales, force majeure",
@@ -281,6 +294,7 @@
     "terms_governing_law": {
       "group": "terms",
       "kind": "block",
+      "multiline": false,
       "max": 5000,
       "label": {
         "fr": "Droit applicable, juridiction, médiation",
@@ -297,6 +311,7 @@
     "terms_changes": {
       "group": "terms",
       "kind": "block",
+      "multiline": false,
       "max": 5000,
       "label": {
         "fr": "Modification des conditions et information des membres",
@@ -313,6 +328,7 @@
     "privacy_controller": {
       "group": "privacy",
       "kind": "line",
+      "multiline": true,
       "max": 300,
       "label": {
         "fr": "Responsable du traitement, délégué, représentant",
@@ -329,6 +345,7 @@
     "privacy_birthdate_note": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Date de naissance réduite à l’année : validation",
@@ -345,6 +362,7 @@
     "privacy_push_legal_basis": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Notifications : base légale à valider",
@@ -361,6 +379,7 @@
     "privacy_mail_provider": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Fournisseur d’e-mail",
@@ -377,6 +396,7 @@
     "privacy_moderation_provider": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Prestataire de modération",
@@ -393,6 +413,7 @@
     "privacy_moderation_data": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Prestataire de modération : données transmises",
@@ -409,6 +430,7 @@
     "privacy_transfers": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Transferts hors Union européenne",
@@ -425,6 +447,7 @@
     "privacy_backup_encryption": {
       "group": "privacy",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Chiffrement des sauvegardes",
@@ -441,6 +464,7 @@
     "retention_sanction_hash": {
       "group": "retention",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Empreinte d’un compte sanctionné : durée",
@@ -458,6 +482,7 @@
     "retention_logs": {
       "group": "retention",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Journaux techniques : durée et contenu",
@@ -474,6 +499,7 @@
     "retention_accounting": {
       "group": "retention",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Achats et pièces comptables : durée",
@@ -491,6 +517,7 @@
     "retention_consent_proof": {
       "group": "retention",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Preuves de consentement : durée",
@@ -507,6 +534,7 @@
     "retention_backups": {
       "group": "retention",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Sauvegardes du serveur : durée",
@@ -523,6 +551,7 @@
     "safety_authorities": {
       "group": "safety",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Signalement aux autorités : procédure et délais",
@@ -539,6 +568,7 @@
     "delete_service_address": {
       "group": "deletion",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Adresse du service du formulaire de suppression",
@@ -555,6 +585,7 @@
     "delete_cancel_procedure": {
       "group": "deletion",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Annulation d’une suppression : procédure",
@@ -571,6 +602,7 @@
     "delete_birthdate_note": {
       "group": "deletion",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Date de naissance réduite à l’année : validation",
@@ -587,6 +619,7 @@
     "delete_backup_note": {
       "group": "deletion",
       "kind": "line",
+      "multiline": false,
       "max": 300,
       "label": {
         "fr": "Sauvegardes : validation du délai de rotation",

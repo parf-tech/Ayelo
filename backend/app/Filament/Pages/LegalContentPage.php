@@ -268,7 +268,11 @@ class LegalContentPage extends Page
     /** @param  array<string, mixed>  $slot */
     private function field(string $key, string $lang, array $slot, string $label): Component
     {
-        $field = $slot['kind'] === 'block' ? Textarea::make("{$key}.{$lang}")->rows(6) : TextInput::make("{$key}.{$lang}");
+        $field = match (true) {
+            $slot['kind'] === 'block' => Textarea::make("{$key}.{$lang}")->rows(6),
+            ($slot['multiline'] ?? false) === true => Textarea::make("{$key}.{$lang}")->rows(3), // adresse : un saut de ligne = une ligne de l'adresse
+            default => TextInput::make("{$key}.{$lang}"),
+        };
 
         return $field
             ->label($label.' · '.Staff::t("admin.legal.lang.{$lang}"))

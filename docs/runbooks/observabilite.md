@@ -19,6 +19,20 @@ Contexte : revue CTO n°1, section 3.2. Avant : ni suivi d'erreurs, ni métrique
 
 Mettre une sonde EXTERNE (Uptime Kuma sur une autre machine, ou un service gratuit) sur `/api/v1/health` : une sonde interne tombe avec le serveur.
 
+## Sonde externe : un site qui répond 200 n'est pas un site en bonne santé
+
+Le site de présentation (`https://<WEB_DOMAIN>`) a un repli statique : application arrêtée, Caddy répond quand même **HTTP 200** avec les fichiers de `web/` (`docs/runbooks/site-public.md`). Une alerte « le site répond 200 » reste donc verte pendant une vraie panne de l'application. Deux contrôles indépendants, un script (`infra/scripts/probe-externe.sh`, `curl` seulement, aucun secret, GET uniquement) :
+
+| commande | ce qu'elle lit | alerte (`ALERTE <contrôle> <cause>`, sortie 1) |
+| --- | --- | --- |
+| `bash infra/scripts/probe-externe.sh api https://<API_DOMAIN>` | `/api/v1/health` : 200 **et** corps `"status":"ok"` | `api_injoignable` (réseau, délai 15 s), `api_degrade` (503, composants `db` / `redis` / `queue` nommés), `api_reponse_inattendue` (autre code, ou 200 sans `"status":"ok"`) |
+| `bash infra/scripts/probe-externe.sh site https://<WEB_DOMAIN>` | `/legal/terms` : 200 **et** en-tête `X-Site-Source: app` | `site_injoignable`, `site_hors_service` (code autre que 200), **`site_repli_statique`** (200 sans `X-Site-Source: app` : l'application est arrêtée ou en échec, le site tient grâce au repli) |
+
+- Sortie 0 : tout va bien ; 1 : panne (la cause est sur la ligne affichée) ; 2 : mauvais usage (adresse sans `https://`, contrôle inconnu ; aucune requête envoyée).
+- Les deux contrôles sont **deux alertes distinctes** : `api` mesure l'application directement ; `site` repère le cas que le code HTTP cache. Les brancher sur deux moniteurs, pas sur un seul. Chaque requête porte un paramètre `?sonde=<heure>` et `Cache-Control: no-cache` : on lit l'état réel, pas une copie en cache (la page de l'application est servie avec `max-age=300`).
+- **Où l'exécuter : sur une autre machine que le serveur**, toutes les 5 minutes : par exemple un `cron` ou un moniteur « push » d'Uptime Kuma (la commande puis `curl` de l'adresse de push si la sortie est 0), ou une tâche planifiée d'un service d'intégration continue. **État au 2026-11-22 : le script est écrit, testé (`infra/scripts/tests/probe_externe_test.sh`, 19 vérifications, rejoué en CI) et essayé une fois à la main sur la production (deux `OK`). L'exécution planifiée est le workflow `.github/workflows/sonde-externe.yml` (deux tâches, `api` et `site`, toutes les 5 minutes, depuis les serveurs de GitHub ; dépôt public donc sans coût).** Il n'est **actif qu'une fois fusionné dans la branche par défaut (`main`)** : un planning GitHub ne tourne pas ailleurs. Chaque tâche tente 3 fois à 30 s d'intervalle avant d'échouer (un rechargement de Caddy ne déclenche rien) ; un échec envoie un e-mail GitHub à la personne qui a modifié le planning en dernier (notifications « Actions », option « failed workflows only » de son compte). Deux limites de GitHub : le planning est désactivé après 60 jours sans activité dans le dépôt (un e-mail d'avertissement arrive : le relancer dans l'onglet Actions), et un lancement peut avoir quelques minutes de retard aux heures de pointe. Premier contrôle après la fusion : onglet Actions, « sonde-externe », « Run workflow », les deux tâches doivent être vertes ; essai de l'alerte : arrêter `app` quelques minutes (`docker compose ... stop app`, puis `start app`) et voir `site` rouge avec la cause `site_repli_statique` et `api` rouge avec `api_injoignable` ou `api_reponse_inattendue`.
+- Piège à éviter : un moniteur HTTP « le site répond 200 » sur `https://<WEB_DOMAIN>/` est insuffisant ; s'il existe déjà, le laisser (il voit Caddy tomber) mais ne pas le compter comme surveillance de l'application.
+
 ## Que surveiller et quand alerter
 
 | signal | comment le lire | seuil d'alerte proposé |

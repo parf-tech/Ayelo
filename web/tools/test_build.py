@@ -14,6 +14,8 @@ build = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(build)
 
 BLOCK_KEYS = {'terms_publisher', 'terms_pricing', 'terms_liability', 'terms_governing_law', 'terms_changes'}
+# Champs « ligne » qui contiennent une adresse : saisis sur plusieurs lignes dans le panneau d'administration.
+ADDRESS_KEYS = {'foot_publisher', 'foot_host', 'support_postal_address', 'privacy_controller'}
 
 
 def render_all():
@@ -88,6 +90,14 @@ class PagesTest(unittest.TestCase):
             self.assertTrue(slot['pages'], key)
         grouped = [k for keys in self.catalog['groups'].values() for k in keys]
         self.assertEqual(sorted(grouped), sorted(slots))
+
+    def test_address_fields_are_multiline(self):
+        for key, slot in self.catalog['slots'].items():
+            self.assertIsInstance(slot['multiline'], bool, key)
+        multiline = {k for k, s in self.catalog['slots'].items() if s['multiline']}
+        self.assertEqual(multiline, ADDRESS_KEYS)
+        for key in ADDRESS_KEYS:
+            self.assertEqual(self.catalog['slots'][key]['kind'], 'line', key)  # un bloc est déjà une zone de texte
 
     def test_catalog_pages_are_the_rendered_files(self):
         self.assertEqual(len(self.catalog['pages']), 16)

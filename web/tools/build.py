@@ -858,22 +858,24 @@ GROUPS = ('publisher', 'contacts', 'terms', 'privacy', 'retention', 'safety', 'd
 LINE_MAX, BLOCK_MAX = 300, 5000
 
 
-def _slot(group: str, kind: str, fr: str, en: str) -> dict:
-    return {'group': group, 'kind': kind, 'max': BLOCK_MAX if kind == 'block' else LINE_MAX, 'label': {'fr': fr, 'en': en}}
+def _slot(group: str, kind: str, fr: str, en: str, multiline: bool = False) -> dict:
+    # `multiline` : un champ « ligne » (texte inséré dans une phrase) saisi sur plusieurs lignes dans le panneau d'administration,
+    # pour une adresse ; chaque retour à la ligne devient un <br> sur la page. Sans objet pour un bloc (déjà une zone de texte).
+    return {'group': group, 'kind': kind, 'multiline': multiline, 'max': BLOCK_MAX if kind == 'block' else LINE_MAX, 'label': {'fr': fr, 'en': en}}
 
 
 SLOTS = {
     # Éditeur et hébergeur
-    'foot_publisher': _slot('publisher', 'line', 'Éditeur du service (pied de page)', 'Service publisher (footer)'),
+    'foot_publisher': _slot('publisher', 'line', 'Éditeur du service (pied de page)', 'Service publisher (footer)', multiline=True),
     'foot_director': _slot('publisher', 'line', 'Directeur de la publication (pied de page)', 'Publication director (footer)'),
-    'foot_host': _slot('publisher', 'line', 'Hébergeur du site (pied de page)', 'Site host (footer)'),
+    'foot_host': _slot('publisher', 'line', 'Hébergeur du site (pied de page)', 'Site host (footer)', multiline=True),
     'terms_publisher': _slot('publisher', 'block', 'Identité de l’éditeur (conditions d’utilisation)', 'Publisher identity (terms of use)'),
     'privacy_host_name': _slot('publisher', 'line', 'Hébergeur du serveur : nom et lieu', 'Server host: name and location'),
     # Contacts
     'contact_support_email': _slot('contacts', 'line', 'E-mail du support', 'Support e-mail'),
     'contact_privacy_email': _slot('contacts', 'line', 'E-mail pour les données personnelles', 'Personal data e-mail'),
     'contact_security_email': _slot('contacts', 'line', 'E-mail sécurité et failles techniques', 'Security and vulnerabilities e-mail'),
-    'support_postal_address': _slot('contacts', 'line', 'Adresse postale de l’éditeur', 'Publisher postal address'),
+    'support_postal_address': _slot('contacts', 'line', 'Adresse postale de l’éditeur', 'Publisher postal address', multiline=True),
     'support_response_delay': _slot('contacts', 'line', 'Délai de réponse du support', 'Support response time'),
     'safety_response_delay': _slot('contacts', 'line', 'Délai de traitement d’un signalement', 'Report processing time'),
     # Conditions d'utilisation
@@ -882,7 +884,7 @@ SLOTS = {
     'terms_governing_law': _slot('terms', 'block', 'Droit applicable, juridiction, médiation', 'Governing law, jurisdiction, mediation'),
     'terms_changes': _slot('terms', 'block', 'Modification des conditions et information des membres', 'How the terms change and how members are told'),
     # Données personnelles
-    'privacy_controller': _slot('privacy', 'line', 'Responsable du traitement, délégué, représentant', 'Controller, data protection officer, representative'),
+    'privacy_controller': _slot('privacy', 'line', 'Responsable du traitement, délégué, représentant', 'Controller, data protection officer, representative', multiline=True),
     'privacy_birthdate_note': _slot('privacy', 'line', 'Date de naissance réduite à l’année : validation', 'Date of birth reduced to the year: validation'),
     'privacy_push_legal_basis': _slot('privacy', 'line', 'Notifications : base légale à valider', 'Notifications: legal basis to validate'),
     'privacy_mail_provider': _slot('privacy', 'line', 'Fournisseur d’e-mail', 'E-mail provider'),

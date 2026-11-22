@@ -162,8 +162,13 @@
 		handle @app_down {
 			root * /srv/web
 			import web_headers
-			header Cache-Control "public, max-age=60"
-			header @confirm Cache-Control "no-store"
+			# Page à jeton dans l'URL : jamais de cache, même en repli. Constaté par infra/scripts/caddy-routage-test.sh le 2026-11-22 :
+			# (1) ici l'adresse a déjà été réécrite en /index.php, donc `@confirm` (défini plus haut sur `path`) ne correspond plus : on
+			# compare l'adresse d'origine ; (2) Caddy applique une directive `header` SANS détecteur après celles qui en ont un, quelle que
+			# soit leur place dans le fichier : l'en-tête général serait venu écraser `no-store`, d'où le préfixe `?` (poser seulement si absent).
+			@confirm_orig expression `{http.request.orig_uri.path} in ['/confirm-deletion', '/confirm-deletion.html', '/en/confirm-deletion', '/en/confirm-deletion.html']`
+			header @confirm_orig Cache-Control "no-store"
+			header ?Cache-Control "public, max-age=60"
 			try_files {http.request.orig_uri.path} {http.request.orig_uri.path}.html {http.request.orig_uri.path}/index.html
 			file_server {
 				status 200

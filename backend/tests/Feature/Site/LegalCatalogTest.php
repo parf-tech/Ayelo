@@ -20,6 +20,21 @@ it('lit les champs, groupes et pages du catalogue', function () {
         ->and($catalog->slots()['contact_privacy_email']['label']['en'])->toBe('Personal data e-mail');
 });
 
+it('indique les champs ligne saisis sur plusieurs lignes, et traite un catalogue sans cet indicateur comme une seule ligne', function () {
+    $slots = LegalFixture::slots();
+    $slots['support_postal_address'] = [
+        'group' => 'contacts', 'kind' => 'line', 'multiline' => true, 'max' => 300, 'pages' => ['support'],
+        'label' => ['fr' => 'Adresse postale', 'en' => 'Postal address'],
+        'hint' => ['fr' => 'adresse', 'en' => 'address'],
+    ];
+    LegalFixture::make($slots);
+    $catalog = new LegalCatalog;
+
+    expect($catalog->multiline('support_postal_address'))->toBeTrue()
+        ->and($catalog->multiline('contact_privacy_email'))->toBeFalse() // indicateur absent du catalogue : une ligne
+        ->and($catalog->multiline('terms_pricing'))->toBeFalse();
+});
+
 it('refuse un catalogue absent en nommant le fichier attendu', function () {
     config(['site.web_root' => sys_get_temp_dir().'/ayelo-inexistant-'.bin2hex(random_bytes(4))]);
 
@@ -60,6 +75,9 @@ it('le catalogue du dépôt correspond exactement aux pages générées (aucune 
 
     expect(array_diff($found, array_keys($catalog->slots())))->toBe([], 'clés de page absentes du catalogue')
         ->and(array_diff(array_keys($catalog->slots()), $found))->toBe([], 'clés du catalogue absentes des pages');
+    $addresses = array_values(array_filter(array_keys($catalog->slots()), fn (string $key): bool => $catalog->multiline($key)));
+    sort($addresses);
+    expect($addresses)->toBe(['foot_host', 'foot_publisher', 'privacy_controller', 'support_postal_address']);
     foreach ($catalog->slots() as $key => $slot) {
         expect($catalog->max($key))->toBe($slot['kind'] === 'block' ? 5000 : 300)
             ->and(trim($slot['hint']['fr']))->not->toBe('')

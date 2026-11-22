@@ -41,6 +41,14 @@ it('remplace deux champs voisins sur une même ligne sans que l’un avale l’a
     expect(renderer()->render('index.html'))->toBe('<p>X et X</p>');
 });
 
+it('affiche une adresse sur plusieurs lignes : chaque saut devient un retour à la ligne, le HTML reste échappé', function () {
+    LegalFixture::make(null, ['index.html' => '<p>Courrier : <mark class="todo" data-legal="contact_privacy_email">[À COMPLÉTER : adresse]</mark></p>']);
+    sitePublish(['contact_privacy_email' => ['fr' => "Ayelo SAS\n12 rue <b>des Lilas</b>\n75011 Paris"]]);
+
+    expect(renderer()->render('index.html'))
+        ->toBe('<p>Courrier : Ayelo SAS<br />'."\n".'12 rue &lt;b&gt;des Lilas&lt;/b&gt;<br />'."\n".'75011 Paris</p>');
+});
+
 it('remplace un bloc par un paragraphe par texte, avec un retour à la ligne pour un saut simple', function () {
     sitePublish(['terms_pricing' => ['fr' => "Premier\nsuite\n\nSecond"]]);
 

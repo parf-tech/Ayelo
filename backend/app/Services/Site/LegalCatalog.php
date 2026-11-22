@@ -17,9 +17,10 @@ final class LegalCatalog
     private ?array $data = null;
 
     /**
-     * Pour chaque clé : group, kind (`line` ou `block`), max, label et hint (`fr`/`en`), pages (clés de page, informatif).
+     * Pour chaque clé : group, kind (`line` ou `block`), multiline (champ ligne saisi sur plusieurs lignes), max, label et hint
+     * (`fr`/`en`), pages (clés de page, informatif).
      *
-     * @return array<string, array{group: string, kind: string, max: int, label: array{fr: string, en: string}, hint: array{fr: string, en: string}, pages: list<string>}>
+     * @return array<string, array{group: string, kind: string, multiline?: bool, max: int, label: array{fr: string, en: string}, hint: array{fr: string, en: string}, pages: list<string>}>
      */
     public function slots(): array
     {
@@ -47,6 +48,15 @@ final class LegalCatalog
     public function kind(string $key): string
     {
         return $this->slot($key)['kind'];
+    }
+
+    /**
+     * Champ « ligne » saisi sur plusieurs lignes (une adresse) : chaque saut de ligne devient un retour à la ligne sur la page.
+     * Un catalogue plus ancien, sans cet indicateur, se lit comme une seule ligne.
+     */
+    public function multiline(string $key): bool
+    {
+        return ($this->slot($key)['multiline'] ?? false) === true;
     }
 
     /** Longueur maximale d'un texte, en caractères. */
