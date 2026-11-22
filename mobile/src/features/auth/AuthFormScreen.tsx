@@ -8,7 +8,7 @@ import { useSignupFlow } from '../../flow/SignupFlowProvider';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
 import { useTheme } from '../../theme';
-import { Banner, Button, ScreenContainer, Text, TextField } from '../../ui';
+import { Banner, Button, ScreenContainer, Text, TextField, useToast } from '../../ui';
 import { passwordToggleLabels } from '../common/passwordToggle';
 import { AuthHeader } from './AuthHeader';
 import { validateEmail, validatePassword } from '../validation';
@@ -23,8 +23,9 @@ type FieldErrors = { email?: string; password?: string };
  */
 export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { space } = useTheme();
+  const toast = useToast();
   const { api, signIn, clientInfo } = useAuth();
   const { state: flow, dispatch } = useSignupFlow();
   const isRegister = mode === 'register';
@@ -37,14 +38,18 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
   const [banner, setBanner] = useState<string | undefined>();
   /** Erreur réseau : le bandeau propose « Réessayer » (comme l'écran de date de naissance). */
   const [canRetry, setCanRetry] = useState(false);
+  /** Compte en cours de suppression (403 `deletion_pending`) : date de suppression, et proposition de l'annuler. */
+  const [pendingDeletion, setPendingDeletion] = useState<{ purgeAt?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInputInstance>(null);
 
   if (isRegister && !access.allowed) return <Redirect href={SIGNUP_ROUTES[access.redirectTo] as never} />;
 
-  const submit = async () => {
+  /** `cancelDeletion` : la personne a choisi « Annuler la suppression » ; jamais envoyé d'office. */
+  const submit = async ({ cancelDeletion = false }: { cancelDeletion?: boolean } = {}) => {
     setBanner(undefined);
     setCanRetry(false);
+    setPendingDeletion(null);
     const emailKey = validateEmail(email);
     const passwordKey = validatePassword(password, mode);
     const local: FieldErrors = {
@@ -79,8 +84,10 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           password,
           platform: clientInfo.platform,
           app_version: clientInfo.appVersion,
+          ...(cancelDeletion ? { cancel_deletion: true } : {}),
         });
         await signIn(response, { isNewAccount: false });
+        if (cancelDeletion) toast.show({ message: t('auth.deletionCancelled'), variant: 'success' });
       }
     } catch (error) {
       handleError(error);
@@ -91,6 +98,10 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
 
   const handleError = (error: unknown) => {
     if (isApiError(error)) {
+      if (!isRegister && error.status === 403 && error.code === 'deletion_pending') {
+        setPendingDeletion({ purgeAt: error.purgeAt });
+        return;
+      }
       if (isRegister && error.status === 403 && error.code === 'age_not_eligible') {
         dispatch({ type: 'AGE_REFUSED' });
         router.replace(SIGNUP_ROUTES.refused as never);
@@ -134,7 +145,7 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           <Button
             testID="auth-submit"
             label={isRegister ? t('auth.register.submit') : t('auth.login.submit')}
-            onPress={submit}
+            onPress={() => void submit()}
             loading={loading}
           />
           {!isRegister ? (
@@ -182,12 +193,31 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
         />
       ) : null}
 
+      {pendingDeletion ? (
+        <Banner
+          testID="auth-deletion-pending"
+          variant="warning"
+          message={t('auth.deletionPending', {
+            date: pendingDeletion.purgeAt
+              ? new Date(pendingDeletion.purgeAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+              : '—',
+          })}
+          actionLabel={t('auth.deletionPending.cancel')}
+          onAction={() => void submit({ cancelDeletion: true })}
+          style={{ marginBottom: space[3] }}
+        />
+      ) : null}
+
       <View style={{ gap: space[4] }}>
         <TextField
           testID="auth-email"
           label={t('auth.email')}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(value) => {
+            setEmail(value);
+            // L'annulation ne vaut que pour les identifiants qui viennent de répondre « suppression en cours ».
+            setPendingDeletion(null);
+          }}
           error={errors.email}
           disabled={loading}
           keyboardType="email-address"
@@ -204,7 +234,10 @@ export function AuthFormScreen({ mode }: { mode: AuthMode }) {
           inputRef={passwordRef}
           label={t('auth.password')}
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(value) => {
+            setPassword(value);
+            setPendingDeletion(null);
+          }}
           error={errors.password}
           helper={isRegister ? t('auth.password.hint') : undefined}
           disabled={loading}

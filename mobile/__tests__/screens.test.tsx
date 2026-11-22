@@ -70,7 +70,7 @@ describe('S01 Accueil', () => {
       await renderApp(<WelcomeScreen />);
       const notice = screen.getByTestId('welcome-deletion-notice');
       expect(notice).toHaveTextContent(/Suppression définitive dans 30 jours/);
-      expect(notice).toHaveTextContent(/contactez le support/);
+      expect(notice).toHaveTextContent(/reconnectez-vous et choisissez « Annuler la suppression »/);
     } finally {
       setDeletionNotice(null);
     }
