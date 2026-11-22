@@ -40,9 +40,11 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
-      - name: Tests
-        run: npm test
+      - name: Tests avec couverture (seuil dans jest.config.js : échoue si la couverture baisse)
+        run: npm run test:coverage
       - name: Android bundle (compilation uniquement)
         run: npx expo export --platform android --output-dir "$RUNNER_TEMP/export"
-      - name: Audit des dépendances de production (informatif)
+      - name: Audit des dépendances de production (bloquant à partir de « high »)
+        # Sans `continue-on-error` : une vulnérabilité de niveau high ou critical dans une dépendance de production fait échouer le job.
+        # Mesuré le 2026-11-23 : 0 high, 21 moderate (non bloquants).
         run: npm audit --omit=dev --audit-level=high
