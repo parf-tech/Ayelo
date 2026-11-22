@@ -22,6 +22,9 @@ import { useThread } from './useThread';
 /** Hauteur maximale de la zone de saisie (au-delà, elle défile). */
 const COMPOSER_MAX_HEIGHT = 120;
 
+/** Le match de la conversation n'est pas dans la liste (GET /matches ne renvoie que les 100 derniers, sans curseur). */
+class MatchNotInRecentList extends Error {}
+
 function param(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
 }
@@ -78,8 +81,12 @@ export function ConversationScreen() {
       toast.show({ message, variant: 'success' });
       router.replace('/messages' as never);
     } catch (error) {
-      const { key, params: p } = apiErrorMessage(error);
-      setNotice(t(key, p));
+      if (error instanceof MatchNotInRecentList) {
+        setNotice(t('conversation.unmatchNotFound'));
+      } else {
+        const { key, params: p } = apiErrorMessage(error);
+        setNotice(t(key, p));
+      }
       setConfirm(null);
     }
   };
@@ -88,7 +95,10 @@ export function ConversationScreen() {
     leave(async () => {
       const matches = await api.discovery.matches();
       const match = matches.data.find((m) => m.conversation_id === conversationId);
-      if (match) await api.discovery.deleteMatch(match.id);
+      // Aucune route ne rompt un match par conversation : on le retrouve dans GET /matches, limité aux 100 derniers. Un match plus
+      // ancien n'y figure pas : rien n'est rompu, on le dit au lieu d'annoncer un succès.
+      if (!match) throw new MatchNotInRecentList();
+      await api.discovery.deleteMatch(match.id);
     }, t('conversation.unmatchDone'));
 
   const renderMessage = ({ item, index }: { item: LocalMessage; index: number }) => {
