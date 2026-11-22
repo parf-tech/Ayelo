@@ -22,9 +22,6 @@ import { useThread } from './useThread';
 /** Hauteur maximale de la zone de saisie (au-delà, elle défile). */
 const COMPOSER_MAX_HEIGHT = 120;
 
-/** Le match de la conversation n'est pas dans la liste (GET /matches ne renvoie que les 100 derniers, sans curseur). */
-class MatchNotInRecentList extends Error {}
-
 function param(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
 }
@@ -58,6 +55,8 @@ export function ConversationScreen() {
   const [composerFocused, setComposerFocused] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | undefined>();
+  // Identifiant du match à rompre, fourni par GET /conversations (nul hors match).
+  const matchId = known?.match_id ?? null;
 
   const submit = () => {
     const text = draft;
@@ -81,24 +80,17 @@ export function ConversationScreen() {
       toast.show({ message, variant: 'success' });
       router.replace('/messages' as never);
     } catch (error) {
-      if (error instanceof MatchNotInRecentList) {
-        setNotice(t('conversation.unmatchNotFound'));
-      } else {
-        const { key, params: p } = apiErrorMessage(error);
-        setNotice(t(key, p));
-      }
+      const { key, params: p } = apiErrorMessage(error);
+      setNotice(t(key, p));
       setConfirm(null);
     }
   };
 
   const unmatch = () =>
     leave(async () => {
-      const matches = await api.discovery.matches();
-      const match = matches.data.find((m) => m.conversation_id === conversationId);
-      // Aucune route ne rompt un match par conversation : on le retrouve dans GET /matches, limité aux 100 derniers. Un match plus
-      // ancien n'y figure pas : rien n'est rompu, on le dit au lieu d'annoncer un succès.
-      if (!match) throw new MatchNotInRecentList();
-      await api.discovery.deleteMatch(match.id);
+      // Le menu n'affiche « Rompre le match » que si `match_id` est connu ; cette garde ne sert qu'au typage.
+      if (!matchId) return;
+      await api.discovery.deleteMatch(matchId);
     }, t('conversation.unmatchDone'));
 
   const renderMessage = ({ item, index }: { item: LocalMessage; index: number }) => {
@@ -328,7 +320,7 @@ export function ConversationScreen() {
             <>
               <MenuItem testID="conversation-report" icon="Flag" label={t('conversation.report')} onPress={report} disabled={!peerId} />
               <MenuItem testID="conversation-block" icon="Ban" danger label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
-              {isMatch ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
+              {matchId ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
               <MenuItem testID="conversation-hide" icon="Trash2" danger label={t('conversation.hide')} onPress={() => setConfirm('hide')} />
             </>
           )}

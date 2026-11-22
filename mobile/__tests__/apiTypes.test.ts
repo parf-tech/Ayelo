@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import type { OpRequest, OpResponse } from '../src/api/generated';
-import type { operations } from '../src/api/openapi';
 import type {
   CallAcceptResponse,
   CallTokenResponse,
@@ -34,15 +33,11 @@ export type MigratedTypesMatchTheContract = [
 ];
 
 /**
- * GET /matches : le contrat n'a ni paramètre de requête (pas de curseur, pas de `limit`) ni indicateur de troncature dans la
- * réponse ; le serveur renvoie les 100 derniers matchs (MatchController). Si le contrat gagne un curseur, ces lignes échouent à
- * la compilation : passer alors à `usePaginated` (modèle : conversationsPagination.test.tsx) et lever la limite documentée dans
- * le README, dans `restant.md` et dans « Rompre le match » (ConversationScreen).
+ * « Rompre le match » : l'application lit `match_id` dans GET /conversations (nul hors match) et appelle DELETE /matches/{id}.
+ * Elle n'utilise pas GET /matches (100 derniers matchs, sans curseur). Si le contrat perd `match_id` ou change son type, cette
+ * ligne échoue à la compilation.
  */
-export type MatchesAreNotPaginated = [
-  Expect<Equal<operations['match.index']['parameters']['query'], undefined>>,
-  Expect<Equal<keyof OpResponse<'match.index'>, 'data'>>,
-];
+export type ConversationsCarryTheMatchId = [Expect<Equal<ConversationListResponse['data'][number]['match_id'], string | null>>];
 
 /** Types écrits à la main, et pourquoi le contrat ne peut pas (encore) les porter. */
 const HAND_WRITTEN: Record<string, string> = {

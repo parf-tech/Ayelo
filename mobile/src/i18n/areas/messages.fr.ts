@@ -33,8 +33,6 @@ export const messagesFr = {
   'conversation.hide': 'Supprimer la conversation',
   'conversation.unmatch': 'Rompre le match',
   'conversation.unmatchDone': 'Match rompu.',
-  'conversation.unmatchNotFound':
-    'Impossible de rompre ce match depuis l’application : il n’est pas parmi vos 100 derniers matchs. Contactez le support.',
   'conversation.hidden': 'Conversation supprimée.',
   'conversation.unmatchConfirm.title': 'Rompre ce match ?',
   'conversation.unmatchConfirm.body': 'Vous ne pourrez plus vous écrire.',

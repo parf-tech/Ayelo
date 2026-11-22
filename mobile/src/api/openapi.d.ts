@@ -2026,6 +2026,7 @@ export interface operations {
                     "application/json": {
                         data: {
                             id: string;
+                            match_id: string | null;
                             status: string;
                             unlocked_by: string;
                             unread: number;

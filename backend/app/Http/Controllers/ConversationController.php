@@ -74,7 +74,7 @@ class ConversationController extends Controller
         ))->keyBy('conversation_id');
 
         /**
-         * @body array{data: list<array{id: string, status: string, unlocked_by: string, unread: int, last_message: array{id: string, mine: bool, type: string, body: string|null, created_at: string}|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null, online?: bool}|null}>, meta: array{next_cursor: string|null}}
+         * @body array{data: list<array{id: string, match_id: string|null, status: string, unlocked_by: string, unread: int, last_message: array{id: string, mine: bool, type: string, body: string|null, created_at: string}|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null, online?: bool}|null}>, meta: array{next_cursor: string|null}}
          */
         return response()->json(['data' => $rows->map(function ($c) use ($me, $conversations, $presented, $unread, $lastByConversation) {
             $other = $conversations->other($c, $me);
@@ -82,6 +82,9 @@ class ConversationController extends Controller
 
             return [
                 'id' => $c->id,
+                // Identifiant du match à rompre (DELETE /matches/{id}) ; nul hors match. Évite de chercher le match dans
+                // GET /matches, plafonné aux 100 derniers sans curseur.
+                'match_id' => $c->match_id,
                 'status' => $c->status,
                 'unlocked_by' => $c->unlocked_by,
                 'unread' => (int) ($unread[$c->id] ?? 0),

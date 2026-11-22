@@ -33,8 +33,6 @@ export const messagesEn = {
   'conversation.hide': 'Delete the conversation',
   'conversation.unmatch': 'Unmatch',
   'conversation.unmatchDone': 'Match ended.',
-  'conversation.unmatchNotFound':
-    'Unable to end this match from the app: it is not among your 100 latest matches. Contact support.',
   'conversation.hidden': 'Conversation deleted.',
   'conversation.unmatchConfirm.title': 'End this match?',
   'conversation.unmatchConfirm.body': 'You will no longer be able to message each other.',

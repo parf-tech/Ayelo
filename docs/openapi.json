@@ -1942,6 +1942,12 @@
                                                     "id": {
                                                         "type": "string"
                                                     },
+                                                    "match_id": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
                                                     "status": {
                                                         "type": "string"
                                                     },
@@ -2111,6 +2117,7 @@
                                                 },
                                                 "required": [
                                                     "id",
+                                                    "match_id",
                                                     "status",
                                                     "unlocked_by",
                                                     "unread",

@@ -22,7 +22,6 @@ import type {
   ExportRequest,
   ListResponse,
   LoginRequest,
-  Match,
   Me,
   MediaCompleteResponse,
   Message,
@@ -124,7 +123,7 @@ export function createEndpoints(client: ApiClient) {
       request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } satisfies SwipeRequest }),
     /** Premium uniquement (402 premium_required) ; 409 nothing_to_undo. */
     undoSwipe: () => request<UndoSwipeResult>('POST', '/swipes/undo'),
-    matches: () => request<ListResponse<Match>>('GET', '/matches'),
+    /** `id` = `match_id` d'un élément de GET /conversations (la liste GET /matches n'est pas utilisée : plafonnée à 100, sans curseur). */
     deleteMatch: (id: string) => request<void>('DELETE', `/matches/${id}`),
   };
 

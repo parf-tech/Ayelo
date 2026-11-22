@@ -63,5 +63,7 @@ export function message(id: string, sender: string, body: string, extra: Partial
 }
 
 export function conversation(id: string, peer: PublicProfile, extra: Partial<Conversation> = {}): Conversation {
-  return { id, status: 'active', unlocked_by: 'match', unread: 0, last_message: null, profile: peer, ...extra };
+  // `match_id` : renseigné pour une conversation issue d'un match (par défaut), nul sinon.
+  const matchId = (extra.unlocked_by ?? 'match') === 'match' ? `m-${id}` : null;
+  return { id, match_id: matchId, status: 'active', unlocked_by: 'match', unread: 0, last_message: null, profile: peer, ...extra };
 }

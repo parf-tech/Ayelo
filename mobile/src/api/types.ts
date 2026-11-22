@@ -176,8 +176,6 @@ export type SwipeAction = SwipeRequest['action'];
 export type SwipeResult = OpResponse<'swipe.store', 201> | OpResponse<'swipe.store', 200>;
 export type UndoSwipeResult = OpResponse<'swipe.undo'>;
 
-export type Match = Item<OpResponse<'match.index'>['data']>;
-
 export type Block = { user_id: string; display_name: string; created_at: string };
 
 export type ReportRequest = OpRequest<'report.store'>;
