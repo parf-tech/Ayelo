@@ -21,6 +21,8 @@ export type MessageBubbleProps = {
   message: LocalMessage;
   mine: boolean;
   content: string;
+  /** Contenu média (image) affiché à la place du texte : il porte lui-même ses libellés et ses actions d'accessibilité. */
+  media?: React.ReactNode;
   /** Appui long ou action d'accessibilité « supprimer » disponible (message envoyé par moi, déjà reçu par le serveur). */
   deletable: boolean;
   /** Les boutons Supprimer / Annuler sont affichés sous la bulle. */
@@ -37,6 +39,7 @@ export function MessageBubble({
   message,
   mine,
   content,
+  media,
   deletable,
   actionOpen,
   onOpenActions,
@@ -55,27 +58,33 @@ export function MessageBubble({
 
   return (
     <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', marginVertical: space[1] }}>
-      <Pressable
-        testID={`message-${message.id}`}
-        accessibilityLabel={state ? `${content}. ${stateLabel}` : content}
-        accessibilityActions={deletable ? [{ name: 'delete', label: t('conversation.deleteMessage') }] : undefined}
-        onAccessibilityAction={onOpenActions}
-        onLongPress={deletable ? onOpenActions : undefined}
-        style={{
-          maxWidth: '80%',
-          paddingHorizontal: space[4],
-          paddingVertical: space[2] + 2,
-          borderRadius: radius.lg,
-          // Le coin proche de l'expéditeur est plus serré : la bulle « pointe » vers son auteur.
-          borderBottomRightRadius: mine ? radius.sm : radius.lg,
-          borderBottomLeftRadius: mine ? radius.lg : radius.sm,
-          backgroundColor: mine ? colors.primary : colors.surface,
-        }}
-      >
-        <Text variant="body" tone={mine ? 'onPrimary' : 'text'} style={deleted ? { fontStyle: 'italic' } : undefined}>
-          {content}
-        </Text>
-      </Pressable>
+      {media ? (
+        <View testID={`message-${message.id}`} style={{ maxWidth: '80%' }}>
+          {media}
+        </View>
+      ) : (
+        <Pressable
+          testID={`message-${message.id}`}
+          accessibilityLabel={state ? `${content}. ${stateLabel}` : content}
+          accessibilityActions={deletable ? [{ name: 'delete', label: t('conversation.deleteMessage') }] : undefined}
+          onAccessibilityAction={onOpenActions}
+          onLongPress={deletable ? onOpenActions : undefined}
+          style={{
+            maxWidth: '80%',
+            paddingHorizontal: space[4],
+            paddingVertical: space[2] + 2,
+            borderRadius: radius.lg,
+            // Le coin proche de l'expéditeur est plus serré : la bulle « pointe » vers son auteur.
+            borderBottomRightRadius: mine ? radius.sm : radius.lg,
+            borderBottomLeftRadius: mine ? radius.lg : radius.sm,
+            backgroundColor: mine ? colors.primary : colors.surface,
+          }}
+        >
+          <Text variant="body" tone={mine ? 'onPrimary' : 'text'} style={deleted ? { fontStyle: 'italic' } : undefined}>
+            {content}
+          </Text>
+        </Pressable>
+      )}
 
       {time || state ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[1], paddingHorizontal: space[1] }}>

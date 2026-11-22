@@ -25,6 +25,7 @@ import type {
   Me,
   MediaCompleteResponse,
   Message,
+  MessageMediaUrl,
   NotificationPrefs,
   OAuthProvider,
   OpenConversationResponse,
@@ -152,6 +153,12 @@ export function createEndpoints(client: ApiClient) {
     /** Idempotent par client_id : renvoyer le même client_id ne crée pas de doublon. */
     sendMessage: (conversationId: string, body: SendMessageRequest) =>
       request<Message>('POST', `/conversations/${conversationId}/messages`, { body }),
+    /**
+     * Adresse de lecture d'une image de conversation. 409 `media_pending` tant que la modération n'a pas statué, 410
+     * `media_rejected` après un rejet. L'adresse expire (`expires_at`) : elle se redemande, elle ne se mémorise pas durablement.
+     */
+    messageMedia: (conversationId: string, messageId: string) =>
+      request<MessageMediaUrl>('GET', `/conversations/${conversationId}/messages/${messageId}/media`),
     markRead: (conversationId: string, upToMessageId: string) =>
       request<void>('POST', `/conversations/${conversationId}/read`, { body: { up_to_message_id: upToMessageId } }),
     markDelivered: (conversationId: string, upToMessageId: string) =>

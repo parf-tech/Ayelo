@@ -211,6 +211,10 @@ export type Message = Item<OpResponse<'message.index'>['data']> & {
   safety_hint?: NonNullable<OpResponse<'message.store', 201>['safety_hint']>;
 };
 export type MessageType = Message['type'];
+/** Statut de modération de l'image d'un message : `processing` en revue humaine, `approved`, `rejected` ; null hors image. */
+export type MessageMediaStatus = NonNullable<Message['media_status']>;
+/** Adresse signée de l'image d'un message, valable jusqu'à `expires_at` (GET /conversations/{id}/messages/{messageId}/media). */
+export type MessageMediaUrl = OpResponse<'message.media'>;
 
 export type ConversationStatus = 'active' | 'blocked' | 'archived' | string;
 

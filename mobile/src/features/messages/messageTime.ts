@@ -35,3 +35,10 @@ export function dayLabel(iso: string | undefined, locale: string, now: Date = ne
     text: date.toLocaleDateString(locale, sameYear ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' }),
   };
 }
+
+/** Durée « m:ss » (minutes sans zéro devant) à partir de millisecondes ; 0:00 si négative ou illisible. */
+export function formatClock(ms: number): string {
+  const total = Number.isFinite(ms) && ms > 0 ? Math.floor(ms / 1000) : 0;
+  const seconds = total % 60;
+  return `${Math.floor(total / 60)}:${String(seconds).padStart(2, '0')}`;
+}

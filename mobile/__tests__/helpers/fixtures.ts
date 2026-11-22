@@ -55,6 +55,8 @@ export function message(id: string, sender: string, body: string, extra: Partial
     type: 'text',
     body,
     media_id: null,
+    media_status: null,
+    media_duration_seconds: null,
     delivered_at: null,
     read_at: null,
     created_at: `2026-11-06T10:00:0${id.length % 10}.000000Z`,

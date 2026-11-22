@@ -19,6 +19,8 @@ const EXPECTED_ICONS = [
   'PhoneOff', 'SwitchCamera', 'Copy', 'WifiOff',
   // Section 3, liste de départ
   'ShieldCheck',
+  // Notes vocales et vidéos en conversation (2026-11-22) : lecture et pause
+  'Play', 'Pause',
 ] as const;
 
 describe('registre des icônes (AC-ICON-4)', () => {

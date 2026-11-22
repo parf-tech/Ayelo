@@ -44,6 +44,8 @@ import ImagePlus from 'lucide-react-native/icons/image-plus';
 import Pencil from 'lucide-react-native/icons/pencil';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import Mic from 'lucide-react-native/icons/mic';
+import Pause from 'lucide-react-native/icons/pause';
+import Play from 'lucide-react-native/icons/play';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import VideoOff from 'lucide-react-native/icons/video-off';
 import Volume2 from 'lucide-react-native/icons/volume-2';
@@ -99,6 +101,8 @@ export const ICON_REGISTRY = {
   Pencil,
   ChevronDown,
   Mic,
+  Pause,
+  Play,
   MicOff,
   VideoOff,
   Volume2,
