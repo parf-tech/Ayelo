@@ -139,7 +139,6 @@ services:
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
-    pids_limit: 128
     tmpfs:
       - /tmp:size=64m,mode=1777
     volumes:
@@ -149,6 +148,8 @@ services:
         limits:
           cpus: "${TRANSCODE_CPUS:-1.5}"
           memory: ${TRANSCODE_MEMORY_LIMIT:-768m}
+          # Plafond de processus ici et non en `pids_limit` : Compose v2 refuse les deux ensemble dès qu'un `limits` existe.
+          pids: 128
     healthcheck:
       test: ["CMD-SHELL", "test $$(( $$(date +%s) - $$(stat -c %Y /tmp/alive) )) -lt 30"]
       interval: 30s
