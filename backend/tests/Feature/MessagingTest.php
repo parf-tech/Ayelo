@@ -130,7 +130,7 @@ it('pagine l’historique par curseur', function () {
     expect($ids)->toHaveCount(5)->and($ids->unique())->toHaveCount(5)->and($p3->json('next_cursor'))->toBeNull();
 });
 
-it('accepte un média approuvé du bon type et refuse les autres', function () {
+it('accepte un média approuvé ou en revue du bon type et refuse les autres', function () {
     [$a, $ab, , , $conv] = matched();
     $media = fn (string $kind, string $status, ?string $owner = null) => tap((string) Str::uuid(), fn ($id) => DB::table('media')->insert([
         'id' => $id, 'user_id' => $owner ?? $a->id, 'kind' => $kind, 'status' => $status, 'storage_key' => "k/$id", 'mime_type' => 'image/jpeg',
@@ -138,7 +138,11 @@ it('accepte un média approuvé du bon type et refuse les autres', function () {
     $send = fn (string $type, string $mediaId) => acting($ab)->postJson("/api/v1/conversations/$conv/messages", ['client_id' => (string) Str::uuid(), 'type' => $type, 'media_id' => $mediaId]);
 
     $send('image', $media('message_image', 'approved'))->assertCreated();
-    $send('image', $media('message_image', 'processing'))->assertStatus(422);
+    // Depuis le 2026-11-22 (décision du propriétaire) le message part tout de suite : un média en revue est accepté, et son
+    // adresse de lecture n'est remise qu'une fois approuvé (MessageImageTest). Non finalisé ou refusé : toujours refusé.
+    $send('image', $media('message_image', 'processing'))->assertCreated();
+    $send('image', $media('message_image', 'pending_upload'))->assertStatus(422);
+    $send('image', $media('message_image', 'rejected'))->assertStatus(422);
     $send('image', $media('profile_photo', 'approved'))->assertStatus(422);
     $send('image', $media('message_image', 'approved', person()[0]->id))->assertStatus(422);
     $send('voice', $media('message_image', 'approved'))->assertStatus(422);

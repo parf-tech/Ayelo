@@ -162,7 +162,7 @@ create table media (
   user_id uuid not null references users(id) on delete cascade,
   kind text not null check (kind in ('profile_photo','profile_video','message_image','message_video','message_voice','story','invite_video','verification_selfie')),
   status text not null default 'pending_upload'
-    check (status in ('pending_upload','processing','approved','rejected','purged')),
+    check (status in ('pending_upload','transcoding','processing','approved','rejected','purged')),  -- transcoding : notes vocales et vidéos, avant la revue humaine
   storage_key text not null unique,
   mime_type text not null,
   size_bytes bigint check (size_bytes > 0),

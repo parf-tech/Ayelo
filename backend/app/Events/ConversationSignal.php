@@ -7,7 +7,7 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
-/** Événements légers d'une conversation : message.delivered, message.read, typing. */
+/** Événements légers d'une conversation : message.delivered, message.read, typing, message.media (décision de modération d'une image). */
 class ConversationSignal implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;

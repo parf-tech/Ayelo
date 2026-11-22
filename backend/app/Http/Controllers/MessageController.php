@@ -7,6 +7,7 @@ use App\Events\MessageCreated;
 use App\Jobs\SendPush;
 use App\Services\Conversations;
 use App\Services\MessageSafety;
+use App\Services\Storage\MediaStorage;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,8 +20,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MessageController extends Controller
 {
-    // Texte et images seulement au lancement (vidéos et notes vocales : spec 012).
-    private const MEDIA_KIND = ['image' => 'message_image'];
+    // Type de message => type de média. Les notes vocales et les vidéos ne sont ouvertes que si leur type de média l'est
+    // (`media.kinds.<type>.enabled`, MEDIA_CHAT_AV_ENABLED) : le conteneur de traitement doit exister.
+    private const MEDIA_KIND = ['image' => 'message_image', 'voice' => 'message_voice', 'video' => 'message_video'];
 
     public function index(Request $request, string $id, Conversations $conversations): JsonResponse
     {
@@ -45,7 +47,7 @@ class MessageController extends Controller
         $last = $page->last();
 
         return response()->json([
-            'data' => $page->map(fn ($m) => $this->present($m))->values(),
+            'data' => $this->presentMany($page),
             'next_cursor' => $rows->count() > $limit && $last ? base64_encode($last->created_at.'|'.$last->id) : null,
         ]);
     }
@@ -58,15 +60,18 @@ class MessageController extends Controller
 
         $data = $request->validate([
             'client_id' => ['required', 'uuid'],
-            'type' => ['required', Rule::in(['text', 'image'])],
+            'type' => ['required', Rule::in(['text', 'image', 'voice', 'video'])],
             'body' => ['nullable', 'string', 'max:2000'],
-            'media_id' => ['nullable', 'uuid', 'prohibited_if:type,text', 'required_if:type,image'],
+            'media_id' => ['nullable', 'uuid', 'prohibited_if:type,text', 'required_if:type,image,voice,video'],
         ]);
+        if ($data['type'] !== 'text' && ! config('media.kinds.'.self::MEDIA_KIND[$data['type']].'.enabled', true)) {
+            throw ValidationException::withMessages(['type' => ['Ce type de message n\'est pas disponible.']]);
+        }
 
         // Renvoi après coupure réseau : même client_id => on renvoie le message déjà enregistré (idempotence).
         $existing = DB::table('messages')->where(['conversation_id' => $id, 'sender_id' => $me->id, 'client_id' => $data['client_id']])->first();
         if ($existing !== null) {
-            return response()->json($this->present($existing), 200);
+            return response()->json($this->presentOne($existing), 200);
         }
 
         if (! $conversations->canWrite($conversation, $me->id)) {
@@ -100,13 +105,13 @@ class MessageController extends Controller
                 throw $e;
             }
 
-            return response()->json($this->present($winner), 200);
+            return response()->json($this->presentOne($winner), 200);
         }
 
         $message = DB::table('messages')->where('id', $messageId)->first();
         $hint = $data['type'] === 'text' ? $safety->inspect($me->id, (string) $data['body']) : null;
 
-        $payload = $this->present($message) + ($hint ? ['safety_hint' => $hint] : []);
+        $payload = $this->presentOne($message) + ($hint ? ['safety_hint' => $hint] : []);
         MessageCreated::dispatch($id, $payload);
 
         $recipient = $conversations->other($conversation, $me->id);
@@ -119,7 +124,7 @@ class MessageController extends Controller
          *
          * @status 201
          *
-         * @body array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image', body: string|null, media_id: string|null, delivered_at: string|null, read_at: string|null, created_at: string, safety_hint?: 'money_request'}
+         * @body array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image'|'voice'|'video', body: string|null, media_id: string|null, media_status: 'processing'|'approved'|'rejected'|null, media_duration_seconds: int|null, delivered_at: string|null, read_at: string|null, created_at: string, safety_hint?: 'money_request'}
          */
         return response()->json($payload, 201);
     }
@@ -195,26 +200,117 @@ class MessageController extends Controller
         return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) && (int) $m[4] < 24 && (int) $m[5] < 60 && (int) $m[6] < 60;
     }
 
-    /** Un média attaché doit appartenir à l'expéditeur, être du bon type et avoir été approuvé. */
+    /**
+     * Un média attaché doit appartenir à l'expéditeur, être du bon type et avoir passé le dépôt. Un média encore en traitement
+     * (`transcoding`, notes vocales et vidéos) ou en revue (`processing`) est accepté : le message part tout de suite, et le destinataire ne reçoit l'adresse de lecture qu'une fois le
+     * média approuvé (`media()`). Un média refusé ou non finalisé ne peut pas être envoyé.
+     */
     private function assertMedia(array $data, string $userId): void
     {
         $media = DB::table('media')->where('id', $data['media_id'] ?? null)->first();
 
-        if ($media === null || $media->user_id !== $userId || $media->kind !== self::MEDIA_KIND[$data['type']] || $media->status !== 'approved') {
-            throw ValidationException::withMessages(['media_id' => ['Média invalide ou pas encore approuvé.']]);
+        if ($media === null || $media->user_id !== $userId || $media->kind !== self::MEDIA_KIND[$data['type']] || ! in_array($media->status, ['transcoding', 'processing', 'approved'], true)) {
+            throw ValidationException::withMessages(['media_id' => ['Média invalide ou refusé.']]);
         }
     }
 
     /**
-     * `type` vaut « deleted » quand le message a été supprimé par son expéditeur (contenu masqué).
+     * Adresse de lecture d'une image, d'une note vocale ou d'une vidéo de conversation.
      *
+     * Réservée aux deux membres, uniquement quand la modération a approuvé le média (409 `media_pending` en revue, 410
+     * `media_rejected` après un rejet). L'adresse est signée et expire (`media.read_ttl_minutes`) ; elle ne figure ni dans la
+     * liste des messages ni dans les diffusions : le client la demande image par image.
+     */
+    public function media(Request $request, string $id, string $messageId, Conversations $conversations, MediaStorage $storage): JsonResponse
+    {
+        abort_if($conversations->forParticipant($id, $request->user()->id) === null, 404);
+
+        $message = DB::table('messages')->where('id', $messageId)->where('conversation_id', $id)->first();
+        abort_if($message === null || $message->deleted_at !== null || ! isset(self::MEDIA_KIND[$message->type]) || $message->media_id === null, 404);
+
+        $media = DB::table('media')->where('id', $message->media_id)->where('kind', self::MEDIA_KIND[$message->type])->first();
+        abort_if($media === null, 404);
+
+        if ($media->status === 'rejected') {
+            return response()->json(['error' => ['code' => 'media_rejected', 'message' => 'Cette image a été refusée par la modération.']], 410);
+        }
+        if ($media->status !== 'approved') {
+            return response()->json(['error' => ['code' => 'media_pending', 'message' => 'Cette image est en cours de vérification.']], 409);
+        }
+
+        $ttl = (int) config('media.read_ttl_minutes', 10);
+
+        /**
+         * Adresse signée de l'image, valable jusqu'à `expires_at`.
+         *
+         * @body array{url: string, expires_at: string}
+         */
+        return response()->json(['url' => $storage->temporaryUrl($media->storage_key, $ttl), 'expires_at' => now()->addMinutes($ttl)->toIso8601String()])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
+    /**
+     * Statut et durée du média des messages image, vocaux et vidéo donnés : `media_id => ['status' => ..., 'seconds' => ...]`.
+     * « transcoding » (traitement interne) se lit « processing » : le client n'a pas à connaître l'étape.
+     *
+     * @param  iterable<stdClass>  $messages
+     * @return array<string, array{status: string, seconds: int|null}>
+     */
+    private function mediaStatuses(iterable $messages): array
+    {
+        $ids = [];
+        foreach ($messages as $m) {
+            if (isset(self::MEDIA_KIND[$m->type]) && $m->deleted_at === null && $m->media_id !== null) {
+                $ids[] = $m->media_id;
+            }
+        }
+        if ($ids === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach (DB::table('media')->whereIn('id', array_unique($ids))->get(['id', 'status', 'duration_seconds']) as $row) {
+            $out[$row->id] = ['status' => $row->status === 'transcoding' ? 'processing' : $row->status, 'seconds' => $row->duration_seconds === null ? null : (int) $row->duration_seconds];
+        }
+
+        return $out;
+    }
+
+    private function presentOne(stdClass $m): array
+    {
+        return $this->present($m, $this->mediaStatuses([$m]));
+    }
+
+    /**
+     * @param  iterable<stdClass>  $messages
+     * @return list<array<string, mixed>>
+     */
+    private function presentMany(iterable $messages): array
+    {
+        $statuses = $this->mediaStatuses($messages);
+        $out = [];
+        foreach ($messages as $m) {
+            $out[] = $this->present($m, $statuses);
+        }
+
+        return $out;
+    }
+
+    /**
+     * `type` vaut « deleted » quand le message a été supprimé par son expéditeur (contenu masqué).
+     * `media_status` : statut de modération du média (`processing` en traitement ou en revue, `approved`, `rejected`) ; null pour un
+     * message sans média. `media_duration_seconds` : durée d'une note vocale ou d'une vidéo, null sinon.
+     *
+     * @param  array<string, array{status: string, seconds: int|null}>  $mediaStatuses  `media_id => statut et durée`
      * @return array<string, mixed>
      *
-     * @scramble-return array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image'|'video'|'voice'|'gift'|'call_missed'|'system'|'deleted', body: string|null, media_id: string|null, delivered_at: string|null, read_at: string|null, created_at: string}
+     * @scramble-return array{id: string, conversation_id: string, sender_id: string, client_id: string, type: 'text'|'image'|'video'|'voice'|'gift'|'call_missed'|'system'|'deleted', body: string|null, media_id: string|null, media_status: 'processing'|'approved'|'rejected'|null, media_duration_seconds: int|null, delivered_at: string|null, read_at: string|null, created_at: string}
      */
-    private function present(stdClass $m): array
+    private function present(stdClass $m, array $mediaStatuses = []): array
     {
         $deleted = $m->deleted_at !== null;
+        $media = ! $deleted && isset(self::MEDIA_KIND[$m->type]) && $m->media_id !== null ? ($mediaStatuses[$m->media_id] ?? null) : null;
+        $status = $media['status'] ?? null;
 
         return [
             'id' => $m->id,
@@ -224,6 +320,8 @@ class MessageController extends Controller
             'type' => $deleted ? 'deleted' : $m->type,
             'body' => $deleted ? null : $m->body,
             'media_id' => $deleted ? null : $m->media_id,
+            'media_status' => in_array($status, ['processing', 'approved', 'rejected'], true) ? $status : null,
+            'media_duration_seconds' => in_array($m->type, ['voice', 'video'], true) ? ($media['seconds'] ?? null) : null,
             'delivered_at' => $m->delivered_at,
             'read_at' => $m->read_at,
             'created_at' => $m->created_at,
