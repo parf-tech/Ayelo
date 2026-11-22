@@ -68,6 +68,8 @@ services:
       - app-storage:/var/www/html/storage
       - app-public:/var/www/html/public
       - ../web:/srv/web:ro
+      # Dossier partagé avec le conteneur `transcode` : lu par `deploy:preflight` (MEDIA_CHAT_AV_ENABLED), jamais écrit ici.
+      - transcode-spool:/spool:ro
     # Mémoire plafonnée : le pool FPM (infra/php/php-fpm-pool.conf, FPM_MAX_CHILDREN) est dimensionné pour ce plafond.
     # Changer l'un sans l'autre = soit des processus tués par le noyau (OOM), soit de la RAM inutilisée.
     deploy:
@@ -91,6 +93,10 @@ services:
     <<: *app
     env_file: .env.prod
     command: ["php", "artisan", "queue:work", "--queue=realtime,default", "--tries=3", "--timeout=60", "--sleep=1", "--max-time=3600", "--max-jobs=1000"]
+    # Dossier partagé avec le conteneur `transcode` : TranscodeChatMedia y dépose les notes vocales et vidéos, puis lit le résultat.
+    volumes:
+      - app-storage:/var/www/html/storage
+      - transcode-spool:/spool
     stop_grace_period: 70s
     deploy:
       replicas: ${WORKER_REPLICAS:-2}
@@ -117,6 +123,38 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  # Traitement des notes vocales et vidéos de conversation (ffmpeg) : fichiers non fiables, donc AUCUN réseau (network_mode: none),
+  # système de fichiers en lecture seule, aucune capacité, plafonds de CPU, de mémoire et de processus. Il ne communique avec
+  # l'application que par le volume `transcode-spool` (infra/transcode/transcode-loop.sh). Sans effet tant que
+  # MEDIA_CHAT_AV_ENABLED=false : il reste au repos (une boucle qui regarde un dossier vide). Voir docs/runbooks/transcode.md.
+  transcode:
+    build:
+      context: ..
+      dockerfile: infra/transcode/Dockerfile
+    restart: unless-stopped
+    network_mode: none
+    user: "82:82"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    volumes:
+      - transcode-spool:/spool
+    deploy:
+      resources:
+        limits:
+          cpus: "${TRANSCODE_CPUS:-1.5}"
+          memory: ${TRANSCODE_MEMORY_LIMIT:-768m}
+    healthcheck:
+      test: ["CMD-SHELL", "test $$(( $$(date +%s) - $$(stat -c %Y /tmp/alive) )) -lt 30"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # Un seul planificateur (tout le nettoyage RGPD en dépend) : ne jamais répliquer ce service.
   scheduler:
@@ -318,3 +356,4 @@ volumes:
   app-public:
   backups:
   redis-data:
+  transcode-spool:

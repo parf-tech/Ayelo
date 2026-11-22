@@ -115,6 +115,9 @@ jobs:
       - name: Test de l'essai du routage Caddy (Caddyfile d'essai généré, défauts attrapés ; faux docker et curl)
         run: bash infra/scripts/tests/caddy_routage_test.sh
 
+      - name: Essai du traitement des notes vocales et vidéos (faux ffmpeg)
+        run: bash infra/scripts/tests/transcode_test.sh
+
       - name: hadolint (informatif)
         continue-on-error: true
         run: |

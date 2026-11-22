@@ -81,7 +81,7 @@
 		# pas d'objet, formulaires et XHR vers soi-même uniquement. Les polices par défaut de Filament viennent de
 		# fonts.bunny.net. img-src https: permet les aperçus de médias servis par URL présignée du stockage objet.
 		# À resserrer (nonces) si Filament le permet un jour ; à vérifier dans un vrai navigateur (console CSP).
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.bunny.net; font-src 'self' https://fonts.bunny.net data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 	}
 	request_body {
 		max_size 2MB
