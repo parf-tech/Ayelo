@@ -241,5 +241,5 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan migrate --force
-      - name: PHPStan niveau 5 (baseline figée : seule une nouvelle erreur échoue)
+      - name: "PHPStan niveau 5 (baseline figée, seule une nouvelle erreur échoue)"
         run: vendor/bin/phpstan analyse --configuration=../.github/workflows/phpstan.neon --memory-limit=1G --no-progress
