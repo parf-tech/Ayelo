@@ -182,13 +182,17 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
         run: |
-          vendor/bin/pest --coverage --coverage-clover=coverage.xml | tee coverage.txt
+          # Sans pipefail, `| tee` renvoie le code de sortie de tee (0) : 33 tests en échec ont été vus « verts » (2026-11-23).
+          set -o pipefail
+          status=0
+          vendor/bin/pest --coverage --coverage-clover=coverage.xml | tee coverage.txt || status=$?
           {
             echo '### Couverture Pest (rapport)'
             echo '```'
-            grep -E 'Total|Cov' coverage.txt | tail -n 5 || true
+            grep -E 'Total|Cov|Tests:' coverage.txt | tail -n 5 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
