@@ -27,11 +27,11 @@ Légende : [x] fait et testé, [~] fait en partie, [ ] reporté (avec raison).
 
 ## Reporté
 
-- [ ] Attribution (« Prendre ») et verrou sur signalements et médias : demande une colonne `assigned_to` et une migration (hors périmètre).
-- [ ] Regroupement des doublons d'un même compte pour traitement groupé (le compteur de signalements ouverts sur la cible est fourni).
+- [x] Attribution (« Prendre ») et verrou sur les **signalements** : FAIT le 2026-11-25 (`reports.assigned_to`, `assigned_at`, `ReportAssignment` : prendre, libérer, reprise par l'administrateur, verrou de décision qui expire après `ADMIN_ASSIGNMENT_TTL_MINUTES`, colonne « Pris par », filtre « Mes signalements », tout est tracé ; `ReportAssignmentTest`). **Les médias restent hors périmètre** : pas d'attribution ni de verrou sur la file des médias.
+- [x] Regroupement des doublons d'un même compte : FAIT le 2026-11-25. Case « Appliquer aussi aux N autres signalements ouverts du même motif sur ce compte » dans Avertir / Suspendre / Bannir / Classer, **décochée par défaut** ; une seule sanction ; jamais pour « mineur suspecté » ni la levée de la suspension préventive ; les doublons pris par une autre personne sont épargnés ; les identifiants clos sont dans l'audit (`closed_duplicates`).
 - [ ] Boutons Approuver / Rejeter et précédent / suivant dans la modale d'aperçu ; rappel de pause après N éléments.
-- [ ] Bandeau d'environnement, favicon, `unsavedChangesAlerts()`, recherche globale limitée aux utilisateurs : ces réglages sont dans `app/Providers/AdminPanelProvider.php`, hors périmètre de ce lot.
-- [ ] Prise en charge de `Accept-Language` ou d'une préférence enregistrée par membre du personnel (aucune colonne `locale` sur `staff_users`).
+- [~] Bandeau d'environnement et `unsavedChangesAlerts()` : FAITS le 2026-11-25 (`AdminPanelProvider::environmentBanner`, `ADMIN_ENVIRONMENT_LABEL`, aucun bandeau en production). **Favicon** (aucun visuel décidé) et **recherche globale** : non faits ; la recherche globale reste désactivée volontairement (`globalSearch(false)`), la limiter aux utilisateurs exposerait des données personnelles dans les résultats.
+- [x] Préférence de langue enregistrée par membre du personnel : FAITE le 2026-11-25 (`staff_users.locale`, choix dans le profil, prioritaire sur `ADMIN_LOCALE`, tracée `staff.locale_changed`). **`Accept-Language` : volontairement non pris en charge** (décision déjà documentée dans `StaffLocale` : un navigateur en anglais ne doit pas faire basculer un back-office formé en français) ; testé.
 
 ## Remarque d'environnement
 

@@ -17,6 +17,7 @@ create table staff_users (
   recovery_codes_encrypted text,
   is_active boolean not null default true,        -- on désactive, on ne supprime jamais (audit)
   last_login_at timestamptz,
+  locale text check (locale in ('fr','en')),      -- langue du back-office choisie par la personne ; nul = ADMIN_LOCALE
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -549,6 +550,8 @@ create table reports (
   outcome text check (outcome in ('warning','suspension','ban','none')),
   reviewed_by uuid references staff_users(id) on delete set null,
   reviewed_at timestamptz,
+  assigned_to uuid references staff_users(id) on delete set null,  -- « Prendre » : verrou de décision, expire (admin.assignment_ttl_minutes)
+  assigned_at timestamptz,
   evidence_retain_until timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -557,6 +560,7 @@ create table reports (
 create index on reports (reported_id);
 create index on reports (reporter_id);
 create index on reports (status, priority desc, created_at);
+create index reports_assigned_to_idx on reports (assigned_to) where assigned_to is not null;
 
 create table risk_events (
   id uuid primary key default gen_random_uuid(),
