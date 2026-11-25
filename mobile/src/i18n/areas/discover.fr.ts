@@ -25,6 +25,7 @@ export const discoverFr = {
   'discover.premium.cta': 'Voir les offres Premium',
   'discover.dismiss': 'Fermer',
   'discover.needProfile': 'Complétez votre profil pour découvrir des personnes.',
+  'discover.restricted': 'Votre compte est restreint. Vous pouvez consulter la sanction et la contester.',
   'discover.swipeFailed': 'Le choix n’a pas pu être enregistré. La carte est revenue.',
 
   'filters.title': 'Filtres',

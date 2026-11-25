@@ -127,6 +127,26 @@ it('traite la demande web sans révéler l’existence du compte, puis supprime 
     test()->postJson('/api/v1/account-deletion-requests/confirm', ['token' => $q['token']])->assertStatus(422);
 });
 
+it('un compte sanctionné peut demander sa suppression depuis le web (droit à l’effacement)', function (string $status) {
+    Mail::fake();
+    [$u] = lifeUser(['email' => 'sanctionne@example.com', 'status' => $status]);
+
+    test()->postJson('/api/v1/account-deletion-requests', ['email' => 'sanctionne@example.com'])->assertStatus(202);
+    Mail::assertSent(AccountDeletionMail::class, 1);
+    parse_str((string) parse_url(Mail::sent(AccountDeletionMail::class)->first()->link, PHP_URL_QUERY), $q);
+    test()->postJson('/api/v1/account-deletion-requests/confirm', ['token' => $q['token']])->assertStatus(202);
+
+    expect($u->fresh()->status)->toBe('deleting')->and($u->fresh()->deletion_requested_at)->not->toBeNull();
+})->with(['suspended', 'banned']);
+
+it('n’envoie pas de lien de suppression web à un compte déjà en suppression ou supprimé', function (string $status) {
+    Mail::fake();
+    lifeUser(['email' => 'parti@example.com', 'status' => $status]);
+
+    test()->postJson('/api/v1/account-deletion-requests', ['email' => 'parti@example.com'])->assertStatus(202);
+    Mail::assertNothingSent();
+})->with(['deleting', 'deleted']);
+
 // ---------- export ----------
 
 it('génère un export JSON des données, une demande par jour, accessible à son seul propriétaire', function () {

@@ -136,15 +136,33 @@ it('réinitialise le mot de passe, ferme toutes les sessions et consomme le jeto
     dev()->postJson('/api/v1/auth/login', ['email' => 'alice@example.com', 'password' => 'NouveauMotdepasse9', 'platform' => 'ios'])->assertOk();
 });
 
-it('n’envoie pas de réinitialisation à un compte suspendu', function () {
+it('un compte sanctionné réinitialise son mot de passe et retrouve un accès restreint (sanctions, contestation)', function (string $status) {
     Mail::fake();
     signUp();
-    User::where('email', 'alice@example.com')->update(['status' => 'suspended']);
+    User::where('email', 'alice@example.com')->update(['status' => $status]);
+    Mail::fake();
+
+    dev()->postJson('/api/v1/auth/password/forgot', ['email' => 'alice@example.com'])->assertNoContent();
+    Mail::assertSent(PasswordResetMail::class, 1);
+    dev()->postJson('/api/v1/auth/password/reset', ['token' => tokenFromMail(PasswordResetMail::class), 'password' => 'NouveauMotdepasse2026'])->assertNoContent();
+
+    $token = dev()->postJson('/api/v1/auth/login', ['email' => 'alice@example.com', 'password' => 'NouveauMotdepasse2026', 'platform' => 'ios'])->assertOk()->json('token');
+    app('auth')->forgetGuards();
+    $session = dev()->withHeader('Authorization', 'Bearer '.$token);
+    $session->getJson('/api/v1/me/sanctions')->assertOk();
+    $session->getJson('/api/v1/discover')->assertForbidden()->assertJsonPath('error.code', 'account_restricted');
+    expect(User::where('email', 'alice@example.com')->value('status'))->toBe($status);
+})->with(['suspended', 'banned']);
+
+it('n’envoie pas de réinitialisation à un compte en cours de suppression ou supprimé', function (string $status) {
+    Mail::fake();
+    signUp();
+    User::where('email', 'alice@example.com')->update(['status' => $status]);
     Mail::fake();
 
     dev()->postJson('/api/v1/auth/password/forgot', ['email' => 'alice@example.com'])->assertNoContent();
     Mail::assertNothingSent();
-});
+})->with(['deleting', 'deleted']);
 
 // ---------- sessions ----------
 

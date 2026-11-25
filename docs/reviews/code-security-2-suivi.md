@@ -55,7 +55,26 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 - [x] `npm audit --omit=dev` mobile rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (outils de build transitifs ; le correctif proposé est un retour à Expo 52, refusé).
 - [ ] `gitleaks` sur l'historique du commit final : non rejoué en local (binaire absent du poste, téléchargement non autorisé) ; le workflow CI `schema` le fait sur l'historique complet.
 - [ ] Procès-verbal de restauration réel (S8).
-- [ ] Troisième relecture ciblée N-01 / N-02 (S9).
+- [x] Troisième relecture ciblée N-01 / N-02 (S9) faite le 2026-11-24 (section suivante).
+
+## Troisième relecture ciblée : N-01 / N-02 (2026-11-24)
+
+Relecture faite par un assistant (Claude) sur le code de `feature/pieces-jointes-conversation` : elle ne remplace pas une revue indépendante humaine.
+
+**N-01 : correction confirmée.**
+- Avec `ADMIN_DOMAIN`, les routes du panneau sont liées à ce domaine (`php artisan route:list`). Restent sans domaine dans l'application : `livewire/*` et `filament/exports|imports/*` ; Caddy les bloque sur le domaine de l'API.
+- Production, requêtes en lecture : `api.ayelo.fr` répond 404 sur `/admin/login`, `/livewire/update` et `/filament/exports/1/download` ; `admin.ayelo.fr` résout directement vers le serveur (sans CDN : le filtre `remote_ip` reste valable) et répond 403 hors liste blanche.
+- Corrigé : le domaine d'administration servait aussi l'API (recommandation d'origine appliquée à moitié) ; `/api`, `/api/*` et `/up` y répondent maintenant 404 (Caddyfile, **non déployé**).
+- Corrigé : le test `N-01` ne comparait que le texte du fournisseur ; `AdminDomainRoutingTest` vérifie les réponses (il échoue si la liaison au domaine est retirée).
+
+**N-02 : correction confirmée côté serveur** (jeton restreint, liste blanche `EnsureAccountActive`, un compte en suppression n'obtient pas de jeton).
+- Corrigé (application) : la Découverte traitait tout 403 comme « profil à compléter » ; un compte suspendu ou banni voit maintenant que son compte est restreint, avec l'accès à « Sanctions et contestations ». Non vérifié sur appareil.
+- Corrigé : deux contestations simultanées de la même sanction donnaient un 500 ; elles donnent un 409 `already_appealed` (`RelectureN02Test`).
+- Corrigé, **décision du propriétaire du 2026-11-25** : un compte suspendu ou banni peut réinitialiser son mot de passe et demander sa suppression par le web (`User::KEEPS_ACCESS`). La connexion reste restreinte ; l'adresse d'un compte sanctionné supprimé reste bloquée à la réinscription. Les comptes en suppression ou supprimés restent exclus. À signaler au juriste.
+
+**Preuves du 2026-11-25 :** Pest 727 réussis, 2 sautés ; Jest 1067 réussis. Le Caddyfile modifié n'a pas été validé en local (ni Caddy ni Docker) : la CI (`infra`, `caddy validate`) le contrôle.
+
+**S9 :** plus de constat ouvert sur N-01 / N-02 ; le prononcé revient au propriétaire.
 
 ## Hors code (propriétaire)
 

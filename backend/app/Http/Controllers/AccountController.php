@@ -129,7 +129,8 @@ class AccountController extends Controller
     public function requestWebDeletion(Request $request, OneTimeCodes $codes): Response
     {
         $data = $request->validate(['email' => ['required', 'email', 'max:254']]);
-        $user = User::where('email', strtolower($data['email']))->where('status', 'active')->first();
+        // Un compte sanctionné peut aussi s'effacer ; son adresse reste bloquée à la réinscription (AccountDeletion).
+        $user = User::where('email', strtolower($data['email']))->whereIn('status', User::KEEPS_ACCESS)->first();
 
         if ($user !== null) {
             // Après la réponse : même durée de requête que le compte existe ou non (revue F-11).

@@ -17,6 +17,12 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasUuids;
 
+    /**
+     * États qui gardent un accès au compte : connexion (restreinte par EnsureAccountActive pour un compte sanctionné),
+     * réinitialisation du mot de passe et demande de suppression depuis le web (contestation et droit à l'effacement, N-02).
+     */
+    public const KEEPS_ACCESS = ['active', 'suspended', 'banned'];
+
     protected $fillable = [
         'email',
         'phone',
