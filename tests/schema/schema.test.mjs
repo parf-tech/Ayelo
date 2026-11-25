@@ -41,7 +41,7 @@ try {
   await client.query(fs.readFileSync(sqlPath, 'utf8'));
   const n = (await q("select count(*)::int as n from information_schema.tables where table_schema='public' and table_type='BASE TABLE'")).rows[0].n;
   console.log('tables créées:', n);
-  await expectOk('39 tables créées', async () => { if (n !== 39) throw new Error('attendu 39, obtenu ' + n); });
+  await expectOk('40 tables créées', async () => { if (n !== 40) throw new Error('attendu 40, obtenu ' + n); });
 
   const mkUser = async (email) =>
     (await q("insert into users(email,birthdate) values ($1,'1990-01-01') returning id", [email])).rows[0].id;
