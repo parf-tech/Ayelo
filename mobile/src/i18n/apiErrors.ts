@@ -7,6 +7,7 @@ export type ErrorMessage = { key: TranslationKey; params?: TranslationParams };
 const CODE_KEYS: Record<string, TranslationKey> = {
   invalid_credentials: 'error.invalid_credentials',
   account_restricted: 'error.account_restricted',
+  deletion_pending: 'error.deletion_pending',
   premium_required: 'error.premium_required',
   quota_reached: 'error.quota_reached',
   credit_required: 'error.credit_required',

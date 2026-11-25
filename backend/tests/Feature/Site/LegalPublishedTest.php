@@ -3,6 +3,9 @@
 use App\Services\Site\LegalPublished;
 use Illuminate\Support\Facades\DB;
 
+// Le délai de dix minutes est testé avec l'horloge simulée : le cache `array` la suit, Redis expire à l'heure réelle.
+beforeEach(fn () => useArrayCache());
+
 it('relit la base au bout de dix minutes même si une publication n’a pas pu invalider le cache', function () {
     $published = app(LegalPublished::class);
     expect($published->values())->toBe([]); // instantané en cache

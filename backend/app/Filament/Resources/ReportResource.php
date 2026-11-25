@@ -11,6 +11,7 @@ use App\Filament\Support\Labels;
 use App\Filament\Support\Sla;
 use App\Filament\Support\Staff;
 use App\Services\Admin\Permissions;
+use App\Services\Admin\ReportAssignment;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -40,7 +41,7 @@ class ReportResource extends AdminResource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['reported.profile', 'reporter.profile'])->orderByDesc('priority')->orderBy('created_at');
+        return parent::getEloquentQuery()->with(['reported.profile', 'reporter.profile', 'assignee'])->orderByDesc('priority')->orderBy('created_at');
     }
 
     public static function getNavigationBadge(): ?string
@@ -54,11 +55,15 @@ class ReportResource extends AdminResource
         return Report::query()->where('status', 'open')->where('priority', 2)->exists() ? 'danger' : 'warning';
     }
 
-    /** Prochain signalement à traiter : le plus ancien encore ouvert au même niveau de priorité. */
+    /** Prochain signalement à traiter : le plus ancien encore ouvert au même niveau de priorité, hors ceux pris par une autre personne. */
     public static function nextUrl(Report $current): ?string
     {
+        $me = Staff::current()->id;
         $next = Report::query()->whereIn('status', ['open', 'reviewed'])->where('id', '<>', $current->id)
-            ->where('priority', $current->priority)->orderBy('created_at')->first(['id']);
+            ->where('priority', $current->priority)
+            ->where(fn (Builder $q) => $q->whereNull('assigned_to')->orWhere('assigned_to', $me)
+                ->orWhere('assigned_at', '<', now()->subMinutes(ReportAssignment::ttlMinutes())))
+            ->orderBy('created_at')->first(['id']);
 
         return $next ? static::getUrl('view', ['record' => $next]) : null;
     }
@@ -72,6 +77,9 @@ class ReportResource extends AdminResource
                 TextColumn::make('reported.profile.display_name')->label(Staff::t('admin.col.reported'))->placeholder('—'),
                 Labels::badge(TextColumn::make('reported.status')->label(Staff::t('admin.col.account')), 'account'),
                 Labels::badge(TextColumn::make('status')->label(Staff::t('admin.col.status')), 'report'),
+                // « Pris par » : vide quand le signalement est libre ou que son verrou a expiré.
+                TextColumn::make('assigned')->label(Staff::t('admin.col.taken_by'))->placeholder(Staff::t('admin.misc.unassigned'))
+                    ->state(fn (Report $record): ?string => static::holder($record)),
                 TextColumn::make('created_at')->label(Staff::t('admin.col.received'))->since(),
                 TextColumn::make('sla')->label(Staff::t('admin.col.sla'))->badge()
                     ->state(fn (Report $record): string => Sla::text($record))
@@ -85,6 +93,8 @@ class ReportResource extends AdminResource
                 SelectFilter::make('reason')->label(Staff::t('admin.col.reason'))
                     ->options(fn (): array => collect(['money_request', 'harassment', 'meeting_behavior', 'fake_or_spam', 'minor_suspected', 'other'])
                         ->mapWithKeys(fn (string $r): array => [$r => Staff::t('admin.reasons.'.$r)])->all()),
+                Filter::make('mine')->label(Staff::t('admin.filter.mine'))->toggle()
+                    ->query(fn (Builder $query): Builder => $query->where('assigned_to', Staff::current()->id)),
                 Filter::make('overdue')->label(Staff::t('admin.filter.overdue'))->toggle()
                     ->query(fn (Builder $query): Builder => $query->whereIn('status', ['open', 'reviewed'])
                         ->whereRaw("created_at < now() - (case when reason = 'minor_suspected' or priority >= 2 then interval '".Sla::CRITICAL_HOURS." hours' else interval '".Sla::STANDARD_HOURS." hours' end)")),
@@ -106,6 +116,8 @@ class ReportResource extends AdminResource
                     ->formatStateUsing(fn ($state): string => Labels::text('context', $state)),
                 TextEntry::make('created_at')->label(Staff::t('admin.col.received'))->dateTime(),
                 Labels::badge(TextEntry::make('outcome')->label(Staff::t('admin.col.decision'))->placeholder('—'), 'outcome'),
+                TextEntry::make('assigned')->label(Staff::t('admin.col.taken_by'))->placeholder(Staff::t('admin.misc.unassigned'))
+                    ->state(fn (Report $record): ?string => static::holder($record)),
                 TextEntry::make('sla_due')->label(Staff::t('admin.col.sla_due'))
                     ->state(fn (Report $record): string => Sla::dueText($record)),
                 TextEntry::make('sla')->label(Staff::t('admin.col.sla'))->badge()
@@ -145,6 +157,13 @@ class ReportResource extends AdminResource
                     ->state(fn (): string => Staff::t('admin.misc.no_message_access')),
             ]),
         ]);
+    }
+
+    /** Adresse de la personne qui a pris le signalement, tant que son verrou est en vigueur ; sinon nul. */
+    public static function holder(Report $record): ?string
+    {
+        return in_array($record->status, ['open', 'reviewed'], true) && $record->assigned_to !== null
+            && $record->assigned_at?->copy()->addMinutes(ReportAssignment::ttlMinutes())->isFuture() ? $record->assignee?->email : null;
     }
 
     public static function getPages(): array

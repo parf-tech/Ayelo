@@ -4,10 +4,15 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class MessageCreated implements ShouldBroadcast
+/**
+ * Nouveau message d'une conversation. Diffusé dans la requête (ShouldBroadcastNow) et non par la file : la latence d'un message
+ * ne dépend pas des pushes ni des exports qui partagent les workers (revue CTO 1). L'appelant protège l'envoi d'un échec de la
+ * diffusion (MessageController::store) : le message est déjà enregistré.
+ */
+class MessageCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 

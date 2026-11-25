@@ -43,7 +43,7 @@ class SanctionLedger
      *
      * @return string identifiant de la sanction
      */
-    public function issue(string $userId, string $kind, string $reason, ?string $reportId, ?CarbonInterface $endsAt, ?string $staffId): string
+    public function issue(string $userId, string $kind, string $reason, ?string $reportId, ?CarbonInterface $endsAt, ?string $staffId, ?string $internalNote = null): string
     {
         $user = DB::table('users')->where('id', $userId)->lockForUpdate()->first();
         if ($user === null || ! in_array($user->status, self::SANCTIONABLE, true)) {
@@ -62,6 +62,8 @@ class SanctionLedger
         $id = (string) Str::uuid();
         DB::table('sanctions')->insert([
             'id' => $id, 'user_id' => $userId, 'kind' => $kind, 'reason' => $reason, 'report_id' => $reportId,
+            // Note interne (pentest P-09) : personnel seulement, vide = aucune.
+            'internal_note' => trim((string) $internalNote) === '' ? null : trim((string) $internalNote),
             'starts_at' => self::ts(), 'ends_at' => $endsAt === null ? null : self::ts($endsAt), 'created_by' => $staffId, 'created_at' => self::ts(),
         ]);
 

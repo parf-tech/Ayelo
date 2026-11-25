@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AccountDeletion;
 use App\Services\DeviceSessions;
 use App\Support\DeviceId;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,9 @@ use Illuminate\Validation\Rule;
 
 class LoginController extends Controller
 {
-    public function __invoke(Request $request, DeviceSessions $sessions): JsonResponse
+    use ChecksAccountStatus;
+
+    public function __invoke(Request $request, DeviceSessions $sessions, AccountDeletion $deletion): JsonResponse
     {
         $device = DeviceId::from($request);
 
@@ -24,6 +27,8 @@ class LoginController extends Controller
             'password' => ['required', 'string', 'max:200'],
             'platform' => ['required', Rule::in(['ios', 'android'])],
             'app_version' => ['nullable', 'string', 'max:32'],
+            // Annule la suppression de compte en cours (délai de grâce) : sans lui, la connexion répond 403 `deletion_pending`.
+            'cancel_deletion' => ['nullable', 'boolean'],
         ]);
 
         $email = strtolower(trim($data['email']));
@@ -79,9 +84,12 @@ class LoginController extends Controller
         }
         Cache::put($trustKey, 1, now()->addDays(30));
 
-        // Un compte suspendu ou banni peut se connecter : le jeton est restreint par EnsureAccountActive (sanctions, contestation,
-        // export, suppression). Un compte en cours de suppression ou supprimé ne le peut pas.
-        if (! in_array($user->status, ['active', 'suspended', 'banned'], true)) {
+        $decision = $this->signInDecision($user, (bool) ($data['cancel_deletion'] ?? false), $deletion);
+        if ($decision === 'deletion_pending') {
+            // Suppression en cours : renvoyer la requête avec `cancel_deletion: true` l'annule (aucun jeton n'est émis ici).
+            return response()->json(['error' => ['code' => 'deletion_pending', 'message' => 'Suppression du compte en cours.', 'purge_at' => $deletion->purgeAt($user)->toIso8601String()]], 403);
+        }
+        if ($decision === 'account_restricted') {
             return response()->json(['error' => ['code' => 'account_restricted', 'message' => 'Compte indisponible.']], 403);
         }
 

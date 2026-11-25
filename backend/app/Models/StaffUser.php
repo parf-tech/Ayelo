@@ -18,6 +18,13 @@ use SensitiveParameter;
  *
  * La 2FA (application TOTP) est branchée sur les colonnes du schéma : le secret et les codes de secours sont
  * chiffrés avec la clé de l'application (cast `encrypted`) ; les codes de secours sont en plus hachés par Filament.
+ *
+ * Les migrations sont en SQL brut : les colonnes sont déclarées ici pour l'analyse statique.
+ *
+ * @property string $id
+ * @property string $email
+ * @property string $role
+ * @property string|null $locale
  */
 class StaffUser extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasName
 {
@@ -33,7 +40,8 @@ class StaffUser extends Authenticatable implements FilamentUser, HasAppAuthentic
 
     protected $table = 'staff_users';
 
-    protected $fillable = ['email', 'password', 'role', 'is_active', 'last_login_at'];
+    // `locale` : préférence de langue du back-office, modifiable par la personne elle-même (profil) ; jamais le rôle ni l'e-mail.
+    protected $fillable = ['email', 'password', 'role', 'is_active', 'last_login_at', 'locale'];
 
     /** Jamais exposés (sérialisation, formulaires, journaux). */
     protected $hidden = ['password', 'totp_secret_encrypted', 'recovery_codes_encrypted'];

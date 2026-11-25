@@ -2447,6 +2447,8 @@ export interface operations {
                     /** @enum {string} */
                     platform: "ios" | "android";
                     app_version?: string | null;
+                    /** @description Annule la suppression de compte en cours (délai de grâce) : sans lui, la connexion répond 403 `deletion_pending`. */
+                    cancel_deletion?: boolean | null;
                 };
             };
         };
@@ -2492,6 +2494,14 @@ export interface operations {
                             code: "account_restricted";
                             /** @constant */
                             message: "Compte indisponible.";
+                        };
+                    } | {
+                        error: {
+                            /** @constant */
+                            code: "deletion_pending";
+                            /** @constant */
+                            message: "Suppression du compte en cours.";
+                            purge_at: string;
                         };
                     };
                 };
@@ -3134,6 +3144,13 @@ export interface operations {
                      *     safety.oauth.require_nonce est actif. L'application mobile doit l'envoyer dès que le SDK du fournisseur le permet.
                      */
                     nonce?: string | null;
+                    /** @description Annule la suppression de compte en cours (délai de grâce) : sans lui, la connexion répond 403 `deletion_pending`. */
+                    cancel_deletion?: boolean | null;
+                    /**
+                     * @description Apple seulement : code d'autorisation de la connexion, échangé côté serveur contre un jeton de rafraîchissement gardé
+                     *     chiffré, révoqué à la suppression du compte (exigence d'Apple). Facultatif : sans lui, rien n'est révoqué.
+                     */
+                    authorization_code?: string | null;
                 };
             };
         };
@@ -3179,6 +3196,14 @@ export interface operations {
                             code: "account_restricted";
                             /** @constant */
                             message: "Compte indisponible.";
+                        };
+                    } | {
+                        error: {
+                            /** @constant */
+                            code: "deletion_pending";
+                            /** @constant */
+                            message: "Suppression du compte en cours.";
+                            purge_at: string;
                         };
                     };
                 };

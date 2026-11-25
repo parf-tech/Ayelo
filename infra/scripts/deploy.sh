@@ -111,7 +111,7 @@ dc run --rm -T --no-deps app php artisan migrate --force
 
 STEP="relance des conteneurs"
 dc up -d --remove-orphans
-for service in app reverb scheduler worker worker-push; do
+for service in app reverb scheduler worker worker-push worker-media; do
   wait_healthy "$service"
 done
 

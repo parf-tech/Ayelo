@@ -61,7 +61,7 @@ Si les deux sommes diffèrent (conteneur créé avant le passage au montage de d
 | `php artisan deploy:preflight` | une configuration incomplète arrête le déploiement AVANT toute migration (voir ci-dessous) |
 | Recopie de `.public-dist` dans `public/`, puis `filament:assets`, en root | le volume `app-public` (partagé avec Caddy) n'est rempli qu'à sa création ; sans cette étape, `index.php` reste celui de la première image et le panneau n'a pas ses scripts et styles. En root car `public/` n'appartient pas à `www-data` (une faille applicative ne doit pas pouvoir y déposer un script servi par Caddy). `LOG_CHANNEL=stderr` évite de créer en root un journal que `www-data` ne pourrait plus écrire |
 | `php artisan migrate --force` | exécuté pendant que l'ancien code sert encore : toute migration doit rester compatible avec lui (ajouter d'abord, retirer dans un déploiement ultérieur) |
-| `docker compose up -d --remove-orphans`, puis attente de la santé de `app`, `reverb`, `scheduler`, `worker`, `worker-push` | `--wait` n'est pas utilisé : le service `backup` reste « starting » jusqu'à sa première sauvegarde (36 h) |
+| `docker compose up -d --remove-orphans`, puis attente de la santé de `app`, `reverb`, `scheduler`, `worker`, `worker-push`, `worker-media` | `--wait` n'est pas utilisé : le service `backup` reste « starting » jusqu'à sa première sauvegarde (36 h) |
 | `config:cache`, `route:cache`, `event:cache` dans `app` | gain de démarrage par requête ; refaits à chaque déploiement car ils vivent dans le conteneur |
 | `GET https://<API_DOMAIN>/api/v1/health` jusqu'à `"status":"ok"` (12 essais) | le certificat peut mettre quelques secondes au premier déploiement |
 
