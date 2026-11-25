@@ -59,6 +59,7 @@ create table auth_identities (
   user_id uuid not null references users(id) on delete cascade,
   provider text not null check (provider in ('google','apple','tiktok')),
   provider_user_id text not null,
+  provider_refresh_token text,                     -- jeton Apple chiffré (Crypt), révoqué à la suppression du compte
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (provider, provider_user_id)

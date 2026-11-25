@@ -1,7 +1,15 @@
-# Configuration PHPStan / Larastan utilisée par .github/workflows/ci.yml (job static-analysis).
-# Les chemins sont relatifs à ce fichier. Aucun baseline : la première exécution mesure l'état réel.
+# Configuration PHPStan / Larastan utilisée par .github/workflows/ci.yml (job static-analysis, bloquant).
+# Les chemins sont relatifs à ce fichier.
+#
+# Baseline (phpstan-baseline.neon) : les 238 erreurs de niveau 5 mesurées le 2026-11-23, figées pour que la CI bloque toute NOUVELLE
+# erreur sans exiger de tout corriger d'un coup. Ce sont surtout des propriétés Eloquent que Larastan ne déduit pas (le schéma vient de
+# migrations en SQL brut, pas du constructeur de schéma de Laravel) et des types de Filament. Ne jamais l'agrandir pour faire passer
+# du code neuf : corriger l'erreur. Pour la réduire après des corrections :
+#   cd backend && vendor/bin/phpstan analyse --configuration=../.github/workflows/phpstan.neon --generate-baseline=../.github/workflows/phpstan-baseline.neon
+# La base de données de développement doit répondre (Larastan lit le schéma) ; en CI, le service postgres du job.
 includes:
     - ../../backend/vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     level: 5
