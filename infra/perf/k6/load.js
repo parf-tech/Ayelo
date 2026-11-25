@@ -15,11 +15,11 @@ const IDLE = __ENV.IDLE === '1';
 const actors = new SharedArray('acteurs', () => JSON.parse(open('/work/actors.json')));
 const photo = open('/work/photo.jpg', 'b');
 
-// Débit croissant (requêtes par seconde) : 25 %, 50 %, 100 % de la pointe, puis palier à la pointe.
-function ramp(peak, exec) {
-  const top = Math.max(1, Math.round(peak * SCALE));
+// Débit croissant (requêtes par `seconds` secondes) : 25 %, 50 %, 100 % de la pointe, puis palier à la pointe.
+function ramp(peak, exec, seconds = 1) {
+  const top = Math.max(1, Math.round(peak * SCALE * seconds));
   return {
-    executor: 'ramping-arrival-rate', exec, startRate: 1, timeUnit: '1s', preAllocatedVUs: top * 2 + 5, maxVUs: top * 10 + 20,
+    executor: 'ramping-arrival-rate', exec, startRate: 1, timeUnit: `${seconds}s`, preAllocatedVUs: top * 2 + 5, maxVUs: top * 10 + 20,
     stages: [
       { target: Math.max(1, Math.round(top / 4)), duration: STAGE },
       { target: Math.max(1, Math.round(top / 2)), duration: STAGE },
@@ -35,7 +35,8 @@ const scenarios = {
   thread: ramp(30, 'thread'),
   send: ramp(10, 'send'),
 };
-if (UPLOAD > 0) scenarios.upload = ramp(UPLOAD, 'upload');
+// Les dépôts sont rares : débit compté par tranche de 10 s, pour pouvoir descendre sous un par seconde.
+if (UPLOAD > 0) scenarios.upload = ramp(UPLOAD, 'upload', 10);
 const ROUTES = ['discover', 'conversations', 'thread', 'send', 'upload-url', 'upload-complete'];
 
 export const options = {

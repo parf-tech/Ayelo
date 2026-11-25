@@ -9,12 +9,14 @@
 Sur une machine avec Docker et compose, depuis un clone du dépôt :
 
 ```bash
-bash infra/perf/run.sh /chemin/resultats                 # 200 000 profils, 500 acteurs, pointe nominale, paliers de 90 s
-bash infra/perf/run.sh /chemin/resultats 200000 500 2    # pointe doublée
+bash infra/perf/run.sh /chemin/resultats                                  # 200 000 profils, 500 acteurs, échelle 1
+PERF_SCALES="0.1 0.25 0.5" bash infra/perf/run.sh /chemin/resultats 200000 500 1 45s   # trois paliers, mêmes données
+PERF_APP_CPUS=4 PERF_DB_CPUS=2 bash infra/perf/run.sh /chemin/resultats   # processeur proche de la production
+UPLOAD_PEAK=0 bash infra/perf/run.sh /chemin/resultats                    # sans dépôt d'image
 MEDIA_ASYNC_IMAGES=true bash infra/perf/run.sh /chemin/resultats-async
 ```
 
-Pointe nominale (échelle 1) : découverte 30 req/s, liste des conversations 30, lecture d'un fil 30, envoi 10, dépôt d'image 2.
+Échelle 1 : découverte 30 req/s, liste des conversations 30, lecture d'un fil 30, envoi 10, dépôt d'image 2 (`UPLOAD_PEAK`).
 
 ## Résultats
 
