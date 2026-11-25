@@ -94,7 +94,7 @@ class ProfilePresenter
             ->whereIn('user_id', $userIds)
             ->whereIn('kind', ['profile_photo', 'profile_video'])
             ->when(! $owner, fn ($q) => $q->where('status', 'approved'))
-            ->when($owner, fn ($q) => $q->whereIn('status', ['pending_upload', 'processing', 'approved']))
+            ->when($owner, fn ($q) => $q->whereIn('status', ['pending_upload', 'transcoding', 'processing', 'approved']))
             ->orderBy('kind')->orderBy('position')
             ->get(['id', 'user_id', 'kind', 'status', 'position', 'storage_key'])
             ->groupBy('user_id');
@@ -121,8 +121,9 @@ class ProfilePresenter
                 'id' => $m->id,
                 'kind' => $m->kind,
                 'position' => $m->position,
-                'status' => $owner ? $m->status : null,
-                'url' => ($owner || $m->status === 'approved') && $m->status !== 'pending_upload'
+                // « transcoding » est un état interne (fichier pas encore ré-encodé, jamais servi) : le client voit « processing ».
+                'status' => $owner ? ($m->status === 'transcoding' ? 'processing' : $m->status) : null,
+                'url' => ($owner || $m->status === 'approved') && ! in_array($m->status, ['pending_upload', 'transcoding'], true)
                     ? $this->storage->temporaryUrl($m->storage_key, (int) config('media.read_ttl_minutes')) : null,
             ])->values()->all(),
         ];

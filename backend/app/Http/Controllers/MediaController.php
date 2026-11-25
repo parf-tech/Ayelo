@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SanitizeImageMedia;
 use App\Jobs\TranscodeChatMedia;
 use App\Models\Media;
 use App\Services\MediaSanitizer;
@@ -17,6 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MediaController extends Controller
 {
+    /** États qui occupent un emplacement de photo de profil (même liste que l'index unique `media_photo_position_unique`). */
+    private const PHOTO_SLOTS = ['pending_upload', 'transcoding', 'processing', 'approved'];
+
     private const EXT = [
         'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp',
         'video/mp4' => 'mp4', 'video/quicktime' => 'mov', 'audio/mp4' => 'm4a', 'audio/x-m4a' => 'm4a', 'audio/aac' => 'aac', 'audio/mpeg' => 'mp3',
@@ -63,7 +67,7 @@ class MediaController extends Controller
 
         if ($data['kind'] === 'profile_photo') {
             $used = DB::table('media')->where('user_id', $user->id)->where('kind', 'profile_photo')
-                ->whereIn('status', ['pending_upload', 'processing', 'approved'])->pluck('position')->all();
+                ->whereIn('status', self::PHOTO_SLOTS)->pluck('position')->all();
             if (count($used) >= (int) config('media.max_profile_photos')) {
                 throw ValidationException::withMessages(['kind' => ['Nombre maximal de photos atteint.']]);
             }
@@ -123,6 +127,16 @@ class MediaController extends Controller
             TranscodeChatMedia::dispatch($media->id);
 
             // L'état « transcoding » est interne : le client voit « processing » (en vérification).
+            return response()->json(['media_id' => $media->id, 'status' => 'processing']);
+        }
+
+        // Image ré-encodée hors de la requête (MEDIA_ASYNC_IMAGES) : même état interne. Un fichier refusé par la tâche devient
+        // `rejected` au lieu d'un 422 immédiat.
+        if (($rules['deferrable'] ?? false) && config('media.async_images')) {
+            $media->status = 'transcoding';
+            $media->save();
+            SanitizeImageMedia::dispatch($media->id);
+
             return response()->json(['media_id' => $media->id, 'status' => 'processing']);
         }
 
@@ -208,7 +222,7 @@ class MediaController extends Controller
         $userId = $request->user()->id;
 
         $current = DB::table('media')->where('user_id', $userId)->where('kind', 'profile_photo')
-            ->whereIn('status', ['pending_upload', 'processing', 'approved'])->pluck('id')->all();
+            ->whereIn('status', self::PHOTO_SLOTS)->pluck('id')->all();
 
         if (count($current) !== count($data['ids']) || array_diff($current, $data['ids']) !== []) {
             throw ValidationException::withMessages(['ids' => ['La liste doit contenir exactement vos photos.']]);
