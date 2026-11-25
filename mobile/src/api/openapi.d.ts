@@ -2153,6 +2153,21 @@ export interface operations {
                     };
                 };
             };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "conversation_closed";
+                            /** @constant */
+                            message: "Cette conversation n'est plus disponible.";
+                        };
+                    };
+                };
+            };
             404: components["responses"]["ModelNotFoundException"];
             409: {
                 headers: {

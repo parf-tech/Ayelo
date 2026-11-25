@@ -7,7 +7,6 @@ use App\Services\Conversations;
 use App\Services\Premium;
 use App\Services\ProfilePresenter;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -118,9 +117,14 @@ class ConversationController extends Controller
         $pair = [$me->id, $data['target_id']];
         sort($pair, SORT_STRING);
 
+        // Une conversation existante n'est rendue que si l'on peut y écrire : blocage, suspension ou conversation fermée depuis
+        // l'ouverture, on ne renvoie plus un identifiant exploitable (403 conversation_closed).
         $existing = DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->first();
         if ($existing !== null) {
-            $this->ensureWritable($existing, $me->id, $conversations);
+            if (! $conversations->canWrite($existing, $me->id)) {
+                // Rendu ici, et non levé par une méthode : le générateur de contrat ne voit que les réponses retournées.
+                return response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403);
+            }
 
             /**
              * Conversation déjà ouverte avec cette personne (aucun crédit dépensé).
@@ -185,7 +189,10 @@ class ConversationController extends Controller
                     ->header('Retry-After', '1');
             }
 
-            $this->ensureWritable($existing, $me->id, $conversations);
+            if (! $conversations->canWrite($existing, $me->id)) {
+                // Rendu ici, et non levé par une méthode : le générateur de contrat ne voit que les réponses retournées.
+                return response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403);
+            }
 
             /**
              * Conversation déjà ouverte avec cette personne (aucun crédit dépensé).
@@ -211,17 +218,6 @@ class ConversationController extends Controller
          * @body array{id: string, status: 'active'}
          */
         return response()->json(['id' => $result, 'status' => 'active'], 201);
-    }
-
-    /**
-     * Une conversation existante n'est rendue que si l'on peut y écrire : blocage, suspension ou conversation fermée depuis
-     * l'ouverture, on ne renvoie plus un identifiant exploitable (403 conversation_closed).
-     */
-    private function ensureWritable(object $existing, string $me, Conversations $conversations): void
-    {
-        if (! $conversations->canWrite($existing, $me)) {
-            throw new HttpResponseException(response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403));
-        }
     }
 
     /** « Supprimer » une conversation = la masquer pour soi ; elle reste disponible à la modération. */
