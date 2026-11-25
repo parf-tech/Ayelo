@@ -36,6 +36,6 @@ trait ChecksAccountStatus
             $user->refresh();
         }
 
-        return in_array($user->getAttribute('status'), ['active', 'suspended', 'banned'], true) ? 'allowed' : 'account_restricted';
+        return in_array($user->getAttribute('status'), User::KEEPS_ACCESS, true) ? 'allowed' : 'account_restricted';
     }
 }
