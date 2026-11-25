@@ -70,7 +70,10 @@ psql_ < explain.sql > "$RESULTS/explain.txt"
 log "essai à blanc"
 if ! dc --profile load run --rm -T k6 run --quiet -e SMOKE=1 -e SCALE=0.1 -e STAGE=5s /scripts/load.js > "$RESULTS/smoke.txt" 2>&1; then
   echo "ERREUR : l'essai à blanc échoue, pas de charge" >&2
-  tail -60 "$RESULTS/smoke.txt"; dc logs --tail 30 app web | cut -c1-300; exit 1
+  dc logs --no-log-prefix app > "$RESULTS/app-smoke.log" 2>&1 || true
+  tail -60 "$RESULTS/smoke.txt"
+  grep -a -E "\.(ERROR|CRITICAL|WARNING):|Exception:|fin de d" "$RESULTS/app-smoke.log" "$RESULTS/smoke.txt" | cut -c1-400 | head -20
+  exit 1
 fi
 
 log "charge (échelle $SCALE, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC)"
