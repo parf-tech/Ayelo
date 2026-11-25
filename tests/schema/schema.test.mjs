@@ -41,7 +41,7 @@ try {
   await client.query(fs.readFileSync(sqlPath, 'utf8'));
   const n = (await q("select count(*)::int as n from information_schema.tables where table_schema='public' and table_type='BASE TABLE'")).rows[0].n;
   console.log('tables créées:', n);
-  await expectOk('39 tables créées', async () => { if (n !== 39) throw new Error('attendu 39, obtenu ' + n); });
+  await expectOk('40 tables créées', async () => { if (n !== 40) throw new Error('attendu 40, obtenu ' + n); });
 
   const mkUser = async (email) =>
     (await q("insert into users(email,birthdate) values ($1,'1990-01-01') returning id", [email])).rows[0].id;
@@ -55,6 +55,14 @@ try {
     q("insert into profiles(user_id,display_name,gender,origin_country,residence_country,intent) values ($1,'Alice','woman','CM','FR','flirt')", [a]));
   await expectFail('date de naissance non modifiable', () =>
     q("update users set birthdate='1991-01-01' where id=$1", [a]));
+  // Seule exception (revue F-06) : l'anonymisation ramène la date au 1er janvier de la même année, en passant le compte à « deleted ».
+  const anon = (await q("insert into users(email,birthdate) values ('anon@example.com','1990-06-15') returning id")).rows[0].id;
+  await expectFail('anonymisation : date ramenée à l’année refusée tant que le compte n’est pas « deleted »', () =>
+    q("update users set birthdate='1990-01-01' where id=$1", [anon]));
+  await expectFail('anonymisation : une autre date que le 1er janvier de la même année reste refusée', () =>
+    q("update users set status='deleted', birthdate='1990-02-02' where id=$1", [anon]));
+  await expectOk('anonymisation : un compte « deleted » garde seulement l’année de naissance (1er janvier)', () =>
+    q("update users set status='deleted', birthdate='1990-01-01' where id=$1", [anon]));
   await expectOk('match canonique', () => q('insert into matches(user_a,user_b) values ($1,$2)', [lo, hi]));
   await expectFail('match ordre inverse refusé', () => q('insert into matches(user_a,user_b) values ($1,$2)', [hi, lo]));
   await expectFail('match doublon refusé', () => q('insert into matches(user_a,user_b) values ($1,$2)', [lo, hi]));

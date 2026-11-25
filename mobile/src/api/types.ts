@@ -14,6 +14,8 @@ export type ApiErrorBody = {
     code: string;
     message: string;
     fields?: Record<string, string[]>;
+    /** 403 `deletion_pending` : date de suppression définitive du compte (ISO 8601). */
+    purge_at?: string;
   };
 };
 

@@ -291,7 +291,7 @@ describe('S55 Suppression du compte', () => {
     await waitFor(() => expect(fake.called('DELETE /me')).toHaveLength(1));
     expect(fake.called('DELETE /me')[0]?.body).toEqual({ password: 'Motdepasse123' });
     expect(await screen.findByTestId('delete-grace')).toHaveTextContent('Suppression définitive dans 30 jours.');
-    expect(screen.getByTestId('delete-cancel-hint')).toHaveTextContent(/contactez le support/);
+    expect(screen.getByTestId('delete-cancel-hint')).toHaveTextContent(/reconnectez-vous et choisissez « Annuler la suppression »/);
     expect(screen.getByTestId('delete-subscription')).toHaveTextContent(/ne résilie pas votre abonnement/);
     expect(screen.getByTestId('delete-manage-subscription')).toBeOnTheScreen();
     expect(probe.auth()).toBe('signedIn');

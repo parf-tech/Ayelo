@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AccountDeletion;
 use App\Services\AgeGate;
 use App\Services\BannedIdentifiers;
 use App\Services\DeviceSessions;
 use App\Services\EmailSquatReclaim;
+use App\Services\OAuth\AppleTokens;
 use App\Services\OAuth\InvalidOAuthToken;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\Registrar;
@@ -21,6 +23,8 @@ use Illuminate\Validation\Rule;
 
 class OAuthController extends Controller
 {
+    use ChecksAccountStatus;
+
     public function __invoke(
         Request $request,
         string $provider,
@@ -29,6 +33,8 @@ class OAuthController extends Controller
         Registrar $registrar,
         DeviceSessions $sessions,
         EmailSquatReclaim $squat,
+        AccountDeletion $deletion,
+        AppleTokens $apple,
     ): JsonResponse {
         $device = DeviceId::from($request);
 
@@ -55,6 +61,11 @@ class OAuthController extends Controller
             // Nonce (revue F-21) : lié à la demande de connexion côté application ; contrôlé quand il est envoyé, exigé si
             // safety.oauth.require_nonce est actif. L'application mobile doit l'envoyer dès que le SDK du fournisseur le permet.
             'nonce' => ['nullable', 'string', 'max:200'],
+            // Annule la suppression de compte en cours (délai de grâce) : sans lui, la connexion répond 403 `deletion_pending`.
+            'cancel_deletion' => ['nullable', 'boolean'],
+            // Apple seulement : code d'autorisation de la connexion, échangé côté serveur contre un jeton de rafraîchissement gardé
+            // chiffré, révoqué à la suppression du compte (exigence d'Apple). Facultatif : sans lui, rien n'est révoqué.
+            'authorization_code' => ['nullable', 'string', 'max:2000'],
         ]);
 
         try {
@@ -79,7 +90,12 @@ class OAuthController extends Controller
 
         if ($linked !== null) {
             $user = User::findOrFail($linked->user_id);
-            if (! in_array($user->status, ['active', 'suspended', 'banned'], true)) {
+            $decision = $this->signInDecision($user, (bool) ($data['cancel_deletion'] ?? false), $deletion);
+            if ($decision === 'deletion_pending') {
+                // Suppression en cours : renvoyer la requête avec `cancel_deletion: true` l'annule (aucun jeton n'est émis ici).
+                return response()->json(['error' => ['code' => 'deletion_pending', 'message' => 'Suppression du compte en cours.', 'purge_at' => $deletion->purgeAt($user)->toIso8601String()]], 403);
+            }
+            if ($decision === 'account_restricted') {
                 return response()->json(['error' => ['code' => 'account_restricted', 'message' => 'Compte indisponible.']], 403);
             }
         } else {
@@ -158,6 +174,10 @@ class OAuthController extends Controller
 
                 throw $e;
             }
+        }
+
+        if ($provider === 'apple' && ! empty($data['authorization_code'])) {
+            $apple->remember((string) $user->id, $identity->subject, $data['authorization_code']);
         }
 
         $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);
