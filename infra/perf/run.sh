@@ -43,7 +43,10 @@ dc build app > "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exi
 log "base, files et stockage"
 dc up -d --wait postgres redis redis-cache >/dev/null
 dc up -d s3 >/dev/null
-dc run --rm -T --no-deps app sh -c 'for i in $(seq 1 90); do php -r "exit(@fsockopen(\"s3\", 9090) ? 0 : 1);" && exit 0; sleep 1; done; exit 1'
+# Le faux stockage (Java) met plusieurs dizaines de secondes à ouvrir son port.
+if ! dc run --rm -T --no-deps app sh -c 'for i in $(seq 1 240); do php -r "exit(@fsockopen(\"s3\", 9090) ? 0 : 1);" 2>/dev/null && exit 0; sleep 1; done; exit 1'; then
+  echo "ERREUR : le faux stockage ne répond pas" >&2; dc logs --tail 40 s3 | cut -c1-300; exit 1
+fi
 dc run --rm -T --no-deps app php artisan migrate --force > "$RESULTS/migrate.log" 2>&1 || { cat "$RESULTS/migrate.log"; exit 1; }
 
 log "données : $PROFILES profils, $ACTORS acteurs"
