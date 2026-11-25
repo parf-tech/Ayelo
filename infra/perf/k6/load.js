@@ -97,7 +97,7 @@ export function upload() {
   const put = http.put(target.url, photo, { headers: target.headers, tags: { name: 'upload-put' } });
   if (!check(put, { 'dépôt 200': (x) => x.status === 200 })) return;
   const done = http.post(`${BASE}/api/v1/media/${mediaId}/complete`, null, params(a, 'upload-complete'));
-  if (!check(done, { 'fin de dépôt 200': (x) => x.status === 200 }) && __ENV.SMOKE === '1') {
+  if (!check(done, { 'fin de dépôt 200': (x) => x.status === 200 })) {
     console.warn(`fin de dépôt ${done.status} : ${String(done.body).slice(0, 300)}`);
   }
 }

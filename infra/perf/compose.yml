@@ -21,6 +21,7 @@ services:
     volumes:
       - app-storage:/var/www/html/storage
       - app-public:/var/www/html/public
+      - ./opcache.php:/srv/perf/opcache.php:ro
     # Même pool FPM et même plafond de mémoire qu'en production ; le processeur est borné pour laisser de la marge à la machine.
     deploy:
       resources:

@@ -5,6 +5,8 @@ APP_DEBUG=false
 APP_KEY=__APP_KEY__
 APP_URL=http://web
 APP_WEB_URL=http://web
+# Renseigné comme en production (sinon chaque requête journalise une ligne critique).
+ADMIN_DOMAIN=admin.perf.invalid
 TRUSTED_PROXIES=172.16.0.0/12,192.168.0.0/16,10.0.0.0/8
 
 LOG_CHANNEL=stderr

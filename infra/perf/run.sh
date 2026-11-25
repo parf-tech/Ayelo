@@ -67,6 +67,11 @@ echo "photo d'essai : $(wc -c < "$WORK/photo.jpg") octets"
 log "plans de la requête de découverte"
 psql_ < explain.sql > "$RESULTS/explain.txt"
 
+diagnose() {
+  docker inspect "$(dc ps -q app)" --format 'application : limite processeur appliquée = {{.HostConfig.NanoCpus}} nanocpus, mémoire = {{.HostConfig.Memory}}'
+  dc exec -T app sh -c 'SCRIPT_NAME=/opcache.php SCRIPT_FILENAME=/srv/perf/opcache.php REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000' | grep -a opcache || echo "diagnostic opcache indisponible"
+}
+
 log "essai à blanc"
 if ! dc --profile load run --rm -T k6 run --quiet -e SMOKE=1 -e SCALE=0.1 -e STAGE=5s /scripts/load.js > "$RESULTS/smoke.txt" 2>&1; then
   echo "ERREUR : l'essai à blanc échoue, pas de charge" >&2
@@ -75,6 +80,8 @@ if ! dc --profile load run --rm -T k6 run --quiet -e SMOKE=1 -e SCALE=0.1 -e STA
   grep -a -E "\.(ERROR|CRITICAL|WARNING):|Exception:|fin de d" "$RESULTS/app-smoke.log" "$RESULTS/smoke.txt" | cut -c1-400 | head -20
   exit 1
 fi
+
+diagnose | tee "$RESULTS/diagnostic.txt"
 
 log "charge (échelle $SCALE, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC)"
 ( while true; do date -u +%H:%M:%S; docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} mem={{.MemUsage}}' $(docker ps -q --filter label=com.docker.compose.project=ayelo-perf) 2>/dev/null; sleep 15; done ) > "$RESULTS/stats.txt" &
@@ -85,7 +92,9 @@ kill "$SAMPLER" 2>/dev/null || true; SAMPLER=""
 cp "$WORK/summary.json" "$RESULTS/summary.json" 2>/dev/null || true
 dc logs --no-log-prefix postgres 2>/dev/null | grep -E "duration: [0-9]+" | cut -c1-400 > "$RESULTS/slow-queries.txt" || true
 dc logs app worker reverb 2>/dev/null | grep -i -E "error|exception|critical" | cut -c1-300 | head -100 > "$RESULTS/errors.txt" || true
+grep -a -o "fin de d[^\"]*" "$RESULTS/k6.txt" | sed -E 's/[0-9a-f-]{36}/<id>/g' | sort | uniq -c | sort -rn | head -5 > "$RESULTS/upload-refus.txt" || true
 psql_ -At -c "select 'files en attente (jobs échoués) : ' || count(*) from failed_jobs" > "$RESULTS/failed-jobs.txt" || true
+diagnose | tee -a "$RESULTS/diagnostic.txt"
 log "k6 terminé, code $status (99 = un objectif n'est pas atteint)"
 cat "$RESULTS/k6.txt"
 exit 0
