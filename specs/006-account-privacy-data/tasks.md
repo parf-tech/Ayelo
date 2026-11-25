@@ -10,4 +10,5 @@
 - [ ] T008 Page web publique de demande de suppression (front) — hébergement et domaine à décider
 - [ ] T009 Politique de confidentialité, CGU, mentions légales — **juriste**
 - [ ] T010 Étude d'impact (AIPD) et registre des traitements — **juriste / propriétaire**
-- [ ] T011 Révocation des jetons Apple / TikTok à la suppression (exigence Apple, à vérifier) — non fait
+- [~] T011 Révocation des jetons Apple / TikTok à la suppression (exigence Apple, à vérifier) — Apple fait côté serveur le 2026-11-23 (échange du code d'autorisation, jeton chiffré, révocation avant l'anonymisation, `AppleRevocationTest`), jamais essayé contre le vrai service ; reste le code d'autorisation envoyé par le mobile (connexion Apple absente) et la clé .p8 ; TikTok non fait
+- [x] T012 Annulation de la suppression pendant le délai de grâce par étape explicite (`deletion_pending`, `cancel_deletion`) — `DeletionCancelTest`, `deletionPending.test.tsx`

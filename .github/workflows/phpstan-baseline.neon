@@ -313,12 +313,6 @@ parameters:
 			path: ../../backend/app/Http/Controllers/Auth/LoginController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Http/Controllers/Auth/LoginController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -326,12 +320,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$locale\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Http/Controllers/Auth/OAuthController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
 			path: ../../backend/app/Http/Controllers/Auth/OAuthController.php

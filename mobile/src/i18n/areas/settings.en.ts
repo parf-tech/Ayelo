@@ -121,7 +121,7 @@ export const settingsEn = {
   'delete.passwordRequired': 'Enter your password.',
   'delete.wrongPassword': 'Wrong password.',
   'delete.done': 'Request recorded. Your profile is hidden.',
-  'delete.notice': 'Request recorded. Your profile is hidden. Permanent deletion in {days} days. To cancel the deletion before that date, contact support.',
+  'delete.notice': 'Request recorded. Your profile is hidden. Permanent deletion in {days} days. To cancel it before that date, sign in again and choose “Cancel the deletion”.',
 
   'export.title': 'Export my data',
   'export.body': 'You can request a copy of your personal data, one request per day',
@@ -206,7 +206,7 @@ export const settingsEn = {
   'legal.fallback.body':
     'The full text of this document is not yet reachable from this version of the app. You can get a copy by writing to support.',
   'legal.fallback.contact': 'Write to {email}',
-  'delete.cancelHint': 'To cancel the deletion before that date, contact support.',
+  'delete.cancelHint': 'To cancel the deletion before that date, sign in again and choose “Cancel the deletion”.',
   'delete.signOut': 'Sign out',
   'delete.subscription':
     'Deleting your account does not cancel your Premium subscription. Cancel it in the store, otherwise you will keep being charged.',
