@@ -66,6 +66,13 @@ it('documente les refus de ré-authentification (403, 429) et le 202 de la suppr
     }
 });
 
+it('documente le 403 conversation_closed à l’ouverture d’une conversation, à côté du 402 et du 409', function () {
+    $responses = openApiContract()['paths']['/conversations']['post']['responses'];
+
+    expect(array_keys($responses))->toContain(200, 201, 402, 403, 409);
+    expect(json_encode($responses['403']))->toContain('conversation_closed');
+});
+
 it('limite /broadcasting/auth à POST avec socket_id, channel_name et la réponse { auth }', function () {
     $operations = openApiContract()['paths']['/broadcasting/auth'];
 
