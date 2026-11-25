@@ -164,7 +164,7 @@ create table media (
   user_id uuid not null references users(id) on delete cascade,
   kind text not null check (kind in ('profile_photo','profile_video','message_image','message_video','message_voice','story','invite_video','verification_selfie')),
   status text not null default 'pending_upload'
-    check (status in ('pending_upload','transcoding','processing','approved','rejected','purged')),  -- transcoding : notes vocales et vidéos, avant la revue humaine
+    check (status in ('pending_upload','transcoding','processing','approved','rejected','purged')),  -- transcoding : fichier pas encore ré-encodé (notes vocales, vidéos, images différées)
   storage_key text not null unique,
   mime_type text not null,
   size_bytes bigint check (size_bytes > 0),
@@ -180,7 +180,7 @@ create index on media (user_id, kind);
 create index media_approved_photo_idx on media (user_id) where kind = 'profile_photo' and status = 'approved';  -- découverte : photo approuvée
 create index on media (status, created_at);
 create unique index media_photo_position_unique on media (user_id, position)
-  where kind = 'profile_photo' and status in ('pending_upload','processing','approved');
+  where kind = 'profile_photo' and status in ('pending_upload','transcoding','processing','approved');
 
 create table verification_requests (
   id uuid primary key default gen_random_uuid(),

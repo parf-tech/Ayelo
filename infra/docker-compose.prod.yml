@@ -124,6 +124,24 @@ services:
       timeout: 5s
       retries: 3
 
+  # Ré-encodage des images hors de la requête (MEDIA_ASYNC_IMAGES, tâche SanitizeImageMedia, file `media`) : worker dédié, pour
+  # que le décodage d'images ne retarde ni les diffusions ni les e-mails. Sans travail tant que MEDIA_ASYNC_IMAGES=false.
+  # Mémoire : le worker plus le sous-processus de ré-encodage (MEDIA_PROCESS_MEMORY_LIMIT, 256M).
+  worker-media:
+    <<: *app
+    env_file: .env.prod
+    command: ["php", "artisan", "queue:work", "--queue=media", "--tries=3", "--timeout=60", "--sleep=1", "--max-time=3600", "--max-jobs=500"]
+    stop_grace_period: 70s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:wor[k]' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   # Traitement des notes vocales et vidéos de conversation (ffmpeg) : fichiers non fiables, donc AUCUN réseau (network_mode: none),
   # système de fichiers en lecture seule, aucune capacité, plafonds de CPU, de mémoire et de processus. Il ne communique avec
   # l'application que par le volume `transcode-spool` (infra/transcode/transcode-loop.sh). Sans effet tant que

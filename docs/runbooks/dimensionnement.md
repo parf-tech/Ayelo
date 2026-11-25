@@ -28,7 +28,10 @@ Vérifier le pool : `docker compose ... exec app php-fpm -tt 2>&1 | grep -E "pm\
 | --- | --- | --- | --- |
 | `worker` | `realtime,default` (dans cet ordre de priorité) | `WORKER_REPLICAS` (2) | diffusions, e-mails, exports |
 | `worker-push` | `push` | 1 | FCM (délai de 5 s par requête, jamais bloquant pour le reste) |
+| `worker-media` | `media` | 1 | ré-encodage des images hors de la requête (au repos tant que `MEDIA_ASYNC_IMAGES=false`) |
 | `scheduler` | (planificateur) | 1, ne jamais répliquer | nettoyage RGPD, appels expirés |
+
+Activer le ré-encodage hors de la requête (soulage les processus PHP-FPM) : vérifier que `worker-media` est sain (`docker compose ps`), passer `MEDIA_ASYNC_IMAGES=true` dans `infra/.env.prod`, déployer, puis déposer une photo d'essai et la voir arriver dans la file de modération. Conséquences : un fichier illisible n'est plus refusé à la fin du dépôt (422) mais rejeté ensuite (l'application ne signale pas encore le rejet d'une photo de profil, qui disparaît de la liste) ; un seul worker ré-encode une image à la fois. Retour arrière : `MEDIA_ASYNC_IMAGES=false` puis déployer, en laissant `worker-media` vider la file. Jamais essayé sur le serveur.
 
 `--max-jobs=1000` et `--max-time=3600` recyclent les workers (fuites mémoire). `stop_grace_period` laisse finir la tâche en cours lors d'un déploiement. `retry_after` (90 s, `REDIS_QUEUE_RETRY_AFTER`) doit rester supérieur au `--timeout` du worker le plus long (60 s).
 
@@ -38,7 +41,7 @@ Un seul processus, descripteurs de fichiers relevés à 65536 (`ulimits.nofile` 
 
 ## PostgreSQL
 
-`max_connections` reste à 100 (défaut). Consommation estimée avec la configuration ci-dessus : FPM 24 + workers (2 + 1) + planificateur 1 + Reverb 1 + sauvegarde 1, soit environ 30 connexions simultanées au maximum. Si `FPM_MAX_CHILDREN` dépasse 60 ou si un second nœud applicatif est ajouté, installer PgBouncer (mode transaction : attention aux verrous consultatifs de `SwipeService`, qui exigent le mode session ou une connexion dédiée) avant de relever `max_connections`.
+`max_connections` reste à 100 (défaut). Consommation estimée avec la configuration ci-dessus : FPM 24 + workers (2 + 1 + 1) + planificateur 1 + Reverb 1 + sauvegarde 1, soit environ 30 connexions simultanées au maximum. Si `FPM_MAX_CHILDREN` dépasse 60 ou si un second nœud applicatif est ajouté, installer PgBouncer (mode transaction : attention aux verrous consultatifs de `SwipeService`, qui exigent le mode session ou une connexion dédiée) avant de relever `max_connections`.
 
 ## Sonde de santé
 

@@ -337,12 +337,6 @@ parameters:
 			path: ../../backend/app/Http/Controllers/MediaController.php
 
 		-
-			message: '#^Parameter \#1 \$mediaId of job class App\\Jobs\\TranscodeChatMedia constructor expects string in App\\Jobs\\TranscodeChatMedia\:\:dispatch\(\), int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/MediaController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$residence_changed_at\.$#'
 			identifier: property.notFound
 			count: 2
