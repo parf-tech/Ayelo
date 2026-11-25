@@ -43,3 +43,6 @@ yarn-error.*
 # Firebase / FCM : configuration du projet, fournie par EAS (GOOGLE_SERVICES_JSON), jamais commitée
 google-services.json
 GoogleService-Info.plist
+
+# Rapport de couverture genere par `npm run test:coverage`.
+coverage/

@@ -3,12 +3,14 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Filament\Support\Staff;
+use App\Models\StaffUser;
 use App\Services\Admin\Audit;
 use Filament\Auth\Pages\EditProfile;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use LogicException;
 
 /**
  * Profil du personnel : langue du back-office, mot de passe et 2FA (configuration, codes de secours) uniquement.
@@ -36,7 +38,7 @@ class EditStaffProfile extends EditProfile
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->passwordChanged = filled($data['password'] ?? null);
-        $this->previousLocale = $this->getUser()->locale;
+        $this->previousLocale = $this->staff()->locale;
         $data['locale'] = filled($data['locale'] ?? null) ? $data['locale'] : null;
 
         return $data;
@@ -45,7 +47,7 @@ class EditStaffProfile extends EditProfile
     /** Ne trace que ce qui a changé : un changement de langue n'est pas un changement de mot de passe. */
     protected function afterSave(): void
     {
-        $user = $this->getUser();
+        $user = $this->staff();
         $audit = app(Audit::class);
 
         if ($this->passwordChanged) {
@@ -54,6 +56,17 @@ class EditStaffProfile extends EditProfile
         if ($user->locale !== $this->previousLocale) {
             $audit->record($user, 'staff.locale_changed', 'staff_users', (string) $user->getKey(), ['locale' => $this->previousLocale], ['locale' => $user->locale]);
         }
+    }
+
+    /** La page n'est servie qu'au garde « staff ». */
+    private function staff(): StaffUser
+    {
+        $user = $this->getUser();
+        if (! $user instanceof StaffUser) {
+            throw new LogicException('Profil réservé au personnel.');
+        }
+
+        return $user;
     }
 
     protected function getCurrentPasswordFormComponent(): Component

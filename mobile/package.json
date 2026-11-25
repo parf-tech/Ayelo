@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "tokens": "node ../design/build-tokens.mjs",

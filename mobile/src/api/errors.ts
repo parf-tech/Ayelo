@@ -14,6 +14,8 @@ export class ApiError extends Error {
   readonly fields?: Record<string, string[]>;
   /** Secondes à attendre (en-tête Retry-After, réponses 429). */
   readonly retryAfter?: number;
+  /** Date de suppression définitive du compte (403 `deletion_pending`, ISO 8601). */
+  readonly purgeAt?: string;
 
   constructor(init: {
     status: number;
@@ -21,6 +23,7 @@ export class ApiError extends Error {
     message: string;
     fields?: Record<string, string[]>;
     retryAfter?: number;
+    purgeAt?: string;
   }) {
     super(init.message);
     this.name = 'ApiError';
@@ -28,6 +31,7 @@ export class ApiError extends Error {
     this.code = init.code;
     this.fields = init.fields;
     this.retryAfter = init.retryAfter;
+    this.purgeAt = init.purgeAt;
   }
 
   get isValidation(): boolean {
@@ -88,6 +92,7 @@ export async function parseErrorResponse(response: Response): Promise<ApiError> 
       message: typeof body.error.message === 'string' ? body.error.message : body.error.code,
       fields: body.error.fields,
       retryAfter,
+      purgeAt: typeof body.error.purge_at === 'string' ? body.error.purge_at : undefined,
     });
   }
 

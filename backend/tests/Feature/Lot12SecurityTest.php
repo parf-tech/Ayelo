@@ -253,6 +253,7 @@ it('découverte : un curseur au format non strict est refusé en 422, un curseur
 // ---------- last_seen_at ----------
 
 it('last_seen_at : écrit au premier appel authentifié, puis une seule fois par heure', function () {
+    useArrayCache(); // la période d'une heure est simulée par travel() : Redis expire à l'heure réelle
     [$u, $bearer] = l12User();
     expect(DB::table('users')->where('id', $u->id)->value('last_seen_at'))->toBeNull();
 
