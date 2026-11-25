@@ -1,0 +1,158 @@
+# Banc de charge jetable (docs/runbooks/charge.md). Lancé par run.sh, qui le détruit à la fin.
+# JAMAIS lié à la production : projet « ayelo-perf », réseau interne sans accès extérieur, aucun port publié, volumes propres,
+# données fictives, secrets tirés au hasard à chaque essai. Le stockage objet est un faux serveur S3 local.
+name: ayelo-perf
+
+x-app: &app
+  image: ayelo-perf-app:local
+  env_file: ${PERF_ENV:?chemin du fichier d'environnement du banc (créé par run.sh)}
+  networks: [perf]
+  volumes:
+    - app-storage:/var/www/html/storage
+
+services:
+  app:
+    <<: *app
+    build:
+      context: ../..
+      dockerfile: infra/php/Dockerfile
+      target: runtime
+    command: ["php-fpm"]
+    volumes:
+      - app-storage:/var/www/html/storage
+      - app-public:/var/www/html/public
+    # Même pool FPM et même plafond de mémoire qu'en production ; le processeur est borné pour laisser de la marge à la machine.
+    deploy:
+      resources:
+        limits:
+          cpus: "${PERF_APP_CPUS:-2.5}"
+          memory: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "SCRIPT_NAME=/fpm-ping SCRIPT_FILENAME=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+
+  web:
+    image: caddy:2.8@sha256:226d1f059b75399fe19182893c7184591c07b97afc8dfcf44eeb80c9a77a530f
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - app-public:/var/www/html/public:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+    networks: [perf]
+    depends_on:
+      app:
+        condition: service_healthy
+
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--queue=realtime,default,push,media", "--sleep=1", "--tries=3", "--timeout=60"]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  reverb:
+    <<: *app
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  postgres:
+    image: postgres:16@sha256:3950ad7c3148ca2175ef1b6c36c9efbf78957ae8fbe8b3a5d7c35af50500382f
+    # Réglages par défaut, comme en production ; les requêtes de plus de 200 ms sont journalisées.
+    command: ["postgres", "-c", "log_min_duration_statement=200"]
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "${PERF_DB_CPUS:-1.5}"
+          memory: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [perf]
+
+  redis:
+    image: redis:7@sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?}
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--save", "", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction", "--requirepass", "${REDIS_PASSWORD:?}"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [perf]
+
+  redis-cache:
+    image: redis:7@sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?}
+    command: ["redis-server", "--appendonly", "no", "--save", "", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "${REDIS_PASSWORD:?}"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [perf]
+
+  # Faux stockage objet compatible S3 (dépôt, lecture, suppression) : aucune clé réelle, rien ne sort du réseau du banc.
+  s3:
+    image: adobe/s3mock:latest
+    environment:
+      initialBuckets: media
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 768m
+    networks: [perf]
+
+  k6:
+    image: grafana/k6:latest
+    profiles: [load]
+    user: "0:0"
+    volumes:
+      - ./k6:/scripts:ro
+      - ${PERF_WORK:?dossier de travail créé par run.sh}:/work
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1g
+    networks: [perf]
+
+networks:
+  perf:
+    internal: true
+
+volumes:
+  app-storage:
+  app-public:
+  pgdata:
+  redis-data:
