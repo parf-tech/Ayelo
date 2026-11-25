@@ -645,6 +645,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/conversations/{id}/messages/{messageId}/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Adresse de lecture d'une image, d'une note vocale ou d'une vidéo de conversation
+         * @description Réservée aux deux membres, uniquement quand la modération a approuvé le média (409 `media_pending` en revue, 410
+         *     `media_rejected` après un rejet). L'adresse est signée et expire (`media.read_ttl_minutes`) ; elle ne figure ni dans la
+         *     liste des messages ni dans les diffusions : le client la demande image par image.
+         */
+        get: operations["message.media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/conversations/{id}/read": {
         parameters: {
             query?: never;
@@ -2026,6 +2048,7 @@ export interface operations {
                     "application/json": {
                         data: {
                             id: string;
+                            match_id: string | null;
                             status: string;
                             unlocked_by: string;
                             unread: number;
@@ -2623,7 +2646,7 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    kind: "profile_photo" | "message_image" | "verification_selfie";
+                    kind: "profile_photo" | "message_image" | "verification_selfie" | "message_voice" | "message_video";
                     mime_type: string;
                     size_bytes: number;
                     duration_seconds?: number | null;
@@ -2672,6 +2695,10 @@ export interface operations {
                         media_id: string;
                         /** @enum {string} */
                         status: "processing" | "approved";
+                    } | {
+                        media_id: string;
+                        /** @constant */
+                        status: "processing";
                     };
                 };
             };
@@ -2809,6 +2836,9 @@ export interface operations {
                             type: "text" | "image" | "video" | "voice" | "gift" | "call_missed" | "system" | "deleted";
                             body: string | null;
                             media_id: string | null;
+                            /** @enum {string|null} */
+                            media_status: "processing" | "approved" | "rejected" | null;
+                            media_duration_seconds: number | null;
                             delivered_at: string | null;
                             read_at: string | null;
                             created_at: string;
@@ -2837,7 +2867,7 @@ export interface operations {
                     /** Format: uuid */
                     client_id: string;
                     /** @enum {string} */
-                    type: "text" | "image";
+                    type: "text" | "image" | "voice" | "video";
                     body?: string | null;
                     /** Format: uuid */
                     media_id?: string | null;
@@ -2859,6 +2889,9 @@ export interface operations {
                         type: "text" | "image" | "video" | "voice" | "gift" | "call_missed" | "system" | "deleted";
                         body: string | null;
                         media_id: string | null;
+                        /** @enum {string|null} */
+                        media_status: "processing" | "approved" | "rejected" | null;
+                        media_duration_seconds: number | null;
                         delivered_at: string | null;
                         read_at: string | null;
                         created_at: string;
@@ -2877,9 +2910,12 @@ export interface operations {
                         sender_id: string;
                         client_id: string;
                         /** @enum {string} */
-                        type: "text" | "image";
+                        type: "text" | "image" | "voice" | "video";
                         body: string | null;
                         media_id: string | null;
+                        /** @enum {string|null} */
+                        media_status: "processing" | "approved" | "rejected" | null;
+                        media_duration_seconds: number | null;
                         delivered_at: string | null;
                         read_at: string | null;
                         created_at: string;
@@ -2906,6 +2942,64 @@ export interface operations {
             };
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "message.media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                messageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Adresse signée de l'image, valable jusqu'à `expires_at`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        url: string;
+                        expires_at: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "media_pending";
+                            /** @constant */
+                            message: "Cette image est en cours de vérification.";
+                        };
+                    };
+                };
+            };
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: {
+                            /** @constant */
+                            code: "media_rejected";
+                            /** @constant */
+                            message: "Cette image a été refusée par la modération.";
+                        };
+                    };
+                };
+            };
         };
     };
     "message.read": {

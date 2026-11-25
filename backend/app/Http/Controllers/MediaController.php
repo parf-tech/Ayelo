@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\TranscodeChatMedia;
 use App\Models\Media;
 use App\Services\MediaSanitizer;
 use App\Services\Storage\MediaStorage;
@@ -18,11 +19,13 @@ class MediaController extends Controller
 {
     private const EXT = [
         'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp',
-        'video/mp4' => 'mp4', 'audio/mp4' => 'm4a', 'audio/aac' => 'aac', 'audio/mpeg' => 'mp3',
+        'video/mp4' => 'mp4', 'video/quicktime' => 'mov', 'audio/mp4' => 'm4a', 'audio/x-m4a' => 'm4a', 'audio/aac' => 'aac', 'audio/mpeg' => 'mp3',
     ];
 
     public function uploadUrl(Request $request, MediaStorage $storage): JsonResponse
     {
+        // Tous les types connus figurent dans le contrat ; un type fermé (`enabled` faux : notes vocales et vidéos tant que le
+        // conteneur de traitement n'est pas déployé) est refusé plus bas, comme une valeur invalide.
         $kinds = array_keys(config('media.kinds'));
         $data = $request->validate([
             'kind' => ['required', Rule::in($kinds)],
@@ -32,6 +35,9 @@ class MediaController extends Controller
         ]);
 
         $rules = config('media.kinds.'.$data['kind']);
+        if (! ($rules['enabled'] ?? true)) {
+            throw ValidationException::withMessages(['kind' => ["Ce type de fichier n'est pas disponible."]]);
+        }
         if (! in_array($data['mime_type'], $rules['mimes'], true)) {
             throw ValidationException::withMessages(['mime_type' => ['Type de fichier non autorisé.']]);
         }
@@ -47,7 +53,7 @@ class MediaController extends Controller
 
         // Quota par type (revue F-22) : le plafond de 20 dépôts par heure ne bornait pas le stockage par compte.
         if (isset($rules['max_open']) && DB::table('media')->where('user_id', $user->id)->where('kind', $data['kind'])
-            ->whereIn('status', ['pending_upload', 'processing'])->count() >= (int) $rules['max_open']) {
+            ->whereIn('status', ['pending_upload', 'transcoding', 'processing'])->count() >= (int) $rules['max_open']) {
             throw ValidationException::withMessages(['kind' => ['Trop de fichiers en attente pour ce type.']]);
         }
         if (isset($rules['max_per_day']) && DB::table('media')->where('user_id', $user->id)->where('kind', $data['kind'])
@@ -107,6 +113,17 @@ class MediaController extends Controller
             $media->delete();
 
             return response()->json(['error' => ['code' => 'upload_rejected', 'message' => 'Fichier refusé.']], 422);
+        }
+
+        // Notes vocales et vidéos : jamais lues ici ni servies telles que déposées. Le conteneur de traitement (ffmpeg, sans réseau)
+        // les réencode sans métadonnées et mesure durée et taille ; la revue humaine ne les voit qu'ensuite (TranscodeChatMedia).
+        if (($rules['transcode'] ?? null) !== null) {
+            $media->status = 'transcoding';
+            $media->save();
+            TranscodeChatMedia::dispatch($media->id);
+
+            // L'état « transcoding » est interne : le client voit « processing » (en vérification).
+            return response()->json(['media_id' => $media->id, 'status' => 'processing']);
         }
 
         // Le type et la taille déclarés ne suffisent pas (la présignature ne les lie pas) : on relit les octets,

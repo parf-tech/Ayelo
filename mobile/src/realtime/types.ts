@@ -36,6 +36,8 @@ export const REALTIME_EVENTS = {
   messageCreated: 'message.created',
   messageDelivered: 'message.delivered',
   messageRead: 'message.read',
+  /** La modération a statué sur une image : `{ message_id, media_status }`. */
+  messageMedia: 'message.media',
   typing: 'typing',
   callState: 'call.state',
 } as const;

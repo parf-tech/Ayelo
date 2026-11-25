@@ -28,6 +28,9 @@ RUN composer dump-autoload --optimize --no-dev --classmap-authoritative \
 
 FROM base AS runtime
 COPY --from=build /var/www/html /var/www/html
+# Dossier partagé avec le conteneur `transcode` (notes vocales et vidéos) : même propriétaire (82 = www-data) des deux côtés, pour
+# que le volume nommé soit utilisable quel que soit le conteneur qui le crée en premier.
+RUN mkdir -p /spool/in /spool/out && chown -R www-data:www-data /spool
 COPY infra/php/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY infra/php/php-fpm-pool.conf /usr/local/etc/php-fpm.d/zz-pool.conf
 # Valeurs par défaut du pool (voir php-fpm-pool.conf) ; surchargeables par infra/.env.prod. Sans ces ENV, ${FPM_*} serait vide

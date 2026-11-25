@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\StaffUser;
+use App\Services\Media\MediaDecisionNotifier;
 use App\Services\Storage\MediaStorage;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class MediaModeration extends AdminService
 {
     public const REJECT_LABELS = ['nudity', 'violence', 'minor', 'spam', 'illegal', 'other'];
 
-    public function __construct(Audit $audit, private MediaStorage $storage)
+    public function __construct(Audit $audit, private MediaStorage $storage, private MediaDecisionNotifier $notifier)
     {
         parent::__construct($audit);
     }
@@ -47,6 +48,8 @@ class MediaModeration extends AdminService
 
             return new Change(null, ['status' => 'processing', 'kind' => $media->kind, 'user_id' => $media->user_id], ['status' => 'approved']);
         });
+
+        $this->notifier->decided($mediaId, 'approved');
     }
 
     /** Rejet : statut « rejected » puis suppression de l'objet. */
@@ -71,6 +74,8 @@ class MediaModeration extends AdminService
         } catch (Throwable $e) {
             report($e);
         }
+
+        $this->notifier->decided($mediaId, 'rejected');
     }
 
     private function pending(string $mediaId): object

@@ -1,6 +1,6 @@
 # Cadrage : images dans les conversations (application mobile)
 
-Date : 2026-11-22. Statut : cadrage seulement, rien n'est codé. **Décision du propriétaire, le 2026-11-22 : reporter avec la phase B6** (voir la section 6).
+Date : 2026-11-22. Statut : **implémenté le 2026-11-22, parcours B** (voir la section 6). Les sections 1 à 5 décrivent l'état avant l'implémentation.
 
 Ce document répond à la partie 6 de `docs/PROMPT-MOBILE-RESTES.md`. Il relie le besoin à la phase B6 du backlog (`docs/15-BACKLOG.md` : « Vidéo de profil, images dans le chat ») et à l'exigence FR-D-6 (« Images dans la conversation (modérées) », `docs/15b-TRACEABILITY.md`).
 
@@ -44,6 +44,12 @@ Tant que la modération est humaine, l'expéditeur ne doit jamais croire que l'i
 
 ## 6. Décision
 
-Le propriétaire a choisi, le 2026-11-22, de **reporter avec la phase B6**, tant que ni le prestataire ou l'effectif de modération, ni l'adresse de lecture serveur ne sont décidés. Le mobile continue d'afficher « Photo reçue » pour une image reçue et ne propose pas d'envoi d'image.
+Le propriétaire avait d'abord choisi, le 2026-11-22, de reporter avec la phase B6. Le même jour, il a demandé l'implémentation complète, a autorisé la modification de `backend/` pour cette partie et a choisi le **parcours B** (le message part tout de suite, l'image reste masquée au destinataire jusqu'à approbation).
 
-L'autre option, écartée pour l'instant : lancer le cadrage serveur maintenant (contrat de la section 3, parcours A ou B de la section 4), le mobile étant codé ensuite. Ce document sert de point de départ le jour où B6 est ouverte.
+Ce qui a été fait :
+- **Serveur** : un média en revue est accepté dans un message ; `media_status` sur chaque message image ; `GET /conversations/{id}/messages/{messageId}/media` (membres seulement, approuvé seulement, adresse signée de 10 minutes, jamais mise en cache) ; signal `message.media` et notification push à l'approbation et au rejet ; contrat OpenAPI régénéré.
+- **Mobile** : bouton « Joindre une photo », dépôt `message_image`, message `image`, aperçu de sa propre photo en vérification, états « en vérification » et « refusée », photo approuvée par adresse signée, plein écran, mise à jour en direct.
+
+Le même jour, le propriétaire a aussi demandé les notes vocales et les vidéos et autorisé `infra/` : code fait, **fermé par défaut** tant que le conteneur `transcode` n'est pas déployé et essayé (`docs/runbooks/transcode.md`).
+
+Ce qui reste (section 5 inchangée) : la modération humaine et son effectif, les textes légaux sur l'accès des modérateurs, la procédure de signalement aux autorités, et toute vérification sur appareil ou contre un vrai stockage.

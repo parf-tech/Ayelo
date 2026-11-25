@@ -55,6 +55,8 @@ export function message(id: string, sender: string, body: string, extra: Partial
     type: 'text',
     body,
     media_id: null,
+    media_status: null,
+    media_duration_seconds: null,
     delivered_at: null,
     read_at: null,
     created_at: `2026-11-06T10:00:0${id.length % 10}.000000Z`,
@@ -63,5 +65,7 @@ export function message(id: string, sender: string, body: string, extra: Partial
 }
 
 export function conversation(id: string, peer: PublicProfile, extra: Partial<Conversation> = {}): Conversation {
-  return { id, status: 'active', unlocked_by: 'match', unread: 0, last_message: null, profile: peer, ...extra };
+  // `match_id` : renseigné pour une conversation issue d'un match (par défaut), nul sinon.
+  const matchId = (extra.unlocked_by ?? 'match') === 'match' ? `m-${id}` : null;
+  return { id, match_id: matchId, status: 'active', unlocked_by: 'match', unread: 0, last_message: null, profile: peer, ...extra };
 }

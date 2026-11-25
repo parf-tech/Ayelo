@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\OpenApi\ReauthenticationRequestBody;
+use App\Services\Media\SpoolTranscoder;
+use App\Services\Media\Transcoder;
 use App\Services\OAuth\JwtOAuthVerifier;
 use App\Services\OAuth\OAuthVerifier;
 use App\Services\Push\FcmPushNotifier;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OAuthVerifier::class, JwtOAuthVerifier::class);
         $this->app->singleton(MediaStorage::class, S3MediaStorage::class);
+        $this->app->bind(Transcoder::class, fn () => new SpoolTranscoder((string) config('media.transcode.spool')));
         $this->app->bind(PushNotifier::class, FcmPushNotifier::class);
     }
 
@@ -85,6 +88,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('swipes', fn (Request $r) => Limit::perMinute(120)->by('swipes:'.$r->user()?->id));
         RateLimiter::for('conversations', fn (Request $r) => Limit::perMinute(10)->by('conv:'.$r->user()?->id));
         RateLimiter::for('messages', fn (Request $r) => Limit::perMinute(30)->by('msg:'.$r->user()?->id));
+        // Adresses de lecture des images de conversation : une par image affichée, mises en cache côté client jusqu'à leur expiration.
+        RateLimiter::for('message-media', fn (Request $r) => Limit::perMinute(90)->by('msg-media:'.$r->user()?->id));
         RateLimiter::for('typing', fn (Request $r) => Limit::perMinute(60)->by('typing:'.$r->user()?->id));
         RateLimiter::for('deletion-request', fn (Request $r) => Limit::perHour(3)->by('del-req:'.$r->ip()));
         RateLimiter::for('account-delete', fn (Request $r) => Limit::perDay(5)->by('acc-del:'.$r->user()?->id));

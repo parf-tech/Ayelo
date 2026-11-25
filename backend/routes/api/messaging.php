@@ -12,6 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/conversations/{id}/messages', [MessageController::class, 'index'])->whereUuid('id');
     Route::post('/conversations/{id}/messages', [MessageController::class, 'store'])->whereUuid('id')->middleware('throttle:messages');
+    Route::get('/conversations/{id}/messages/{messageId}/media', [MessageController::class, 'media'])->whereUuid('id')->whereUuid('messageId')->middleware('throttle:message-media');
     Route::post('/conversations/{id}/read', [MessageController::class, 'read'])->whereUuid('id');
     Route::post('/conversations/{id}/delivered', [MessageController::class, 'delivered'])->whereUuid('id');
     Route::post('/conversations/{id}/typing', [MessageController::class, 'typing'])->whereUuid('id')->middleware('throttle:typing');

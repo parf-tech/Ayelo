@@ -32,6 +32,23 @@ jest.mock('expo-crypto', () => ({
 
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
+// expo-audio et expo-video : leurs modules natifs n'existent pas sous Jest (l'import lui-même échoue). Doubles minimaux ;
+// les tests de conversation remplacent aussi nos enveloppes (src/media/voiceRecorder.ts, voicePlayer.ts).
+jest.mock('expo-audio', () => ({
+  AudioModule: { requestRecordingPermissionsAsync: jest.fn(async () => ({ granted: true })), AudioRecorder: jest.fn() },
+  RecordingPresets: { HIGH_QUALITY: { extension: '.m4a', sampleRate: 44100, numberOfChannels: 2, bitRate: 128000 } },
+  setAudioModeAsync: jest.fn(async () => undefined),
+  createAudioPlayer: jest.fn(),
+}));
+jest.mock('expo-video', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    useVideoPlayer: jest.fn(() => ({ play: jest.fn(), pause: jest.fn(), release: jest.fn() })),
+    VideoView: (props: Record<string, unknown>) => React.createElement(View, { testID: 'video-view', ...props }),
+  };
+});
+
 // Les animations en boucle (Skeleton) empêcheraient act() de se terminer : on simule « réduire les animations ».
 beforeEach(() => {
   jest.clearAllMocks();

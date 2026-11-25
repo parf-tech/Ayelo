@@ -1,5 +1,10 @@
 <?php
 
+// Notes vocales et vidéos en conversation : fermées tant que le conteneur `transcode` (ffmpeg, sans réseau) n'est pas déployé.
+// Un fichier audio ou vidéo n'est jamais servi tel que déposé : il est réencodé sans métadonnées, durée et taille vérifiées,
+// puis relu par un modérateur (docs/14-DEPLOYMENT.md, docs/runbooks/transcode.md).
+$chatAv = (bool) env('MEDIA_CHAT_AV_ENABLED', false);
+
 return [
     /*
      | Stockage objet compatible S3 (Cloudflare R2). Les secrets viennent de l'environnement, jamais du dépôt.
@@ -44,10 +49,34 @@ return [
         'profile_photo' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 6, 'max_per_day' => 12],
         'message_image' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 50, 'max_per_day' => 100],
         'verification_selfie' => ['mimes' => ['image/jpeg', 'image/png'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 3, 'max_per_day' => 5],
+        // `enabled` : ouvert seulement avec MEDIA_CHAT_AV_ENABLED. `transcode` : traitement obligatoire avant la revue humaine.
+        // `max_seconds` : durée vérifiée sur le résultat du traitement (ffprobe), pas seulement sur la déclaration du client.
+        'message_voice' => [
+            'enabled' => $chatAv, 'transcode' => 'audio',
+            'mimes' => ['audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/mpeg'],
+            'max_bytes' => 5 * 1024 * 1024, 'max_seconds' => 120, 'max_open' => 50, 'max_per_day' => 100,
+        ],
+        'message_video' => [
+            'enabled' => $chatAv, 'transcode' => 'video',
+            'mimes' => ['video/mp4', 'video/quicktime'],
+            'max_bytes' => 50 * 1024 * 1024, 'max_seconds' => 30, 'max_open' => 10, 'max_per_day' => 20,
+        ],
     ],
 
-    // Types prévus plus tard (non ouverts) : profile_video, message_video, message_voice, story, invite_video.
-    'deferred_kinds' => ['profile_video', 'message_video', 'message_voice', 'story', 'invite_video'],
+    // Traitement des notes vocales et vidéos par le conteneur `transcode` : dossier partagé (volume), sans réseau.
+    // `timeout_seconds` : au-delà, le média est refusé (le conteneur a sa propre limite de durée par fichier, plus courte).
+    // `poll_seconds` : intervalle entre deux regards de la tâche, qui n'occupe aucun worker entre-temps.
+    'transcode' => [
+        'spool' => env('MEDIA_TRANSCODE_SPOOL', '/spool'),
+        'timeout_seconds' => (int) env('MEDIA_TRANSCODE_TIMEOUT', 300),
+        'poll_seconds' => (int) env('MEDIA_TRANSCODE_POLL', 5),
+        // Marge sur la durée maximale d'un type (secondes) : le réencodage arrondit à l'image ou au paquet près.
+        'duration_tolerance_seconds' => 2,
+    ],
+
+    // Types prévus plus tard (non ouverts) : profile_video, story, invite_video. (Les notes vocales et vidéos de conversation
+    // sont dans `kinds`, derrière `enabled`.)
+    'deferred_kinds' => ['profile_video', 'story', 'invite_video'],
 
     // Balayage des objets sans ligne en base (revue N-14) : délai de grâce (heures, bien supérieur au délai de dépôt et
     // à la fenêtre entre l'écriture de l'objet et celle de la ligne) et plafond de suppressions par passage.

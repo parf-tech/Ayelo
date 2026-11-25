@@ -191,6 +191,29 @@ it('liste et rompt un match', function () {
     as_($cb)->deleteJson("/api/v1/matches/$matchId")->assertNotFound();
 });
 
+it('expose match_id dans GET /conversations : le match se rompt sans passer par la liste plafonnée de GET /matches', function () {
+    [$a, $ab] = member();
+    [$b, $bb] = member();
+    [$c] = member();
+    as_($ab)->postJson('/api/v1/swipes', ['target_id' => $b->id, 'action' => 'like']);
+    as_($bb)->postJson('/api/v1/swipes', ['target_id' => $a->id, 'action' => 'like']);
+
+    // Conversation hors match (ouverte avec un crédit ou le Premium) : pas de match à rompre.
+    $pair = [$a->id, $c->id];
+    sort($pair, SORT_STRING);
+    DB::table('conversations')->insert(['id' => (string) Str::uuid(), 'user_a' => $pair[0], 'user_b' => $pair[1], 'initiated_by' => $a->id,
+        'unlocked_by' => 'credit', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+
+    $matchId = as_($ab)->getJson('/api/v1/matches')->json('data.0.id');
+    $rows = collect(as_($ab)->getJson('/api/v1/conversations')->assertOk()->json('data'))->keyBy('unlocked_by');
+
+    expect($rows['match']['match_id'])->toBe($matchId)
+        ->and($rows['credit']['match_id'])->toBeNull();
+
+    as_($ab)->deleteJson('/api/v1/matches/'.$rows['match']['match_id'])->assertNoContent();
+    expect(DB::table('conversations')->where('unlocked_by', 'match')->value('status'))->toBe('archived');
+});
+
 // ---------- blocage ----------
 
 it('bloque : le profil disparaît, le match et la conversation sont bloqués, opération idempotente', function () {

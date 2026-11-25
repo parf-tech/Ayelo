@@ -23,7 +23,7 @@
         "CFBundleAllowMixedLocalizations": true,
         "NSCameraUsageDescription": "Ayelo utilise la caméra pour le selfie de vérification de votre profil.",
         "NSPhotoLibraryUsageDescription": "Ayelo accède à vos photos pour que vous puissiez les ajouter à votre profil.",
-        "NSMicrophoneUsageDescription": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs."
+        "NSMicrophoneUsageDescription": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs et pour enregistrer vos messages vocaux."
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -95,9 +95,16 @@
         {
           "photosPermission": "Ayelo accède à vos photos pour que vous puissiez les ajouter à votre profil.",
           "cameraPermission": "Ayelo utilise la caméra pour le selfie de vérification de votre profil.",
-          "microphonePermission": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs."
+          "microphonePermission": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs et pour enregistrer vos messages vocaux."
         }
       ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Ayelo utilise le micro pour les appels audio et vidéo avec vos matchs et pour enregistrer vos messages vocaux."
+        }
+      ],
+      "expo-video",
       [
         "expo-notifications",
         {

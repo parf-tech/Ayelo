@@ -176,8 +176,6 @@ export type SwipeAction = SwipeRequest['action'];
 export type SwipeResult = OpResponse<'swipe.store', 201> | OpResponse<'swipe.store', 200>;
 export type UndoSwipeResult = OpResponse<'swipe.undo'>;
 
-export type Match = Item<OpResponse<'match.index'>['data']>;
-
 export type Block = { user_id: string; display_name: string; created_at: string };
 
 export type ReportRequest = OpRequest<'report.store'>;
@@ -213,6 +211,10 @@ export type Message = Item<OpResponse<'message.index'>['data']> & {
   safety_hint?: NonNullable<OpResponse<'message.store', 201>['safety_hint']>;
 };
 export type MessageType = Message['type'];
+/** Statut de modération de l'image d'un message : `processing` en revue humaine, `approved`, `rejected` ; null hors image. */
+export type MessageMediaStatus = NonNullable<Message['media_status']>;
+/** Adresse signée de l'image d'un message, valable jusqu'à `expires_at` (GET /conversations/{id}/messages/{messageId}/media). */
+export type MessageMediaUrl = OpResponse<'message.media'>;
 
 export type ConversationStatus = 'active' | 'blocked' | 'archived' | string;
 

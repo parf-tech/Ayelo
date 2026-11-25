@@ -166,6 +166,35 @@ describe('biométrie : description d’usage de Face ID', () => {
   });
 });
 
+describe('notes vocales et vidéos : modules natifs et micro', () => {
+  const expo = readJson('app.json').expo;
+  const plugins = expo.plugins as unknown[];
+  const options = (name: string) => (plugins.find((p) => Array.isArray(p) && p[0] === name) as [string, Record<string, unknown>] | undefined)?.[1];
+
+  it('expo-audio et expo-video sont des dépendances du projet', () => {
+    const dependencies = readJson('package.json').dependencies;
+    expect(dependencies['expo-audio']).toBeDefined();
+    expect(dependencies['expo-video']).toBeDefined();
+  });
+
+  it('expo-audio est déclaré avec la MÊME description du micro que l’iOS et le sélecteur d’images (une seule version, en français, qui cite les messages vocaux)', () => {
+    const description = expo.ios.infoPlist.NSMicrophoneUsageDescription;
+    expect(options('expo-audio')?.microphonePermission).toBe(description);
+    expect(description).toMatch(/messages vocaux/);
+    expect(description).toMatch(/appels/);
+    expect(description).not.toMatch(/Allow \$\(PRODUCT_NAME\)/);
+  });
+
+  it('expo-video est déclaré (plugin natif)', () => {
+    expect(plugins.some((p) => p === 'expo-video' || (Array.isArray(p) && p[0] === 'expo-video'))).toBe(true);
+  });
+
+  it('le micro reste déclaré : RECORD_AUDIO côté Android, jamais bloqué', () => {
+    expect(expo.android.permissions).toContain('android.permission.RECORD_AUDIO');
+    expect(expo.android.blockedPermissions ?? []).not.toContain('android.permission.RECORD_AUDIO');
+  });
+});
+
 describe('prix par mois (offres de plusieurs mois)', () => {
   const product = (price: number, months: number, extra = {}) => ({
     productId: `p${months}`,

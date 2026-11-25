@@ -22,10 +22,10 @@ import type {
   ExportRequest,
   ListResponse,
   LoginRequest,
-  Match,
   Me,
   MediaCompleteResponse,
   Message,
+  MessageMediaUrl,
   NotificationPrefs,
   OAuthProvider,
   OpenConversationResponse,
@@ -124,7 +124,7 @@ export function createEndpoints(client: ApiClient) {
       request<SwipeResult>('POST', '/swipes', { body: { target_id: targetId, action } satisfies SwipeRequest }),
     /** Premium uniquement (402 premium_required) ; 409 nothing_to_undo. */
     undoSwipe: () => request<UndoSwipeResult>('POST', '/swipes/undo'),
-    matches: () => request<ListResponse<Match>>('GET', '/matches'),
+    /** `id` = `match_id` d'un élément de GET /conversations (la liste GET /matches n'est pas utilisée : plafonnée à 100, sans curseur). */
     deleteMatch: (id: string) => request<void>('DELETE', `/matches/${id}`),
   };
 
@@ -153,6 +153,12 @@ export function createEndpoints(client: ApiClient) {
     /** Idempotent par client_id : renvoyer le même client_id ne crée pas de doublon. */
     sendMessage: (conversationId: string, body: SendMessageRequest) =>
       request<Message>('POST', `/conversations/${conversationId}/messages`, { body }),
+    /**
+     * Adresse de lecture d'une image de conversation. 409 `media_pending` tant que la modération n'a pas statué, 410
+     * `media_rejected` après un rejet. L'adresse expire (`expires_at`) : elle se redemande, elle ne se mémorise pas durablement.
+     */
+    messageMedia: (conversationId: string, messageId: string) =>
+      request<MessageMediaUrl>('GET', `/conversations/${conversationId}/messages/${messageId}/media`),
     markRead: (conversationId: string, upToMessageId: string) =>
       request<void>('POST', `/conversations/${conversationId}/read`, { body: { up_to_message_id: upToMessageId } }),
     markDelivered: (conversationId: string, upToMessageId: string) =>

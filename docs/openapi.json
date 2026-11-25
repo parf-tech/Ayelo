@@ -1942,6 +1942,12 @@
                                                     "id": {
                                                         "type": "string"
                                                     },
+                                                    "match_id": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
                                                     "status": {
                                                         "type": "string"
                                                     },
@@ -2111,6 +2117,7 @@
                                                 },
                                                 "required": [
                                                     "id",
+                                                    "match_id",
                                                     "status",
                                                     "unlocked_by",
                                                     "unread",
@@ -3409,7 +3416,9 @@
                                         "enum": [
                                             "profile_photo",
                                             "message_image",
-                                            "verification_selfie"
+                                            "verification_selfie",
+                                            "message_voice",
+                                            "message_video"
                                         ]
                                     },
                                     "mime_type": {
@@ -3507,22 +3516,42 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "media_id": {
-                                            "type": "string"
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "media_id": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "processing",
+                                                        "approved"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "media_id",
+                                                "status"
+                                            ]
                                         },
-                                        "status": {
-                                            "type": "string",
-                                            "enum": [
-                                                "processing",
-                                                "approved"
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "media_id": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "const": "processing"
+                                                }
+                                            },
+                                            "required": [
+                                                "media_id",
+                                                "status"
                                             ]
                                         }
-                                    },
-                                    "required": [
-                                        "media_id",
-                                        "status"
                                     ]
                                 }
                             }
@@ -3833,6 +3862,24 @@
                                                             "null"
                                                         ]
                                                     },
+                                                    "media_status": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "enum": [
+                                                            "processing",
+                                                            "approved",
+                                                            "rejected",
+                                                            null
+                                                        ]
+                                                    },
+                                                    "media_duration_seconds": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ]
+                                                    },
                                                     "delivered_at": {
                                                         "type": [
                                                             "string",
@@ -3857,6 +3904,8 @@
                                                     "type",
                                                     "body",
                                                     "media_id",
+                                                    "media_status",
+                                                    "media_duration_seconds",
                                                     "delivered_at",
                                                     "read_at",
                                                     "created_at"
@@ -3919,7 +3968,9 @@
                                         "type": "string",
                                         "enum": [
                                             "text",
-                                            "image"
+                                            "image",
+                                            "voice",
+                                            "video"
                                         ]
                                     },
                                     "body": {
@@ -3969,7 +4020,9 @@
                                             "type": "string",
                                             "enum": [
                                                 "text",
-                                                "image"
+                                                "image",
+                                                "voice",
+                                                "video"
                                             ]
                                         },
                                         "body": {
@@ -3981,6 +4034,24 @@
                                         "media_id": {
                                             "type": [
                                                 "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "media_status": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "enum": [
+                                                "processing",
+                                                "approved",
+                                                "rejected",
+                                                null
+                                            ]
+                                        },
+                                        "media_duration_seconds": {
+                                            "type": [
+                                                "integer",
                                                 "null"
                                             ]
                                         },
@@ -4012,6 +4083,8 @@
                                         "type",
                                         "body",
                                         "media_id",
+                                        "media_status",
+                                        "media_duration_seconds",
                                         "delivered_at",
                                         "read_at",
                                         "created_at"
@@ -4064,6 +4137,24 @@
                                                 "null"
                                             ]
                                         },
+                                        "media_status": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "enum": [
+                                                "processing",
+                                                "approved",
+                                                "rejected",
+                                                null
+                                            ]
+                                        },
+                                        "media_duration_seconds": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "delivered_at": {
                                             "type": [
                                                 "string",
@@ -4088,6 +4179,8 @@
                                         "type",
                                         "body",
                                         "media_id",
+                                        "media_status",
+                                        "media_duration_seconds",
                                         "delivered_at",
                                         "read_at",
                                         "created_at"
@@ -4133,6 +4226,128 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/conversations/{id}/messages/{messageId}/media": {
+            "get": {
+                "operationId": "message.media",
+                "description": "R\u00e9serv\u00e9e aux deux membres, uniquement quand la mod\u00e9ration a approuv\u00e9 le m\u00e9dia (409 `media_pending` en revue, 410\n`media_rejected` apr\u00e8s un rejet). L'adresse est sign\u00e9e et expire (`media.read_ttl_minutes`) ; elle ne figure ni dans la\nliste des messages ni dans les diffusions : le client la demande image par image.",
+                "summary": "Adresse de lecture d'une image, d'une note vocale ou d'une vid\u00e9o de conversation",
+                "tags": [
+                    "Message"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Adresse sign\u00e9e de l'image, valable jusqu'\u00e0 `expires_at`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "expires_at": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "url",
+                                        "expires_at"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "media_pending"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Cette image est en cours de v\u00e9rification."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "media_rejected"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Cette image a \u00e9t\u00e9 refus\u00e9e par la mod\u00e9ration."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"

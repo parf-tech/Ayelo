@@ -1,7 +1,11 @@
-import type { Message } from '../../api/types';
+import type { Message, MessageMediaStatus } from '../../api/types';
 
-/** Message tel qu'affiché : un message envoyé mais pas encore confirmé par le serveur porte `local`. */
-export type LocalMessage = Message & { local?: 'sending' | 'failed' };
+/**
+ * Message tel qu'affiché : un message envoyé mais pas encore confirmé par le serveur porte `local`.
+ * `local_image_uri` : fichier local de la photo que MOI j'ai envoyée, gardé pour l'aperçu tant qu'elle est en vérification
+ * (jamais renvoyé par le serveur, absent après un redémarrage de l'application).
+ */
+export type LocalMessage = Message & { local?: 'sending' | 'failed'; local_image_uri?: string };
 
 function compareDesc(a: LocalMessage, b: LocalMessage): number {
   if (a.created_at === b.created_at) return a.id < b.id ? 1 : -1;
@@ -30,6 +34,7 @@ export function mergeMessage(list: LocalMessage[], incoming: Message): LocalMess
       delivered_at: clean.delivered_at ?? existing.delivered_at,
       read_at: clean.read_at ?? existing.read_at,
       safety_hint: clean.safety_hint ?? existing.safety_hint,
+      ...(existing.local_image_uri ? { local_image_uri: existing.local_image_uri } : null),
     };
     return sortThread(copy);
   }
@@ -51,6 +56,20 @@ export function setLocalState(list: LocalMessage[], clientId: string, local: 'se
 
 export function removeByClientId(list: LocalMessage[], clientId: string): LocalMessage[] {
   return list.filter((m) => m.client_id !== clientId);
+}
+
+/** Décision de modération reçue en direct : met à jour le statut du média (photo, note vocale, vidéo) du message `messageId`. */
+export function applyMediaStatus(list: LocalMessage[], messageId: string, status: MessageMediaStatus): LocalMessage[] {
+  const index = list.findIndex((m) => m.id === messageId && (m.type === 'image' || m.type === 'voice' || m.type === 'video'));
+  if (index < 0 || list[index]?.media_status === status) return list;
+  return list.map((m, i) => (i === index ? { ...m, media_status: status } : m));
+}
+
+const MEDIA_STATUSES: readonly string[] = ['processing', 'approved', 'rejected'];
+
+/** Statut de modération valide, ou null : un signal mal formé est ignoré. */
+export function parseMediaStatus(value: unknown): MessageMediaStatus | null {
+  return typeof value === 'string' && MEDIA_STATUSES.includes(value) ? (value as MessageMediaStatus) : null;
 }
 
 /**

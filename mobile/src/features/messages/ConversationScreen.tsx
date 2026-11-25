@@ -2,9 +2,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, TextInput, View } from 'react-native';
 import { useAuth } from '../../auth/AuthProvider';
-import { CALLS_ENABLED } from '../../config/features';
+import { CALLS_ENABLED, CHAT_AV_ENABLED } from '../../config/features';
 import { useI18n } from '../../i18n';
 import { apiErrorMessage } from '../../i18n/apiErrors';
+import { pickImage, pickVideo } from '../../media/picker';
+import { startVoiceRecording, type RecordingSession, type VoiceRecording } from '../../media/voiceRecorder';
 import { useRealtime } from '../../realtime';
 import { borderWidth, fontFamilyFor, focus, MIN_TARGET, useFontsReady, useTheme } from '../../theme';
 import { AsyncView, Avatar, Banner, Button, Icon, IconButton, ScreenContainer, Text, useToast } from '../../ui';
@@ -14,16 +16,20 @@ import { useGoBack } from '../common/useGoBack';
 import { primaryPhotoUrl } from '../discover/swipe';
 import { useConversations } from './ConversationsProvider';
 import { DateSeparator } from './DateSeparator';
+import { ImageMessage } from './ImageMessage';
+import { ImageViewer } from './ImageViewer';
 import { MessageBubble } from './MessageBubble';
+import { RecordingBar } from './RecordingBar';
+import { VideoMessage } from './VideoMessage';
+import { VideoViewer } from './VideoViewer';
+import { VoiceMessage } from './VoiceMessage';
 import { dayKey } from './messageTime';
 import type { LocalMessage } from './thread';
-import { useThread } from './useThread';
+import { useMessageImages } from './useMessageImages';
+import { useThread, type ImageSendResult } from './useThread';
 
 /** Hauteur maximale de la zone de saisie (au-delà, elle défile). */
 const COMPOSER_MAX_HEIGHT = 120;
-
-/** Le match de la conversation n'est pas dans la liste (GET /matches ne renvoie que les 100 derniers, sans curseur). */
-class MatchNotInRecentList extends Error {}
 
 function param(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
@@ -52,18 +58,83 @@ export function ConversationScreen() {
   const canCall = CALLS_ENABLED && isMatch;
 
   const thread = useThread(conversationId);
+  const loadImage = useMessageImages(conversationId);
+  const [viewing, setViewing] = useState<string | null>(null);
+  const [viewingVideo, setViewingVideo] = useState<string | null>(null);
+  const [recording, setRecording] = useState<RecordingSession | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirm, setConfirm] = useState<'block' | 'unmatch' | 'hide' | null>(null);
   const [composerFocused, setComposerFocused] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | undefined>();
+  // Identifiant du match à rompre, fourni par GET /conversations (nul hors match).
+  const matchId = known?.match_id ?? null;
 
   const submit = () => {
     const text = draft;
     if (!text.trim()) return;
     setDraft('');
     void thread.send(text);
+  };
+
+  /** Affiche l'erreur d'un envoi d'image (le message local est déjà en « échec », avec « Renvoyer »). */
+  const showImageResult = async (result: Promise<ImageSendResult | undefined>) => {
+    const outcome = await result;
+    if (outcome && !outcome.ok) {
+      const { key, params: p } = apiErrorMessage(outcome.error);
+      setNotice(t(key, p));
+    }
+  };
+
+  const attachPhoto = async () => {
+    setAttachOpen(false);
+    setNotice(undefined);
+    try {
+      const picked = await pickImage('library');
+      if (picked.kind !== 'picked') return;
+      await showImageResult(thread.sendImage(picked.image));
+    } catch (error) {
+      const { key, params: p } = apiErrorMessage(error);
+      setNotice(t(key, p));
+    }
+  };
+
+  const attachVideo = async () => {
+    setAttachOpen(false);
+    setNotice(undefined);
+    try {
+      const picked = await pickVideo();
+      if (picked.kind !== 'picked') return;
+      await showImageResult(thread.sendMedia({ type: 'video', file: picked.video, durationSeconds: picked.video.durationSeconds ?? undefined }));
+    } catch (error) {
+      const { key, params: p } = apiErrorMessage(error);
+      setNotice(t(key, p));
+    }
+  };
+
+  // Avec les notes vocales et les vidéos, « Joindre » propose le choix ; sans elles, il ouvre directement la galerie de photos.
+  const onAttach = () => {
+    if (CHAT_AV_ENABLED) setAttachOpen((open) => !open);
+    else void attachPhoto();
+  };
+
+  const record = async () => {
+    setNotice(undefined);
+    setAttachOpen(false);
+    const started = await startVoiceRecording();
+    if (started.kind === 'started') setRecording(started.session);
+    else setNotice(t(started.kind === 'denied' ? 'conversation.record.denied' : 'conversation.record.failed'));
+  };
+
+  const sendRecording = async (voice: VoiceRecording | null) => {
+    setRecording(null);
+    if (!voice) {
+      setNotice(t('conversation.record.empty'));
+      return;
+    }
+    await showImageResult(thread.sendMedia({ type: 'voice', file: { uri: voice.uri, mimeType: 'audio/mp4', fileSize: null }, durationSeconds: voice.durationSeconds }));
   };
 
   const report = () => {
@@ -81,24 +152,17 @@ export function ConversationScreen() {
       toast.show({ message, variant: 'success' });
       router.replace('/messages' as never);
     } catch (error) {
-      if (error instanceof MatchNotInRecentList) {
-        setNotice(t('conversation.unmatchNotFound'));
-      } else {
-        const { key, params: p } = apiErrorMessage(error);
-        setNotice(t(key, p));
-      }
+      const { key, params: p } = apiErrorMessage(error);
+      setNotice(t(key, p));
       setConfirm(null);
     }
   };
 
   const unmatch = () =>
     leave(async () => {
-      const matches = await api.discovery.matches();
-      const match = matches.data.find((m) => m.conversation_id === conversationId);
-      // Aucune route ne rompt un match par conversation : on le retrouve dans GET /matches, limité aux 100 derniers. Un match plus
-      // ancien n'y figure pas : rien n'est rompu, on le dit au lieu d'annoncer un succès.
-      if (!match) throw new MatchNotInRecentList();
-      await api.discovery.deleteMatch(match.id);
+      // Le menu n'affiche « Rompre le match » que si `match_id` est connu ; cette garde ne sert qu'au typage.
+      if (!matchId) return;
+      await api.discovery.deleteMatch(matchId);
     }, t('conversation.unmatchDone'));
 
   const renderMessage = ({ item, index }: { item: LocalMessage; index: number }) => {
@@ -150,11 +214,30 @@ export function ConversationScreen() {
           message={item}
           mine={mine}
           content={content}
+          media={
+            item.type === 'image' ? (
+              <ImageMessage
+                message={item}
+                mine={mine}
+                loadUrl={loadImage}
+                onOpen={setViewing}
+                deletable={deletable}
+                onOpenActions={() => setActionFor(item.id)}
+              />
+            ) : item.type === 'voice' ? (
+              <VoiceMessage message={item} mine={mine} loadUrl={loadImage} deletable={deletable} onOpenActions={() => setActionFor(item.id)} />
+            ) : item.type === 'video' ? (
+              <VideoMessage message={item} mine={mine} onOpen={setViewingVideo} deletable={deletable} onOpenActions={() => setActionFor(item.id)} />
+            ) : undefined
+          }
           deletable={deletable}
           actionOpen={actionFor === item.id}
           onOpenActions={() => setActionFor(item.id)}
           onCloseActions={() => setActionFor(null)}
-          onRetry={() => void thread.retry(item.client_id)}
+          onRetry={() => {
+            setNotice(undefined);
+            void showImageResult(thread.retry(item.client_id));
+          }}
           onDiscard={() => thread.discard(item.client_id)}
           onDelete={() => {
             setActionFor(null);
@@ -196,8 +279,25 @@ export function ConversationScreen() {
               {t('conversation.closed')}
             </Text>
           </View>
+        ) : recording ? (
+          <RecordingBar session={recording} onSend={(voice) => void sendRecording(voice)} onCancel={() => setRecording(null)} />
         ) : (
+          <View style={{ gap: space[2] }}>
+          {attachOpen ? (
+            <MenuSheet testID="conversation-attach-sheet">
+              <MenuItem testID="attach-photo" icon="ImagePlus" label={t('conversation.attach.photo')} onPress={() => void attachPhoto()} />
+              <MenuItem testID="attach-video" icon="Video" label={t('conversation.attach.video')} onPress={() => void attachVideo()} />
+            </MenuSheet>
+          ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space[2] }}>
+            <IconButton
+              testID="conversation-attach"
+              icon="ImagePlus"
+              size="lg"
+              expanded={CHAT_AV_ENABLED ? attachOpen : undefined}
+              accessibilityLabel={t('conversation.attach')}
+              onPress={onAttach}
+            />
             <TextInput
               testID="conversation-input"
               accessibilityLabel={t('conversation.input')}
@@ -230,15 +330,27 @@ export function ConversationScreen() {
                 backgroundColor: colors.surface,
               }}
             />
-            <IconButton
-              testID="conversation-send"
-              icon="Send"
-              size="lg"
-              variant="filled"
-              accessibilityLabel={t('conversation.send')}
-              onPress={submit}
-              disabled={draft.trim() === ''}
-            />
+            {CHAT_AV_ENABLED && draft.trim() === '' ? (
+              <IconButton
+                testID="conversation-record"
+                icon="Mic"
+                size="lg"
+                variant="filled"
+                accessibilityLabel={t('conversation.record')}
+                onPress={() => void record()}
+              />
+            ) : (
+              <IconButton
+                testID="conversation-send"
+                icon="Send"
+                size="lg"
+                variant="filled"
+                accessibilityLabel={t('conversation.send')}
+                onPress={submit}
+                disabled={draft.trim() === ''}
+              />
+            )}
+          </View>
           </View>
         )
       }
@@ -328,7 +440,7 @@ export function ConversationScreen() {
             <>
               <MenuItem testID="conversation-report" icon="Flag" label={t('conversation.report')} onPress={report} disabled={!peerId} />
               <MenuItem testID="conversation-block" icon="Ban" danger label={t('conversation.block')} onPress={() => setConfirm('block')} disabled={!peerId} />
-              {isMatch ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
+              {matchId ? <MenuItem testID="conversation-unmatch" icon="Undo2" label={t('conversation.unmatch')} onPress={() => setConfirm('unmatch')} /> : null}
               <MenuItem testID="conversation-hide" icon="Trash2" danger label={t('conversation.hide')} onPress={() => setConfirm('hide')} />
             </>
           )}
@@ -397,6 +509,18 @@ export function ConversationScreen() {
           }
         />
       </AsyncView>
+      {viewing ? <ImageViewer uri={viewing} onClose={() => setViewing(null)} /> : null}
+      {viewingVideo ? (
+        <VideoViewer
+          messageId={viewingVideo}
+          loadUrl={loadImage}
+          onClose={() => setViewingVideo(null)}
+          onUnavailable={(messageId, status) => {
+            setViewingVideo(null);
+            thread.setMediaStatus(messageId, status);
+          }}
+        />
+      ) : null}
     </ScreenContainer>
   );
 }

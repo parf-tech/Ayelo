@@ -57,6 +57,12 @@ final class DeployPreflight
                 $errors[] = $variable.' est vide (stockage objet).';
             }
         }
+        // Notes vocales et vidéos : le dossier partagé avec le conteneur `transcode` doit exister, sinon chaque dépôt serait refusé.
+        $chatAv = (bool) config('media.kinds.message_voice.enabled') || (bool) config('media.kinds.message_video.enabled');
+        $spool = rtrim((string) config('media.transcode.spool'), '/\\');
+        if ($chatAv && (! is_dir($spool.'/in') || ! is_dir($spool.'/out'))) {
+            $errors[] = 'MEDIA_TRANSCODE_SPOOL : dossier partagé avec le conteneur transcode introuvable (in/ et out/) alors que MEDIA_CHAT_AV_ENABLED est actif : tous les dépôts vocaux et vidéo seraient refusés.';
+        }
         if (config('media.auto_approve')) {
             $errors[] = 'MEDIA_AUTO_APPROVE doit valoir false : aucun prestataire de modération n\'est branché, tout média passe en revue humaine.';
         }
