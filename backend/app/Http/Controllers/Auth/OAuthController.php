@@ -177,7 +177,7 @@ class OAuthController extends Controller
         }
 
         if ($provider === 'apple' && ! empty($data['authorization_code'])) {
-            $apple->remember($user->id, $identity->subject, $data['authorization_code']);
+            $apple->remember((string) $user->id, $identity->subject, $data['authorization_code']);
         }
 
         $token = $sessions->start($user, $data['platform'], $device, $data['app_version'] ?? null);

@@ -41,13 +41,13 @@ class AccountDeletion
     /** Date de l'anonymisation d'un compte dont la suppression a été demandée. */
     public function purgeAt(User $user): CarbonImmutable
     {
-        return CarbonImmutable::parse($user->deletion_requested_at)->addDays(self::GRACE_DAYS);
+        return CarbonImmutable::parse($user->getAttribute('deletion_requested_at'))->addDays(self::GRACE_DAYS);
     }
 
     /** Compte en cours de suppression et encore dans son délai de grâce : la suppression peut être annulée. */
     public function isCancellable(User $user): bool
     {
-        return $user->status === 'deleting' && $user->deletion_requested_at !== null && $this->purgeAt($user)->isFuture();
+        return $user->getAttribute('status') === 'deleting' && $user->getAttribute('deletion_requested_at') !== null && $this->purgeAt($user)->isFuture();
     }
 
     /**
@@ -61,7 +61,7 @@ class AccountDeletion
      */
     public function cancel(User $user): bool
     {
-        $restrictions = app(SanctionLedger::class)->activeRestrictions($user->id);
+        $restrictions = app(SanctionLedger::class)->activeRestrictions((string) $user->id);
         $status = $restrictions->contains(fn ($s) => $s->kind === 'ban') ? 'banned' : ($restrictions->isNotEmpty() ? 'suspended' : 'active');
 
         return DB::table('users')->where('id', $user->id)->where('status', 'deleting')
@@ -236,7 +236,7 @@ class AccountDeletion
             } catch (DecryptException) {
                 Log::error('Jeton Apple illisible, non révoqué', ['user_id' => $user->id]);
             } catch (AppleRevocationFailed $e) {
-                if ($user->deletion_requested_at === null || ! $this->purgeAt($user)->addDays(7)->isPast()) {
+                if ($user->getAttribute('deletion_requested_at') === null || ! $this->purgeAt($user)->addDays(7)->isPast()) {
                     throw $e;
                 }
                 Log::error('Jeton Apple non révoqué, purge poursuivie', ['user_id' => $user->id, 'error' => $e->getMessage()]);
