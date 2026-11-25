@@ -36,8 +36,11 @@ class ReportModeration extends AdminService
     /**
      * @param  string  $note  motif communiqué à l'utilisateur (avertissement, suspension, bannissement) ou note interne (classement)
      * @param  int|null  $days  durée de la suspension
+     * @param  bool  $withDuplicates  applique aussi la décision aux autres signalements ouverts du même motif sur le même compte
+     *                                (une seule sanction, rattachée à ce signalement) ; jamais pour « mineur suspecté » ni pour la levée
+     *                                de la suspension préventive, qui se revoient un par un ; ceux pris par une autre personne sont épargnés
      */
-    public function decide(StaffUser $actor, string $reportId, string $decision, string $note, ?int $days = null): void
+    public function decide(StaffUser $actor, string $reportId, string $decision, string $note, ?int $days = null, bool $withDuplicates = false, ?string $internalNote = null): void
     {
         if (! in_array($decision, self::DECISIONS, true)) {
             throw new DomainException('Décision inconnue.');
@@ -50,10 +53,13 @@ class ReportModeration extends AdminService
             throw new DomainException('La durée de suspension doit être comprise entre 1 et 365 jours.');
         }
 
-        $this->audited($actor, Permissions::REPORTS_REVIEW, 'report.'.$decision, 'reports', $reportId, function () use ($actor, $reportId, $decision, $note, $days) {
+        $this->audited($actor, Permissions::REPORTS_REVIEW, 'report.'.$decision, 'reports', $reportId, function () use ($actor, $reportId, $decision, $note, $days, $withDuplicates, $internalNote) {
             $report = DB::table('reports')->where('id', $reportId)->lockForUpdate()->first();
             if ($report === null || ! in_array($report->status, ['open', 'reviewed'], true)) {
                 throw new DomainException('Ce signalement a déjà été traité.');
+            }
+            if (ReportAssignment::lockedByOther($report, $actor->id)) {
+                throw new DomainException('Ce signalement est pris en charge par un autre membre du personnel.');
             }
 
             $userId = $report->reported_id;
@@ -73,16 +79,16 @@ class ReportModeration extends AdminService
 
             switch ($decision) {
                 case self::WARNING:
-                    $sanctionId = $this->sanctions->issue($userId, 'warning', $note, $reportId, null, $actor->id);
+                    $sanctionId = $this->sanctions->issue($userId, 'warning', $note, $reportId, null, $actor->id, $internalNote);
                     [$outcome, $status] = ['warning', 'actioned'];
                     break;
                 case self::SUSPENSION:
-                    $sanctionId = $this->sanctions->issue($userId, 'suspension', $note, $reportId, now()->addDays($days), $actor->id);
+                    $sanctionId = $this->sanctions->issue($userId, 'suspension', $note, $reportId, now()->addDays($days), $actor->id, $internalNote);
                     [$outcome, $status] = ['suspension', 'actioned'];
                     break;
                 case self::BAN:
                     // Déjà banni (autre signalement) : le signalement est tout de même clos comme « actioned ».
-                    $sanctionId = $userBefore === 'banned' ? null : $this->sanctions->issue($userId, 'ban', $note, $reportId, null, $actor->id);
+                    $sanctionId = $userBefore === 'banned' ? null : $this->sanctions->issue($userId, 'ban', $note, $reportId, null, $actor->id, $internalNote);
                     [$outcome, $status] = ['ban', 'actioned'];
                     break;
                 case self::LIFT_PREVENTIVE:
@@ -93,9 +99,19 @@ class ReportModeration extends AdminService
                     break;
             }
 
-            DB::table('reports')->where('id', $reportId)->update([
-                'status' => $status, 'outcome' => $outcome, 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'updated_at' => now(),
-            ]);
+            // La décision clôt le signalement et lève l'attribution.
+            $closed = ['status' => $status, 'outcome' => $outcome, 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'assigned_to' => null, 'assigned_at' => null, 'updated_at' => now()];
+            DB::table('reports')->where('id', $reportId)->update($closed);
+
+            $duplicates = [];
+            if ($withDuplicates && $report->reason !== 'minor_suspected' && $decision !== self::LIFT_PREVENTIVE) {
+                $candidates = DB::table('reports')->where('reported_id', $userId)->where('reason', $report->reason)->whereIn('status', ['open', 'reviewed'])
+                    ->where('id', '<>', $reportId)->lockForUpdate()->get(['id', 'assigned_to', 'assigned_at']);
+                $duplicates = $candidates->reject(fn ($d) => ReportAssignment::lockedByOther($d, $actor->id))->pluck('id')->all();
+                if ($duplicates !== []) {
+                    DB::table('reports')->whereIn('id', $duplicates)->update($closed);
+                }
+            }
 
             return new Change(
                 null,
@@ -103,6 +119,7 @@ class ReportModeration extends AdminService
                 [
                     'report_status' => $status, 'outcome' => $outcome, 'user_status' => DB::table('users')->where('id', $userId)->value('status'),
                     'sanction_id' => $sanctionId, 'note' => $note, 'days' => $decision === self::SUSPENSION ? $days : null,
+                    'closed_duplicates' => $duplicates,
                 ],
             );
         });

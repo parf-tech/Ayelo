@@ -23,6 +23,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,6 +32,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -88,6 +90,22 @@ class AdminPanelProvider extends PanelProvider
         return config('app.admin_domain') ?: null;
     }
 
+    /**
+     * Bandeau en haut de chaque page hors production (préproduction, local), pour ne pas confondre les environnements ; rien en
+     * production. Texte : `admin.environment_label` s'il est renseigné, sinon « Environnement : <APP_ENV> » dans la langue du personnel.
+     */
+    public static function environmentBanner(): HtmlString
+    {
+        if (app()->isProduction()) {
+            return new HtmlString('');
+        }
+
+        $text = config('admin.environment_label') ?: __('admin.environment', ['name' => app()->environment()], StaffLocale::resolve());
+
+        return new HtmlString('<div role="note" style="background:#f59e0b;color:#1f2937;text-align:center;font-size:.8125rem;font-weight:600;padding:.25rem .75rem">'
+            .e((string) $text).'</div>');
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -103,6 +121,9 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Ayelo · Administration')
             ->colors(['primary' => Color::Indigo])
             ->globalSearch(false)
+            // Quitter un formulaire modifié demande confirmation ; bandeau d'environnement hors production.
+            ->unsavedChangesAlerts()
+            ->renderHook(PanelsRenderHook::BODY_START, fn (): HtmlString => self::environmentBanner())
             ->resources([
                 Resources\MediaItemResource::class,
                 Resources\ReportResource::class,

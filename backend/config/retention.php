@@ -11,4 +11,8 @@ return [
 
     // Motif d'une sanction (sanctions.reason, colonne obligatoire : remplacé par un marqueur) une fois le compte sanctionné anonymisé.
     'sanction_reason_days' => (int) env('RETENTION_SANCTION_REASON_DAYS', 365),
+
+    // Compte créé par e-mail dont l'adresse n'a jamais été vérifiée et qui n'a aucune activité depuis ce délai : anonymisé par
+    // accounts:purge-unverified (AccountDeletion::purgeUnverified). Valeur initiale, à confirmer avec la matrice juridique.
+    'unverified_account_days' => (int) env('RETENTION_UNVERIFIED_ACCOUNT_DAYS', 30),
 ];

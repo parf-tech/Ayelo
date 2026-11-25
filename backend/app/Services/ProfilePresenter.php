@@ -24,9 +24,9 @@ class ProfilePresenter
      */
     public function self(User $user, ?Profile $profile): array
     {
-        // Un seul agrégat groupé au lieu de trois `sum()` (revue CTO 2.1) ; la table de soldes reste à faire.
-        $sums = DB::table('credit_ledger')->where('user_id', $user->id)->whereIn('credit_type', ['conversation', 'proposal', 'coin'])
-            ->selectRaw('credit_type, sum(delta) as n')->groupBy('credit_type')->pluck('n', 'credit_type');
+        // Soldes lus dans `credit_balances` (tenue à jour par un déclencheur sur le registre) : au plus trois lignes, sans parcourir
+        // l'historique des crédits (revue CTO 1).
+        $sums = DB::table('credit_balances')->where('user_id', $user->id)->pluck('balance', 'credit_type');
         $balance = fn (string $type) => (int) ($sums[$type] ?? 0);
 
         return [
