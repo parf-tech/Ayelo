@@ -30,12 +30,14 @@ function breakDatabase(): void
 }
 
 it('répond 200 quand la base répond et que Redis et la file ne sont pas utilisés', function () {
+    useArrayCache(); // sous CACHE_STORE=redis (CI), le cache utilise Redis : la sonde le pinguerait
     $this->getJson('/api/v1/health')
         ->assertOk()
         ->assertExactJson(['status' => 'ok', 'db' => 'ok', 'redis' => 'skipped', 'queue' => 'skipped']);
 });
 
 it('répond 503 quand la base est injoignable, sans détail technique', function () {
+    useArrayCache();
     breakDatabase();
 
     $response = $this->getJson('/api/v1/health')->assertStatus(503);
@@ -61,6 +63,7 @@ it('répond 503 quand Redis (file) est injoignable, sans détail technique', fun
 });
 
 it('sonde la file en base quand QUEUE_CONNECTION=database', function () {
+    useArrayCache();
     config(['queue.default' => 'database']);
     app()->forgetInstance('queue');
     Queue::clearResolvedInstance('queue');
