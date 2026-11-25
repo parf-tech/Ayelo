@@ -54,7 +54,7 @@ Statuts : [x] corrigé (test cité) | [~] atténué ou décision requise | [ ] o
 - [x] `composer audit` rejoué le 2026-11-06 : « No security vulnerability advisories found ».
 - [x] `npm audit --omit=dev` mobile rejoué le 2026-11-06 : 22 vulnérabilités (1 basse, 21 modérées), aucune haute ni critique (outils de build transitifs ; le correctif proposé est un retour à Expo 52, refusé).
 - [ ] `gitleaks` sur l'historique du commit final : non rejoué en local (binaire absent du poste, téléchargement non autorisé) ; le workflow CI `schema` le fait sur l'historique complet.
-- [ ] Procès-verbal de restauration réel (S8).
+- [ ] Procès-verbal de restauration réel (S8) : exercice fait le 2026-11-25 (`docs/runbooks/restauration.md`), procès-verbal à signer par deux personnes.
 - [x] Troisième relecture ciblée N-01 / N-02 (S9) faite le 2026-11-24 (section suivante).
 
 ## Troisième relecture ciblée : N-01 / N-02 (2026-11-24)

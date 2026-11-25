@@ -1,6 +1,6 @@
 # Procédure : restauration de la base de données
 
-**Statut** : écrite, **jamais exécutée**. Le gate G5 exige une restauration réelle, chronométrée, sur une base vierge, avant le lancement.
+**Statut** : exécutée pour la première fois le 2026-11-25 (réussie avec réserves, voir « Exercices réalisés » en fin de document). Le gate G5 exige une restauration réelle, chronométrée, sur une base vierge, avant le lancement.
 
 **Rien n'a été exécuté, ni les sauvegardes, ni les restaurations, ni les scripts** : le poste de développement n'a ni Docker, ni `pg_dump`, ni `pg_restore`, ni `shellcheck`. Seule la syntaxe bash (`bash -n`) et les refus d'arguments de `restore.sh` (nom de base protégé ou invalide) ont été essayés. Le service `backup` du compose n'a jamais démarré.
 
@@ -44,7 +44,7 @@ La clé privée GPG de déchiffrement est conservée par au moins deux personnes
 
 # Exercice de restauration PostgreSQL (gate G5, exigence S8)
 
-**Statut : procédure écrite, NON exécutée.** Aucune restauration n'a été réalisée à ce jour. Le procès-verbal ci-dessous est vierge : ne le remplir qu'après un exercice réel, avec les valeurs mesurées. Un exercice non consigné compte comme non fait.
+**Statut : exercice réalisé le 2026-11-25.** Le modèle ci-dessous reste vierge : une copie remplie est établie à chaque exercice, signée et conservée hors du dépôt. Un exercice non consigné compte comme non fait.
 
 ## Principe
 L'exercice restaure la dernière sauvegarde dans une **base jetable, sur une instance PostgreSQL séparée de la production** (jamais la base en service), puis vérifie les données et chronomètre chaque phase. Il valide à la fois la sauvegarde, la somme de contrôle, la clé GPG (si le chiffrement est activé) et le script `infra/scripts/restore.sh`.
@@ -70,7 +70,7 @@ Noter l'heure de début (T0) puis l'heure de fin de chaque étape dans le procè
    `time PGHOST=127.0.0.1 PGPORT=55432 PGUSER=postgres infra/scripts/restore.sh <fichier>.dump app_restore`
    Le script s'arrête à la première erreur SQL (`pg_restore --exit-on-error`) et affiche les comptages de tables pour le procès-verbal : toute erreur est à consigner telle quelle.
 6. **Vérifier l'intégrité** (copier les résultats dans le procès-verbal) :
-   - nombre de tables : `psql -h 127.0.0.1 -p 55432 -U postgres -d app_restore -Atc "select count(*) from information_schema.tables where table_schema='public'"` (attendu : 36 tables métier plus les tables Laravel) ;
+   - nombre de tables : `psql -h 127.0.0.1 -p 55432 -U postgres -d app_restore -Atc "select count(*) from information_schema.tables where table_schema='public'"` (attendu : le même nombre qu'en production, 46 au 2026-11-25) ;
    - `select count(*) from users;`, `select max(created_at) from messages;`, `select max(created_at) from purchases;` : comparer avec la production (même ordre de grandeur, dernière date cohérente avec l'heure de la sauvegarde) ;
    - absence de ligne orpheline : `select count(*) from messages m left join conversations c on c.id = m.conversation_id where c.id is null;` (attendu : 0) ;
    - versions de migrations : `php artisan migrate:status` avec `DB_HOST=127.0.0.1 DB_PORT=55432 DB_DATABASE=app_restore` (toutes « Ran »).
@@ -102,7 +102,7 @@ Noter l'heure de début (T0) puis l'heure de fin de chaque étape dans le procè
 | Durée de la restauration (étape 5) | ______ |
 | Durée totale T0 à fin de l'étape 7 | ______ |
 | Erreurs SQL rencontrées | ______ |
-| Nombre de tables | ______ (attendu : 36 + Laravel) |
+| Nombre de tables | ______ (attendu : comme en production) |
 | Utilisateurs (restauré / production) | ______ / ______ |
 | Dernier message (date restaurée) | ______ |
 | Dernier achat (date restaurée) | ______ |
@@ -118,3 +118,11 @@ Noter l'heure de début (T0) puis l'heure de fin de chaque étape dans le procè
 | Signatures (deux personnes) et date | ______ |
 
 Après le premier exercice réel : mettre à jour le statut en tête de ce document, `docs/16-STATUS.md` (gate G5), `specs/011-launch-readiness/tasks.md` (T003, T027) et la ligne « Procès-verbal de restauration » de `docs/reviews/code-security-2-suivi.md` (par la personne qui en a la charge).
+
+## Exercices réalisés
+
+### 2026-11-25 : réussi avec réserves
+
+- Méthode : dernière sauvegarde téléchargée depuis le stockage distant, somme SHA-256 conforme ; déchiffrement sur le poste détenteur de la clé, en flux, directement dans la mémoire d'un PostgreSQL **jetable** du serveur (réseau Docker interne, données en `tmpfs`), puis `restore.sh` exécuté dans ce conteneur ; comptages comparés à la production en lecture seule ; conteneur applicatif jetable contre la base restaurée ; tout détruit ensuite.
+- Résultat : aucune erreur SQL ; 46 tables et 9 migrations, identiques à la production (même empreinte), 0 migration en attente ; `/api/v1/health` 200 ; aucune ligne orpheline ; 64 s de T0 à la fin du test applicatif (téléchargement 11 s, `restore.sh` 7 s).
+- Réserves : base de production sans aucun membre, donc durée et charge non représentatives ; connexion d'un compte de test et bascule non jouées ; clé privée sur un seul poste, sans phrase secrète ; aucune alerte d'échec de sauvegarde ; procès-verbal à signer par deux personnes.

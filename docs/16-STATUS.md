@@ -63,7 +63,7 @@ Date : 2026-11-06 (mise à jour le 2026-11-07, après les lots 6 à 9, le pentes
 - **LiveKit réel** : les jetons sont décodés par les tests ; aucun appel établi.
 - **Applications mobiles** : jamais lancées sur appareil ni émulateur.
 - **Docker Compose, Caddyfile et image PHP** : non testés (Docker absent du poste de développement). Durcissement de production relu et complété le 2026-11-07 (en-têtes dont CSP pour l'hôte d'administration, liste blanche d'IP échec fermé, Redis protégé par mot de passe, variables limitées pour Caddy, Reverb sans événements client) **par lecture seulement** : ni `docker compose config`, ni `caddy validate`, ni la CSP dans un navigateur n'ont été exécutés.
-- **Restauration PostgreSQL** : exercice pas à pas et modèle de procès-verbal écrits (`runbooks/restauration.md`), **jamais exécutés**.
+- **Restauration PostgreSQL** : exercice réalisé le 2026-11-25, réussi avec réserves (base de production sans membre ; procès-verbal à signer) : `runbooks/restauration.md`, « Exercices réalisés ».
 - **Charge et concurrence réelle** : le verrou de match n'est testé que séquentiellement.
 
 ## Ce que l'équipe ne peut pas faire seule (dépend du propriétaire ou d'un tiers)
