@@ -119,7 +119,7 @@ return [
     'field' => [
         'message_to_user' => 'Message communiqué à l\'utilisateur', 'reason_to_user' => 'Motif communiqué à l\'utilisateur', 'internal_note' => 'Note interne',
         'justification' => 'Justification', 'duration' => 'Durée', 'reason' => 'Motif', 'note_optional' => 'Note (facultative)',
-        'decision_note' => 'Note de décision (obligatoire)', 'language' => 'Langue du back-office', 'with_duplicates' => 'Appliquer aussi aux :count autre(s) signalement(s) ouvert(s) du même motif sur ce compte', 'assign_to' => 'Attribuer à', 'reason_required' => 'Motif (obligatoire)', 'reason_visible_hint' => 'Ce motif est communiqué à l\'utilisateur. N\'y inscrivez aucune note interne.', 'delta' => 'Variation (+ ou −)',
+        'decision_note' => 'Note de décision (obligatoire)', 'language' => 'Langue du back-office', 'with_duplicates' => 'Appliquer aussi aux :count autre(s) signalement(s) ouvert(s) du même motif sur ce compte', 'assign_to' => 'Attribuer à', 'reason_required' => 'Motif (obligatoire)', 'sanction_internal_note' => 'Note interne (facultative)', 'sanction_internal_note_hint' => 'Lue par le personnel seulement : jamais communiquée à la personne, ni incluse dans son export de données.', 'reason_visible_hint' => 'Ce motif est communiqué à l\'utilisateur. N\'y inscrivez aucune note interne.', 'delta' => 'Variation (+ ou −)',
     ],
     'environment' => 'Environnement : :name',
     'days' => '{1} :count jour|[2,*] :count jours',

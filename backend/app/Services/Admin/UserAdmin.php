@@ -26,28 +26,28 @@ class UserAdmin extends AdminService
         parent::__construct($audit);
     }
 
-    public function suspend(StaffUser $actor, string $userId, string $reason, int $days): void
+    public function suspend(StaffUser $actor, string $userId, string $reason, int $days, ?string $internalNote = null): void
     {
         $reason = $this->reason($reason);
         if ($days < 1 || $days > 365) {
             throw new DomainException('La durée de suspension doit être comprise entre 1 et 365 jours.');
         }
 
-        $this->audited($actor, Permissions::USERS_MANAGE, 'user.suspended', 'users', $userId, function () use ($actor, $userId, $reason, $days) {
+        $this->audited($actor, Permissions::USERS_MANAGE, 'user.suspended', 'users', $userId, function () use ($actor, $userId, $reason, $days, $internalNote) {
             $before = $this->status($userId);
-            $sanctionId = $this->sanctions->issue($userId, 'suspension', $reason, null, now()->addDays($days), $actor->id);
+            $sanctionId = $this->sanctions->issue($userId, 'suspension', $reason, null, now()->addDays($days), $actor->id, $internalNote);
 
             return new Change(null, ['status' => $before], ['status' => 'suspended', 'sanction_id' => $sanctionId, 'reason' => $reason, 'days' => $days]);
         });
     }
 
-    public function ban(StaffUser $actor, string $userId, string $reason): void
+    public function ban(StaffUser $actor, string $userId, string $reason, ?string $internalNote = null): void
     {
         $reason = $this->reason($reason);
 
-        $this->audited($actor, Permissions::USERS_MANAGE, 'user.banned', 'users', $userId, function () use ($actor, $userId, $reason) {
+        $this->audited($actor, Permissions::USERS_MANAGE, 'user.banned', 'users', $userId, function () use ($actor, $userId, $reason, $internalNote) {
             $before = $this->status($userId);
-            $sanctionId = $this->sanctions->issue($userId, 'ban', $reason, null, null, $actor->id);
+            $sanctionId = $this->sanctions->issue($userId, 'ban', $reason, null, null, $actor->id, $internalNote);
 
             return new Change(null, ['status' => $before], ['status' => 'banned', 'sanction_id' => $sanctionId, 'reason' => $reason]);
         });

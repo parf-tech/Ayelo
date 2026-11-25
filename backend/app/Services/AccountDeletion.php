@@ -131,7 +131,8 @@ class AccountDeletion
 
     /**
      * Texte libre dont la durée de conservation est écoulée (revue F-06). Ne touche que les dossiers dont une partie est déjà
-     * anonymisée : reports.details est mis à null ; sanctions.reason (obligatoire) est remplacé par le marqueur PURGED_REASON.
+     * anonymisée : reports.details est mis à null ; sanctions.reason (obligatoire) est remplacé par le marqueur PURGED_REASON et
+     * sanctions.internal_note est mise à null.
      * Les signalements encore sous conservation probatoire (evidence_retain_until) sont épargnés.
      *
      * @return array{reports: int, sanctions: int}
@@ -146,10 +147,10 @@ class AccountDeletion
             ->where(fn ($q) => $q->whereIn('reported_id', $deleted)->orWhereIn('reporter_id', $deleted))
             ->update(['details' => null, 'updated_at' => now()]);
 
-        $sanctions = DB::table('sanctions')->where('reason', '<>', self::PURGED_REASON)
+        $sanctions = DB::table('sanctions')->where(fn ($q) => $q->where('reason', '<>', self::PURGED_REASON)->orWhereNotNull('internal_note'))
             ->where('created_at', '<=', now()->subDays((int) config('retention.sanction_reason_days', 365)))
             ->whereIn('user_id', $deleted)
-            ->update(['reason' => self::PURGED_REASON]);
+            ->update(['reason' => self::PURGED_REASON, 'internal_note' => null]);
 
         return ['reports' => $reports, 'sanctions' => $sanctions];
     }

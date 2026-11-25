@@ -576,7 +576,8 @@ create table sanctions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users(id) on delete restrict,
   kind text not null check (kind in ('warning','suspension','ban')),
-  reason text not null,
+  reason text not null,                            -- communiqué à la personne (GET /me/sanctions, export)
+  internal_note text check (char_length(internal_note) <= 1000),  -- personnel seulement, jamais communiquée (P-09)
   report_id uuid references reports(id) on delete set null,
   starts_at timestamptz not null default now(),
   ends_at timestamptz,

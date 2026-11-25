@@ -26,6 +26,8 @@ class ViewMember extends ViewRecord
         $reason = fn () => Textarea::make('reason')->label(Staff::t('admin.field.reason_required'))->required()->minLength(5)->maxLength(500);
         // Suspension et bannissement : le motif est renvoyé tel quel à la personne par GET /me/sanctions (pentest P-09).
         $sanctionReason = fn () => $reason()->helperText(Staff::t('admin.field.reason_visible_hint'));
+        $internal = fn () => Textarea::make('internal_note')->label(Staff::t('admin.field.sanction_internal_note'))
+            ->helperText(Staff::t('admin.field.sanction_internal_note_hint'))->maxLength(1000);
         $name = fn (Member $record): string => (string) ($record->profile?->display_name ?: Staff::t('admin.misc.this_account'));
         $days = fn (array $values) => collect($values)->mapWithKeys(fn (int $d): array => [$d => Staff::days($d)])->all();
         $manage = fn (): bool => Staff::can(Permissions::USERS_MANAGE);
@@ -44,16 +46,17 @@ class ViewMember extends ViewRecord
                 ->schema([
                     Select::make('days')->label(Staff::t('admin.field.duration'))->required()->options($days([1, 3, 7, 30, 90])),
                     $sanctionReason(),
+                    $internal(),
                 ])
                 ->action(fn (Member $record, array $data) => $done(Staff::run(
-                    fn () => app(UserAdmin::class)->suspend(Staff::current(), $record->id, $data['reason'], (int) $data['days']), Staff::t('admin.notify.suspended')))),
+                    fn () => app(UserAdmin::class)->suspend(Staff::current(), $record->id, $data['reason'], (int) $data['days'], $data['internal_note'] ?? null), Staff::t('admin.notify.suspended')))),
             Action::make('ban')->label(Staff::t('admin.action.ban'))->icon('heroicon-o-no-symbol')->color('danger')
                 ->visible(fn (Member $record): bool => $manage() && in_array($record->status, ['active', 'suspended'], true))
                 ->requiresConfirmation()
                 ->modalDescription(fn (Member $record): string => Staff::t('admin.confirm.member.ban', ['name' => $name($record)]))
-                ->schema([$sanctionReason()])
+                ->schema([$sanctionReason(), $internal()])
                 ->action(fn (Member $record, array $data) => $done(Staff::run(
-                    fn () => app(UserAdmin::class)->ban(Staff::current(), $record->id, $data['reason']), Staff::t('admin.notify.banned')))),
+                    fn () => app(UserAdmin::class)->ban(Staff::current(), $record->id, $data['reason'], $data['internal_note'] ?? null), Staff::t('admin.notify.banned')))),
             Action::make('reactivate')->label(Staff::t('admin.action.reactivate'))->icon('heroicon-o-arrow-uturn-left')->color('success')
                 ->visible(fn (Member $record): bool => $manage() && in_array($record->status, ['suspended', 'banned'], true))
                 ->requiresConfirmation()

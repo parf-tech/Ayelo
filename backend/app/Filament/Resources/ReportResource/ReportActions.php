@@ -50,6 +50,9 @@ final class ReportActions
     public static function make(?Closure $afterSuccess = null): array
     {
         $note = fn (string $label) => Textarea::make('note')->label(Staff::t($label))->required()->minLength(3)->maxLength(500);
+        // Séparée du motif communiqué (pentest P-09) : lue par le personnel seulement.
+        $internal = fn () => Textarea::make('internal_note')->label(Staff::t('admin.field.sanction_internal_note'))
+            ->helperText(Staff::t('admin.field.sanction_internal_note_hint'))->maxLength(1000);
         $canReview = fn (Report $record): bool => in_array($record->status, ['open', 'reviewed'], true) && Staff::can(Permissions::REPORTS_REVIEW);
         $lockedByOther = fn (Report $record): bool => ReportAssignment::lockedByOther($record, Staff::current()->id);
         // Un signalement pris par une autre personne ne se décide pas (le service le refuse aussi) : les décisions sont masquées.
@@ -62,7 +65,7 @@ final class ReportActions
             $done = Staff::run(
                 fn () => app(ReportModeration::class)->decide(
                     Staff::current(), $record->id, $decision, (string) $data['note'], isset($data['days']) ? (int) $data['days'] : null,
-                    withDuplicates: (bool) ($data['with_duplicates'] ?? false),
+                    withDuplicates: (bool) ($data['with_duplicates'] ?? false), internalNote: $data['internal_note'] ?? null,
                 ),
                 Staff::t($successKey),
             );
@@ -98,7 +101,7 @@ final class ReportActions
                 ->visible($open)
                 ->requiresConfirmation()
                 ->modalDescription($confirm('admin.confirm.report.warn'))
-                ->schema(fn (Report $record): array => [$note('admin.field.message_to_user'), $duplicates($record)])
+                ->schema(fn (Report $record): array => [$note('admin.field.message_to_user'), $internal(), $duplicates($record)])
                 ->action($decide('warning', 'admin.notify.warned')),
             Action::make('suspend')->label(Staff::t('admin.action.suspend'))->icon('heroicon-o-pause-circle')->color('danger')
                 ->visible($open)
@@ -112,6 +115,7 @@ final class ReportActions
                         ? Staff::t('admin.confirm.report.suspend_duration', ['name' => self::name($record), 'days' => (int) $get('days')])
                         : ''),
                     $note('admin.field.reason_to_user'),
+                    $internal(),
                     $duplicates($record),
                 ])
                 ->action($decide('suspension', 'admin.notify.suspended')),
@@ -119,7 +123,7 @@ final class ReportActions
                 ->visible($open)
                 ->requiresConfirmation()
                 ->modalDescription($confirm('admin.confirm.report.ban'))
-                ->schema(fn (Report $record): array => [$note('admin.field.reason_to_user'), $duplicates($record)])
+                ->schema(fn (Report $record): array => [$note('admin.field.reason_to_user'), $internal(), $duplicates($record)])
                 ->action($decide('ban', 'admin.notify.banned')),
             Action::make('dismiss')->label(Staff::t('admin.action.dismiss'))->icon('heroicon-o-archive-box')->color('gray')
                 ->visible($open)
