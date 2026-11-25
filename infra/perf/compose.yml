@@ -147,7 +147,8 @@ services:
       resources:
         limits:
           cpus: "1"
-          memory: 1g
+          # Chaque utilisateur virtuel garde sa copie de la photo d'essai : 1 Go ne suffisait pas au-delà de 30 requêtes par seconde.
+          memory: 4g
     networks: [perf]
 
 networks:

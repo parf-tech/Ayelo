@@ -19,7 +19,7 @@ const photo = open('/work/photo.jpg', 'b');
 function ramp(peak, exec, seconds = 1) {
   const top = Math.max(1, Math.round(peak * SCALE * seconds));
   return {
-    executor: 'ramping-arrival-rate', exec, startRate: 1, timeUnit: `${seconds}s`, preAllocatedVUs: top * 2 + 5, maxVUs: top * 10 + 20,
+    executor: 'ramping-arrival-rate', exec, startRate: 1, timeUnit: `${seconds}s`, preAllocatedVUs: top * 2 + 5, maxVUs: top * 6 + 20,
     stages: [
       { target: Math.max(1, Math.round(top / 4)), duration: STAGE },
       { target: Math.max(1, Math.round(top / 2)), duration: STAGE },
