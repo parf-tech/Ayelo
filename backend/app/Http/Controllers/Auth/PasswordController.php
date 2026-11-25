@@ -24,7 +24,8 @@ class PasswordController extends Controller
     {
         $data = $request->validate(['email' => ['required', 'email', 'max:254']]);
 
-        $user = User::where('email', strtolower($data['email']))->where('status', 'active')->first();
+        // Un compte sanctionné y a droit : sans mot de passe, il ne pourrait ni contester ni effacer son compte (revue N-02).
+        $user = User::where('email', strtolower($data['email']))->whereIn('status', User::KEEPS_ACCESS)->first();
         if ($user !== null) {
             $mail->sendPasswordResetAfterResponse($user);
         }

@@ -70,11 +70,11 @@ Relecture faite par un assistant (Claude) sur le code de `feature/pieces-jointes
 **N-02 : correction confirmée côté serveur** (jeton restreint, liste blanche `EnsureAccountActive`, un compte en suppression n'obtient pas de jeton).
 - Corrigé (application) : la Découverte traitait tout 403 comme « profil à compléter » ; un compte suspendu ou banni voit maintenant que son compte est restreint, avec l'accès à « Sanctions et contestations ». Non vérifié sur appareil.
 - Corrigé : deux contestations simultanées de la même sanction donnaient un 500 ; elles donnent un 409 `already_appealed` (`RelectureN02Test`).
-- **Ouvert, décision du propriétaire :** un compte suspendu ou banni ne peut ni réinitialiser son mot de passe (`PasswordController::forgot`, choix testé dans `AccountFlowTest`) ni demander la suppression par le web (`AccountController`, comptes `active` seulement). S'il a oublié son mot de passe, il ne lui reste que le contact hors application pour contester ou effacer son compte. À trancher avec le juriste.
+- Corrigé, **décision du propriétaire du 2026-11-25** : un compte suspendu ou banni peut réinitialiser son mot de passe et demander sa suppression par le web (`User::KEEPS_ACCESS`). La connexion reste restreinte ; l'adresse d'un compte sanctionné supprimé reste bloquée à la réinscription. Les comptes en suppression ou supprimés restent exclus. À signaler au juriste.
 
-**Preuves du 2026-11-25 :** Pest 720 réussis, 2 sautés ; Jest 1067 réussis. Le Caddyfile modifié n'a pas été validé en local (ni Caddy ni Docker) : la CI (`infra`, `caddy validate`) le contrôle.
+**Preuves du 2026-11-25 :** Pest 727 réussis, 2 sautés ; Jest 1067 réussis. Le Caddyfile modifié n'a pas été validé en local (ni Caddy ni Docker) : la CI (`infra`, `caddy validate`) le contrôle.
 
-**S9 :** plus de constat haut ouvert sur N-01 / N-02 ; le prononcé revient au propriétaire (point ouvert ci-dessus).
+**S9 :** plus de constat ouvert sur N-01 / N-02 ; le prononcé revient au propriétaire.
 
 ## Hors code (propriétaire)
 
