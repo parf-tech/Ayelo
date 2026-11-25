@@ -54,6 +54,45 @@ class AccountDeletion
     }
 
     /**
+     * Anonymise les comptes créés par e-mail et mot de passe dont l'adresse n'a JAMAIS été vérifiée et qui n'ont aucune activité depuis
+     * `retention.unverified_account_days` jours (compte créé, jamais vu, aucun jeton utilisé). Jamais touchés : un compte vérifié (e-mail
+     * ou téléphone), social, payant (achat, abonnement, registre de crédits), visé par un signalement ou une sanction, en suppression.
+     * Une panne sur un compte ne bloque pas les suivants : il reste actif et sera repris au passage suivant.
+     *
+     * @return int nombre de comptes anonymisés
+     */
+    public function purgeUnverified(): int
+    {
+        $limit = now()->subDays(max(1, (int) config('retention.unverified_account_days', 30)));
+        $has = fn (string $table, string $column) => fn ($q) => $q->select(DB::raw(1))->from($table)->whereColumn($table.'.'.$column, 'users.id');
+
+        $candidates = User::query()->where('status', 'active')->whereNull('email_verified_at')->whereNull('phone_verified_at')->whereNotNull('password')
+            ->where('created_at', '<=', $limit)
+            ->where(fn ($q) => $q->whereNull('last_seen_at')->orWhere('last_seen_at', '<=', $limit))
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('personal_access_tokens')->whereColumn('personal_access_tokens.tokenable_id', 'users.id')
+                ->where('personal_access_tokens.last_used_at', '>', $limit))
+            ->whereNotExists($has('auth_identities', 'user_id'))
+            ->whereNotExists($has('purchases', 'user_id'))
+            ->whereNotExists($has('subscriptions', 'user_id'))
+            ->whereNotExists($has('credit_ledger', 'user_id'))
+            ->whereNotExists($has('reports', 'reported_id'))
+            ->whereNotExists($has('sanctions', 'user_id'))
+            ->get();
+
+        $done = 0;
+        foreach ($candidates as $user) {
+            try {
+                $this->anonymize($user);
+                $done++;
+            } catch (\Throwable $e) {
+                Log::error('Anonymisation d\'un compte jamais vérifié', ['user_id' => $user->id, 'error' => $e::class]);
+            }
+        }
+
+        return $done;
+    }
+
+    /**
      * Texte libre dont la durée de conservation est écoulée (revue F-06). Ne touche que les dossiers dont une partie est déjà
      * anonymisée : reports.details est mis à null ; sanctions.reason (obligatoire) est remplacé par le marqueur PURGED_REASON.
      * Les signalements encore sous conservation probatoire (evidence_retain_until) sont épargnés.

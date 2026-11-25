@@ -3,7 +3,8 @@ name: ci
 # Complète backend.yml / mobile.yml / schema.yml (revue CTO n°1, 4.1) :
 #  - infra : construction réelle de l'image Docker, validation du compose, de Caddy, des scripts shell ;
 #  - backend-prodlike : suite Pest avec le cache sur Redis (comme en production) et mesure de couverture ;
-#  - static-analysis : PHPStan / Larastan niveau 5 (informatif tant que la base de référence n'est pas mesurée).
+#  - static-analysis : PHPStan / Larastan niveau 5, BLOQUANT (Larastan est dans composer.json ; les 238 erreurs existantes sont figées
+#    dans phpstan-baseline.neon : seule une NOUVELLE erreur fait échouer le job). Mesuré en local le 2026-11-23 ; jamais exécuté ici.
 # Le typecheck, le lint et Jest du mobile restent dans mobile.yml (mêmes déclencheurs).
 # Les jobs marqués `continue-on-error` n'ont JAMAIS tourné : repasser en bloquant une fois la première exécution connue.
 
@@ -18,6 +19,7 @@ on:
       - 'docs/schema/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/phpstan.neon'
+      - '.github/workflows/phpstan-baseline.neon'
   pull_request:
     paths:
       - 'infra/**'
@@ -25,6 +27,7 @@ on:
       - 'docs/schema/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/phpstan.neon'
+      - '.github/workflows/phpstan-baseline.neon'
 
 permissions:
   contents: read
@@ -201,14 +204,33 @@ jobs:
           if-no-files-found: ignore
 
   static-analysis:
-    # PHPStan + Larastan niveau 5. Larastan n'est pas dans composer.json (composer.lock ne peut pas être régénéré
-    # sans Composer sur le poste de développement) : il est ajouté ici, dans le runner seulement.
+    # PHPStan + Larastan niveau 5, bloquant. Larastan (composer.json, require-dev) lit le schéma dans la base : service postgres et
+    # migrations comme pour la suite Pest. Les erreurs déjà présentes sont dans phpstan-baseline.neon ; une nouvelle erreur échoue.
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: app_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
@@ -218,7 +240,10 @@ jobs:
           coverage: none
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
-      - name: Install Larastan (runner only)
-        run: composer require --dev --no-interaction --with-all-dependencies larastan/larastan:^3.0
-      - name: PHPStan niveau 5
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+      - name: "PHPStan niveau 5 (baseline figée, seule une nouvelle erreur échoue)"
         run: vendor/bin/phpstan analyse --configuration=../.github/workflows/phpstan.neon --memory-limit=1G --no-progress
