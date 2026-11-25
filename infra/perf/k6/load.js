@@ -8,6 +8,10 @@ import { SharedArray } from 'k6/data';
 const BASE = __ENV.BASE || 'http://web';
 const SCALE = Number(__ENV.SCALE || 1);
 const STAGE = __ENV.STAGE || '90s';
+// Pointe des dépôts d'images (par seconde) ; 0 = aucun dépôt, pour mesurer l'API seule.
+const UPLOAD = __ENV.UPLOAD === undefined ? 2 : Number(__ENV.UPLOAD);
+// IDLE=1 : un seul utilisateur, une requête à la fois, pour connaître le coût de chaque route sans concurrence.
+const IDLE = __ENV.IDLE === '1';
 const actors = new SharedArray('acteurs', () => JSON.parse(open('/work/actors.json')));
 const photo = open('/work/photo.jpg', 'b');
 
@@ -25,16 +29,19 @@ function ramp(peak, exec) {
   };
 }
 
+const scenarios = {
+  discover: ramp(30, 'discover'),
+  conversations: ramp(30, 'conversations'),
+  thread: ramp(30, 'thread'),
+  send: ramp(10, 'send'),
+};
+if (UPLOAD > 0) scenarios.upload = ramp(UPLOAD, 'upload');
+const ROUTES = ['discover', 'conversations', 'thread', 'send', 'upload-url', 'upload-complete'];
+
 export const options = {
-  scenarios: {
-    discover: ramp(30, 'discover'),
-    conversations: ramp(30, 'conversations'),
-    thread: ramp(30, 'thread'),
-    send: ramp(10, 'send'),
-    upload: ramp(2, 'upload'),
-  },
+  scenarios: IDLE ? { idle: { executor: 'per-vu-iterations', exec: 'idle', vus: 1, iterations: 15 } } : scenarios,
   // SMOKE=1 (essai à blanc) : tout doit répondre ; la latence à froid ne compte pas.
-  thresholds: __ENV.SMOKE === '1' ? { checks: ['rate==1'] } : {
+  thresholds: __ENV.SMOKE === '1' ? { checks: ['rate==1'] } : IDLE ? Object.fromEntries(ROUTES.map((n) => [`http_req_duration{name:${n}}`, ['max>=0']])) : {
     'http_req_duration{name:discover}': ['p(95)<300'],
     'http_req_duration{name:conversations}': ['p(95)<300'],
     'http_req_duration{name:thread}': ['p(95)<300'],
@@ -64,6 +71,14 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) =
   const r = Math.floor(Math.random() * 16);
   return (c === 'x' ? r : (r % 4) + 8).toString(16);
 });
+
+export function idle() {
+  discover();
+  conversations();
+  thread();
+  send();
+  upload();
+}
 
 export function discover() {
   const r = http.get(`${BASE}/api/v1/discover?limit=20`, params(actor(), 'discover'));

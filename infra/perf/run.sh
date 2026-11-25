@@ -60,8 +60,8 @@ log "application"
 dc up -d --wait app >/dev/null
 dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache' > "$RESULTS/cache.log" 2>&1
 dc up -d web worker reverb >/dev/null
-# Photo d'essai (3000 x 2000, bruitée) : un ré-encodage représentatif d'un téléphone.
-dc run --rm -T --no-deps app php -r '$i = imagecreatetruecolor(3000, 2000); mt_srand(1); for ($k = 0; $k < 40000; $k++) { $x = mt_rand(0, 2999); $y = mt_rand(0, 1999); imagefilledrectangle($i, $x, $y, $x + mt_rand(2, 60), $y + mt_rand(2, 60), mt_rand(0, 0xFFFFFF)); } imagejpeg($i, null, 90);' > "$WORK/photo.jpg"
+# Photo d'essai produite par photo.php (mêmes octets à chaque essai).
+dc exec -T app php /srv/perf/photo.php > "$WORK/photo.jpg"
 echo "photo d'essai : $(wc -c < "$WORK/photo.jpg") octets"
 
 log "plans de la requête de découverte"
@@ -69,6 +69,7 @@ psql_ < explain.sql > "$RESULTS/explain.txt"
 
 diagnose() {
   docker inspect "$(dc ps -q app)" --format 'application : limite processeur appliquée = {{.HostConfig.NanoCpus}} nanocpus, mémoire = {{.HostConfig.Memory}}'
+  dc exec -T app sh -c 'echo "cgroup cpu.max : $(cat /sys/fs/cgroup/cpu.max) ; $(grep -E "nr_throttled|^usage_usec" /sys/fs/cgroup/cpu.stat | tr "\n" " ")"' || true
   dc exec -T app sh -c 'SCRIPT_NAME=/opcache.php SCRIPT_FILENAME=/srv/perf/opcache.php REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000' | grep -a opcache || echo "diagnostic opcache indisponible"
 }
 
@@ -83,11 +84,16 @@ fi
 
 diagnose | tee "$RESULTS/diagnostic.txt"
 
+log "coût à vide (une requête à la fois)"
+dc --profile load run --rm -T k6 run --quiet -e IDLE=1 /scripts/load.js > "$RESULTS/idle.txt" 2>&1 || true
+grep -a -F "{ name:" "$RESULTS/idle.txt" || true
+dc exec -T app sh -c 'php /srv/perf/photo.php > /tmp/p.jpg; cd /var/www/html; for n in 1 2 3; do s=$(date +%s%3N); php -d memory_limit=256M artisan media:sanitize-stdin image/jpeg < /tmp/p.jpg > /dev/null; echo "ré-encodage seul, essai $n : $(( $(date +%s%3N) - s )) ms"; done; s=$(date +%s%3N); php artisan --version > /dev/null; echo "démarrage d artisan seul : $(( $(date +%s%3N) - s )) ms"' | tee "$RESULTS/sanitize-cost.txt"
+
 log "charge (échelle $SCALE, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC)"
 ( while true; do date -u +%H:%M:%S; docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} mem={{.MemUsage}}' $(docker ps -q --filter label=com.docker.compose.project=ayelo-perf) 2>/dev/null; sleep 15; done ) > "$RESULTS/stats.txt" &
 SAMPLER=$!
 status=0
-dc --profile load run --rm -T k6 run --quiet -e SCALE="$SCALE" -e STAGE="$STAGE" --summary-export=/work/summary.json /scripts/load.js > "$RESULTS/k6.txt" 2>&1 || status=$?
+dc --profile load run --rm -T k6 run --quiet -e SCALE="$SCALE" -e STAGE="$STAGE" -e UPLOAD="${UPLOAD_PEAK:-2}" --summary-export=/work/summary.json /scripts/load.js > "$RESULTS/k6.txt" 2>&1 || status=$?
 kill "$SAMPLER" 2>/dev/null || true; SAMPLER=""
 cp "$WORK/summary.json" "$RESULTS/summary.json" 2>/dev/null || true
 dc logs --no-log-prefix postgres 2>/dev/null | grep -E "duration: [0-9]+" | cut -c1-400 > "$RESULTS/slow-queries.txt" || true
