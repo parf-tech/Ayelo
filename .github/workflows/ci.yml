@@ -106,6 +106,9 @@ jobs:
       - name: Test de la logique de rétention des sauvegardes
         run: bash infra/scripts/tests/retention_test.sh
 
+      - name: Test des alertes d'échec de sauvegarde (faux pg_dump et curl, aucun envoi)
+        run: bash infra/scripts/tests/backup_alert_test.sh
+
       - name: Test de l'ordre des étapes de deploy.sh (faux docker, aucune commande réelle)
         run: bash infra/scripts/tests/deploy_test.sh
 

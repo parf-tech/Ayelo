@@ -14,7 +14,7 @@
 - **Limites connues** :
   - Rétention du bucket : appliquée par le script seulement si la clé a le droit de supprimer ; sinon règle de cycle de vie du bucket, **non configurée**. Vérifier que la durée annoncée dans `docs/legal/` (14 jours + mensuelles) correspond à `BACKUP_MONTHLY_RETENTION_MONTHS`.
   - Chiffrement : sans `BACKUP_GPG_RECIPIENT` et sans clé publique importée dans l'image (`BACKUP_GPG_PUBLIC_KEY_FILE`, non câblé dans le compose), les archives sont en clair sur le volume et dans le bucket (chiffrement au repos du fournisseur seulement). À décider par le propriétaire ; les archives contiennent toutes les données personnelles.
-  - Alerte : sans `BACKUP_ALERT_WEBHOOK_URL`, rien ne prévient personne (la sonde seule passe en `unhealthy`) ; une panne totale du conteneur ou de la boucle n'envoie pas d'alerte. Le bucket de sauvegarde doit être distinct du bucket des médias, avec une clé à droits limités.
+  - Alerte : sans `BACKUP_ALERT_EMAIL` ni `BACKUP_ALERT_WEBHOOK_URL`, rien ne prévient personne (la sonde seule passe en `unhealthy`) ; une panne totale du conteneur ou de la boucle n'envoie pas d'alerte. E-mail : renseigner `BACKUP_ALERT_EMAIL` dans `infra/.env.prod`, déployer, puis vérifier la réception avec `docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml exec backup /scripts/backup.sh --test-alert` (sortie 0 et e-mail reçu). L'envoi passe par le même fournisseur que l'application : s'il est en panne, l'alerte ne part pas. Le bucket de sauvegarde doit être distinct du bucket des médias, avec une clé à droits limités.
   - Dépendances d'installation (`awscli` de Debian bookworm) : disponibilité non vérifiée, build jamais lancé.
 
 ## Restauration avec le script (jetable, jamais en production)
