@@ -10,6 +10,9 @@ use App\Services\Presence;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+// La durée de vie de la clé de présence est testée avec l'horloge simulée : le cache `array` la suit, Redis expire à l'heure réelle.
+beforeEach(fn () => useArrayCache());
+
 function prUser(array $user = [], array $profile = []): array
 {
     $u = User::factory()->create(array_merge(['birthdate' => '1993-05-06', 'password' => 'Motdepasse2026'], $user));

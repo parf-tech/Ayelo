@@ -39,6 +39,11 @@ return [
     // true uniquement en développement local.
     'auto_approve' => (bool) env('MEDIA_AUTO_APPROVE', false),
 
+    // Ré-encodage des images hors de la requête (tâche SanitizeImageMedia, file `media`) : à n'activer qu'avec un worker qui
+    // consomme cette file (`worker-media` dans infra/docker-compose.prod.yml). Sinon les images restent en attente sans fin.
+    // Fermé : le ré-encodage a lieu à la fin du dépôt, dans la requête. Concerne les types marqués `deferrable`.
+    'async_images' => (bool) env('MEDIA_ASYNC_IMAGES', false),
+
     'max_profile_photos' => 6,
 
     // Types ouverts au lancement : IMAGES uniquement. Chaque image est relue, ré-encodée et débarrassée de ses métadonnées
@@ -46,8 +51,10 @@ return [
     // (ffmpeg -map_metadata -1, transcodage) n'existe : voir specs/012 et docs/reviews/code-security-1.md (F-05).
     // `max_open` : dépôts en attente ou en revue en même temps ; `max_per_day` : dépôts créés sur 24 h glissantes (revue F-22).
     'kinds' => [
-        'profile_photo' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 6, 'max_per_day' => 12],
-        'message_image' => ['mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 50, 'max_per_day' => 100],
+        // `deferrable` : ré-encodable hors de la requête (`async_images`). Le selfie ne l'est pas : la demande de vérification le
+        // lit aussitôt après la fin du dépôt.
+        'profile_photo' => ['deferrable' => true, 'mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 6, 'max_per_day' => 12],
+        'message_image' => ['deferrable' => true, 'mimes' => ['image/jpeg', 'image/png', 'image/webp'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 50, 'max_per_day' => 100],
         'verification_selfie' => ['mimes' => ['image/jpeg', 'image/png'], 'max_bytes' => 8 * 1024 * 1024, 'max_open' => 3, 'max_per_day' => 5],
         // `enabled` : ouvert seulement avec MEDIA_CHAT_AV_ENABLED. `transcode` : traitement obligatoire avant la revue humaine.
         // `max_seconds` : durée vérifiée sur le résultat du traitement (ffprobe), pas seulement sur la déclaration du client.

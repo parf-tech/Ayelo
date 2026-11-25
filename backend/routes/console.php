@@ -14,6 +14,15 @@ Artisan::command('accounts:purge', function (AccountDeletion $deletion) {
 
 Schedule::command('accounts:purge')->dailyAt('03:15')->onOneServer();
 
+Artisan::command('accounts:purge-unverified', function (AccountDeletion $deletion) {
+    $this->info('Comptes jamais vérifiés anonymisés : '.$deletion->purgeUnverified());
+})->purpose('Anonymise les comptes créés par e-mail, jamais vérifiés et inactifs depuis retention.unverified_account_days jours');
+
+Schedule::command('accounts:purge-unverified')->dailyAt('03:30')->onOneServer();
+
+// Rattrape tout écart des compteurs dénormalisés (non lus, dernier message, soldes de crédits) ; une correction est journalisée.
+Schedule::command('counters:reconcile --fix')->dailyAt('03:45')->onOneServer();
+
 Artisan::command('calls:expire', function (Calls $calls) {
     $r = $calls->expire();
     $this->info("Appels manqués : {$r['missed']}, terminés (durée maximale) : {$r['ended']}");

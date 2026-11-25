@@ -17,6 +17,7 @@ create table staff_users (
   recovery_codes_encrypted text,
   is_active boolean not null default true,        -- on désactive, on ne supprime jamais (audit)
   last_login_at timestamptz,
+  locale text check (locale in ('fr','en')),      -- langue du back-office choisie par la personne ; nul = ADMIN_LOCALE
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -59,6 +60,7 @@ create table auth_identities (
   user_id uuid not null references users(id) on delete cascade,
   provider text not null check (provider in ('google','apple','tiktok')),
   provider_user_id text not null,
+  provider_refresh_token text,                     -- jeton Apple chiffré (Crypt), révoqué à la suppression du compte
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (provider, provider_user_id)
@@ -162,7 +164,7 @@ create table media (
   user_id uuid not null references users(id) on delete cascade,
   kind text not null check (kind in ('profile_photo','profile_video','message_image','message_video','message_voice','story','invite_video','verification_selfie')),
   status text not null default 'pending_upload'
-    check (status in ('pending_upload','transcoding','processing','approved','rejected','purged')),  -- transcoding : notes vocales et vidéos, avant la revue humaine
+    check (status in ('pending_upload','transcoding','processing','approved','rejected','purged')),  -- transcoding : fichier pas encore ré-encodé (notes vocales, vidéos, images différées)
   storage_key text not null unique,
   mime_type text not null,
   size_bytes bigint check (size_bytes > 0),
@@ -178,7 +180,7 @@ create index on media (user_id, kind);
 create index media_approved_photo_idx on media (user_id) where kind = 'profile_photo' and status = 'approved';  -- découverte : photo approuvée
 create index on media (status, created_at);
 create unique index media_photo_position_unique on media (user_id, position)
-  where kind = 'profile_photo' and status in ('pending_upload','processing','approved');
+  where kind = 'profile_photo' and status in ('pending_upload','transcoding','processing','approved');
 
 create table verification_requests (
   id uuid primary key default gen_random_uuid(),
@@ -243,6 +245,9 @@ create table conversations (
   hidden_by_a_at timestamptz,                      -- « supprimée » côté A, conservée pour modération
   hidden_by_b_at timestamptz,
   last_message_at timestamptz,
+  unread_a integer not null default 0,             -- messages non lus de l'autre, côté A (tenu par le déclencheur messages_counters)
+  unread_b integer not null default 0,
+  last_message_id uuid,                            -- dernier message non supprimé (sans clé étrangère : tenu par le déclencheur)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (user_a < user_b),
@@ -275,6 +280,71 @@ create index messages_conversation_created_idx on messages (conversation_id, cre
 create index messages_unread_idx on messages (conversation_id) where read_at is null and deleted_at is null;  -- non lus
 create index on messages (sender_id);
 create index on messages (media_id) where media_id is not null;
+
+-- Compteurs de conversation (revue CTO 1, risque 9). Migration miroir : 2026_11_24_100000_add_conversation_counters.php. Un déclencheur
+-- tient unread_a, unread_b et last_message_id ; `messages` reste la source de vérité (commande counters:reconcile).
+create or replace function conversation_unread_add(p_conv uuid, p_sender uuid, p_delta integer) returns void language sql as $fn$
+  update conversations set
+    unread_a = unread_a + case when p_sender <> user_a then p_delta else 0 end,
+    unread_b = unread_b + case when p_sender <> user_b then p_delta else 0 end
+  where id = p_conv;
+$fn$;
+
+create or replace function conversation_bump_last(p_conv uuid, p_id uuid, p_at timestamptz) returns void language sql as $fn$
+  update conversations c set last_message_id = p_id
+  where c.id = p_conv and (
+    c.last_message_id is null
+    or not exists (select 1 from messages m where m.id = c.last_message_id)
+    or (p_at, p_id) > (select m.created_at, m.id from messages m where m.id = c.last_message_id)
+  );
+$fn$;
+
+create or replace function conversation_refresh_last(p_conv uuid) returns void language sql as $fn$
+  update conversations set last_message_id = (
+    select m.id from messages m where m.conversation_id = p_conv and m.deleted_at is null order by m.created_at desc, m.id desc limit 1
+  ) where id = p_conv;
+$fn$;
+
+create or replace function messages_counters_apply() returns trigger language plpgsql as $fn$
+begin
+  if tg_op = 'INSERT' then
+    if new.deleted_at is null then
+      if new.read_at is null then
+        perform conversation_unread_add(new.conversation_id, new.sender_id, 1);
+      end if;
+      perform conversation_bump_last(new.conversation_id, new.id, new.created_at);
+    end if;
+  elsif tg_op = 'DELETE' then
+    if old.deleted_at is null then
+      if old.read_at is null then
+        perform conversation_unread_add(old.conversation_id, old.sender_id, -1);
+      end if;
+      if exists (select 1 from conversations where id = old.conversation_id and last_message_id = old.id) then
+        perform conversation_refresh_last(old.conversation_id);
+      end if;
+    end if;
+  else
+    if (old.deleted_at is null and old.read_at is null) is distinct from (new.deleted_at is null and new.read_at is null) then
+      if new.deleted_at is null and new.read_at is null then
+        perform conversation_unread_add(new.conversation_id, new.sender_id, 1);
+      else
+        perform conversation_unread_add(old.conversation_id, old.sender_id, -1);
+      end if;
+    end if;
+    if (old.deleted_at is null) is distinct from (new.deleted_at is null) then
+      if new.deleted_at is null then
+        perform conversation_bump_last(new.conversation_id, new.id, new.created_at);
+      elsif exists (select 1 from conversations where id = new.conversation_id and last_message_id = new.id) then
+        perform conversation_refresh_last(new.conversation_id);
+      end if;
+    end if;
+  end if;
+  return null;
+end
+$fn$;
+
+create trigger messages_counters after insert or update of read_at, deleted_at or delete on messages
+  for each row execute function messages_counters_apply();
 
 create table call_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -380,6 +450,32 @@ create table credit_ledger (
 );
 create index on credit_ledger (user_id, credit_type, created_at desc);
 
+-- Soldes (revue CTO 1) : tenus par un déclencheur sur credit_ledger, qui reste la source de vérité (ajout seulement).
+-- Migration miroir : 2026_11_24_000000_create_credit_balances.php.
+create table credit_balances (
+  user_id uuid not null references users(id) on delete cascade,
+  credit_type text not null check (credit_type in ('conversation','proposal','coin')),
+  balance integer not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, credit_type)
+);
+
+create or replace function credit_balances_apply() returns trigger language plpgsql as $fn$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then
+    update credit_balances set balance = balance - old.delta, updated_at = now() where user_id = old.user_id and credit_type = old.credit_type;
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    insert into credit_balances (user_id, credit_type, balance, updated_at) values (new.user_id, new.credit_type, new.delta, now())
+    on conflict (user_id, credit_type) do update set balance = credit_balances.balance + excluded.balance, updated_at = now();
+  end if;
+  return null;
+end
+$fn$;
+
+create trigger credit_ledger_balance after insert or update of user_id, credit_type, delta or delete on credit_ledger
+  for each row execute function credit_balances_apply();
+
 create table purchases (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users(id) on delete cascade,
@@ -454,6 +550,8 @@ create table reports (
   outcome text check (outcome in ('warning','suspension','ban','none')),
   reviewed_by uuid references staff_users(id) on delete set null,
   reviewed_at timestamptz,
+  assigned_to uuid references staff_users(id) on delete set null,  -- « Prendre » : verrou de décision, expire (admin.assignment_ttl_minutes)
+  assigned_at timestamptz,
   evidence_retain_until timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -462,6 +560,7 @@ create table reports (
 create index on reports (reported_id);
 create index on reports (reporter_id);
 create index on reports (status, priority desc, created_at);
+create index reports_assigned_to_idx on reports (assigned_to) where assigned_to is not null;
 
 create table risk_events (
   id uuid primary key default gen_random_uuid(),
@@ -477,7 +576,8 @@ create table sanctions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users(id) on delete restrict,
   kind text not null check (kind in ('warning','suspension','ban')),
-  reason text not null,
+  reason text not null,                            -- communiqué à la personne (GET /me/sanctions, export)
+  internal_note text check (char_length(internal_note) <= 1000),  -- personnel seulement, jamais communiquée (P-09)
   report_id uuid references reports(id) on delete set null,
   starts_at timestamptz not null default now(),
   ends_at timestamptz,

@@ -121,7 +121,7 @@ export const settingsFr = {
   'delete.passwordRequired': 'Saisissez votre mot de passe.',
   'delete.wrongPassword': 'Mot de passe incorrect.',
   'delete.done': 'Demande enregistrée. Votre profil est masqué.',
-  'delete.notice': 'Demande enregistrée. Votre profil est masqué. Suppression définitive dans {days} jours. Pour annuler la suppression avant cette date, contactez le support.',
+  'delete.notice': 'Demande enregistrée. Votre profil est masqué. Suppression définitive dans {days} jours. Pour l’annuler avant cette date, reconnectez-vous et choisissez « Annuler la suppression ».',
 
   'export.title': 'Exporter mes données',
   'export.body': 'Vous pouvez demander une copie de vos données personnelles, une demande par jour',
@@ -206,7 +206,7 @@ export const settingsFr = {
   'legal.fallback.body':
     'Le texte complet de ce document n’est pas encore accessible depuis cette version de l’application. Vous pouvez en obtenir une copie en écrivant au support.',
   'legal.fallback.contact': 'Écrire à {email}',
-  'delete.cancelHint': 'Pour annuler la suppression avant cette date, contactez le support.',
+  'delete.cancelHint': 'Pour annuler la suppression avant cette date, reconnectez-vous et choisissez « Annuler la suppression ».',
   'delete.signOut': 'Me déconnecter',
   'delete.subscription':
     'Supprimer votre compte ne résilie pas votre abonnement Premium. Résiliez-le dans la boutique, sinon il continuera d’être facturé.',

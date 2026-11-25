@@ -20,7 +20,7 @@ Vérifié sur ce poste : `HealthCheckTest` + `HealthTest` (6 tests verts, Postgr
 ### 2.2 Travail synchrone dans les requêtes web
 - [x] Fichier de pool PHP-FPM : `pm=dynamic`, `pm.max_children` (24 pour 2 Go), `pm.max_requests`, `request_terminate_timeout=60s`, `request_slowlog_timeout=5s`, `slowlog`, `clear_env=no`, `ping.path`. Preuve : `infra/php/php-fpm-pool.conf`, `infra/php/Dockerfile` (ENV `FPM_*`, `fcgi`), `.env.prod.example`. Dimensionnement : `docs/runbooks/dimensionnement.md`.
 - [x] CI vérifie que le pool est chargé (`php-fpm -tt | grep pm.max_children = 24`), à l'exécution de `ci.yml`.
-- [ ] Ré-encodage d'images hors du chemin de requête (file dédiée ou second pool) : changement de code (MediaController / job). Le runbook décrit l'option.
+- [x] Ré-encodage d’images hors du chemin de requête : fait le 2026-11-25 (file `media`, tâche `SanitizeImageMedia`, worker `worker-media`), FERMÉ par défaut (`MEDIA_ASYNC_IMAGES=false`), jamais essayé sur le serveur. Le selfie de vérification reste dans la requête. Voir `docs/runbooks/dimensionnement.md`.
 
 ### 2.3 File d'attente, Redis, temps réel
 - [x] Redis file : persistance AOF + `noeviction`, instance séparée du cache (voir rang 6).

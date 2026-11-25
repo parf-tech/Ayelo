@@ -87,6 +87,7 @@ it('N-06 : la confiance est liée au couple e-mail + appareil, et un appareil de
 });
 
 it('N-06 : la confiance expire au bout de 30 jours', function () {
+    useArrayCache(); // le délai est simulé par travel() : Redis expire à l'heure réelle
     $u = r4_member();
     $trusted = (string) Str::uuid();
     r4_login($u->email, 'Motdepasse2026', '198.51.100.1', $trusted)->assertOk();
@@ -103,8 +104,9 @@ it('N-06 : le compteur est incrémenté avant la comparaison du mot de passe (un
 
     Hash::partialMock()->shouldReceive('check')->once()->andReturnUsing(function () use ($u, $ip, &$seen) {
         $seen = [
-            'pair' => RateLimiter::attempts('login-fail:'.$u->email.'|'.$ip),
-            'email' => RateLimiter::attempts('login-fail-email:'.$u->email),
+            // (int) : Redis rend un compteur sous forme de chaîne, le cache `array` sous forme d'entier.
+            'pair' => (int) RateLimiter::attempts('login-fail:'.$u->email.'|'.$ip),
+            'email' => (int) RateLimiter::attempts('login-fail-email:'.$u->email),
         ];
 
         return false;
@@ -122,7 +124,8 @@ it('N-06 : une connexion réussie ne consomme ni le compteur d’IP ni celui d�
     }
     r4_login($u->email, 'Motdepasse2026', '192.0.2.10')->assertOk();
 
-    expect(RateLimiter::attempts('login-fail:'.$u->email.'|192.0.2.10'))->toBe(0)->and(RateLimiter::attempts('login-fail-email:'.$u->email))->toBe(4);
+    expect((int) RateLimiter::attempts('login-fail:'.$u->email.'|192.0.2.10'))->toBe(0)
+        ->and((int) RateLimiter::attempts('login-fail-email:'.$u->email))->toBe(4);
 });
 
 // ---------- F-17 : valeurs par défaut ----------

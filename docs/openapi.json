@@ -2297,6 +2297,38 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "const": "conversation_closed"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "const": "Cette conversation n'est plus disponible."
+                                                }
+                                            },
+                                            "required": [
+                                                "code",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "error"
+                                    ]
+                                }
+                            }
+                        }
+                    },
                     "409": {
                         "description": "",
                         "content": {
@@ -2934,6 +2966,13 @@
                                             "null"
                                         ],
                                         "maxLength": 32
+                                    },
+                                    "cancel_deletion": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ],
+                                        "description": "Annule la suppression de compte en cours (d\u00e9lai de gr\u00e2ce) : sans lui, la connexion r\u00e9pond 403 `deletion_pending`."
                                     }
                                 },
                                 "required": [
@@ -2989,28 +3028,61 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
+                                    "anyOf": [
+                                        {
                                             "type": "object",
                                             "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "const": "account_restricted"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "const": "Compte indisponible."
+                                                "error": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "code": {
+                                                            "type": "string",
+                                                            "const": "account_restricted"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "const": "Compte indisponible."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "code",
+                                                        "message"
+                                                    ]
                                                 }
                                             },
                                             "required": [
-                                                "code",
-                                                "message"
+                                                "error"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "error": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "code": {
+                                                            "type": "string",
+                                                            "const": "deletion_pending"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "const": "Suppression du compte en cours."
+                                                        },
+                                                        "purge_at": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "code",
+                                                        "message",
+                                                        "purge_at"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "error"
                                             ]
                                         }
-                                    },
-                                    "required": [
-                                        "error"
                                     ]
                                 }
                             }
@@ -4563,6 +4635,21 @@
                                         ],
                                         "description": "Nonce (revue F-21) : li\u00e9 \u00e0 la demande de connexion c\u00f4t\u00e9 application ; contr\u00f4l\u00e9 quand il est envoy\u00e9, exig\u00e9 si\nsafety.oauth.require_nonce est actif. L'application mobile doit l'envoyer d\u00e8s que le SDK du fournisseur le permet.",
                                         "maxLength": 200
+                                    },
+                                    "cancel_deletion": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ],
+                                        "description": "Annule la suppression de compte en cours (d\u00e9lai de gr\u00e2ce) : sans lui, la connexion r\u00e9pond 403 `deletion_pending`."
+                                    },
+                                    "authorization_code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Apple seulement : code d'autorisation de la connexion, \u00e9chang\u00e9 c\u00f4t\u00e9 serveur contre un jeton de rafra\u00eechissement gard\u00e9\nchiffr\u00e9, r\u00e9voqu\u00e9 \u00e0 la suppression du compte (exigence d'Apple). Facultatif : sans lui, rien n'est r\u00e9voqu\u00e9.",
+                                        "maxLength": 2000
                                     }
                                 },
                                 "required": [
@@ -4694,6 +4781,35 @@
                                                     "required": [
                                                         "code",
                                                         "message"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "error"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "error": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "code": {
+                                                            "type": "string",
+                                                            "const": "deletion_pending"
+                                                        },
+                                                        "message": {
+                                                            "type": "string",
+                                                            "const": "Suppression du compte en cours."
+                                                        },
+                                                        "purge_at": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "code",
+                                                        "message",
+                                                        "purge_at"
                                                     ]
                                                 }
                                             },

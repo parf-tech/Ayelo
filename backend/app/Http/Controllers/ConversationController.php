@@ -7,7 +7,6 @@ use App\Services\Conversations;
 use App\Services\Premium;
 use App\Services\ProfilePresenter;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,30 +52,23 @@ class ConversationController extends Controller
         $nextCursor = $fetched->count() > $limit && $lastRow ? base64_encode($lastRow->sort_at.'|'.$lastRow->id) : null;
 
         $others = $rows->map(fn ($c) => $conversations->other($c, $me));
-        $ids = $rows->pluck('id')->all();
 
         // Requêtes en nombre constant, quel que soit le nombre de conversations (revue CTO, risque 9) :
-        // profils + utilisateurs + médias (présentateur), non lus, derniers messages.
+        // profils + utilisateurs + médias (présentateur), derniers messages.
         $profiles = Profile::with('user')->whereIn('user_id', $others)->get()->keyBy('user_id');
         $presented = $presenter->publicMany($profiles->filter(fn ($p) => $p->user->status === 'active'));
 
-        // Non lus : index partiel messages_unread_idx (read_at et deleted_at nuls).
-        $unread = DB::table('messages')->whereIn('conversation_id', $ids)->where('sender_id', '<>', $me)->whereNull('read_at')->whereNull('deleted_at')
-            ->selectRaw('conversation_id, count(*) as n')->groupBy('conversation_id')->pluck('n', 'conversation_id');
-
-        // Dernier message de chaque conversation en une requête (jointure latérale, index messages_conversation_created_idx).
-        $lastByConversation = $ids === [] ? collect() : collect(DB::select(
-            'select m.* from conversations c cross join lateral ('
-            .'select id, conversation_id, sender_id, type, body, created_at from messages '
-            .'where messages.conversation_id = c.id and messages.deleted_at is null order by created_at desc, id desc limit 1'
-            .') m where c.id in ('.implode(',', array_fill(0, count($ids), '?')).')',
-            $ids
-        ))->keyBy('conversation_id');
+        // Non lus (unread_a / unread_b) et dernier message (last_message_id) sont des colonnes de `conversations`, tenues à jour par un
+        // déclencheur sur `messages` (migration add_conversation_counters) : plus aucun parcours des messages par conversation.
+        // Les derniers messages se lisent par clé primaire, en une requête.
+        $lastIds = $rows->pluck('last_message_id')->filter()->all();
+        $lastByConversation = $lastIds === [] ? collect() : DB::table('messages')->whereIn('id', $lastIds)->whereNull('deleted_at')
+            ->get(['id', 'conversation_id', 'sender_id', 'type', 'body', 'created_at'])->keyBy('conversation_id');
 
         /**
          * @body array{data: list<array{id: string, match_id: string|null, status: string, unlocked_by: string, unread: int, last_message: array{id: string, mine: bool, type: string, body: string|null, created_at: string}|null, profile: array{user_id: string, display_name: string, age: int, gender: 'man'|'woman'|'other', origin_country: string, residence_country: string, city: string|null, bio: string|null, intent: 'marriage'|'long_lasting_love'|'flirt'|'friendship'|'lets_find_out', verified: bool, media: list<array{id: string, kind: 'profile_photo'|'profile_video', position: int, status: 'pending_upload'|'processing'|'approved'|null, url: string|null}>, last_seen_at?: string|null, online?: bool}|null}>, meta: array{next_cursor: string|null}}
          */
-        return response()->json(['data' => $rows->map(function ($c) use ($me, $conversations, $presented, $unread, $lastByConversation) {
+        return response()->json(['data' => $rows->map(function ($c) use ($me, $conversations, $presented, $lastByConversation) {
             $other = $conversations->other($c, $me);
             $last = $lastByConversation->get($c->id);
 
@@ -87,7 +79,7 @@ class ConversationController extends Controller
                 'match_id' => $c->match_id,
                 'status' => $c->status,
                 'unlocked_by' => $c->unlocked_by,
-                'unread' => (int) ($unread[$c->id] ?? 0),
+                'unread' => (int) ($c->user_a === $me ? $c->unread_a : $c->unread_b),
                 'last_message' => $last ? ['id' => $last->id, 'mine' => $last->sender_id === $me, 'type' => $last->type, 'body' => $last->type === 'text' ? $last->body : null, 'created_at' => $last->created_at] : null,
                 'profile' => $presented[$other] ?? null,
             ];
@@ -118,9 +110,14 @@ class ConversationController extends Controller
         $pair = [$me->id, $data['target_id']];
         sort($pair, SORT_STRING);
 
+        // Une conversation existante n'est rendue que si l'on peut y écrire : blocage, suspension ou conversation fermée depuis
+        // l'ouverture, on ne renvoie plus un identifiant exploitable (403 conversation_closed).
         $existing = DB::table('conversations')->where('user_a', $pair[0])->where('user_b', $pair[1])->first();
         if ($existing !== null) {
-            $this->ensureWritable($existing, $me->id, $conversations);
+            if (! $conversations->canWrite($existing, $me->id)) {
+                // Rendu ici, et non levé par une méthode : le générateur de contrat ne voit que les réponses retournées.
+                return response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403);
+            }
 
             /**
              * Conversation déjà ouverte avec cette personne (aucun crédit dépensé).
@@ -185,7 +182,10 @@ class ConversationController extends Controller
                     ->header('Retry-After', '1');
             }
 
-            $this->ensureWritable($existing, $me->id, $conversations);
+            if (! $conversations->canWrite($existing, $me->id)) {
+                // Rendu ici, et non levé par une méthode : le générateur de contrat ne voit que les réponses retournées.
+                return response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403);
+            }
 
             /**
              * Conversation déjà ouverte avec cette personne (aucun crédit dépensé).
@@ -211,17 +211,6 @@ class ConversationController extends Controller
          * @body array{id: string, status: 'active'}
          */
         return response()->json(['id' => $result, 'status' => 'active'], 201);
-    }
-
-    /**
-     * Une conversation existante n'est rendue que si l'on peut y écrire : blocage, suspension ou conversation fermée depuis
-     * l'ouverture, on ne renvoie plus un identifiant exploitable (403 conversation_closed).
-     */
-    private function ensureWritable(object $existing, string $me, Conversations $conversations): void
-    {
-        if (! $conversations->canWrite($existing, $me)) {
-            throw new HttpResponseException(response()->json(['error' => ['code' => 'conversation_closed', 'message' => "Cette conversation n'est plus disponible."]], 403));
-        }
     }
 
     /** « Supprimer » une conversation = la masquer pour soi ; elle reste disponible à la modération. */

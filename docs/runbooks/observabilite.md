@@ -15,7 +15,7 @@ Contexte : revue CTO n°1, section 3.2. Avant : ni suivi d'erreurs, ni métrique
 | --- | --- | --- |
 | `/up` | `https://<API_DOMAIN>/up` | le processus répond ; ne touche à aucun service ; pour le répartiteur ou une sonde externe fréquente |
 | `/api/v1/health` | `https://<API_DOMAIN>/api/v1/health` | base + Redis + lecture de la file ; 503 si l'un échoue ; corps `{"status","db","redis","queue"}` sans détail ; toutes les 1 à 5 minutes |
-| healthchecks Docker | `docker compose ps` | `app` (ping FastCGI), `worker`, `worker-push`, `scheduler` (processus vivant), `reverb` (port 8080), `redis*`, `postgres`, `backup` (réussite < 36 h) |
+| healthchecks Docker | `docker compose ps` | `app` (ping FastCGI), `worker`, `worker-push`, `worker-media`, `scheduler` (processus vivant), `reverb` (port 8080), `redis*`, `postgres`, `backup` (réussite < 36 h) |
 
 Mettre une sonde EXTERNE (Uptime Kuma sur une autre machine, ou un service gratuit) sur `/api/v1/health` : une sonde interne tombe avec le serveur.
 
@@ -57,7 +57,7 @@ Pour l'activer, quand la décision est prise (coût indicatif : 29 $/mois, `docs
 
 1. Sur un poste avec Composer : `composer require sentry/sentry-laravel` dans `backend/`, puis committer `composer.json` et `composer.lock`.
 2. Le paquet lit `SENTRY_LARAVEL_DSN` seul (pas de commande de configuration obligatoire). Brancher la remontée des exceptions dans `bootstrap/app.php` : `->withExceptions(function (Exceptions $exceptions) { \Sentry\Laravel\Integration::handles($exceptions); })`.
-3. Renseigner `SENTRY_LARAVEL_DSN` dans `infra/.env.prod`, redémarrer `app`, `worker`, `worker-push`, `scheduler`, `reverb`.
+3. Renseigner `SENTRY_LARAVEL_DSN` dans `infra/.env.prod`, redémarrer `app`, `worker`, `worker-push`, `worker-media`, `scheduler`, `reverb`.
 4. Données personnelles : laisser `send_default_pii` à `false` (valeur par défaut de `config/sentry.php`), ne pas activer les traces de requêtes SQL avec valeurs, et inscrire Sentry comme sous-traitant dans la matrice RGPD (`docs/legal/`). Choisir la région UE.
 5. Règles d'alerte à créer dans Sentry : nouvelle erreur en production, pic de fréquence (> 20 événements en 5 min), échec d'un job (`failed_jobs`).
 

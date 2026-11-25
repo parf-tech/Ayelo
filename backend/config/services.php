@@ -28,7 +28,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    // Connexion avec Google / Apple : seuls des identifiants d'application PUBLICS sont configurés.
+    // Connexion avec Google / Apple : les identifiants d'application sont PUBLICS. Seule exception, la clé privée Apple (.p8), un
+    // secret, lue dans l'environnement uniquement : elle signe le secret client qui permet de révoquer le jeton Apple d'un compte
+    // supprimé (App\Services\OAuth\AppleTokens). Sans APPLE_TEAM_ID, APPLE_KEY_ID et APPLE_PRIVATE_KEY, aucune révocation n'a lieu.
     'oauth' => [
         'google' => [
             'client_ids' => array_filter(explode(',', (string) env('GOOGLE_CLIENT_IDS', ''))),
@@ -39,6 +41,10 @@ return [
             'client_ids' => array_filter(explode(',', (string) env('APPLE_CLIENT_IDS', ''))),
             'issuers' => ['https://appleid.apple.com'],
             'jwks_url' => 'https://appleid.apple.com/auth/keys',
+            'team_id' => env('APPLE_TEAM_ID'),
+            'key_id' => env('APPLE_KEY_ID'),
+            // Contenu de la clé .p8 ; les retours à la ligne s'écrivent \n dans le fichier d'environnement.
+            'private_key' => str_replace('\n', "\n", (string) env('APPLE_PRIVATE_KEY', '')),
         ],
     ],
 

@@ -36,6 +36,7 @@ class SanctionsRelationManager extends RelationManager
             ->columns([
                 Labels::badge(TextColumn::make('kind')->label(Staff::t('admin.col.type')), 'sanction'),
                 TextColumn::make('reason')->label(Staff::t('admin.col.reason')),
+                TextColumn::make('internal_note')->label(Staff::t('admin.field.sanction_internal_note'))->placeholder('-')->wrap(),
                 TextColumn::make('starts_at')->label(Staff::t('admin.col.start'))->dateTime(),
                 TextColumn::make('ends_at')->label(Staff::t('admin.col.end'))->dateTime()->placeholder(Staff::t('admin.misc.no_end')),
             ]);

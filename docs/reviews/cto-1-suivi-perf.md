@@ -29,7 +29,7 @@ Nombre de requêtes constant (1 contre 20, `Model::preventLazyLoading()` actif) 
 
 - Mesure `EXPLAIN ANALYZE` sur 200 000 profils et test k6 (demandés par cto-1 ; le test de plan ici ne porte que sur un jeu de 20 000 messages).
 - `last_seen_at` : le middleware `App\Http\Middleware\TouchLastSeen` (groupe `api`, `bootstrap/app.php`) le renseigne désormais à l'activité réelle, au plus une écriture par heure et par compte (clé de cache `last_seen.<id>` posée par `Cache::add`, puis `UPDATE` conditionnel : aucune requête tant que le cache la couvre). Le filtre de fraîcheur peut donc être activé : renseigner `DISCOVERY_ACTIVE_WITHIN_DAYS` (par exemple 30) une fois le déploiement en production, après quelques jours d'activité pour que les comptes existants aient un `last_seen_at` récent. Tests : `Lot12SecurityTest`. En production, `CACHE_STORE` doit être partagé entre processus (Redis, base) ; avec le pilote `array`, la limite d'une écriture par heure ne tient pas d'une requête à l'autre.
-- Table de soldes `credit_balances` et `Premium::active` (lectures de `GET /me`).
-- Liste des conversations non paginée (plafond dur à 100) ; `last_message_preview` et compteur stockés sur `conversations`.
+- Table de soldes `credit_balances` : FAIT le 2026-11-24 (déclencheur sur `credit_ledger`). Reste `Premium::active` (lecture de `GET /me`).
+- Liste des conversations : paginée (Lot 12) ; compteurs de non lus et `last_message_id` stockés sur `conversations` FAIT le 2026-11-24 (déclencheur sur `messages`, `counters:reconcile`). Voir `restant.md`.
 - Contrat OpenAPI : documenter le paramètre `active_within_days` de `GET /discover`.
 - Signature d'URL de média par photo : calcul local, pas de requête SQL, mais coût CPU par profil à surveiller.

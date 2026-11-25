@@ -1,0 +1,649 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Filament\\Schemas\\Components\\Component\:\:minLength\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: ../../backend/app/Filament/Pages/Auth/EditStaffProfile.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\LegalContentPage\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 6
+			path: ../../backend/app/Filament/Pages/LegalContentPage.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Appeal\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/AppealResource/AppealActions.php
+
+		-
+			message: '#^Parameter \#2 \$appealId of method App\\Services\\Admin\\AppealReview\:\:accept\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/AppealResource/AppealActions.php
+
+		-
+			message: '#^Parameter \#2 \$appealId of method App\\Services\\Admin\\AppealReview\:\:reject\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/AppealResource/AppealActions.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\MediaItem\:\:\$mime_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/MediaItemResource.php
+
+		-
+			message: '#^Parameter \#2 \$mediaId of method App\\Services\\Admin\\MediaModeration\:\:approve\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MediaItemResource.php
+
+		-
+			message: '#^Parameter \#2 \$mediaId of method App\\Services\\Admin\\MediaModeration\:\:preview\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MediaItemResource.php
+
+		-
+			message: '#^Parameter \#2 \$mediaId of method App\\Services\\Admin\\MediaModeration\:\:reject\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MediaItemResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Member\:\:\$birthdate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource.php
+
+		-
+			message: '#^Parameter \#1 \$userId of static method App\\Services\\Premium\:\:active\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Member\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 3
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$display_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Parameter \#2 \$userId of method App\\Services\\Admin\\UserAdmin\:\:adjustCredits\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Parameter \#2 \$userId of method App\\Services\\Admin\\UserAdmin\:\:ban\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Parameter \#2 \$userId of method App\\Services\\Admin\\UserAdmin\:\:grantPremium\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Parameter \#2 \$userId of method App\\Services\\Admin\\UserAdmin\:\:reactivate\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Parameter \#2 \$userId of method App\\Services\\Admin\\UserAdmin\:\:suspend\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/MemberResource/Pages/ViewMember.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$priority\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$reporter_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Sanction\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Sanction\:\:\$kind\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Sanction\:\:\$reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:sanctions\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$profile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Resources/ReportResource/ReportActions.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\SupportTicket\:\:\$assigned_to\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Filament/Resources/SupportTicketResource/TicketActions.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\SupportTicket\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Filament/Resources/SupportTicketResource/TicketActions.php
+
+		-
+			message: '#^Parameter \#2 \$ticketId of method App\\Services\\Admin\\TicketDesk\:\:update\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: ../../backend/app/Filament/Resources/SupportTicketResource/TicketActions.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\VerificationRequest\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Filament/Resources/VerificationRequestResource/Pages/ViewVerificationRequest.php
+
+		-
+			message: '#^Parameter \#2 \$requestId of method App\\Services\\Admin\\VerificationReview\:\:approve\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/VerificationRequestResource/Pages/ViewVerificationRequest.php
+
+		-
+			message: '#^Parameter \#2 \$requestId of method App\\Services\\Admin\\VerificationReview\:\:reject\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/VerificationRequestResource/Pages/ViewVerificationRequest.php
+
+		-
+			message: '#^Parameter \#2 \$requestId of method App\\Services\\Admin\\VerificationReview\:\:viewSelfie\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Filament/Resources/VerificationRequestResource/Pages/ViewVerificationRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Filament/Support/Sla.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$priority\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Filament/Support/Sla.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/AccountController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/AccountController.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Services\\OneTimeCodes\:\:issue\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Http/Controllers/AccountController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\StaffUser\|App\\Models\\User\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/EmailVerificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/OAuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/OAuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/ConversationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/DiscoveryController.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function array_filter expects \(callable\(string\)\: bool\)\|null, ''strlen'' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Http/Controllers/DiscoveryController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$is_visible\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/MatchController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/MatchController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$kind\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$mime_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$size_bytes\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$storage_key\.$#'
+			identifier: property.notFound
+			count: 7
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/MediaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$residence_changed_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Http/Controllers/ProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$residence_country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Http/Controllers/ProfileController.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function array_filter expects \(callable\(string\)\: bool\)\|null, ''strlen'' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Http/Controllers/ProfileController.php
+
+		-
+			message: '#^Call to an undefined method Psr\\Log\\LoggerInterface\:\:pushProcessor\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: ../../backend/app/Logging/RedactLogs.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Models/StaffUser.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$recovery_codes_encrypted\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Models/StaffUser.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$totp_secret_encrypted\.$#'
+			identifier: property.notFound
+			count: 3
+			path: ../../backend/app/Models/StaffUser.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Media\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Policies/MediaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$is_visible\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Policies/ProfilePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Policies/ProfilePolicy.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Policies/ProfilePolicy.php
+
+		-
+			message: '#^Parameter \#1 \$a of static method App\\Support\\Blocks\:\:between\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Policies/ProfilePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/AccountDeletion.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/AccountDeletion.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 6
+			path: ../../backend/app/Services/AccountMail.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 3
+			path: ../../backend/app/Services/AccountMail.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Services\\OneTimeCodes\:\:issue\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: ../../backend/app/Services/AccountMail.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, string\|null\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: ../../backend/app/Services/Admin/LegalContent.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: ../../backend/app/Services/Admin/LegalContent.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/Admin/Permissions.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\SanctionLedger\:\:activeRestrictions\(\) should return Illuminate\\Support\\Collection\<int, object\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
+			identifier: return.type
+			count: 1
+			path: ../../backend/app/Services/Admin/SanctionLedger.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\SanctionLedger\:\:revokeSessions\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: ../../backend/app/Services/Admin/SanctionLedger.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/EmailSquatReclaim.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/EmailSquatReclaim.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_seen_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/EmailSquatReclaim.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/EmailSquatReclaim.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/EmailSquatReclaim.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: ../../backend/app/Services/MediaSanitizer.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$bio\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$display_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$gender\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$hide_distance\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$hide_last_seen\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$intent\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$is_visible\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$origin_country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$residence_country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$verification_status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$birthdate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_seen_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Method App\\Services\\ProfilePresenter\:\:mediaFor\(\) should return Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Collection\<int, object\>\> but returns Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Support\\Collection\<int, stdClass\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<string,Illuminate\\Support\\Collection\<int, object\>\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Services\\Presence\:\:isOnline\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Parameter \#1 \$userIds of method App\\Services\\ProfilePresenter\:\:mediaFor\(\) expects list\<string\>, array\{int\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Services\\ProfilePresenter\:\:base\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: ../../backend/app/Services/ProfilePresenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: ../../backend/app/Services/Registrar.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Services\\Registrar\:\:consentRow\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: ../../backend/app/Services/Registrar.php
