@@ -223,6 +223,15 @@ describe('S10 Découverte', () => {
     expect(await screen.findByTestId('discover-needs-profile')).toBeOnTheScreen();
   });
 
+  it('compte suspendu ou banni (403 account_restricted) : accès à la sanction, pas « complétez votre profil » (revue N-02)', async () => {
+    installFakeApi({ 'GET /me': [200, ME], 'GET /discover': [403, { error: { code: 'account_restricted', message: 'Compte indisponible.' } }] } as never);
+    await renderShell(<DiscoverScreen />);
+    expect(await screen.findByTestId('discover-restricted')).toBeOnTheScreen();
+    expect(screen.queryByTestId('discover-needs-profile')).toBeNull();
+    await user().press(screen.getByText('Sanctions et contestations'));
+    expect(router.push).toHaveBeenCalledWith('/settings/sanctions');
+  });
+
   it('appuyer sur la carte ouvre le détail S11', async () => {
     installFakeApi(deck());
     await renderShell(<DiscoverScreen />);

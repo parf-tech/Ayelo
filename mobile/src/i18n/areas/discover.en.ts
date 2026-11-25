@@ -25,6 +25,7 @@ export const discoverEn = {
   'discover.premium.cta': 'See Premium offers',
   'discover.dismiss': 'Dismiss',
   'discover.needProfile': 'Complete your profile to discover people.',
+  'discover.restricted': 'Your account is restricted. You can read the sanction and appeal it.',
   'discover.swipeFailed': 'Your choice could not be saved. The card is back.',
 
   'filters.title': 'Filters',

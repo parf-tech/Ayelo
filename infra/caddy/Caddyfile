@@ -71,6 +71,9 @@
 	root * /var/www/html/public
 	encode zstd gzip
 	import admin_ip_allowlist
+	# L'API n'est servie que sur son domaine (revue N-01) : ici /api et /up répondent 404.
+	@api_ici path /api /api/* /up
+	respond @api_ici 404
 	import security_headers
 	header {
 		# Pas de cache des pages d'administration (données personnelles) ni d'indexation.

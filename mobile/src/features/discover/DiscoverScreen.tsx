@@ -152,7 +152,10 @@ export function DiscoverScreen() {
       params: { reportedId: profile.user_id, name: profile.display_name, contextType: 'profile', contextId: profile.user_id },
     } as never);
   const filtersActive = filters !== null;
-  const needsProfile = status === 'error' && isApiError(paged.error) && paged.error.status === 403;
+  const forbidden = status === 'error' && isApiError(paged.error) && paged.error.status === 403 ? paged.error : null;
+  // Compte suspendu ou banni (revue N-02) : on mène à la sanction et à la contestation, pas au profil.
+  const restricted = forbidden?.code === 'account_restricted';
+  const needsProfile = forbidden !== null && !restricted;
 
   return (
     <ScreenContainer testID="screen-discover">
@@ -184,7 +187,14 @@ export function DiscoverScreen() {
         />
       ) : null}
 
-      {needsProfile ? (
+      {restricted ? (
+        <EmptyState
+          testID="discover-restricted"
+          title={t('discover.restricted')}
+          actionLabel={t('settings.sanctions')}
+          onAction={() => router.push('/settings/sanctions' as never)}
+        />
+      ) : needsProfile ? (
         <EmptyState
           testID="discover-needs-profile"
           title={t('discover.needProfile')}
