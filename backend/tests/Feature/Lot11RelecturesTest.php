@@ -206,8 +206,9 @@ it('safety.state_store : jeton d’âge à usage unique et compteur de ré-authe
     [$u, $b] = l11User();
     l11As($b)->postJson('/api/v1/me/export', ['password' => 'mauvais'])->assertForbidden();
     $key = 'reauth-fail:'.$u->id.'|127.0.0.1';
-    expect(SafetyState::limiter()->attempts($key))->toBe(1)
-        ->and(app(RateLimiter::class)->attempts($key))->toBe(0);
+    // (int) : Redis rend un compteur sous forme de chaîne, le cache `array` sous forme d'entier.
+    expect((int) SafetyState::limiter()->attempts($key))->toBe(1)
+        ->and((int) app(RateLimiter::class)->attempts($key))->toBe(0);
 });
 
 it('safety.state_store : sans configuration, le magasin de cache par défaut est utilisé', function () {
@@ -215,7 +216,7 @@ it('safety.state_store : sans configuration, le magasin de cache par défaut est
 
     SafetyState::store()->put('l11-k', 1, 60);
 
-    expect(Cache::store()->get('l11-k'))->toBe(1);
+    expect((int) Cache::store()->get('l11-k'))->toBe(1);
 });
 
 // ---------- 8. ré-authentification : compteur remis à zéro, clé compte + IP ----------
@@ -226,10 +227,10 @@ it('reauthenticate : un succès remet le compteur d’échecs à zéro ; la clé
     foreach (range(1, 4) as $_) {
         l11As($b)->postJson('/api/v1/me/export', ['password' => 'mauvais'])->assertForbidden();
     }
-    expect(SafetyState::limiter()->attempts('reauth-fail:'.$u->id.'|127.0.0.1'))->toBe(4);
+    expect((int) SafetyState::limiter()->attempts('reauth-fail:'.$u->id.'|127.0.0.1'))->toBe(4);
 
     l11As($b)->postJson('/api/v1/me/export', ['password' => 'Motdepasse2026'])->assertStatus(202);
-    expect(SafetyState::limiter()->attempts('reauth-fail:'.$u->id.'|127.0.0.1'))->toBe(0);
+    expect((int) SafetyState::limiter()->attempts('reauth-fail:'.$u->id.'|127.0.0.1'))->toBe(0);
 
     // Sans remise à zéro, ces 4 échecs auraient atteint le plafond de 5 : ils restent des 403.
     foreach (range(1, 4) as $_) {

@@ -128,10 +128,10 @@ jobs:
           docker run --rm -i hadolint/hadolint < infra/scripts/Dockerfile
 
   backend-prodlike:
-    # Même magasin de cache qu'en production (Redis) + couverture. Informatif : première exécution jamais observée.
+    # Même magasin de cache qu'en production (Redis) + couverture. BLOQUANT depuis le 2026-11-24 (première exécution réellement
+    # verte : 718 réussis, 2 sautés, couverture totale 94,7 %).
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    continue-on-error: true
     services:
       postgres:
         image: postgres:16
@@ -170,9 +170,9 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-      - name: Pest avec CACHE_STORE=redis et couverture (rapport, pas de seuil)
-        # Seuils visés par docs/13-TEST-STRATEGY.md : 70 % global, 85 % services critiques. Aucun seuil bloquant ici
-        # tant que la valeur mesurée n'est pas connue (--min=NN à ajouter après la première exécution).
+      - name: "Pest avec CACHE_STORE=redis et couverture (seuil global 92 %)"
+        # Seuil global 92 % : 2 à 3 points sous la mesure du 2026-11-24 (94,7 %), au-dessus des planchers de docs/13-TEST-STRATEGY.md
+        # (70 % global, 85 % services critiques). Pas de seuil par service : Pest ne le propose pas.
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -185,13 +185,17 @@ jobs:
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
         run: |
-          vendor/bin/pest --coverage --coverage-clover=coverage.xml | tee coverage.txt
+          # Sans pipefail, `| tee` renvoie le code de sortie de tee (0) : 33 tests en échec ont été vus « verts » (2026-11-23).
+          set -o pipefail
+          status=0
+          vendor/bin/pest --coverage --min=92 --coverage-clover=coverage.xml | tee coverage.txt || status=$?
           {
             echo '### Couverture Pest (rapport)'
             echo '```'
-            grep -E 'Total|Cov' coverage.txt | tail -n 5 || true
+            grep -E 'Total|Cov|Tests:' coverage.txt | tail -n 5 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
