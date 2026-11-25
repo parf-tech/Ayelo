@@ -119,7 +119,7 @@ return [
     'field' => [
         'message_to_user' => 'Message sent to the user', 'reason_to_user' => 'Reason sent to the user', 'internal_note' => 'Internal note',
         'justification' => 'Justification', 'duration' => 'Duration', 'reason' => 'Reason', 'note_optional' => 'Note (optional)',
-        'decision_note' => 'Decision note (required)', 'language' => 'Back-office language', 'with_duplicates' => 'Also apply to the :count other open report(s) with the same reason on this account', 'assign_to' => 'Assign to', 'reason_required' => 'Reason (required)', 'reason_visible_hint' => 'This reason is shown to the user. Do not enter any internal note here.', 'delta' => 'Change (+ or −)',
+        'decision_note' => 'Decision note (required)', 'language' => 'Back-office language', 'with_duplicates' => 'Also apply to the :count other open report(s) with the same reason on this account', 'assign_to' => 'Assign to', 'reason_required' => 'Reason (required)', 'sanction_internal_note' => 'Internal note (optional)', 'sanction_internal_note_hint' => 'Staff only: never shown to the user, nor included in their data export.', 'reason_visible_hint' => 'This reason is shown to the user. Do not enter any internal note here.', 'delta' => 'Change (+ or −)',
     ],
     'environment' => 'Environment: :name',
     'days' => '{1} :count day|[2,*] :count days',

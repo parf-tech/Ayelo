@@ -40,7 +40,7 @@ class ReportModeration extends AdminService
      *                                (une seule sanction, rattachée à ce signalement) ; jamais pour « mineur suspecté » ni pour la levée
      *                                de la suspension préventive, qui se revoient un par un ; ceux pris par une autre personne sont épargnés
      */
-    public function decide(StaffUser $actor, string $reportId, string $decision, string $note, ?int $days = null, bool $withDuplicates = false): void
+    public function decide(StaffUser $actor, string $reportId, string $decision, string $note, ?int $days = null, bool $withDuplicates = false, ?string $internalNote = null): void
     {
         if (! in_array($decision, self::DECISIONS, true)) {
             throw new DomainException('Décision inconnue.');
@@ -53,7 +53,7 @@ class ReportModeration extends AdminService
             throw new DomainException('La durée de suspension doit être comprise entre 1 et 365 jours.');
         }
 
-        $this->audited($actor, Permissions::REPORTS_REVIEW, 'report.'.$decision, 'reports', $reportId, function () use ($actor, $reportId, $decision, $note, $days, $withDuplicates) {
+        $this->audited($actor, Permissions::REPORTS_REVIEW, 'report.'.$decision, 'reports', $reportId, function () use ($actor, $reportId, $decision, $note, $days, $withDuplicates, $internalNote) {
             $report = DB::table('reports')->where('id', $reportId)->lockForUpdate()->first();
             if ($report === null || ! in_array($report->status, ['open', 'reviewed'], true)) {
                 throw new DomainException('Ce signalement a déjà été traité.');
@@ -79,16 +79,16 @@ class ReportModeration extends AdminService
 
             switch ($decision) {
                 case self::WARNING:
-                    $sanctionId = $this->sanctions->issue($userId, 'warning', $note, $reportId, null, $actor->id);
+                    $sanctionId = $this->sanctions->issue($userId, 'warning', $note, $reportId, null, $actor->id, $internalNote);
                     [$outcome, $status] = ['warning', 'actioned'];
                     break;
                 case self::SUSPENSION:
-                    $sanctionId = $this->sanctions->issue($userId, 'suspension', $note, $reportId, now()->addDays($days), $actor->id);
+                    $sanctionId = $this->sanctions->issue($userId, 'suspension', $note, $reportId, now()->addDays($days), $actor->id, $internalNote);
                     [$outcome, $status] = ['suspension', 'actioned'];
                     break;
                 case self::BAN:
                     // Déjà banni (autre signalement) : le signalement est tout de même clos comme « actioned ».
-                    $sanctionId = $userBefore === 'banned' ? null : $this->sanctions->issue($userId, 'ban', $note, $reportId, null, $actor->id);
+                    $sanctionId = $userBefore === 'banned' ? null : $this->sanctions->issue($userId, 'ban', $note, $reportId, null, $actor->id, $internalNote);
                     [$outcome, $status] = ['ban', 'actioned'];
                     break;
                 case self::LIFT_PREVENTIVE:
