@@ -1,32 +1,8 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 2
-			path: ../../backend/app/Filament/Commands/StaffCreateCommand.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$role\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Commands/StaffCreateCommand.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Commands/StaffResetTwoFactorCommand.php
-
-		-
 			message: '#^Call to an undefined method Filament\\Schemas\\Components\\Component\:\:minLength\(\)\.$#'
 			identifier: method.notFound
-			count: 1
-			path: ../../backend/app/Filament/Pages/Auth/EditStaffProfile.php
-
-		-
-			message: '#^Parameter \#1 \$actor of method App\\Services\\Admin\\Audit\:\:record\(\) expects App\\Models\\StaffUser\|null, Illuminate\\Contracts\\Auth\\Authenticatable&Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
 			count: 1
 			path: ../../backend/app/Filament/Pages/Auth/EditStaffProfile.php
 
@@ -139,12 +115,6 @@ parameters:
 			path: ../../backend/app/Filament/Resources/ReportResource.php
 
 		-
-			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$reported_id\.$#'
-			identifier: property.notFound
-			count: 3
-			path: ../../backend/app/Filament/Resources/ReportResource.php
-
-		-
 			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$reporter_id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -175,26 +145,8 @@ parameters:
 			path: ../../backend/app/Filament/Resources/ReportResource.php
 
 		-
-			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$reason\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Resources/ReportResource/ReportActions.php
-
-		-
-			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Resources/ReportResource/ReportActions.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$profile\.$#'
 			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Resources/ReportResource/ReportActions.php
-
-		-
-			message: '#^Parameter \#2 \$reportId of method App\\Services\\Admin\\ReportModeration\:\:decide\(\) expects string, int given\.$#'
-			identifier: argument.type
 			count: 1
 			path: ../../backend/app/Filament/Resources/ReportResource/ReportActions.php
 
@@ -214,12 +166,6 @@ parameters:
 			message: '#^Parameter \#2 \$ticketId of method App\\Services\\Admin\\TicketDesk\:\:update\(\) expects string, int given\.$#'
 			identifier: argument.type
 			count: 2
-			path: ../../backend/app/Filament/Resources/SupportTicketResource/TicketActions.php
-
-		-
-			message: '#^Parameter \#4 \$assignedTo of method App\\Services\\Admin\\TicketDesk\:\:update\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 1
 			path: ../../backend/app/Filament/Resources/SupportTicketResource/TicketActions.php
 
 		-
@@ -254,18 +200,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$priority\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Support/Sla.php
-
-		-
-			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$reason\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Filament/Support/Sla.php
-
-		-
-			message: '#^Access to an undefined property App\\Filament\\Models\\Report\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
 			path: ../../backend/app/Filament/Support/Sla.php
@@ -337,116 +271,14 @@ parameters:
 			path: ../../backend/app/Http/Controllers/Auth/RegisterController.php
 
 		-
-			message: '#^Parameter \#1 \$userId of method App\\Services\\Conversations\:\:creditBalance\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/BillingController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of static method App\\Services\\Premium\:\:active\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/BillingController.php
-
-		-
-			message: '#^Parameter \#1 \$a of method App\\Services\\Calls\:\:endBetween\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/BlockController.php
-
-		-
-			message: '#^Parameter \#1 \$callerId of method App\\Services\\Calls\:\:unansweredRecently\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#1 \.\.\.\$userIds of method App\\Services\\Calls\:\:activeFor\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#1 \.\.\.\$userIds of method App\\Services\\Calls\:\:lockUsers\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#2 \$identity of method App\\Services\\LiveKitTokens\:\:mint\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:canWrite\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:forParticipant\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:other\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/CallController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
 			path: ../../backend/app/Http/Controllers/ConversationController.php
 
 		-
-			message: '#^Parameter \#1 \$userId of method App\\Services\\Conversations\:\:creditBalance\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ConversationController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of static method App\\Services\\Premium\:\:active\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ConversationController.php
-
-		-
-			message: '#^Parameter \#2 \$me of method App\\Http\\Controllers\\ConversationController\:\:ensureWritable\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Http/Controllers/ConversationController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:forParticipant\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ConversationController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:other\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Http/Controllers/ConversationController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$user_id\.$#'
 			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Http/Controllers/DiscoveryController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\DiscoveryController\:\:preferences\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/DiscoveryController.php
-
-		-
-			message: '#^Parameter \#1 \$viewerId of method App\\Services\\DiscoveryQuery\:\:build\(\) expects string, int given\.$#'
-			identifier: argument.type
 			count: 1
 			path: ../../backend/app/Http/Controllers/DiscoveryController.php
 
@@ -511,36 +343,6 @@ parameters:
 			path: ../../backend/app/Http/Controllers/MediaController.php
 
 		-
-			message: '#^Parameter \#1 \$senderId of method App\\Services\\MessageSafety\:\:inspect\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/MessageController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Http\\Controllers\\MessageController\:\:assertMedia\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/MessageController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:canWrite\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Http/Controllers/MessageController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:forParticipant\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 5
-			path: ../../backend/app/Http/Controllers/MessageController.php
-
-		-
-			message: '#^Parameter \#2 \$userId of method App\\Services\\Conversations\:\:other\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/MessageController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Profile\:\:\$residence_changed_at\.$#'
 			identifier: property.notFound
 			count: 2
@@ -553,100 +355,16 @@ parameters:
 			path: ../../backend/app/Http/Controllers/ProfileController.php
 
 		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\ProfileController\:\:preferencesFor\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Http/Controllers/ProfileController.php
-
-		-
 			message: '#^Parameter \#2 \$callback of function array_filter expects \(callable\(string\)\: bool\)\|null, ''strlen'' given\.$#'
 			identifier: argument.type
 			count: 1
 			path: ../../backend/app/Http/Controllers/ProfileController.php
 
 		-
-			message: '#^Parameter \#1 \$reporterId of method App\\Services\\ReporterCredibility\:\:alertIfAbnormal\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ReportController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Services\\ReporterCredibility\:\:hasInteraction\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ReportController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Services\\ReporterCredibility\:\:isEstablished\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ReportController.php
-
-		-
-			message: '#^Parameter \#2 \$exceptId of method App\\Services\\ReporterCredibility\:\:otherCredibleMinorReporters\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ReportController.php
-
-		-
-			message: '#^Parameter \#2 \$me of method App\\Http\\Controllers\\ReportController\:\:assertContext\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/ReportController.php
-
-		-
-			message: '#^Parameter \#1 \$swiperId of method App\\Services\\SwipeService\:\:swipe\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/SwipeController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\SwipeController\:\:increment\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/SwipeController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\SwipeController\:\:release\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Http/Controllers/SwipeController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\SwipeController\:\:reserve\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/SwipeController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of static method App\\Services\\Premium\:\:active\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Http/Controllers/SwipeController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\VerificationController\:\:challenge\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Http/Controllers/VerificationController.php
-
-		-
-			message: '#^Parameter \#1 \$userId of method App\\Http\\Controllers\\VerificationController\:\:challengeKey\(\) expects string, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Http/Controllers/VerificationController.php
-
-		-
 			message: '#^Call to an undefined method Psr\\Log\\LoggerInterface\:\:pushProcessor\(\)\.$#'
 			identifier: method.notFound
 			count: 1
 			path: ../../backend/app/Logging/RedactLogs.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 2
-			path: ../../backend/app/Models/StaffUser.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$is_active\.$#'
@@ -656,12 +374,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$recovery_codes_encrypted\.$#'
-			identifier: property.notFound
-			count: 2
-			path: ../../backend/app/Models/StaffUser.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$role\.$#'
 			identifier: property.notFound
 			count: 2
 			path: ../../backend/app/Models/StaffUser.php
@@ -751,18 +463,6 @@ parameters:
 			path: ../../backend/app/Services/Admin/Permissions.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$role\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Services/Admin/Permissions.php
-
-		-
-			message: '#^Parameter \#6 \$staffId of method App\\Services\\Admin\\SanctionLedger\:\:issue\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 3
-			path: ../../backend/app/Services/Admin/ReportModeration.php
-
-		-
 			message: '#^Method App\\Services\\Admin\\SanctionLedger\:\:activeRestrictions\(\) should return Illuminate\\Support\\Collection\<int, object\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
 			identifier: return.type
 			count: 1
@@ -773,54 +473,6 @@ parameters:
 			identifier: method.unused
 			count: 1
 			path: ../../backend/app/Services/Admin/SanctionLedger.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Services/Admin/StaffAccounts.php
-
-		-
-			message: '#^Parameter \#4 \$subjectId of method App\\Services\\Admin\\Audit\:\:record\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Services/Admin/StaffAccounts.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\StaffUser\:\:\$role\.$#'
-			identifier: property.notFound
-			count: 1
-			path: ../../backend/app/Services/Admin/StaffAuthAudit.php
-
-		-
-			message: '#^Parameter \#4 \$subjectId of method App\\Services\\Admin\\Audit\:\:record\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Services/Admin/StaffAuthAudit.php
-
-		-
-			message: '#^Parameter \#4 \$subjectId of method App\\Services\\Admin\\Audit\:\:record\(\) expects string\|null, int\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Services/Admin/StaffAuthAudit.php
-
-		-
-			message: '#^Parameter \#6 \$staffId of method App\\Services\\Admin\\SanctionLedger\:\:issue\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../backend/app/Services/Admin/UserAdmin.php
-
-		-
-			message: '#^Parameter \#2 \$staffId of method App\\Services\\ProfileVerification\:\:approve\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Services/Admin/VerificationReview.php
-
-		-
-			message: '#^Parameter \#3 \$staffId of method App\\Services\\ProfileVerification\:\:reject\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: ../../backend/app/Services/Admin/VerificationReview.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$created_at\.$#'
