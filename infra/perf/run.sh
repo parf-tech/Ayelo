@@ -87,20 +87,24 @@ diagnose | tee "$RESULTS/diagnostic.txt"
 log "coût à vide (une requête à la fois)"
 dc --profile load run --rm -T k6 run --quiet -e IDLE=1 /scripts/load.js > "$RESULTS/idle.txt" 2>&1 || true
 grep -a -F "{ name:" "$RESULTS/idle.txt" || true
-dc exec -T app sh -c 'php /srv/perf/photo.php > /tmp/p.jpg; cd /var/www/html; for n in 1 2 3; do s=$(date +%s%3N); php -d memory_limit=256M artisan media:sanitize-stdin image/jpeg < /tmp/p.jpg > /dev/null; echo "ré-encodage seul, essai $n : $(( $(date +%s%3N) - s )) ms"; done; s=$(date +%s%3N); php artisan --version > /dev/null; echo "démarrage d artisan seul : $(( $(date +%s%3N) - s )) ms"' | tee "$RESULTS/sanitize-cost.txt"
+dc exec -T app php /srv/perf/timing.php | tee "$RESULTS/sanitize-cost.txt"
 
-log "charge (échelle $SCALE, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC)"
 ( while true; do date -u +%H:%M:%S; docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} mem={{.MemUsage}}' $(docker ps -q --filter label=com.docker.compose.project=ayelo-perf) 2>/dev/null; sleep 15; done ) > "$RESULTS/stats.txt" &
 SAMPLER=$!
-status=0
-dc --profile load run --rm -T k6 run --quiet -e SCALE="$SCALE" -e STAGE="$STAGE" -e UPLOAD="${UPLOAD_PEAK:-2}" --summary-export=/work/summary.json /scripts/load.js > "$RESULTS/k6.txt" 2>&1 || status=$?
+# Plusieurs paliers sur les mêmes données : PERF_SCALES="0.1 0.25 0.5" (sinon l'échelle donnée).
+for scale in ${PERF_SCALES:-$SCALE}; do
+  log "charge (échelle $scale, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC, pointe de dépôts ${UPLOAD_PEAK:-2}/s x échelle)"
+  status=0
+  dc --profile load run --rm -T k6 run --quiet -e SCALE="$scale" -e STAGE="$STAGE" -e UPLOAD="${UPLOAD_PEAK:-2}" --summary-export="/work/summary-$scale.json" /scripts/load.js > "$RESULTS/k6-$scale.txt" 2>&1 || status=$?
+  cp "$WORK/summary-$scale.json" "$RESULTS/" 2>/dev/null || true
+  grep -a -E "\{ name:|http_req_duration\.|checks_succeeded|dropped_iterations\.|http_req_failed\.|http_reqs\." "$RESULTS/k6-$scale.txt" | cut -c1-200 || true
+  grep -a -o "fin de d[^\"]*" "$RESULTS/k6-$scale.txt" | sed -E 's/[0-9a-f-]{36}/<id>/g' | cut -c1-200 | sort | uniq -c | sort -rn | head -3 || true
+  log "palier $scale terminé, code $status (99 = un objectif n'est pas atteint)"
+  sleep 20
+done
 kill "$SAMPLER" 2>/dev/null || true; SAMPLER=""
-cp "$WORK/summary.json" "$RESULTS/summary.json" 2>/dev/null || true
 dc logs --no-log-prefix postgres 2>/dev/null | grep -E "duration: [0-9]+" | cut -c1-400 > "$RESULTS/slow-queries.txt" || true
-dc logs app worker reverb 2>/dev/null | grep -i -E "error|exception|critical" | cut -c1-300 | head -100 > "$RESULTS/errors.txt" || true
-grep -a -o "fin de d[^\"]*" "$RESULTS/k6.txt" | sed -E 's/[0-9a-f-]{36}/<id>/g' | sort | uniq -c | sort -rn | head -5 > "$RESULTS/upload-refus.txt" || true
+dc logs app worker reverb 2>/dev/null | grep -i -E "error|exception|critical" | cut -c1-300 | head -200 > "$RESULTS/errors.txt" || true
 psql_ -At -c "select 'files en attente (jobs échoués) : ' || count(*) from failed_jobs" > "$RESULTS/failed-jobs.txt" || true
 diagnose | tee -a "$RESULTS/diagnostic.txt"
-log "k6 terminé, code $status (99 = un objectif n'est pas atteint)"
-cat "$RESULTS/k6.txt"
 exit 0

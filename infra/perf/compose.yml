@@ -23,6 +23,7 @@ services:
       - app-public:/var/www/html/public
       - ./opcache.php:/srv/perf/opcache.php:ro
       - ./photo.php:/srv/perf/photo.php:ro
+      - ./timing.php:/srv/perf/timing.php:ro
     # Même pool FPM et même plafond de mémoire qu'en production ; le processeur est borné pour laisser de la marge à la machine.
     deploy:
       resources:
