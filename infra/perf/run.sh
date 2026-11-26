@@ -2,6 +2,7 @@
 # Banc de charge jetable : construit l'application de CE dépôt, remplit une base fictive, lance k6, puis détruit tout.
 # Usage : run.sh <dossier des résultats> [profils=200000] [acteurs=500] [échelle=1] [durée d'un palier=90s]
 #         MEDIA_ASYNC_IMAGES=true run.sh ...   ré-encodage des images hors de la requête
+#         DB_PERSISTENT=true run.sh ...        connexions PostgreSQL persistantes
 # Sans effet sur un autre projet compose : tout passe par « -p ayelo-perf » ; aucune commande « prune ».
 set -euo pipefail
 
@@ -9,6 +10,7 @@ set -euo pipefail
 RESULTS="$(mkdir -p "$1" && cd "$1" && pwd)"
 PROFILES="${2:-200000}"; ACTORS="${3:-500}"; SCALE="${4:-1}"; STAGE="${5:-90s}"
 ASYNC="${MEDIA_ASYNC_IMAGES:-false}"
+PERSISTENT="${DB_PERSISTENT:-false}"
 for n in "$PROFILES" "$ACTORS"; do case "$n" in ''|*[!0-9]*) echo "nombre invalide : $n" >&2; exit 2 ;; esac; done
 [ "$ACTORS" -ge 50 ] && [ "$PROFILES" -ge "$ACTORS" ] || { echo "il faut au moins 50 acteurs et profils >= acteurs" >&2; exit 2; }
 cd "$(dirname "$0")"
@@ -35,8 +37,10 @@ secret() { head -c 24 /dev/urandom | base64 | tr -dc A-Za-z0-9; }
 ( umask 077
   sed -e "s|__APP_KEY__|base64:$(head -c 32 /dev/urandom | base64)|" \
       -e "s|__DB_PASSWORD__|$(secret)|" -e "s|__REDIS_PASSWORD__|$(secret)|" -e "s|__REVERB_SECRET__|$(secret)|" \
-      -e "s|__ASYNC__|${ASYNC}|" perf.env.tpl > "$PERF_ENV" )
+      -e "s|__ASYNC__|${ASYNC}|" -e "s|__PERSISTENT__|${PERSISTENT}|" perf.env.tpl > "$PERF_ENV" )
 psql_() { dc exec -T postgres psql -U app -d app -X -v ON_ERROR_STOP=1 "$@"; }
+# Connexions ouvertes depuis le démarrage de PostgreSQL : montre si l'application les réutilise.
+sessions() { psql_ -At -c "select sessions from pg_stat_database where datname = 'app'"; }
 
 log "construction de l'image (code : $(git -C ../.. log -1 --format=%h 2>/dev/null || echo inconnu))"
 dc build app > "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
@@ -93,14 +97,15 @@ dc exec -T app php /srv/perf/timing.php | tee "$RESULTS/sanitize-cost.txt"
 SAMPLER=$!
 # Plusieurs paliers sur les mêmes données : PERF_SCALES="0.1 0.25 0.5" (sinon l'échelle donnée).
 for scale in ${PERF_SCALES:-$SCALE}; do
-  log "charge (échelle $scale, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC, pointe de dépôts ${UPLOAD_PEAK:-2}/s x échelle)"
-  status=0
+  log "charge (échelle $scale, paliers de $STAGE, MEDIA_ASYNC_IMAGES=$ASYNC, DB_PERSISTENT=$PERSISTENT, pointe de dépôts ${UPLOAD_PEAK:-2}/s x échelle)"
+  status=0; opened="$(sessions)"
   dc --profile load run --rm -T k6 run --quiet -e SCALE="$scale" -e STAGE="$STAGE" -e UPLOAD="${UPLOAD_PEAK:-2}" --summary-export="/work/summary-$scale.json" /scripts/load.js > "$RESULTS/k6-$scale.txt" 2>&1 || status=$?
   cp "$WORK/summary-$scale.json" "$RESULTS/" 2>/dev/null || true
   grep -a -E "\{ name:|http_req_duration\.|checks_succeeded|dropped_iterations\.|http_req_failed\.|http_reqs\." "$RESULTS/k6-$scale.txt" | cut -c1-200 || true
   grep -a -o "fin de d[^\"]*" "$RESULTS/k6-$scale.txt" | sed -E 's/[0-9a-f-]{36}/<id>/g' | cut -c1-200 | sort | uniq -c | sort -rn | head -3 || true
   log "palier $scale terminé, code $status (99 = un objectif n'est pas atteint)"
   sleep 20
+  echo "échelle $scale : $(( $(sessions) - opened )) connexions PostgreSQL ouvertes (DB_PERSISTENT=$PERSISTENT)" | tee -a "$RESULTS/connexions.txt"
 done
 kill "$SAMPLER" 2>/dev/null || true; SAMPLER=""
 dc logs --no-log-prefix postgres 2>/dev/null | grep -E "duration: [0-9]+" | cut -c1-400 > "$RESULTS/slow-queries.txt" || true
