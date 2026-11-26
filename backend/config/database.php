@@ -97,6 +97,11 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Connexions persistantes, FERMÉES par défaut : chaque processus PHP-FPM garde sa connexion d'une requête à l'autre
+            // au lieu d'en rouvrir une (docs/runbooks/charge.md). PDO annule la transaction laissée ouverte et remplace une
+            // connexion coupée ; en revanche un réglage de session (`SET` sans `LOCAL`, table temporaire, verrou consultatif de
+            // session) survivrait à la requête : ne pas en introduire.
+            'options' => filter_var(env('DB_PERSISTENT', false), FILTER_VALIDATE_BOOL) ? [PDO::ATTR_PERSISTENT => true] : [],
         ],
 
         'sqlsrv' => [

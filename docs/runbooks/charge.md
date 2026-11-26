@@ -14,6 +14,7 @@ PERF_SCALES="0.1 0.25 0.5" bash infra/perf/run.sh /chemin/resultats 200000 500 1
 PERF_APP_CPUS=4 PERF_DB_CPUS=2 bash infra/perf/run.sh /chemin/resultats   # processeur proche de la production
 UPLOAD_PEAK=0 bash infra/perf/run.sh /chemin/resultats                    # sans dépôt d'image
 MEDIA_ASYNC_IMAGES=true bash infra/perf/run.sh /chemin/resultats-async
+DB_PERSISTENT=true bash infra/perf/run.sh /chemin/resultats-persistant    # connexions PostgreSQL persistantes
 ```
 
 Échelle 1 : découverte 30 req/s, liste des conversations 30, lecture d'un fil 30, envoi 10, dépôt d'image 2 (`UPLOAD_PEAK`).
@@ -28,6 +29,17 @@ MEDIA_ASYNC_IMAGES=true bash infra/perf/run.sh /chemin/resultats-async
 | `stats.txt` | processeur et mémoire des conteneurs, toutes les 15 s |
 | `errors.txt`, `failed-jobs.txt` | erreurs de l'application, tâches échouées |
 | `volume.txt` | taille du jeu de données |
+| `connexions.txt` | connexions PostgreSQL ouvertes pendant chaque palier |
+
+## Connexions persistantes (`DB_PERSISTENT`)
+
+Fermées par défaut. Sans elles, chaque requête rouvre une connexion à PostgreSQL (chiffrement du mot de passe compris). Avec `DB_PERSISTENT=true`, chaque processus PHP-FPM garde la sienne.
+
+- **Avant d'activer** : comparer deux passages du banc sur la même machine, avec et sans (`connexions.txt` doit passer de plusieurs connexions par seconde à quelques dizaines au total).
+- **Nombre de connexions** : au plus une par processus (24 FPM, plus les workers et le planificateur), sous le `max_connections` de PostgreSQL (100). Augmenter `pm.max_children` ou ajouter un conteneur `app` oblige à refaire ce compte.
+- **Ce qui est essayé** (`DatabasePersistenceTest`) : la connexion est réutilisée, une transaction laissée ouverte est annulée, une connexion coupée par le serveur est remplacée.
+- **Interdit dès lors** : réglage de session sans `LOCAL`, table temporaire, `pg_advisory_lock` de session. Ils passeraient à la requête suivante.
+- **Activer** : `DB_PERSISTENT=true` dans `infra/.env.prod`, puis `infra/scripts/deploy.sh`. **Revenir en arrière** : `false`, puis déployer.
 
 ## Limites
 
