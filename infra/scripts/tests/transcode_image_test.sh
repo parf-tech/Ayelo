@@ -16,7 +16,13 @@ cleanup() { docker rm -f -v "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 box() { docker exec "$NAME" bash -c "$1"; }
-fail() { echo "ECHEC : $1" >&2; docker logs "$NAME" >&2 || true; exit 1; }
+running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = true ]; }
+fail() {
+  echo "ECHEC : $1" >&2
+  docker inspect -f 'conteneur : {{.State.Status}}, code de sortie {{.State.ExitCode}}' "$NAME" >&2 || true
+  docker logs "$NAME" >&2 || true
+  exit 1
+}
 ok() { echo "ok : $1"; }
 
 # Dépose une demande comme le fait l'application : les octets d'abord, la demande en dernier.
@@ -28,6 +34,7 @@ submit() {
 wait_for() {
   local i
   for i in $(seq 1 90); do
+    running || return 1
     if box "test -f $1"; then return 0; fi
     sleep 1
   done
@@ -76,4 +83,6 @@ ok "fichier illisible refusé"
 
 box 'test -z "$(ls -A /spool/in)"' || fail "des fichiers restent dans /spool/in"
 ok "aucune source conservée"
+running || fail "la boucle s'est arrêtée"
+ok "boucle toujours en marche après un fichier illisible"
 echo "image transcode : tout passe"

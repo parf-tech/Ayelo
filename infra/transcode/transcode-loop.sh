@@ -43,7 +43,8 @@ transcode_fail() {
 
 # Durée d'un fichier en secondes (décimal), vide si illisible.
 probe_duration() {
-  timeout 20 "$FFPROBE" -v error -protocol_whitelist file -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1" 2>/dev/null | head -n 1
+  # `|| true` : ffprobe sort en erreur sur un fichier illisible ; sous `set -e`, cela arrêterait toute la boucle.
+  timeout 20 "$FFPROBE" -v error -protocol_whitelist file -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$1" 2>/dev/null | head -n 1 || true
 }
 
 # Nombre de flux d'un type (a ou v) ; 0 si illisible.
@@ -66,7 +67,8 @@ transcode_job() {
   # Prise en charge atomique : si la demande a déjà été prise (ou retirée), on ne fait rien.
   mv -- "$job" "$run" 2>/dev/null || return 0
 
-  kind="$(sed -n 's/.*"kind" *: *"\([a-z]*\)".*/\1/p' "$run" 2>/dev/null | head -n 1)"
+  # L'application peut retirer ses fichiers à tout moment (délai dépassé) : une lecture ratée vaut « refusé », jamais un arrêt.
+  kind="$(sed -n 's/.*"kind" *: *"\([a-z]*\)".*/\1/p' "$run" 2>/dev/null | head -n 1 || true)"
   case "$kind" in
     audio) mime="audio/mp4"; max_seconds="$MAX_SECONDS_AUDIO"; max_bytes="$MAX_BYTES_AUDIO" ;;
     video) mime="video/mp4"; max_seconds="$MAX_SECONDS_VIDEO"; max_bytes="$MAX_BYTES_VIDEO" ;;
@@ -74,7 +76,7 @@ transcode_job() {
   esac
 
   [ -f "$src" ] || { transcode_fail "$id"; return 0; }
-  size="$(wc -c < "$src" | tr -d ' ')"
+  size="$(wc -c < "$src" 2>/dev/null | tr -d ' ' || true)"
   { [ "${size:-0}" -ge 1 ] && [ "$size" -le "$max_bytes" ]; } || { transcode_fail "$id"; return 0; }
 
   dur="$(probe_duration "$src")"
