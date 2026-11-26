@@ -1,6 +1,6 @@
 # Image de l'application Laravel (API, worker, planificateur, Reverb). Non construite ni testée sur le poste de
 # développement (Docker absent) : à valider sur le serveur ou en CI avant la première mise en production.
-FROM php:8.4-fpm-alpine@sha256:48b0daad6d12699089e45dd5ad2a7620982fa08d18426f94bf83d926e8495f9f AS base
+FROM php:8.5-fpm-alpine@sha256:51414d5291758fe27f58a64c7e8a078465d32cc7dcef7bda803f5b36019802e0 AS base
 
 RUN apk add --no-cache icu-libs libpq libzip freetype libjpeg-turbo libpng libwebp git unzip fcgi \
  && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev postgresql-dev libzip-dev freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev \
