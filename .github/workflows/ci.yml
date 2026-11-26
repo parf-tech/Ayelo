@@ -82,6 +82,12 @@ jobs:
           cp infra/.env.prod.example infra/.env.prod
           docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml config -q
           echo "compose valide"
+          # Chaque service plafonne ses journaux Docker (sans plafond, ils remplissent le disque).
+          json="$(docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml config --format json)"
+          echo "$json" | jq -e '.services | length >= 10' >/dev/null
+          sans_plafond="$(echo "$json" | jq -r '.services | to_entries[] | select(.value.logging.options["max-size"] == null or .value.logging.options["max-file"] == null) | .key')"
+          if [ -n "$sans_plafond" ]; then echo "ERREUR : services sans plafond de journaux :"; echo "$sans_plafond"; exit 1; fi
+          echo "journaux plafonnés"
 
       - name: Le compose refuse de démarrer sans destinataire GPG (chiffrement obligatoire)
         env:
