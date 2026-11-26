@@ -33,7 +33,7 @@ DB_PERSISTENT=true bash infra/perf/run.sh /chemin/resultats-persistant    # conn
 
 ## Connexions persistantes (`DB_PERSISTENT`)
 
-Fermées par défaut. Sans elles, chaque requête rouvre une connexion à PostgreSQL (chiffrement du mot de passe compris). Avec `DB_PERSISTENT=true`, chaque processus PHP-FPM garde la sienne.
+Fermées par défaut dans le code, **activées en production depuis le 2026-11-26**. Sans elles, chaque requête rouvre une connexion à PostgreSQL (chiffrement du mot de passe compris). Avec `DB_PERSISTENT=true`, chaque processus PHP-FPM garde la sienne.
 
 - **Avant d'activer** : comparer deux passages du banc sur la même machine, avec et sans (`connexions.txt` doit passer de plusieurs connexions par seconde à quelques dizaines au total).
 - **Nombre de connexions** : au plus une par processus (24 FPM, plus les workers et le planificateur), sous le `max_connections` de PostgreSQL (100). Augmenter `pm.max_children` ou ajouter un conteneur `app` oblige à refaire ce compte.
