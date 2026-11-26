@@ -7,6 +7,7 @@ Contexte : revue CTO n°1, section 3.2. Avant : ni suivi d'erreurs, ni métrique
 - Production : `LOG_CHANNEL=stack`, `LOG_STACK=daily`, `LOG_LEVEL=info`, `LOG_DAILY_DAYS=14` (fichiers `storage/logs/laravel-AAAA-MM-JJ.log`, rotation et suppression automatiques). Même sans ces variables, `config/logging.php` choisit `daily` et `info` quand `APP_ENV=production`.
 - Le processeur de masquage `RedactLogs` / `RedactSensitiveData` reste appliqué à tous les canaux (mots de passe, jetons, e-mails).
 - PHP-FPM écrit les requêtes lentes (> 5 s) sur la sortie d'erreur du conteneur : `docker compose logs app`.
+- Journaux des conteneurs (ce que montre `docker compose logs`, dont ceux de Caddy, PostgreSQL et Redis) : au plus **5 fichiers de 10 Mo par conteneur** (`x-logging` dans `infra/docker-compose.prod.yml` ; la CI refuse un service sans plafond). Le plafond s'applique à la (re)création du conteneur : le premier déploiement après ce changement **recrée aussi PostgreSQL, Redis et Caddy** (courte coupure), et les anciens journaux disparaissent avec les anciens conteneurs. La durée gardée dépend du volume écrit, pas d'un nombre de jours.
 - Taille : surveiller le volume `app-storage` (alerte disque ci-dessous).
 
 ## Sondes de santé
