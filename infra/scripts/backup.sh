@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Sauvegarde PostgreSQL : pg_dump au format custom, horodaté, avec somme de contrôle SHA-256,
 # rétention (quotidienne + mensuelle, en local et dans le bucket) et envoi facultatif vers un bucket compatible S3
-# (Cloudflare R2). Alerte facultative par webhook en cas d'échec et fichier témoin pour la sonde de santé.
+# (Cloudflare R2). Alertes facultatives (webhook, e-mail) en cas d'échec et fichier témoin pour la sonde de santé.
+# Usage : backup.sh              une sauvegarde
+#         backup.sh --test-alert  envoie une alerte d'essai par les canaux configurés, sans toucher à la base
+#                                 (sortie 0 seulement si tous les envois configurés ont réussi)
 #
 # STATUT : écrit, JAMAIS EXÉCUTÉ (ni Docker, ni pg_dump, ni shellcheck sur le poste de développement).
 # Seule la logique de rétention (retention.sh) a été essayée, sur de faux fichiers (tests/retention_test.sh).
@@ -15,6 +18,9 @@
 #                    Règle détaillée dans retention.sh ; elle vaut pour le dossier local ET pour le bucket.
 #                  BACKUP_ALERT_WEBHOOK_URL (vide = pas d'alerte) : en cas d'échec, POST JSON
 #                    {"host","timestamp","step"} (nom d'hôte, heure UTC, étape en échec ; ni secret ni chemin).
+#                  BACKUP_ALERT_EMAIL (vide = pas d'e-mail) : en cas d'échec, e-mail par SMTP (TLS obligatoire) avec les
+#                    réglages de l'application : MAIL_HOST, MAIL_PORT (587 ; 465 = TLS implicite), MAIL_USERNAME,
+#                    MAIL_PASSWORD ; expéditeur BACKUP_ALERT_EMAIL_FROM, sinon MAIL_FROM_ADDRESS.
 #                  BACKUP_BUCKET + BACKUP_ENDPOINT + BACKUP_AWS_ACCESS_KEY_ID + BACKUP_AWS_SECRET_ACCESS_KEY
 #                    (si BACKUP_BUCKET est vide, aucun envoi : la copie reste locale)
 #                  BACKUP_S3_PREFIX (postgres)
@@ -41,34 +47,93 @@ BACKUP_ALERT_WEBHOOK_URL="${BACKUP_ALERT_WEBHOOK_URL:-}"
 PARTIAL=""
 STEP="configuration"
 
+ALERT_SENT=0
+ALERT_FAILED=0
+alert_problem() { ALERT_FAILED=$((ALERT_FAILED + 1)); log "$1" >&2; }
+alert_host() { hostname 2>/dev/null | tr -cd 'A-Za-z0-9._-' || true; }
+
 # Alerte webhook. Ne renvoie jamais d'erreur. L'URL (qui peut contenir un jeton) passe par l'entrée standard de curl :
 # elle n'apparaît ni dans la liste des processus ni dans les journaux. Le corps ne contient que l'hôte, l'heure et l'étape.
-alert_failure() {
+alert_webhook() {
   local host payload
   [ -n "$BACKUP_ALERT_WEBHOOK_URL" ] || return 0
   case "$BACKUP_ALERT_WEBHOOK_URL" in
     *[[:space:]\"\\]*)
-      log "alerte non envoyée : BACKUP_ALERT_WEBHOOK_URL contient un caractère interdit" >&2
+      alert_problem "alerte non envoyée : BACKUP_ALERT_WEBHOOK_URL contient un caractère interdit"
       return 0
       ;;
     http://* | https://*) ;;
     *)
-      log "alerte non envoyée : BACKUP_ALERT_WEBHOOK_URL doit commencer par http:// ou https://" >&2
+      alert_problem "alerte non envoyée : BACKUP_ALERT_WEBHOOK_URL doit commencer par http:// ou https://"
       return 0
       ;;
   esac
-  command -v curl >/dev/null 2>&1 || { log "alerte non envoyée : curl introuvable" >&2; return 0; }
-  host="$(hostname 2>/dev/null | tr -cd 'A-Za-z0-9._-' || true)"
+  command -v curl >/dev/null 2>&1 || { alert_problem "alerte non envoyée : curl introuvable"; return 0; }
+  host="$(alert_host)"
   payload="$(printf '{"host":"%s","timestamp":"%s","step":"%s"}' "${host:-inconnu}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$STEP")"
   if printf 'url = "%s"\n' "$BACKUP_ALERT_WEBHOOK_URL" \
     | curl -K - --silent --fail --output /dev/null --max-time 15 --request POST \
         --header 'Content-Type: application/json' --data "$payload" 2>/dev/null; then
+    ALERT_SENT=$((ALERT_SENT + 1))
     log "alerte envoyée (étape : ${STEP})"
   else
-    log "alerte NON envoyée (webhook injoignable ou refusé)" >&2
+    alert_problem "alerte NON envoyée (webhook injoignable ou refusé)"
   fi
   return 0
 }
+
+# Alerte e-mail par SMTP. Ne renvoie jamais d'erreur. TLS obligatoire. Le mot de passe passe par l'entrée standard de curl (ni liste
+# des processus ni journaux). Adresses et serveur sont validés strictement (pas d'injection d'en-tête). Message sans secret.
+alert_email() {
+  local to="${BACKUP_ALERT_EMAIL:-}" from="${BACKUP_ALERT_EMAIL_FROM:-${MAIL_FROM_ADDRESS:-}}" port="${MAIL_PORT:-587}"
+  local address='^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' url message host
+  [ -n "$to" ] || return 0
+  if ! [[ "$to" =~ $address ]]; then alert_problem "alerte e-mail non envoyée : BACKUP_ALERT_EMAIL invalide"; return 0; fi
+  if [ -z "${MAIL_HOST:-}" ] || [ -z "${MAIL_USERNAME:-}" ] || [ -z "${MAIL_PASSWORD:-}" ] || [ -z "$from" ]; then
+    alert_problem "alerte e-mail non envoyée : réglages SMTP incomplets (MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM_ADDRESS)"
+    return 0
+  fi
+  if ! [[ "$from" =~ $address ]] || ! [[ "$MAIL_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || ! [[ "$port" =~ ^[0-9]+$ ]]; then
+    alert_problem "alerte e-mail non envoyée : expéditeur, serveur ou port SMTP invalide"
+    return 0
+  fi
+  case "${MAIL_USERNAME}${MAIL_PASSWORD}" in
+    *[\"\\]* | *$'\n'*) alert_problem "alerte e-mail non envoyée : identifiant ou mot de passe SMTP contient un caractère interdit"; return 0 ;;
+  esac
+  command -v curl >/dev/null 2>&1 || { alert_problem "alerte e-mail non envoyée : curl introuvable"; return 0; }
+  if [ "$port" = "465" ]; then url="smtps://${MAIL_HOST}:${port}"; else url="smtp://${MAIL_HOST}:${port}"; fi
+  message="$(mktemp)" || { alert_problem "alerte e-mail non envoyée : fichier temporaire impossible"; return 0; }
+  host="$(alert_host)"
+  printf 'From: Ayelo sauvegardes <%s>\r\nTo: <%s>\r\nSubject: [Ayelo] Sauvegarde de la base en echec (etape : %s)\r\nDate: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nLa sauvegarde de la base a échoué.\r\n\r\nMachine : %s\r\nHeure (UTC) : %s\r\nÉtape : %s\r\n\r\nVoir le journal du service backup.\r\n' \
+    "$from" "$to" "$STEP" "$(date -u -R)" "${host:-inconnu}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$STEP" > "$message"
+  if printf 'user = "%s:%s"\n' "$MAIL_USERNAME" "$MAIL_PASSWORD" \
+    | curl -K - --silent --ssl-reqd --max-time 30 --url "$url" --mail-from "$from" --mail-rcpt "$to" --upload-file "$message" >/dev/null 2>&1; then
+    ALERT_SENT=$((ALERT_SENT + 1))
+    log "alerte e-mail envoyée (étape : ${STEP})"
+  else
+    alert_problem "alerte e-mail NON envoyée (serveur SMTP injoignable ou envoi refusé)"
+  fi
+  rm -f -- "$message"
+  return 0
+}
+
+alert_failure() {
+  alert_webhook || true
+  alert_email || true
+  return 0
+}
+
+case "${1:-}" in
+  '') ;;
+  --test-alert)
+    STEP="essai"
+    log "essai des alertes : la base n'est pas touchée"
+    alert_failure
+    [ "$ALERT_SENT" -ge 1 ] && [ "$ALERT_FAILED" -eq 0 ] || fail "essai non concluant : ${ALERT_SENT} envoi(s) réussi(s), ${ALERT_FAILED} en échec"
+    exit 0
+    ;;
+  *) fail "option inconnue : $1 (seule --test-alert existe)" ;;
+esac
 
 # Sortie : supprime les fichiers partiels et, si la sauvegarde a échoué, écrit le témoin d'échec puis alerte.
 # Le code de sortie d'origine est toujours rendu tel quel.

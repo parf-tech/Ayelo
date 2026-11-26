@@ -40,7 +40,7 @@ Le site de présentation (`https://<WEB_DOMAIN>`) a un repli statique : applicat
 | profondeur de la file | `docker compose exec redis redis-cli llen queues:default` (puis `queues:push`, `queues:realtime`) | > 500 pendant 5 min ; > 0 et inchangé depuis 10 min (worker bloqué) |
 | tâches en échec | `docker compose exec app php artisan queue:failed` ; ou `select count(*) from failed_jobs` | toute nouvelle ligne ; `QueueDeadLetterServiceProvider` journalise déjà une ligne `critical` |
 | taux d'erreurs 5xx | journaux Caddy (`docker compose logs caddy`) ou, avec Sentry, le taux d'erreurs | > 1 % des requêtes sur 5 min ; toute rafale de 5xx |
-| dernière sauvegarde réussie | healthcheck du service `backup` (`find /backups/.last_success -mmin -2160`) ; `BACKUP_ALERT_WEBHOOK_URL` appelé à l'échec | `unhealthy` ou aucune réussite depuis 26 h ; test de restauration tous les mois |
+| dernière sauvegarde réussie | healthcheck du service `backup` (`find /backups/.last_success -mmin -2160`) ; à l'échec, e-mail à `BACKUP_ALERT_EMAIL` et appel de `BACKUP_ALERT_WEBHOOK_URL` s'ils sont renseignés | `unhealthy` ou aucune réussite depuis 26 h ; test de restauration tous les mois |
 | mémoire Redis (file) | `redis-cli info memory` : `used_memory` / `maxmemory` | > 70 % (au-delà de 100 % la file refuse les écritures : `noeviction`) |
 | disque | `df -h` de l'hôte, taille des volumes `pgdata`, `app-storage`, `backups` | > 80 % |
 | mémoire des conteneurs | `docker stats --no-stream` ; `State.OOMKilled` | conteneur `app` > 85 % de sa limite ; tout OOM |
