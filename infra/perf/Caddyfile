@@ -1,0 +1,10 @@
+# Frontal du banc de charge : HTTP seul sur le réseau interne. Pas de TLS ni d'en-têtes de production : on mesure l'application.
+{
+	auto_https off
+}
+
+:80 {
+	root * /var/www/html/public
+	php_fastcgi app:9000
+	file_server
+}
