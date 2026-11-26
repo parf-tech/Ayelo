@@ -23,6 +23,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directory: /infra/transcode
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
 
   # Images du Docker Compose de production (Caddy, PostgreSQL, Redis).
   - package-ecosystem: docker-compose

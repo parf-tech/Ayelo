@@ -19,6 +19,8 @@ BIN="$TMP/bin"; mkdir -p "$BIN"
 cat > "$BIN/ffprobe" <<'EOF'
 #!/usr/bin/env bash
 last="${@: -1}"
+# Comme le vrai : sort en erreur sur un fichier qu'il ne sait pas lire.
+if grep -q ILLISIBLE "$last" 2>/dev/null; then exit 1; fi
 if printf '%s' "$*" | grep -q 'format=duration'; then
   case "$last" in *.bin.tmp) printf '%s\n' "${FAKE_OUT_DURATION:-12.4}" ;; *) printf '%s\n' "${FAKE_DURATION-12.4}" ;; esac
 elif printf '%s' "$*" | grep -q -- '-select_streams a'; then
@@ -34,7 +36,7 @@ cat > "$BIN/ffmpeg" <<'EOF'
 printf '%s\n' "$*" >> "$FAKE_LOG"
 [ "${FAKE_FFMPEG_FAIL:-0}" = 1 ] && exit 1
 last="${@: -1}"
-if [ "${FAKE_FFMPEG_EMPTY:-0}" = 1 ]; then : > "$last"; else printf 'RESULT' > "$last"; fi
+if [ "${FAKE_FFMPEG_EMPTY:-0}" = 1 ]; then : > "$last"; else printf '%s' "${FAKE_FFMPEG_OUTPUT:-RESULT}" > "$last"; fi
 exit 0
 EOF
 chmod +x "$BIN/ffprobe" "$BIN/ffmpeg"
@@ -43,7 +45,7 @@ export SPOOL="$TMP/spool" FFMPEG="$BIN/ffmpeg" FFPROBE="$BIN/ffprobe" FAKE_LOG="
 # shellcheck source=../../transcode/transcode-loop.sh
 . "${HERE}/../../transcode/transcode-loop.sh"
 
-fresh() { rm -rf -- "$SPOOL"; mkdir -p "$SPOOL/in" "$SPOOL/out"; : > "$FAKE_LOG"; unset FAKE_DURATION FAKE_OUT_DURATION FAKE_AUDIO FAKE_VIDEO FAKE_FFMPEG_FAIL FAKE_FFMPEG_EMPTY; }
+fresh() { rm -rf -- "$SPOOL"; mkdir -p "$SPOOL/in" "$SPOOL/out"; : > "$FAKE_LOG"; unset FAKE_DURATION FAKE_OUT_DURATION FAKE_AUDIO FAKE_VIDEO FAKE_FFMPEG_FAIL FAKE_FFMPEG_EMPTY FAKE_FFMPEG_OUTPUT; }
 ID1="11111111-1111-4111-8111-111111111111"
 ID2="22222222-2222-4222-8222-222222222222"
 submit() { # submit <id> <kind> [taille] : dépose la source puis la demande, comme l'application
@@ -110,6 +112,20 @@ check "résultat vide : refusé" 'refused "$ID1"'
 
 fresh; submit "$ID1" audio; FAKE_OUT_DURATION=500 transcode_pass
 check "résultat de durée hors limite : refusé" 'refused "$ID1"'
+
+# ffprobe en échec : la passe tourne ici dans un bash à part, avec « set -e » actif comme dans le conteneur. Un fichier
+# illisible doit être refusé sans arrêter la boucle ni les demandes suivantes.
+pass_alone() { bash -c '. "$1"; transcode_pass' _ "${HERE}/../../transcode/transcode-loop.sh"; }
+
+fresh; submit "$ID1" audio; submit "$ID2" audio; printf 'ILLISIBLE' > "$SPOOL/in/$ID1.src"
+status=0; pass_alone || status=$?
+check "fichier illisible : la passe ne s'arrête pas" '[ "$status" -eq 0 ]'
+check "fichier illisible : refusé sans lancer ffmpeg dessus" 'refused "$ID1" && ! grep -q -- "$ID1" "$FAKE_LOG"'
+check "fichier illisible : la demande suivante est traitée" '[ -f "$SPOOL/out/$ID2.ok" ]'
+
+fresh; submit "$ID1" audio
+status=0; FAKE_FFMPEG_OUTPUT=ILLISIBLE pass_alone || status=$?
+check "résultat illisible : refusé, la passe ne s'arrête pas" '[ "$status" -eq 0 ] && refused "$ID1" && [ ! -f "$SPOOL/out/$ID1.bin.tmp" ]'
 
 # 4. noms et reprise
 fresh; head -c 10 /dev/zero > "$SPOOL/in/../evil.src" 2>/dev/null || true

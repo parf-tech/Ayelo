@@ -26,12 +26,10 @@ Tant que `MEDIA_CHAT_AV_ENABLED=false` (valeur par défaut), le serveur refuse l
 
 Avant d'activer, dans cet ordre :
 
-1. Construire et démarrer le conteneur sur le serveur : `docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml up -d --build transcode`. Il doit devenir `healthy`. **Jamais construit ni exécuté depuis le poste de développement** (Docker absent) : c'est le premier essai réel.
-2. Épingler l'image de base par condensat (`docker buildx imagetools inspect alpine:3.21`), comme les autres images, et reporter le condensat dans `infra/transcode/Dockerfile`.
-3. Reconstruire l'image PHP (`app`, `worker`) : elle crée `/spool` au même propriétaire (82).
-4. **Essai réel avec de vrais fichiers** : déposer une note vocale de 30 secondes et une vidéo de 20 secondes (iPhone `.mov` et Android `.mp4`), vérifier qu'elles ressortent en `.m4a` et `.mp4`, **sans métadonnées** (`ffprobe -show_format -show_streams` ne doit montrer ni `location`, ni `com.apple.*`, ni titre), de la bonne durée, et lisibles. Vérifier aussi un fichier corrompu et un fichier de 3 minutes : ils doivent être refusés.
-5. Passer `MEDIA_CHAT_AV_ENABLED=true` dans `infra/.env.prod`, puis déployer. `php artisan deploy:preflight` vérifie que `/spool/in` et `/spool/out` existent.
-6. Prévenir les modérateurs : ils verront des notes vocales et des vidéos privées. **Les textes légaux** (`docs/legal/`) doivent le dire avant l'ouverture au public.
+1. Déployer (`infra/scripts/deploy.sh`) : il construit et démarre le conteneur avec les autres services, et reconstruit l'image PHP (`app`, `worker`), qui crée `/spool` au même propriétaire (82). `transcode` doit devenir `healthy`.
+2. **Essai réel avec de vrais fichiers** : déposer une note vocale de 30 secondes et une vidéo de 20 secondes (iPhone `.mov` et Android `.mp4`), vérifier qu'elles ressortent en `.m4a` et `.mp4`, **sans métadonnées** (`ffprobe -show_format -show_streams` ne doit montrer ni `location`, ni `com.apple.*`, ni titre), de la bonne durée, et lisibles. Vérifier aussi un fichier corrompu et un fichier de 3 minutes : ils doivent être refusés.
+3. Passer `MEDIA_CHAT_AV_ENABLED=true` dans `infra/.env.prod`, puis déployer. `php artisan deploy:preflight` vérifie que `/spool/in` et `/spool/out` existent.
+4. Prévenir les modérateurs : ils verront des notes vocales et des vidéos privées. **Les textes légaux** (`docs/legal/`) doivent le dire avant l'ouverture au public.
 
 ## Surveiller
 
@@ -45,4 +43,4 @@ Avant d'activer, dans cet ordre :
 
 ## Ce qui n'est pas vérifié
 
-L'essai du script (`infra/scripts/tests/transcode_test.sh`, en CI) utilise un **faux** ffmpeg : il prouve le protocole, les refus et les options passées à ffmpeg, pas le comportement de ffmpeg sur de vrais fichiers. Les options (`-map_metadata -1`, `-protocol_whitelist file`, plafonds de durée) sont à confirmer à l'étape 4.
+En CI, `infra/scripts/tests/transcode_test.sh` (faux ffmpeg) prouve le protocole, les refus et les options passées à ffmpeg, et `infra/scripts/tests/transcode_image_test.sh` construit l'image et la fait tourner avec le vrai ffmpeg et les restrictions de la production, sur des fichiers **fabriqués** (son et mire). Restent à confirmer à l'étape 2 : des fichiers de vrais téléphones (métadonnées `location` et `com.apple.*`, formats `.mov` et `.mp4`) et le refus d'un fichier trop long.

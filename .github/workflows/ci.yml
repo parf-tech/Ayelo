@@ -58,6 +58,13 @@ jobs:
       - name: Image de sauvegarde (pg_dump 16, aws, gpg)
         run: docker build --pull -f infra/scripts/Dockerfile -t ayelo-backup:ci infra/scripts
 
+      # Toutes les images que deploy.sh construit doivent l'être ici : un échec découvert au déploiement bloque la production.
+      - name: Image de traitement audio et vidéo (conteneur transcode)
+        run: docker build --pull -f infra/transcode/Dockerfile -t ayelo-transcode:ci .
+
+      - name: Essai réel de l'image transcode (vrai ffmpeg, mêmes restrictions que la production)
+        run: bash infra/scripts/tests/transcode_image_test.sh ayelo-transcode:ci
+
       - name: docker compose config (variables factices)
         env:
           REDIS_PASSWORD: ci-factice
@@ -129,6 +136,7 @@ jobs:
         run: |
           docker run --rm -i hadolint/hadolint < infra/php/Dockerfile
           docker run --rm -i hadolint/hadolint < infra/scripts/Dockerfile
+          docker run --rm -i hadolint/hadolint < infra/transcode/Dockerfile
 
   backend-prodlike:
     # Même magasin de cache qu'en production (Redis) + couverture. BLOQUANT depuis le 2026-11-24 (première exécution réellement
