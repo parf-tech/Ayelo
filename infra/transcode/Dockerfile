@@ -3,7 +3,7 @@
 # Construite et essayée avec le vrai ffmpeg en CI (infra/scripts/tests/transcode_image_test.sh) : l'essai avec de vrais
 # fichiers de téléphone reste à faire sur le serveur avant d'activer MEDIA_CHAT_AV_ENABLED (docs/runbooks/transcode.md).
 # Image de base épinglée par condensat, comme les autres images (Dependabot propose les mises à jour).
-FROM alpine:3.21@sha256:bc21487101ae47172509130ee1092cc273a831968d64b617776d1f69c81e42ab
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 
 # Aucun compte créé : Alpine réserve déjà le groupe 82 (www-data), et `USER` par numéro suffit à ffmpeg et au script.
 RUN apk add --no-cache bash coreutils ffmpeg \
