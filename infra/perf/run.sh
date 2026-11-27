@@ -68,7 +68,7 @@ psql_ -At -c "select 'profils=' || (select count(*) from profiles) || ' conversa
 
 log "application"
 dc up -d --wait app >/dev/null
-dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache' > "$RESULTS/cache.log" 2>&1
+dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache && php artisan filament:optimize' > "$RESULTS/cache.log" 2>&1
 dc up -d web worker reverb >/dev/null
 # Photo d'essai produite par photo.php (mêmes octets à chaque essai).
 dc exec -T app php /srv/perf/photo.php > "$WORK/photo.jpg"

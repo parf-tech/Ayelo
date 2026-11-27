@@ -116,7 +116,8 @@ for service in app reverb scheduler worker worker-push worker-media; do
 done
 
 STEP="mise en cache de la configuration"
-dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache'
+# filament:optimize : composants et icônes du panneau (sans le cache d'icônes, chaque réponse JSON les rebalayait).
+dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache && php artisan filament:optimize'
 
 STEP="contrôle de santé public"
 API_DOMAIN="$(env_value API_DOMAIN)"

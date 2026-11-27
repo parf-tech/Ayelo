@@ -70,6 +70,8 @@ check "la construction précède deploy:preflight" "$([ -n "$p" ] && [ "$c" -lt 
 check "deploy:preflight précède la migration" "$([ -n "$m" ] && [ "$p" -lt "$m" ]; echo $?)"
 check "la migration précède la relance des conteneurs" "$([ -n "$u" ] && [ "$m" -lt "$u" ]; echo $?)"
 check "la mise en cache suit la relance" "$([ -n "$k" ] && [ "$u" -lt "$k" ]; echo $?)"
+# Sans cache d'icônes, chaque réponse JSON rebalayait les dossiers d'icônes du panneau (profil du banc de charge).
+check "composants et icônes du panneau mis en cache" "$(grep -q 'exec .* app .*filament:optimize' "$LOG"; echo $?)"
 check "le contrôle de santé public est appelé" "$(grep -q 'curl .*https://api.example.test/api/v1/health' "$LOG"; echo $?)"
 check "filament:assets est lancé en root" "$(grep -q -- '-u root .*filament:assets' "$LOG"; echo $?)"
 
