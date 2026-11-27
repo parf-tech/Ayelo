@@ -72,14 +72,22 @@ $play = static function (string $route, int $times, bool $profiled) use ($curl, 
 };
 $at = static fn (array $sorted, float $q): float => $sorted === [] ? 0.0 : $sorted[(int) floor($q * (count($sorted) - 1))];
 
-foreach (array_keys($routes) as $route) {
+// PROFIL_ROUTE : une seule route (comparaison, comparer.sh). PROFIL_SANS=1 : pas de passage profilé.
+$only = getenv('PROFIL_ROUTE') ?: null;
+$selected = $only === null ? array_keys($routes) : [$only];
+$profile = getenv('PROFIL_SANS') !== '1';
+
+foreach ($selected as $route) {
     $play($route, 20, false);
 }
 printf("%-14s %6s %10s %10s %14s %12s %s\n", 'route', 'n', 'médiane ms', 'p95 ms', 'profilé méd.', 'réponse Ko', 'refus (code => nombre)');
-foreach (array_keys($routes) as $route) {
+foreach ($selected as $route) {
     mt_srand(1);
     [$plain, $failures, $bytes] = $play($route, $count, false);
-    mt_srand(1);
-    [$profiled] = $play($route, $count, true);
+    $profiled = [];
+    if ($profile) {
+        mt_srand(1);
+        [$profiled] = $play($route, $count, true);
+    }
     printf("%-14s %6d %10.1f %10.1f %14.1f %12.1f %s\n", $route, count($plain), $at($plain, 0.5), $at($plain, 0.95), $at($profiled, 0.5), $plain === [] ? 0 : $bytes / count($plain) / 1024, json_encode((object) $failures));
 }

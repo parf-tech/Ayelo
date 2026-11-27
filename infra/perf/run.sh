@@ -4,6 +4,7 @@
 #         MEDIA_ASYNC_IMAGES=true run.sh ...   ré-encodage des images hors de la requête
 #         DB_PERSISTENT=true run.sh ...        connexions PostgreSQL persistantes
 #         PERF_PROFILE=1 run.sh ...            profil des routes, sans charge (PROFILE_REQUESTS=200 par route)
+#         PERF_REFERENCE=<dépôt> run.sh ...    comparaison alternée avec un autre état du code, sans charge (comparer.sh)
 # Sans effet sur un autre projet compose : tout passe par « -p ayelo-perf » ; aucune commande « prune ».
 set -euo pipefail
 
@@ -13,6 +14,9 @@ PROFILES="${2:-200000}"; ACTORS="${3:-500}"; SCALE="${4:-1}"; STAGE="${5:-90s}"
 ASYNC="${MEDIA_ASYNC_IMAGES:-false}"
 PERSISTENT="${DB_PERSISTENT:-false}"
 PROFILE="${PERF_PROFILE:-0}"
+# Dossier d'un autre état du dépôt à comparer à celui-ci (voir comparer.sh).
+REFERENCE=""
+if [ -n "${PERF_REFERENCE:-}" ]; then REFERENCE="$(cd "$PERF_REFERENCE" && pwd)"; fi
 for n in "$PROFILES" "$ACTORS"; do case "$n" in ''|*[!0-9]*) echo "nombre invalide : $n" >&2; exit 2 ;; esac; done
 [ "$ACTORS" -ge 50 ] && [ "$PROFILES" -ge "$ACTORS" ] || { echo "il faut au moins 50 acteurs et profils >= acteurs" >&2; exit 2; }
 cd "$(dirname "$0")"
@@ -28,8 +32,10 @@ SAMPLER=""
 cleanup() {
   if [ -n "$SAMPLER" ]; then kill "$SAMPLER" 2>/dev/null || true; fi
   echo "== destruction du banc"
+  docker rm -f ayelo-perf-ref-app ayelo-perf-ref-web >/dev/null 2>&1 || true
   dc --profile load down -v --remove-orphans >/dev/null 2>&1 || true
   docker image rm ayelo-perf-app:local >/dev/null 2>&1 || true
+  docker image rm ayelo-perf-app:reference >/dev/null 2>&1 || true
   rm -rf -- "$WORK"
 }
 trap cleanup EXIT
@@ -49,6 +55,10 @@ dc build app > "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exi
 if [ "$PROFILE" = 1 ]; then
   log "image de profil (extension excimer)"
   docker build --pull=false -t ayelo-perf-app:local profil >> "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
+fi
+if [ -n "$REFERENCE" ]; then
+  log "image de référence (code : $REFERENCE)"
+  docker build -f "$REFERENCE/infra/php/Dockerfile" --target runtime -t ayelo-perf-app:reference "$REFERENCE" >> "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
 fi
 log "base, files et stockage"
 dc up -d --wait postgres redis redis-cache >/dev/null
@@ -93,6 +103,11 @@ if ! dc --profile load run --rm -T k6 run --quiet -e SMOKE=1 -e SCALE=0.1 -e STA
 fi
 
 diagnose | tee "$RESULTS/diagnostic.txt"
+
+if [ -n "$REFERENCE" ]; then
+  . ./comparer.sh
+  exit 0
+fi
 
 # Mode profil : pas de charge, une requête à la fois, puis les piles échantillonnées de chaque route.
 if [ "$PROFILE" = 1 ]; then
