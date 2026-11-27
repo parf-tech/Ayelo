@@ -3,7 +3,7 @@
 # tout arrive par les variables d'environnement du conteneur au démarrage.
 # Non construite sur le poste de développement (Docker absent) : à valider sur le serveur ou en CI.
 # Même version majeure que le serveur PostgreSQL du compose (16) : pg_dump refuse un serveur plus récent que lui.
-FROM postgres:16-bookworm@sha256:ce3efec6bc404f6b15ebf5d9bed6b45a9d4655aea238d7dacc3467ccb05a1175
+FROM postgres:19-bookworm@sha256:f8b826440669ad283328d2ac8326682539eddd91867904ad5abf4ec19269d241
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends awscli curl gnupg ca-certificates \
