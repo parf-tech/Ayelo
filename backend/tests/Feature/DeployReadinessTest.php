@@ -163,6 +163,7 @@ function productionConfig(array $overrides = []): void
         'services.mail_webhook.secret' => 's',
         'services.oauth.google.client_ids' => ['google-id'],
         'services.oauth.apple.client_ids' => ['apple-id'],
+        'sentry.dsn' => 'https://cle@o1.ingest.de.sentry.io/1',
     ], $overrides));
 }
 

@@ -96,6 +96,13 @@ final class DeployPreflight
                 $warnings[] = $variable.' est vide : la connexion '.ucfirst($provider).' est refusée.';
             }
         }
+        // Suivi d'erreurs facultatif. Les données partent chez Sentry : région UE attendue (hôte « ….ingest.de.sentry.io »).
+        $dsn = (string) config('sentry.dsn');
+        if ($dsn === '') {
+            $warnings[] = 'SENTRY_LARAVEL_DSN est vide : aucune erreur n\'est remontée à un suivi externe (facultatif).';
+        } elseif (! str_ends_with(strtolower((string) parse_url($dsn, PHP_URL_HOST)), '.ingest.de.sentry.io')) {
+            $warnings[] = 'SENTRY_LARAVEL_DSN ne désigne pas la région UE de Sentry (hôte attendu : ….ingest.de.sentry.io) : vérifier avant d\'envoyer des données.';
+        }
 
         return ['errors' => $errors, 'warnings' => $warnings];
     }

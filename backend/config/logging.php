@@ -138,6 +138,20 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        // Aucun journal ne part vers Sentry : seules les exceptions sont remontées (config/sentry.php). Ces deux canaux sont
+        // définis ici, sans effet, sinon le paquet les ajoute lui-même, reliés à Sentry et sans le masquage.
+        'sentry' => [
+            'tap' => [RedactLogs::class],
+            'driver' => 'monolog',
+            'handler' => NullHandler::class,
+        ],
+
+        'sentry_logs' => [
+            'tap' => [RedactLogs::class],
+            'driver' => 'monolog',
+            'handler' => NullHandler::class,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],

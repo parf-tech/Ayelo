@@ -50,16 +50,27 @@ Le site de présentation (`https://<WEB_DOMAIN>`) a un repli statique : applicat
 
 Il n'existe aucun exporteur de métriques dans le dépôt : ces lectures sont manuelles ou à brancher sur l'outil de supervision choisi (Uptime Kuma « push monitors » avec un cron qui exécute les commandes ci-dessus, par exemple). Le seul signal automatique aujourd'hui : healthchecks Docker, webhook d'échec de sauvegarde, ligne `critical` dans les journaux.
 
-## Suivi d'erreurs Sentry (facultatif, désactivé par défaut)
+## Suivi d'erreurs Sentry (serveur : installé, fermé par défaut)
 
-Rien n'est installé : aucun paquet Composer n'a été ajouté. Le crochet est entièrement piloté par l'environnement : `SENTRY_LARAVEL_DSN` (vide dans `infra/.env.prod.example` et `backend/.env.example`) et `SENTRY_TRACES_SAMPLE_RATE=0`. Vide = aucun envoi.
+`sentry/sentry-laravel` est installé et branché (`bootstrap/app.php`, `config/sentry.php`). Tant que `SENTRY_LARAVEL_DSN` est vide, **rien n'est envoyé**.
 
-Pour l'activer, quand la décision est prise (coût indicatif : 29 $/mois, `docs/14b-COSTS.md`) :
+### Ce qui part quand la clé est renseignée
 
-1. Sur un poste avec Composer : `composer require sentry/sentry-laravel` dans `backend/`, puis committer `composer.json` et `composer.lock`.
-2. Le paquet lit `SENTRY_LARAVEL_DSN` seul (pas de commande de configuration obligatoire). Brancher la remontée des exceptions dans `bootstrap/app.php` : `->withExceptions(function (Exceptions $exceptions) { \Sentry\Laravel\Integration::handles($exceptions); })`.
-3. Renseigner `SENTRY_LARAVEL_DSN` dans `infra/.env.prod`, redémarrer `app`, `worker`, `worker-push`, `worker-media`, `scheduler`, `reverb`.
-4. Données personnelles : laisser `send_default_pii` à `false` (valeur par défaut de `config/sentry.php`), ne pas activer les traces de requêtes SQL avec valeurs, et inscrire Sentry comme sous-traitant dans la matrice RGPD (`docs/legal/`). Choisir la région UE.
-5. Règles d'alerte à créer dans Sentry : nouvelle erreur en production, pic de fréquence (> 20 événements en 5 min), échec d'un job (`failed_jobs`).
+Les exceptions non attendues (requêtes, tâches de file, commandes planifiées) : type, message masqué, pile d'appels avec les lignes de code voisines, méthode et chemin de la requête, versions techniques.
 
-Le mobile n'a pas non plus de client de suivi d'erreurs (travail séparé).
+Retiré avant l'envoi (`App\Logging\SentryScrubber`, essayé par `SentryTest`) : compte, adresse IP, en-têtes, cookies, corps, paramètres d'adresse, variables de la pile, contexte libre, « miettes » (requêtes, cache, e-mails, appels sortants). Dans les messages : adresses e-mail, jetons, identifiants (UUID), adresses IP, réponses de services externes ; une erreur de base de données est réduite au code `SQLSTATE` et au nom de la contrainte. Les réglages de protection sont écrits en dur : aucune variable d'environnement ne les ouvre. Ni traces de performance, ni profils, ni journaux (`Log::…` ne part pas).
+
+**Limite** : un message d'exception écrit par notre code avec un pseudo ou un texte de membre partirait tel quel. Ne jamais mettre de donnée de membre dans un message d'exception.
+
+**Non couvert** : `reverb` (il ne reçoit pas la clé) et l'application mobile.
+
+### Activer
+
+1. Créer le compte et un projet PHP / Laravel dans la **région UE** (le choix se fait à la création de l'organisation et ne se change pas). Coût : offre gratuite 5 000 erreurs et un utilisateur, ou 26 à 29 $/mois (`docs/14b-COSTS.md`).
+2. Signer l'accord de traitement des données et faire compléter la politique de confidentialité (`docs/legal/02-politique-confidentialite.md`, tableau des prestataires) : Sentry devient un sous-traitant.
+3. Dans les réglages du projet : activer « Prevent Storing of IP Addresses » et le filtrage des données côté serveur.
+4. Sur le serveur, saisir la clé dans `infra/.env.prod` (`SENTRY_LARAVEL_DSN=…`, jamais dans le dépôt ni dans une conversation), puis `infra/scripts/deploy.sh --skip-build`. `deploy:preflight` avertit si la clé ne désigne pas la région UE.
+5. Essai : `docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml exec app php artisan sentry:test`. Un événement doit apparaître dans le projet ; vérifier qu'il ne porte ni adresse IP ni compte.
+6. Règles d'alerte à créer dans Sentry : nouvelle erreur en production, pic de fréquence (> 20 événements en 5 min).
+
+**Fermer** : vider la clé, puis déployer.
