@@ -31,6 +31,14 @@ DB_PERSISTENT=true bash infra/perf/run.sh /chemin/resultats-persistant    # conn
 | `volume.txt` | taille du jeu de données |
 | `connexions.txt` | connexions PostgreSQL ouvertes pendant chaque palier |
 
+## Profil des routes (sans charge)
+
+```bash
+DB_PERSISTENT=true PERF_PROFILE=1 PERF_APP_CPUS=4 PERF_DB_CPUS=2 bash infra/perf/run.sh /chemin/resultats
+```
+
+Ajoute l'extension `excimer` à une copie de l'image (banc seulement), joue découverte, conversations, fil et envoi une requête à la fois (`PROFILE_REQUESTS`, 200 par route), puis s'arrête. `profil-temps.txt` : durées sans et avec profil ; `profil.txt` : part par famille (PostgreSQL, SDK AWS, amorçage...), temps propre et temps inclusif par fonction ; `profils.tar.gz` : piles brutes. Sans paliers de charge, la production du serveur est peu gênée.
+
 ## Connexions persistantes (`DB_PERSISTENT`)
 
 Fermées par défaut dans le code, **activées en production depuis le 2026-11-26**. Sans elles, chaque requête rouvre une connexion à PostgreSQL (chiffrement du mot de passe compris). Avec `DB_PERSISTENT=true`, chaque processus PHP-FPM garde la sienne.
