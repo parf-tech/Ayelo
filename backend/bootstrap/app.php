@@ -10,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -40,6 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Refus attendus (mauvais mot de passe, trop d'essais) : réponses normales, pas des incidents à journaliser.
         $exceptions->dontReport([ReauthenticationRefused::class, ReauthenticationThrottled::class]);
+
+        // Suivi d'erreurs externe, sans effet tant que SENTRY_LARAVEL_DSN est vide (config/sentry.php, filtre SentryScrubber).
+        Integration::handles($exceptions);
 
         // Format d'erreur unique de l'API (docs/10-API-SPECIFICATIONS.md) :
         // { "error": { "code", "message", "fields"? } }
