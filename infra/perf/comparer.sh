@@ -21,6 +21,33 @@ drive() {
 }
 cpu_usec() { docker exec "$1" sh -c 'awk "/^usage_usec/ {print \$2}" /sys/fs/cgroup/cpu.stat'; }
 
+# PERF_LOAD=1 : mêmes alternances, mais sous charge (k6, sans dépôt d'image sauf UPLOAD_PEAK).
+if [ "${PERF_LOAD:-0}" = 1 ]; then
+  # charge <base> <échelle> <palier> <résumé> : un passage k6 ; le code 99 (objectif manqué) n'arrête pas la comparaison.
+  charge() {
+    dc --profile load run --rm -T k6 run --quiet -e BASE="$1" -e SCALE="$2" -e STAGE="$3" -e UPLOAD="${UPLOAD_PEAK:-0}" \
+      --summary-export="/work/$4" /scripts/load.js > "$RESULTS/${4%.json}.txt" 2>&1 || true
+    cp "$WORK/$4" "$RESULTS/"
+  }
+  log "échauffement des deux versions"
+  charge http://web-ref 0.1 10s chauffe-reference.json
+  charge http://web 0.1 10s chauffe-present.json
+  for round in $(seq 1 "$ROUNDS"); do
+    if [ $((round % 2)) -eq 1 ]; then order="reference present"; else order="present reference"; fi
+    for scale in ${PERF_SCALES:-$SCALE}; do
+      for version in $order; do
+        if [ "$version" = reference ]; then base=http://web-ref; else base=http://web; fi
+        log "tour $round sur $ROUNDS, échelle $scale, version $version"
+        charge "$base" "$scale" "$STAGE" "charge-$version-$scale-$round.json"
+        sleep 20
+      done
+    done
+  done
+  python3 -I resume_charge.py "$RESULTS" | tee "$RESULTS/comparaison-charge.txt"
+  docker rm -f "$REF_APP" "$REF_WEB" > /dev/null
+  return 0
+fi
+
 : > "$RESULTS/comparaison.tsv"
 for route in decouverte conversations fil envoi; do
   drive http://web-ref "$route" 40 > /dev/null
