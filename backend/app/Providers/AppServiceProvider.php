@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\PersonalAccessToken;
 use App\OpenApi\ReauthenticationRequestBody;
 use App\Services\Media\SpoolTranscoder;
 use App\Services\Media\Transcoder;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // `last_used_at` écrit au plus toutes les cinq minutes par jeton, au lieu d'une fois par requête.
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         // Garde de production (revue CTO n°1) : le mode debug expose traces, variables d'environnement et secrets dans les erreurs.
         if ($this->app->isProduction() && config('app.debug')) {
             throw new \RuntimeException('APP_DEBUG doit être false en production (APP_ENV=production).');
