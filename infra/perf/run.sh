@@ -3,6 +3,8 @@
 # Usage : run.sh <dossier des résultats> [profils=200000] [acteurs=500] [échelle=1] [durée d'un palier=90s]
 #         MEDIA_ASYNC_IMAGES=true run.sh ...   ré-encodage des images hors de la requête
 #         DB_PERSISTENT=true run.sh ...        connexions PostgreSQL persistantes
+#         PERF_PROFILE=1 run.sh ...            profil des routes, sans charge (PROFILE_REQUESTS=200 par route)
+#         PERF_REFERENCE=<dépôt> run.sh ...    comparaison alternée avec un autre état du code, sans charge (comparer.sh)
 # Sans effet sur un autre projet compose : tout passe par « -p ayelo-perf » ; aucune commande « prune ».
 set -euo pipefail
 
@@ -11,6 +13,10 @@ RESULTS="$(mkdir -p "$1" && cd "$1" && pwd)"
 PROFILES="${2:-200000}"; ACTORS="${3:-500}"; SCALE="${4:-1}"; STAGE="${5:-90s}"
 ASYNC="${MEDIA_ASYNC_IMAGES:-false}"
 PERSISTENT="${DB_PERSISTENT:-false}"
+PROFILE="${PERF_PROFILE:-0}"
+# Dossier d'un autre état du dépôt à comparer à celui-ci (voir comparer.sh).
+REFERENCE=""
+if [ -n "${PERF_REFERENCE:-}" ]; then REFERENCE="$(cd "$PERF_REFERENCE" && pwd)"; fi
 for n in "$PROFILES" "$ACTORS"; do case "$n" in ''|*[!0-9]*) echo "nombre invalide : $n" >&2; exit 2 ;; esac; done
 [ "$ACTORS" -ge 50 ] && [ "$PROFILES" -ge "$ACTORS" ] || { echo "il faut au moins 50 acteurs et profils >= acteurs" >&2; exit 2; }
 cd "$(dirname "$0")"
@@ -26,8 +32,10 @@ SAMPLER=""
 cleanup() {
   if [ -n "$SAMPLER" ]; then kill "$SAMPLER" 2>/dev/null || true; fi
   echo "== destruction du banc"
+  docker rm -f ayelo-perf-ref-app ayelo-perf-ref-web >/dev/null 2>&1 || true
   dc --profile load down -v --remove-orphans >/dev/null 2>&1 || true
   docker image rm ayelo-perf-app:local >/dev/null 2>&1 || true
+  docker image rm ayelo-perf-app:reference >/dev/null 2>&1 || true
   rm -rf -- "$WORK"
 }
 trap cleanup EXIT
@@ -44,6 +52,14 @@ sessions() { psql_ -At -c "select sessions from pg_stat_database where datname =
 
 log "construction de l'image (code : $(git -C ../.. log -1 --format=%h 2>/dev/null || echo inconnu))"
 dc build app > "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
+if [ "$PROFILE" = 1 ]; then
+  log "image de profil (extension excimer)"
+  docker build --pull=false -t ayelo-perf-app:local profil >> "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
+fi
+if [ -n "$REFERENCE" ]; then
+  log "image de référence (code : $REFERENCE)"
+  docker build -f "$REFERENCE/infra/php/Dockerfile" --target runtime -t ayelo-perf-app:reference "$REFERENCE" >> "$RESULTS/build.log" 2>&1 || { tail -30 "$RESULTS/build.log"; exit 1; }
+fi
 log "base, files et stockage"
 dc up -d --wait postgres redis redis-cache >/dev/null
 dc up -d s3 >/dev/null
@@ -62,7 +78,7 @@ psql_ -At -c "select 'profils=' || (select count(*) from profiles) || ' conversa
 
 log "application"
 dc up -d --wait app >/dev/null
-dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache' > "$RESULTS/cache.log" 2>&1
+dc exec -T app sh -c 'php artisan config:cache && php artisan route:cache && php artisan event:cache && php artisan filament:optimize' > "$RESULTS/cache.log" 2>&1
 dc up -d web worker reverb >/dev/null
 # Photo d'essai produite par photo.php (mêmes octets à chaque essai).
 dc exec -T app php /srv/perf/photo.php > "$WORK/photo.jpg"
@@ -87,6 +103,21 @@ if ! dc --profile load run --rm -T k6 run --quiet -e SMOKE=1 -e SCALE=0.1 -e STA
 fi
 
 diagnose | tee "$RESULTS/diagnostic.txt"
+
+if [ -n "$REFERENCE" ]; then
+  . ./comparer.sh
+  exit 0
+fi
+
+# Mode profil : pas de charge, une requête à la fois, puis les piles échantillonnées de chaque route.
+if [ "$PROFILE" = 1 ]; then
+  log "profil : ${PROFILE_REQUESTS:-200} requêtes par route, une à la fois (DB_PERSISTENT=$PERSISTENT)"
+  dc run --rm -T --no-deps -u root -v "$WORK:/work:ro" app php /srv/perf/profil/requetes.php /work/actors.json "${PROFILE_REQUESTS:-200}" | tee "$RESULTS/profil-temps.txt"
+  dc exec -T app php /srv/perf/profil/resume.php /tmp/profils > "$RESULTS/profil.txt"
+  dc exec -T app sh -c 'cd /tmp/profils && tar -czf - .' > "$RESULTS/profils.tar.gz"
+  log "profil terminé : profil.txt, profil-temps.txt, profils.tar.gz"
+  exit 0
+fi
 
 log "coût à vide (une requête à la fois)"
 dc --profile load run --rm -T k6 run --quiet -e IDLE=1 /scripts/load.js > "$RESULTS/idle.txt" 2>&1 || true

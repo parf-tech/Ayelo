@@ -31,6 +31,29 @@ DB_PERSISTENT=true bash infra/perf/run.sh /chemin/resultats-persistant    # conn
 | `volume.txt` | taille du jeu de données |
 | `connexions.txt` | connexions PostgreSQL ouvertes pendant chaque palier |
 
+## Profil des routes (sans charge)
+
+```bash
+DB_PERSISTENT=true PERF_PROFILE=1 PERF_APP_CPUS=4 PERF_DB_CPUS=2 bash infra/perf/run.sh /chemin/resultats
+```
+
+Ajoute l'extension `excimer` à une copie de l'image (banc seulement), joue découverte, conversations, fil et envoi une requête à la fois (`PROFILE_REQUESTS`, 200 par route), puis s'arrête. `profil-temps.txt` : durées sans et avec profil ; `profil.txt` : part par famille (PostgreSQL, SDK AWS, amorçage...), temps propre et temps inclusif par fonction ; `profils.tar.gz` : piles brutes. Sans paliers de charge, la production du serveur est peu gênée.
+
+## Comparer deux états du code (sans charge)
+
+```bash
+DB_PERSISTENT=true PERF_REFERENCE=/chemin/depot-avant PERF_APP_CPUS=4 PERF_DB_CPUS=2 bash infra/perf/run.sh /chemin/resultats
+```
+
+Les deux versions tournent côte à côte sur les mêmes données ; chaque tour (`PERF_ROUNDS`, 5) joue chaque route sur les deux, dans un ordre alterné (`PROFILE_REQUESTS`, 80 par tour). `comparaison.txt` : médiane des tours (durée médiane et p95) et temps processeur de l'application par requête. Sur une machine partagée, comparer deux passages séparés ne suffit pas : les durées y varient autant que les gains cherchés.
+
+La même comparaison **sous charge**, par paliers alternés (résultat dans `comparaison-charge.txt`, environ 40 minutes avec ces réglages ; la production du serveur est ralentie pendant ce temps) :
+
+```bash
+DB_PERSISTENT=true PERF_REFERENCE=/chemin/depot-avant PERF_LOAD=1 PERF_ROUNDS=2 PERF_SCALES="0.1 0.25 0.5" PERF_APP_CPUS=4 PERF_DB_CPUS=2 \
+  bash infra/perf/run.sh /chemin/resultats 200000 500 1 45s
+```
+
 ## Connexions persistantes (`DB_PERSISTENT`)
 
 Fermées par défaut dans le code, **activées en production depuis le 2026-11-26**. Sans elles, chaque requête rouvre une connexion à PostgreSQL (chiffrement du mot de passe compris). Avec `DB_PERSISTENT=true`, chaque processus PHP-FPM garde la sienne.

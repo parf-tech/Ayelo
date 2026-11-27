@@ -2,8 +2,11 @@
 
 namespace App\Services\Storage;
 
+use Aws\Credentials\Credentials;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
+use Aws\Signature\S3SignatureV4;
+use GuzzleHttp\Psr7\Request;
 
 class S3MediaStorage implements MediaStorage
 {
@@ -68,11 +71,27 @@ class S3MediaStorage implements MediaStorage
         return ['url' => (string) $request->getUri(), 'headers' => ['Content-Type' => $mime]];
     }
 
+    /**
+     * Signature directe (signeur SigV4 du SDK) de l'adresse « chemin » `<endpoint>/<bucket>/<clé>`. Une liste signe une adresse
+     * par photo : passer par un client S3 et sa chaîne de commande prenait environ une milliseconde par adresse, soit un sixième
+     * du temps de la découverte (profil du banc de charge). `MediaReadUrlTest` compare le résultat à celui du client S3.
+     */
     public function temporaryUrl(string $key, int $ttlMinutes): string
     {
-        $command = $this->client()->getCommand('GetObject', ['Bucket' => config('media.disk.bucket'), 'Key' => $key]);
+        $options = $this->baseOptions();
+        $url = rtrim((string) $options['endpoint'], '/')
+            .'/'.rawurlencode((string) config('media.disk.bucket'))
+            .'/'.str_replace('%2F', '/', rawurlencode($key));
+        $now = now()->getTimestamp();
 
-        return (string) $this->client()->createPresignedRequest($command, "+{$ttlMinutes} minutes")->getUri();
+        $signed = (new S3SignatureV4('s3', (string) $options['region']))->presign(
+            new Request('GET', $url),
+            new Credentials($options['credentials']['key'], $options['credentials']['secret']),
+            $now + $ttlMinutes * 60,
+            ['start_time' => $now],
+        );
+
+        return (string) $signed->getUri();
     }
 
     public function head(string $key): ?array
